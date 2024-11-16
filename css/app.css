@@ -13,6 +13,10 @@ pkm-sprite {
     width: 462px; /* (68 + 4 + 5) * 30 */
 }
 
+.current-tera-type-image {
+    align-self: center;
+}
+
 @keyframes bounce {
     0%, 100% {
         transform: translateY(0);
@@ -21,6 +25,16 @@ pkm-sprite {
     50% {
         transform: translateY(-5px);
     }
+}
+
+.plus-nature > div > div {
+    color: red;
+    font-weight: bold;
+}
+
+.minus-nature > div > div {
+    color: blue;
+    font-weight: bold;
 }
 
 .loading-progress {
