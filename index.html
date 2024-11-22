@@ -20,6 +20,8 @@
 
 <body>
 
+    <div class="status-bar-safe-area"></div>
+
     <div id="app">
         <svg class="loading-progress">
             <circle r="40%"
@@ -49,7 +51,20 @@
 
     <!--prevent autostarting-->
     <script src="_framework/blazor.webassembly.js" autostart="false"></script>
-    <script>navigator.serviceWorker.register('service-worker.js');</script>
+    <script>
+        navigator.serviceWorker.register('service-worker.published.js', { updateViaCache: 'none' }).then(registration => {
+            setInterval(() => registration.update(), 1 * 60 * 60 * 1000); // check for updates every hour
+            registration.onupdatefound = () => {
+                const installingWorker = registration.installing;
+                installingWorker.onstatechange = () => {
+                    if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        // Notify Blazor about the update
+                        window.dispatchEvent(new CustomEvent('updateAvailable'));
+                    }
+                };
+            };
+        });
+    </script>
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
     <script src="js/lib/crypto-js/crypto-js.min.js"></script>
 
@@ -80,7 +95,14 @@
         }
     </script>
 
+    <script>
+        window.addUpdateListener = () => {
+            window.addEventListener('updateAvailable', () => {
+                DotNet.invokeMethodAsync('Pkmds.Web', 'ShowUpdateMessage');
+            });
+        };
+    </script>
+
 </body>
 
 </html>
-

@@ -1,5 +1,5 @@
 self.assetsManifest = {
-  "version": "795ld+4f",
+  "version": "PHGzzpQn",
   "assets": [
     {
       "hash": "sha256-RuXsJFsQyK92yMotd1V1TFN+QXJJobbWTT6gigaJFl8=",
@@ -90,8 +90,8 @@ self.assetsManifest = {
       "url": "_framework/Microsoft.Extensions.Configuration.ell6o7ap7i.wasm"
     },
     {
-      "hash": "sha256-/y7qB6llkXbYZsKe77P9W/87iyw9pQYUyGwmewNAHf8=",
-      "url": "_framework/Microsoft.Extensions.DependencyInjection.Abstractions.ljksqk1l8s.wasm"
+      "hash": "sha256-1cmJTHeZ5XGffcRlYyRKy2kfLonI0XaaxyfyOmu8Jjw=",
+      "url": "_framework/Microsoft.Extensions.DependencyInjection.Abstractions.zepy9ipf12.wasm"
     },
     {
       "hash": "sha256-EPey4pvx6aL8aj8zL05ip1ZJSUG7DjjOrtL9aPRDYPw=",
@@ -138,8 +138,8 @@ self.assetsManifest = {
       "url": "_framework/PKHeX.Core.uu1dzvwyb3.wasm"
     },
     {
-      "hash": "sha256-dggr5Ibt3AUuEHxwV5WBpeOIclaxuF8bDITuRDtONtE=",
-      "url": "_framework/Pkmds.Web.y17vri9r5h.wasm"
+      "hash": "sha256-7mLVv9vxRde8TGIfKfGV8dIVmgT/rycvqaFAlOtlDFQ=",
+      "url": "_framework/Pkmds.Web.iwgukanyvr.wasm"
     },
     {
       "hash": "sha256-nmhUPBjB8ZbEN0U5j2acgnW4fkbSYlov7U3e30Lsp8A=",
@@ -274,7 +274,7 @@ self.assetsManifest = {
       "url": "_framework/System.Web.HttpUtility.v1a9l0tpd6.wasm"
     },
     {
-      "hash": "sha256-RoIQ97KTTj3yl1FebWRWgMBwBQmvsSjr1TtJST9LqUU=",
+      "hash": "sha256-lPp/MjTGMXKsENBWHu5TJOq9pBu2Qz12AvyCURFoiqU=",
       "url": "_framework/blazor.boot.json"
     },
     {
@@ -310,7 +310,7 @@ self.assetsManifest = {
       "url": "_framework/icudt_no_CJK.lfu7j35m59.dat"
     },
     {
-      "hash": "sha256-WBsgVOMmPZ/zhE9lvt7yBywXuxMDG+Hhr/0DM6PE2bE=",
+      "hash": "sha256-h8U5Q4vwWpLljdFHN8jnDsrpfHE60o93F5x8k+5zzOs=",
       "url": "css/app.css"
     },
     {
@@ -326,7 +326,7 @@ self.assetsManifest = {
       "url": "icon-512.png"
     },
     {
-      "hash": "sha256-uO4I4Jt5ckbAmTCoSYOjjAUhYg2MnpAh3RX8BOWa6pI=",
+      "hash": "sha256-221Pa71Zz7i8lTZIRQ6TYQ2YR++0kjn0EmCHE4KEjDk=",
       "url": "index.html"
     },
     {
@@ -338,7 +338,7 @@ self.assetsManifest = {
       "url": "js/lib/crypto-js/crypto-js.min.js"
     },
     {
-      "hash": "sha256-C61TNThfzEkkVNVcgdxoK75Gi3Kw8MfcDpGCivGI+Uo=",
+      "hash": "sha256-w8Pspj1BEEaZbdP8e6zP6AlPLPzuEgBfEVPU9GcFeCo=",
       "url": "manifest.webmanifest"
     },
     {
