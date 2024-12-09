@@ -2,11 +2,19 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches:
-      - release
+    branches: [ "main" ]
+    paths-ignore:
+      - "**.md"
+      - "**.ps1"
+      - ".editorconfig"
+      - "TestFiles/*"
+      - '**/*.gitignore'
+      - '**/*.gitattributes'
+      - '**/*.yml'
 
 jobs:
   deploy:
+    name: "Deploy to GitHub Pages"
     # use ubuntu-latest image to run steps on
     runs-on: ubuntu-latest
     steps:
