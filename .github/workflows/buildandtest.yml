@@ -2,14 +2,21 @@ name: Build and Test
 
 on:
   push:
-    branches:
-      - main
+    branches: [ dev ]
+    paths-ignore:
+      - "**.md"
+      - "**.ps1"
+      - ".editorconfig"
+      - "TestFiles/*"
+      - '**/*.gitignore'
+      - '**/*.gitattributes'
+      - '**/*.yml'
   pull_request:
-    branches:
-      - main
+    branches: [ dev, main ]
 
 jobs:
   build:
+    name: Build and Test
     # use ubuntu-latest image to run steps on
     runs-on: ubuntu-latest
 
