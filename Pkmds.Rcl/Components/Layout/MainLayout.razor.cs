@@ -9,6 +9,7 @@ public partial class MainLayout : IDisposable
 
     private IBrowserFile? browserLoadSaveFile;
     private bool isDarkMode;
+    private bool isCheckingForUpdate;
     private MudThemeProvider? mudThemeProvider;
 
     public void Dispose() => RefreshService.OnAppStateChanged -= StateHasChanged;
@@ -59,6 +60,34 @@ public partial class MainLayout : IDisposable
     }
 
     private void DrawerToggle() => AppService.ToggleDrawer();
+
+    private async Task CheckForUpdate()
+    {
+        isCheckingForUpdate = true;
+        StateHasChanged();
+
+        try
+        {
+            var result = await JSRuntime.InvokeAsync<string>("checkForUpdate");
+            var (message, severity) = result switch
+            {
+                "update-found" => ("Update found! It will be applied on next reload.", Severity.Success),
+                "no-update" => ("You're up to date — no updates available.", Severity.Info),
+                _ => ("Unable to check for updates (service worker not available).", Severity.Warning),
+            };
+            Snackbar.Add(message, severity);
+        }
+        catch (JSException ex)
+        {
+            Logger.LogWarning(ex, "Failed to check for updates");
+            Snackbar.Add("Unable to check for updates.", Severity.Warning);
+        }
+        finally
+        {
+            isCheckingForUpdate = false;
+            StateHasChanged();
+        }
+    }
 
     private async Task ShowLoadSaveFileDialog()
     {
