@@ -1,80 +1,53 @@
-using BlazorExpress.ChartJS;
-using RadarChartOptions = BlazorExpress.ChartJS.RadarChartOptions;
-
 namespace Pkmds.Rcl.Components;
 
 public partial class StatsChart : IDisposable
 {
-    private const int MinStatValue = 0;
     private const int DefaultMaxStatValue = 650;
     private const int StatStepSize = 50;
-    private ChartData chartData = null!;
-    private bool isChartInitialized;
-    private int maxStatValue = DefaultMaxStatValue;
+
+    private readonly RadarChartOptions radarChartOptions = new()
+    {
+        ShowLegend = false,
+        ShowDataMarkers = true,
+        DataPointRadius = 4,
+        ShowAxisLabels = true,
+        ShowAxisValues = false,
+        FillOpacity = 0.3,
+        StrokeWidth = 2,
+        ShowGridLines = true,
+        GridLevels = 5
+    };
+
+    private string[] chartLabels = [];
+    private List<ChartSeries<double>> chartSeries = [];
     private PKM? previousPokemon;
     private int previousStatsHash;
-
-    private RadarChart radarChart = null!;
-    private RadarChartOptions radarChartOptions = null!;
 
     [Parameter]
     [EditorRequired]
     public PKM? Pokemon { get; set; }
 
-    public void Dispose()
-    {
-        RefreshService.OnAppStateChanged -= OnStateChanged;
-        RefreshService.OnThemeChanged -= OnThemeChanged;
-    }
+    public void Dispose() => RefreshService.OnAppStateChanged -= OnStateChanged;
 
     protected override void OnInitialized()
     {
         RefreshService.OnAppStateChanged += OnStateChanged;
-        RefreshService.OnThemeChanged += OnThemeChanged;
         InitializeChartData();
     }
 
-    // ReSharper disable once AsyncVoidMethod
-    private async void OnThemeChanged(bool isDarkMode)
+    private void OnStateChanged()
     {
-        if (!isChartInitialized)
-        {
-            return;
-        }
-
-        try
-        {
-            await JSRuntime.InvokeVoidAsync("chartHelper.refreshChartColorsWithTheme", radarChart.Id, isDarkMode);
-        }
-        catch (Exception ex)
-        {
-            // TODO: Add proper logging with ILogger when available
-            Console.WriteLine($"Error refreshing chart colors: {ex.Message}");
-            throw;
-        }
-    }
-
-    // ReSharper disable once AsyncVoidMethod
-    private async void OnStateChanged()
-    {
+        InitializeChartData();
         StateHasChanged();
-        if (!isChartInitialized)
-        {
-            return;
-        }
-
-        InitializeChartData();
-        await UpdateChartAsync();
     }
 
-    protected override async Task OnParametersSetAsync()
+    protected override void OnParametersSet()
     {
         var statsChanged = Pokemon is not null && GetStatsHash() != previousStatsHash;
 
-        if ((Pokemon != previousPokemon || statsChanged) && isChartInitialized)
+        if (Pokemon != previousPokemon || statsChanged)
         {
             InitializeChartData();
-            await UpdateChartAsync();
         }
 
         previousPokemon = Pokemon;
@@ -98,7 +71,7 @@ public partial class StatsChart : IDisposable
         return hash.ToHashCode();
     }
 
-    private static List<string> GetLabels(byte generation, PKM? pkm) =>
+    private static List<string> GetBaseLabels(byte generation, PKM? pkm) =>
         (generation, pkm) switch
         {
             (1, PK1) => ["HP", "Attack", "Defense", "Speed", "Special"],
@@ -112,93 +85,58 @@ public partial class StatsChart : IDisposable
             return;
         }
 
-        var labels = GetLabels(saveGeneration, Pokemon);
-
+        var baseLabels = GetBaseLabels(saveGeneration, Pokemon);
         var stats = GetPokemonStats();
+        var natureModifiers = GetNatureModifiers(saveGeneration);
 
-        maxStatValue = CalculateMaxStatValue(stats);
-
-        chartData = new ChartData
-        {
-            Labels = labels,
-            Datasets =
-            [
-                new RadarChartDataset
+        chartLabels =
+        [
+            .. baseLabels.Select((label, i) =>
+            {
+                var modifier = i < natureModifiers.Count
+                    ? natureModifiers[i]
+                    : 0;
+                var arrow = modifier switch
                 {
-                    Label = "Stats",
-                    Data = stats,
-                    Fill = true,
-                    BackgroundColor = "rgba(100, 181, 246, 0.4)",
-                    BorderColor = "rgb(66, 165, 245)",
-                    BorderWidth = 2,
-                    PointBackgroundColor = ["rgb(66, 165, 245)"],
-                    PointBorderColor = ["rgba(255, 255, 255, 0.8)"],
-                    PointHoverBackgroundColor = ["rgba(255, 255, 255, 0.8)"],
-                    PointHoverBorderColor = ["rgb(66, 165, 245)"]
-                }
-            ]
-        };
-        radarChartOptions = new() { Responsive = true };
+                    1 => " +",
+                    -1 => " -",
+                    _ => string.Empty
+                };
+                var value = i < stats.Count
+                    ? stats[i]
+                    : 0;
+                return $"{label}{arrow} ({value})";
+            })
+        ];
+
+        chartSeries =
+        [
+            new ChartSeries<double> { Name = "Stats", Data = stats.Select(s => (double)s).ToArray() }
+        ];
+
+        var maxStatValue = CalculateMaxStatValue(stats);
+        radarChartOptions.GridLevels = Math.Max(maxStatValue / StatStepSize, 2);
     }
 
-    private List<double?> GetPokemonStats() => Pokemon is null
+    private List<int> GetPokemonStats() => Pokemon is null
         ? []
         : AppState.SaveFile?.Generation == 1 && Pokemon is PK1 pk1
-            ?
-            [
-                pk1.Stat_HPMax,
-                pk1.Stat_ATK,
-                pk1.Stat_DEF,
-                pk1.Stat_SPE,
-                pk1.Stat_SPC
-            ]
+            ? [pk1.Stat_HPMax, pk1.Stat_ATK, pk1.Stat_DEF, pk1.Stat_SPE, pk1.Stat_SPC]
             : [.. Pokemon.Stats];
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    private List<int> GetNatureModifiers(byte saveGeneration)
     {
-        if (firstRender)
+        if (Pokemon is null)
         {
-            await radarChart.InitializeAsync(chartData, radarChartOptions);
-            isChartInitialized = true;
-
-            // Set radar scale using MinStatValue and dynamically calculated maxStatValue for better visualization of stats
-            await JSRuntime.InvokeVoidAsync("chartHelper.setRadarScale", radarChart.Id, MinStatValue, maxStatValue,
-                StatStepSize);
-
-            await UpdateChartLabelsAsync();
+            return [0, 0, 0, 0, 0, 0];
         }
 
-        await base.OnAfterRenderAsync(firstRender);
-    }
-
-    private async Task UpdateChartAsync()
-    {
-        if (!isChartInitialized || Pokemon is null)
+        if (saveGeneration == 1 && Pokemon is PK1)
         {
-            return;
+            return [0, 0, 0, 0, 0];
         }
 
-        await radarChart.UpdateAsync(chartData, radarChartOptions);
-
-        // Reapply scale customizations after update
-        // chartId, min, max, stepSize
-        await JSRuntime.InvokeVoidAsync("chartHelper.setRadarScale", radarChart.Id, MinStatValue, maxStatValue,
-            StatStepSize);
-        await UpdateChartLabelsAsync();
-    }
-
-    private async Task UpdateChartLabelsAsync()
-    {
-        if (Pokemon is null || AppState.SaveFile is not { Generation: var saveGeneration })
-        {
-            return;
-        }
-
-        var labels = GetLabels(saveGeneration, Pokemon);
-
-        var values = GetPokemonStats();
-
-        List<int> natureModifiers = Pokemon.StatNature switch
+        return Pokemon.StatNature switch
         {
             Nature.Adamant => [0, 1, 0, 0, 0, -1],
             Nature.Bold => [0, -1, 1, 0, 0, 0],
@@ -222,27 +160,17 @@ public partial class StatsChart : IDisposable
             Nature.Timid => [0, -1, 0, 1, 0, 0],
             _ => [0, 0, 0, 0, 0, 0]
         };
-
-        // For Gen I, use only 5 nature modifiers (no nature modifiers exist in Gen I anyway)
-        if (saveGeneration == 1 && Pokemon is PK1)
-        {
-            natureModifiers = [0, 0, 0, 0, 0];
-        }
-
-        await JSRuntime.InvokeVoidAsync("chartHelper.updateLabelsWithValues", radarChart.Id, labels, values,
-            natureModifiers);
     }
 
-    private static int CalculateMaxStatValue(List<double?> stats)
+    private static int CalculateMaxStatValue(List<int> stats)
     {
         if (stats.Count == 0)
         {
             return DefaultMaxStatValue;
         }
 
-        var maxStat = stats.Where(s => s.HasValue).Max(s => s!.Value);
-
-        var roundedMax = (int)Math.Ceiling(maxStat / StatStepSize) * StatStepSize;
+        var maxStat = stats.Max();
+        var roundedMax = (int)Math.Ceiling((double)maxStat / StatStepSize) * StatStepSize;
 
         return Math.Max(roundedMax + StatStepSize, StatStepSize * 2);
     }

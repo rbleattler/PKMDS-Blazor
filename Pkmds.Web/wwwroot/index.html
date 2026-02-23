@@ -69,23 +69,10 @@
 </div>
 
 <script src="_content/Pkmds.Rcl/js/fileSave.js"></script>
-<!-- Add custom chart helper -->
-<script src="_content/Pkmds.Rcl/js/chartHelper.js"></script>
 
 <!--prevent autostarting-->
 <script autostart="false"
         src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
-
-<!-- Add a reference to Chart.js. -->
-<script crossorigin="anonymous"
-        referrerpolicy="no-referrer"
-        src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-<!-- Add a reference to chartjs-plugin-datalabels.min.js if your application uses chart components with the data labels feature. -->
-<script crossorigin="anonymous"
-        referrerpolicy="no-referrer"
-        src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
-<!-- Add a reference to blazorexpress.chartjs.js. -->
-<script src="_content/BlazorExpress.ChartJS/blazorexpress.chartjs.js"></script>
 
 <script>
     navigator.serviceWorker.register('service-worker.js', {updateViaCache: 'none'}).then(registration => {
