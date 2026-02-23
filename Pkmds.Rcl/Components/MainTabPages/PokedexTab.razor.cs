@@ -124,7 +124,7 @@ public partial class PokedexTab
     }
 
     private void ShowNotImplementedMessage() =>
-        DialogService.ShowMessageBox(
+        DialogService.ShowMessageBoxAsync(
             "Not implemented",
             "This feature is not implemented yet. Please check back later.",
             options: new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small });

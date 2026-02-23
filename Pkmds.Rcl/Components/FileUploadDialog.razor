@@ -4,14 +4,15 @@
     <DialogContent>
         <MudFileUpload T="@IBrowserFile"
                        Accept="*/*"
-                       FilesChanged="@HandleFile">
-            <ActivatorContent>
+                       @bind-Files="browserFile">
+            <CustomContent>
                 <MudButton Variant="@Variant.Filled"
                            Color="@Color.Primary"
-                           StartIcon="@Icons.Material.Filled.CloudUpload">
+                           StartIcon="@Icons.Material.Filled.CloudUpload"
+                           OnClick="@context.OpenFilePickerAsync">
                     @Message
                 </MudButton>
-            </ActivatorContent>
+            </CustomContent>
             <SelectedTemplate>
                 @if (context != null)
                 {
