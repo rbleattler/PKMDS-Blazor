@@ -1,4 +1,5 @@
 using BlazorExpress.ChartJS;
+using RadarChartOptions = BlazorExpress.ChartJS.RadarChartOptions;
 
 namespace Pkmds.Rcl.Components;
 

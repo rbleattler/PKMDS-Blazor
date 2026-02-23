@@ -132,7 +132,7 @@ public partial class MysteryGiftDatabaseTab
 
             if (!convertedEntity.IsSuccess || pokemon is null)
             {
-                await DialogService.ShowMessageBox("Error",
+                await DialogService.ShowMessageBoxAsync("Error",
                     convertedEntity.GetDisplayString(tempPokemon, saveFile.PKMType));
                 return;
             }

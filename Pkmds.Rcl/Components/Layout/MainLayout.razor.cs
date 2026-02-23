@@ -83,7 +83,7 @@ public partial class MainLayout : IDisposable
         if (browserLoadSaveFile is null)
         {
             Logger.LogWarning("Attempted to load save file but no file was selected");
-            await DialogService.ShowMessageBox("No file selected", "Please select a file to load.");
+            await DialogService.ShowMessageBoxAsync("No file selected", "Please select a file to load.");
             return;
         }
 
@@ -113,14 +113,14 @@ public partial class MainLayout : IDisposable
                 Logger.LogError("Failed to load save file: {FileName} - Invalid save file format", selectedFile.Name);
                 const string message =
                     "The selected save file is invalid. If this save file came from a ROM hack, it is not supported. Otherwise, try saving in-game and re-exporting / re-uploading the save file.";
-                await DialogService.ShowMessageBox("Error", message);
+                await DialogService.ShowMessageBoxAsync("Error", message);
                 return;
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading save file: {FileName}", selectedFile.Name);
-            await DialogService.ShowMessageBox("Error", $"{ex.Message}{Environment.NewLine}{ex.StackTrace}");
+            await DialogService.ShowMessageBoxAsync("Error", $"{ex.Message}{Environment.NewLine}{ex.StackTrace}");
         }
         finally
         {
@@ -256,7 +256,7 @@ public partial class MainLayout : IDisposable
             {
                 Logger.LogError("Failed to load Pokémon file: {FileName} - Not a supported format",
                     browserLoadPokemonFile.Name);
-                await DialogService.ShowMessageBox("Error", "The file is not a supported Pokémon file.");
+                await DialogService.ShowMessageBoxAsync("Error", "The file is not a supported Pokémon file.");
                 return;
             }
 
@@ -271,7 +271,7 @@ public partial class MainLayout : IDisposable
                 {
                     Logger.LogError("Failed to convert Pokémon: {ConversionResult}",
                         c.GetDisplayString(pkm, saveFile.PKMType));
-                    await DialogService.ShowMessageBox("Error", c.GetDisplayString(pkm, saveFile.PKMType));
+                    await DialogService.ShowMessageBoxAsync("Error", c.GetDisplayString(pkm, saveFile.PKMType));
                     return;
                 }
             }
@@ -295,14 +295,14 @@ public partial class MainLayout : IDisposable
                 ? $"{messageStart} '{boxDetail.GetBoxName(box)}' (Box {box + 1}), Slot {slot + 1}."
                 : $"{messageStart} Box {box + 1}, Slot {slot + 1}.";
 
-            await DialogService.ShowMessageBox(
+            await DialogService.ShowMessageBoxAsync(
                 title,
                 message);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading Pokémon file: {FileName}", browserLoadPokemonFile.Name);
-            await DialogService.ShowMessageBox("Error", $"{ex.Message}{Environment.NewLine}{ex.StackTrace}");
+            await DialogService.ShowMessageBoxAsync("Error", $"{ex.Message}{Environment.NewLine}{ex.StackTrace}");
         }
         finally
         {
@@ -336,14 +336,14 @@ public partial class MainLayout : IDisposable
             {
                 Logger.LogError("Failed to load Mystery Gift file: {FileName} - Not a supported format",
                     browserLoadMysteryGiftFile.Name);
-                await DialogService.ShowMessageBox("Error", "The file is not a supported Mystery Gift file.");
+                await DialogService.ShowMessageBoxAsync("Error", "The file is not a supported Mystery Gift file.");
                 return;
             }
 
             if (mysteryGift.Species.IsInvalidSpecies())
             {
                 Logger.LogError("Mystery Gift Pokémon is invalid: Species {Species}", mysteryGift.Species);
-                await DialogService.ShowMessageBox("Error", "The Mystery Gift Pokémon is invalid.");
+                await DialogService.ShowMessageBoxAsync("Error", "The Mystery Gift Pokémon is invalid.");
                 return;
             }
 
@@ -359,12 +359,12 @@ public partial class MainLayout : IDisposable
                 Logger.LogWarning("Mystery Gift import failed: {Message}", resultsMessage);
             }
 
-            await DialogService.ShowMessageBox(title, resultsMessage);
+            await DialogService.ShowMessageBoxAsync(title, resultsMessage);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading Mystery Gift file: {FileName}", browserLoadMysteryGiftFile.Name);
-            await DialogService.ShowMessageBox("Error", $"{ex.Message}{Environment.NewLine}{ex.StackTrace}");
+            await DialogService.ShowMessageBoxAsync("Error", $"{ex.Message}{Environment.NewLine}{ex.StackTrace}");
         }
         finally
         {
