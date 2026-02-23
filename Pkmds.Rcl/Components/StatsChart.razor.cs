@@ -100,7 +100,7 @@ public partial class StatsChart : IDisposable
                 {
                     1 => " +",
                     -1 => " -",
-                    _ => ""
+                    _ => string.Empty
                 };
                 var value = i < stats.Count
                     ? stats[i]
