@@ -73,7 +73,9 @@ public partial class MainLayout : IDisposable
             {
                 "update-found" => ("Update found! It will be applied on next reload.", Severity.Success),
                 "no-update" => ("You're up to date — no updates available.", Severity.Info),
-                _ => ("Unable to check for updates (service worker not available).", Severity.Warning),
+                "no-sw" => ("Service worker is not available. Try reloading the page first.", Severity.Warning),
+                "error" => ("An error occurred while checking for updates.", Severity.Error),
+                _ => ($"Unexpected update check result: {result}", Severity.Warning),
             };
             Snackbar.Add(message, severity);
         }
