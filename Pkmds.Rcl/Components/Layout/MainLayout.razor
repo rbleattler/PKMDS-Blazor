@@ -29,7 +29,14 @@
             @Constants.AppShortTitle
         </MudText>
         <MudSpacer/>
-        <MudStack Row>
+        <MudStack Row
+                   AlignItems="@AlignItems.Center">
+            <MudTooltip Text="@(isCheckingForUpdate ? "Checking..." : "Check for updates")">
+                <MudIconButton Icon="@Icons.Material.Filled.SystemUpdateAlt"
+                               Color="@Color.Inherit"
+                               Disabled="@isCheckingForUpdate"
+                               OnClick="@CheckForUpdate"/>
+            </MudTooltip>
             <MudSwitch Value="@isDarkMode"
                        ValueChanged="@((bool value) => OnThemeSwitchChanged(value))"
                        Color="@Color.Primary"
