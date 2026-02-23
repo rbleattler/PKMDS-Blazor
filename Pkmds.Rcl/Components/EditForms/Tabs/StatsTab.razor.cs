@@ -140,13 +140,6 @@ public partial class StatsTab : IDisposable
         _ => string.Empty
     };
 
-    private enum NatureModifier
-    {
-        Neutral,
-        Boosted,
-        Hindered
-    }
-
     private static string GetTeraTypeDisplayName(byte teraTypeId) => teraTypeId == TeraTypeUtil.Stellar
         ? GameInfo.Strings.Types[TeraTypeUtil.StellarTypeDisplayStringIndex]
         : GameInfo.Strings.Types[teraTypeId];
@@ -274,6 +267,13 @@ public partial class StatsTab : IDisposable
         Pokemon.SetIV(statIndex, (byte)newValue);
 
         AppService.LoadPokemonStats(Pokemon);
+    }
+
+    private enum NatureModifier
+    {
+        Neutral,
+        Boosted,
+        Hindered
     }
 
     private enum Stats

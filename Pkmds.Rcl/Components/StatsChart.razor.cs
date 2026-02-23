@@ -111,11 +111,7 @@ public partial class StatsChart : IDisposable
 
         chartSeries =
         [
-            new ChartSeries<double>
-            {
-                Name = "Stats",
-                Data = stats.Select(s => (double)s).ToArray()
-            }
+            new ChartSeries<double> { Name = "Stats", Data = stats.Select(s => (double)s).ToArray() }
         ];
 
         var maxStatValue = CalculateMaxStatValue(stats);
