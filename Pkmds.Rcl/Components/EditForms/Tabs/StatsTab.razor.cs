@@ -86,6 +86,67 @@ public partial class StatsTab : IDisposable
                     : string.Empty;
     }
 
+    private NatureModifier GetNatureModifier(Stats stat)
+    {
+        if (Pokemon is null)
+        {
+            return NatureModifier.Neutral;
+        }
+
+        var nature = Pokemon.Format >= 8
+            ? Pokemon.StatNature
+            : Pokemon.Nature;
+
+        var (up, dn) = nature.GetNatureModification();
+
+        if (up == dn)
+        {
+            return NatureModifier.Neutral;
+        }
+
+        if (up == (int)stat)
+        {
+            return NatureModifier.Boosted;
+        }
+
+        return dn == (int)stat
+            ? NatureModifier.Hindered
+            : NatureModifier.Neutral;
+    }
+
+    private string GetNatureAdornmentIcon(Stats stat) => GetNatureModifier(stat) switch
+    {
+        NatureModifier.Boosted => Icons.Material.Filled.ArrowUpward,
+        NatureModifier.Hindered => Icons.Material.Filled.ArrowDownward,
+        _ => string.Empty
+    };
+
+    private Color GetNatureAdornmentColor(Stats stat) => GetNatureModifier(stat) switch
+    {
+        NatureModifier.Boosted => Color.Error,
+        NatureModifier.Hindered => Color.Info,
+        _ => Color.Default
+    };
+
+    private Adornment GetNatureAdornment(Stats stat) =>
+        GetNatureModifier(stat) is NatureModifier.Neutral
+            ? Adornment.None
+            : Adornment.End;
+
+    private string GetNatureTooltip(Stats stat) => GetNatureModifier(stat) switch
+    {
+        NatureModifier.Boosted => "Boosted by nature (+10%)",
+        NatureModifier.Hindered => "Hindered by nature (-10%)",
+        _ => string.Empty
+    };
+
+    private enum NatureModifier
+    {
+        Neutral,
+        Boosted,
+        Hindered
+    }
+
     private static string GetTeraTypeDisplayName(byte teraTypeId) => teraTypeId == TeraTypeUtil.Stellar
         ? GameInfo.Strings.Types[TeraTypeUtil.StellarTypeDisplayStringIndex]
         : GameInfo.Strings.Types[teraTypeId];

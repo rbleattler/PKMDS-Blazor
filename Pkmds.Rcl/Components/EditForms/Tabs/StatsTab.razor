@@ -23,8 +23,7 @@
                            Label="Show Stats Chart"/>
                 @if (ShowStatsChart)
                 {
-                    <MudPaper Width="300px"
-                              Class="pa-1">
+                    <MudPaper Class="pa-1">
                         <StatsChart
                             Pokemon="@Pokemon"/>
                     </MudPaper>
@@ -503,17 +502,23 @@
 
                 <MudNumericField Label="Atk"
                                  Class="@GetStatClass(Stats.Attack)"
-                                 title="Attack Stat"
+                                 title="@GetNatureTooltip(Stats.Attack)"
                                  Variant="@Variant.Outlined"
                                  Value="@Pokemon.Stat_ATK"
+                                 Adornment="@GetNatureAdornment(Stats.Attack)"
+                                 AdornmentIcon="@GetNatureAdornmentIcon(Stats.Attack)"
+                                 AdornmentColor="@GetNatureAdornmentColor(Stats.Attack)"
                                  ReadOnly
                                  HideSpinButtons/>
 
                 <MudNumericField Label="Def"
                                  Class="@GetStatClass(Stats.Defense)"
-                                 title="Defense Stat"
+                                 title="@GetNatureTooltip(Stats.Defense)"
                                  Variant="@Variant.Outlined"
                                  Value="@Pokemon.Stat_DEF"
+                                 Adornment="@GetNatureAdornment(Stats.Defense)"
+                                 AdornmentIcon="@GetNatureAdornmentIcon(Stats.Defense)"
+                                 AdornmentColor="@GetNatureAdornmentColor(Stats.Defense)"
                                  ReadOnly
                                  HideSpinButtons/>
 
@@ -537,25 +542,34 @@
                 {
                     <MudNumericField Label="Spa"
                                      Class="@GetStatClass(Stats.SpecialAttack)"
-                                     title="Special Attack Stat"
+                                     title="@GetNatureTooltip(Stats.SpecialAttack)"
                                      Variant="@Variant.Outlined"
                                      Value="@Pokemon.Stat_SPA"
+                                     Adornment="@GetNatureAdornment(Stats.SpecialAttack)"
+                                     AdornmentIcon="@GetNatureAdornmentIcon(Stats.SpecialAttack)"
+                                     AdornmentColor="@GetNatureAdornmentColor(Stats.SpecialAttack)"
                                      ReadOnly
                                      HideSpinButtons/>
 
                     <MudNumericField Label="Spd"
                                      Class="@GetStatClass(Stats.SpecialDefense)"
-                                     title="Special Defense Stat"
+                                     title="@GetNatureTooltip(Stats.SpecialDefense)"
                                      Variant="@Variant.Outlined"
                                      Value="@Pokemon.Stat_SPD"
+                                     Adornment="@GetNatureAdornment(Stats.SpecialDefense)"
+                                     AdornmentIcon="@GetNatureAdornmentIcon(Stats.SpecialDefense)"
+                                     AdornmentColor="@GetNatureAdornmentColor(Stats.SpecialDefense)"
                                      ReadOnly
                                      HideSpinButtons/>
 
                     <MudNumericField Label="Spe"
                                      Class="@GetStatClass(Stats.Speed)"
-                                     title="Speed Stat"
+                                     title="@GetNatureTooltip(Stats.Speed)"
                                      Variant="@Variant.Outlined"
                                      Value="@Pokemon.Stat_SPE"
+                                     Adornment="@GetNatureAdornment(Stats.Speed)"
+                                     AdornmentIcon="@GetNatureAdornmentIcon(Stats.Speed)"
+                                     AdornmentColor="@GetNatureAdornmentColor(Stats.Speed)"
                                      ReadOnly
                                      HideSpinButtons/>
                 }
