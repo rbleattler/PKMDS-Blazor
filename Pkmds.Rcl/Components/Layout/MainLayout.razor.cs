@@ -68,21 +68,26 @@ public partial class MainLayout : IDisposable
 
         try
         {
-            var result = await JSRuntime.InvokeAsync<string>("checkForUpdate");
+            var response = await JSRuntime.InvokeAsync<System.Text.Json.JsonElement>("checkForUpdate");
+            var result = response.GetProperty("result").GetString() ?? string.Empty;
+            var detail = response.TryGetProperty("detail", out var detailProp)
+                ? detailProp.GetString() ?? string.Empty
+                : string.Empty;
+
             var (message, severity) = result switch
             {
                 "update-found" => ("Update found! It will be applied on next reload.", Severity.Success),
                 "no-update" => ("You're up to date — no updates available.", Severity.Info),
-                "no-sw" => ("Service worker is not available. Try reloading the page first.", Severity.Warning),
-                "error" => ("An error occurred while checking for updates.", Severity.Error),
-                _ => ($"Unexpected update check result: {result}", Severity.Warning),
+                "no-sw" => ($"Service worker is not available. {detail}", Severity.Warning),
+                "error" => ($"An error occurred while checking for updates. {detail}", Severity.Error),
+                _ => ($"Unexpected update check result: {result}. {detail}", Severity.Warning),
             };
             Snackbar.Add(message, severity);
         }
         catch (JSException ex)
         {
             Logger.LogWarning(ex, "Failed to check for updates");
-            Snackbar.Add("Unable to check for updates.", Severity.Warning);
+            Snackbar.Add($"Unable to check for updates: {ex.Message}", Severity.Warning);
         }
         finally
         {
