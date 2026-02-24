@@ -79,15 +79,22 @@ public partial class MainLayout : IDisposable
                 "update-found" => ("Update found! It will be applied on next reload.", Severity.Success),
                 "no-update" => ("You're up to date — no updates available.", Severity.Info),
                 "no-sw" => ($"Service worker is not available. {detail}", Severity.Warning),
-                "error" => ($"An error occurred while checking for updates. {detail}", Severity.Error),
+                "error" => ($"An error occurred while checking for updates: {detail}", Severity.Error),
                 _ => ($"Unexpected update check result: {result}. {detail}", Severity.Warning),
             };
+            
+            Logger.LogInformation("Update check result: {Result} - {Detail}", result, detail);
             Snackbar.Add(message, severity);
         }
         catch (JSException ex)
         {
-            Logger.LogWarning(ex, "Failed to check for updates");
+            Logger.LogWarning(ex, "Failed to check for updates due to JavaScript interop error");
             Snackbar.Add($"Unable to check for updates: {ex.Message}", Severity.Warning);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Unexpected error while checking for updates");
+            Snackbar.Add($"An unexpected error occurred while checking for updates: {ex.Message}", Severity.Error);
         }
         finally
         {
