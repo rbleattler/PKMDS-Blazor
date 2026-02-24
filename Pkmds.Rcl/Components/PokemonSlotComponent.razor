@@ -11,7 +11,7 @@
           @ondrop="@HandleDrop"
           Class="@($"square-slot {GetClass()} {GetDragClass()} {ImageHelper.GetSpriteCssClass(Pokemon)}")">
     <div
-        class="w-full h-full aspect-square flex items-center justify-center overflow-hidden p-0 box-border border border-transparent">
+        class="w-full h-full aspect-square flex items-center justify-center overflow-hidden p-0 box-border border border-transparent relative">
         @if (Pokemon is not null && Pokemon.Species > 0)
         {
             var title = GetPokemonTitle();
@@ -26,6 +26,21 @@
                      title="@title"
                      alt="@title">
             </object>
+            @if (Pokemon.HeldItem != 0)
+            {
+                var itemTitle = GetItemTitle();
+                <div class="held-item-icon">
+                    <object type="image/png"
+                            data="@ImageHelper.GetItemSpriteFilename(Pokemon.HeldItem, Pokemon.Context)"
+                            title="@itemTitle"
+                            class="w-full h-full object-contain">
+                        <img src="@ImageHelper.ItemFallbackImageFileName"
+                             title="@itemTitle"
+                             alt="@itemTitle"
+                             class="w-full h-full object-contain">
+                    </object>
+                </div>
+            }
         }
     </div>
 </MudPaper>

@@ -44,6 +44,10 @@ public partial class PokemonSlotComponent : IDisposable
         ? AppService.GetPokemonSpeciesName(Pokemon.Species) ?? "Unknown"
         : "Unknown";
 
+    private string GetItemTitle() => Pokemon is { HeldItem: > 0 }
+        ? AppService.GetItemComboItem(Pokemon.HeldItem).Text
+        : "Unknown";
+
     private bool IsDraggable()
     {
         // Don't allow dragging if no Pokémon
