@@ -207,6 +207,10 @@
                     if (err.name === 'InvalidStateError' || (err.message && err.message.includes('newestWorker is null'))) {
                         console.info('registration.update() threw InvalidStateError (newestWorker is null) — treating as no update available.');
                         done('no-update', 'Service worker is up to date (no pending update).');
+                    } else if (err.name === 'NetworkError') {
+                        // Network errors during update check are treated as "no update available"
+                        console.info('registration.update() failed with NetworkError — network may be unavailable.');
+                        done('no-update', 'Network error during update check.');
                     } else {
                         console.warn('registration.update() failed:', err);
                         done('error', 'update() threw: ' + err.message);
