@@ -55,6 +55,29 @@ public partial class PokemonSlotComponent : IDisposable
         _ => false
     };
 
+    private int? GetLetsGoPartySlotNumber()
+    {
+        // Only show party slot indicators for Let's Go games in the BOX view
+        // Don't show indicators in the party view itself
+        if (AppState.SaveFile is not SAV7b saveFile || Pokemon is null || Pokemon.Species == 0 || IsPartySlot)
+        {
+            return null;
+        }
+
+        // Use PKHeX's GetBoxSlotFlags to determine if this box slot is a party member
+        // In Let's Go, party members are stored in the box and GetBoxSlotFlags returns
+        // the party slot index via the IsParty() method
+        var flags = saveFile.GetBoxSlotFlags(0, SlotNumber); // Let's Go uses box 0
+        var partySlot = flags.IsParty();
+
+        if (partySlot >= 0)
+        {
+            return partySlot + 1; // Convert 0-based to 1-based for display
+        }
+
+        return null;
+    }
+
     private bool IsDraggable()
     {
         // Don't allow dragging if no Pokémon
@@ -145,15 +168,15 @@ public partial class PokemonSlotComponent : IDisposable
                 return;
             }
 
-            // For Let's Go games, disable party-box dragging (but allow party reordering)
+            // For Let's Go games, disable all party dragging (party-to-party, party-to-box, box-to-party)
+            // This is because SetPartySlotAtIndex moves actual box data instead of just reordering party pointers
             if (AppState.SaveFile is SAV7b)
             {
-                var isPartyToBoxDrag = DragDropService.IsDragSourceParty && !IsPartySlot;
-                var isBoxToPartyDrag = !DragDropService.IsDragSourceParty && IsPartySlot;
+                var isAnyPartyDrag = DragDropService.IsDragSourceParty || IsPartySlot;
 
-                if (isPartyToBoxDrag || isBoxToPartyDrag)
+                if (isAnyPartyDrag)
                 {
-                    // Silently prevent party-box dragging for Let's Go games
+                    // Silently prevent all party dragging for Let's Go games
                     DragDropService.ClearDrag();
                     StateHasChanged();
                     return;

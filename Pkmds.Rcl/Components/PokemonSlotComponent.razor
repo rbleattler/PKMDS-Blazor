@@ -46,6 +46,16 @@
                 </div>
             }
 
+            @if (GetLetsGoPartySlotNumber() is { } partySlot)
+            {
+                <div class="party-slot-indicator-icon"
+                     title="@($"Party Slot {partySlot}")">
+                    <img src="@ImageHelper.GetPartySlotIndicatorSpriteFileName(partySlot)"
+                         alt="@($"Party {partySlot}")"
+                         class="w-full h-full object-contain">
+                </div>
+            }
+
             @if (Pokemon.HeldItem != 0)
             {
                 var itemTitle = GetItemTitle();
