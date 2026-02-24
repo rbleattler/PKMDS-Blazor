@@ -141,23 +141,54 @@
             if (!registration) {
                 return 'no-sw';
             }
-            // Call update() and listen for a new worker
-            await registration.update();
-            // If a new worker is already waiting or installing, an update was found
-            if (registration.waiting || registration.installing) {
+            // If a waiting worker already exists before we call update(), an update is pending
+            if (registration.waiting) {
                 return 'update-found';
             }
-            // Otherwise, listen briefly for the updatefound event
+            // Remember the current active worker so we can detect if it actually changed
+            const previousActive = registration.active;
+            // Listen for the updatefound event, then call update()
             return await new Promise(resolve => {
-                const onUpdateFound = () => {
+                let resolved = false;
+                const done = (result) => {
+                    if (resolved) return;
+                    resolved = true;
                     registration.removeEventListener('updatefound', onUpdateFound);
-                    resolve('update-found');
+                    resolve(result);
+                };
+                const onUpdateFound = () => {
+                    const newWorker = registration.installing;
+                    if (!newWorker) {
+                        done('no-update');
+                        return;
+                    }
+                    // Wait for the new worker to finish installing
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed') {
+                            // A new worker is installed and waiting — genuine update
+                            done('update-found');
+                        } else if (newWorker.state === 'activated') {
+                            // Worker activated (skipWaiting) — check if it's actually different
+                            if (previousActive && registration.active === previousActive) {
+                                // Same worker reference, no real update
+                                done('no-update');
+                            } else {
+                                done('update-found');
+                            }
+                        } else if (newWorker.state === 'redundant') {
+                            // Installation failed or was superseded
+                            done('no-update');
+                        }
+                    });
                 };
                 registration.addEventListener('updatefound', onUpdateFound);
-                setTimeout(() => {
-                    registration.removeEventListener('updatefound', onUpdateFound);
-                    resolve('no-update');
-                }, 5000);
+                // Call update() — if a new SW is found, the event fires
+                registration.update().catch(err => {
+                    console.warn('registration.update() failed:', err);
+                    done('error');
+                });
+                // If no update is found within 8 seconds, assume we're up to date
+                setTimeout(() => done('no-update'), 8000);
             });
         } catch (error) {
             console.warn('checkForUpdate error:', error);
