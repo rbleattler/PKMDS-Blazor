@@ -1,8 +1,8 @@
 ﻿namespace Pkmds.Rcl;
 
 /// <summary>
-///     Helper class for generating file paths to Pokémon and item sprite images.
-///     Handles sprite selection based on species, form, gender, context, and other attributes.
+/// Helper class for generating file paths to Pokémon and item sprite images.
+/// Handles sprite selection based on species, form, gender, context, and other attributes.
 /// </summary>
 public static class SpriteHelper
 {
@@ -22,14 +22,14 @@ public static class SpriteHelper
     private static readonly int[] Gen45MailIds = [137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148];
 
     /// <summary>
-    ///     Gets the sprite filename for a Mystery Gift (either Pokémon or item).
+    /// Gets the sprite filename for a Mystery Gift (either Pokémon or item).
     /// </summary>
     public static string GetMysteryGiftSpriteFileName(MysteryGift gift) => gift.IsItem
         ? GetItemSpriteFilename(gift.ItemID, gift.Context)
         : GetPokemonSpriteFilename(gift.Species, gift.Context, gift.IsEgg, gift.Form, 0, gift.Gender);
 
     /// <summary>
-    ///     Gets the sprite filename for a Pokémon, handling all forms, genders, and special cases.
+    /// Gets the sprite filename for a Pokémon, handling all forms, genders, and special cases.
     /// </summary>
     public static string GetPokemonSpriteFilename(PKM? pokemon) => pokemon is null
         ? PokemonFallbackImageFileName
@@ -37,8 +37,8 @@ public static class SpriteHelper
             pokemon.GetFormArgument(0), pokemon.Gender);
 
     /// <summary>
-    ///     Internal method to construct the Pokémon sprite filename based on various attributes.
-    ///     Handles special cases like starter Pikachu/Eevee, eggs, gender differences, Alcremie variations, etc.
+    /// Internal method to construct the Pokémon sprite filename based on various attributes.
+    /// Handles special cases like starter Pikachu/Eevee, eggs, gender differences, Alcremie variations, etc.
     /// </summary>
     private static string GetPokemonSpriteFilename(ushort species, EntityContext context, bool isEgg, byte form,
         uint? formArg1, byte gender) =>
@@ -81,14 +81,14 @@ public static class SpriteHelper
             .ToString();
 
     /// <summary>
-    ///     Gets the sprite filename for a Poké Ball.
+    /// Gets the sprite filename for a Poké Ball.
     /// </summary>
     /// <param name="ball">The ball ID.</param>
     public static string GetBallSpriteFilename(int ball) =>
         $"{SpritesRoot}b/_ball{ball}.png";
 
     /// <summary>
-    ///     Gets the sprite filename for an item, selecting appropriate size/style based on generation.
+    /// Gets the sprite filename for an item, selecting appropriate size/style based on generation.
     /// </summary>
     public static string GetItemSpriteFilename(int item, EntityContext context) => context switch
     {
@@ -148,7 +148,7 @@ public static class SpriteHelper
     };
 
     /// <summary>
-    ///     Gets the sprite filename for a move category icon (Physical/Special/Status).
+    /// Gets the sprite filename for a move category icon (Physical/Special/Status).
     /// </summary>
     /// <remarks>TODO: Not yet implemented.</remarks>
     // ReSharper disable once UnusedParameter.Global
@@ -156,11 +156,44 @@ public static class SpriteHelper
         string.Empty;
 
     /// <summary>
-    ///     Gets the CSS class to apply to a Pokémon slot based on whether it contains a valid Pokémon.
+    /// Gets the CSS class to apply to a Pokémon slot based on whether it contains a valid Pokémon.
     /// </summary>
     public static string GetSpriteCssClass(PKM? pkm) => (pkm?.Species).IsValidSpecies()
         ? " slot-fill"
         : string.Empty;
+
+    #region Box Wallpapers (box folder)
+
+    /// <summary>
+    /// Gets the sprite filename for a box wallpaper based on wallpaper ID and game version.
+    /// The wallpaper ID is typically retrieved from the save file's box data.
+    /// </summary>
+    /// <param name="wallpaperId">The wallpaper ID (typically 0-23 or similar depending on game).</param>
+    /// <param name="gameAbbreviation">The game abbreviation (e.g., "ao" for Alola, "swsh" for Sword/Shield, etc.).</param>
+    public static string GetBoxWallpaperSpriteFileName(int wallpaperId, string? gameAbbreviation)
+    {
+        if (string.IsNullOrEmpty(gameAbbreviation))
+        {
+            return string.Empty;
+        }
+
+        var gameCode = gameAbbreviation.ToLowerInvariant();
+        return $"{SpritesRoot}box/{gameCode}/box_wp{wallpaperId:00}{gameCode}.png";
+    }
+
+    #endregion
+
+    #region Ribbon Icons (r folder)
+
+    /// <summary>Gets the sprite filename for a ribbon icon by ribbon name.</summary>
+    /// <remarks>Ribbon names follow the pattern: ribbon[name].png</remarks>
+    public static string GetRibbonIconSpriteFileName(string ribbonName)
+    {
+        var name = ribbonName.ToLowerInvariant();
+        return $"{SpritesRoot}r/ribbon{name}.png";
+    }
+
+    #endregion
 
     /// <summary>Determines if an item is a mail item based on its ID and context.</summary>
     private static bool IsItemMail(int item, EntityContext context) => context switch
@@ -172,8 +205,8 @@ public static class SpriteHelper
     };
 
     /// <summary>
-    ///     Converts an item ID to its string representation for sprite filenames.
-    ///     Handles lumped items (TMs, TRs) and mail items specially.
+    /// Converts an item ID to its string representation for sprite filenames.
+    /// Handles lumped items (TMs, TRs) and mail items specially.
     /// </summary>
     private static string GetItemIdString(int item, EntityContext context) =>
         HeldItemLumpUtil.GetIsLump(item, context) switch
@@ -184,4 +217,159 @@ public static class SpriteHelper
                 ? "unk"
                 : item.ToString()
         };
+
+    #region Accent Icons (ac folder)
+
+    /// <summary>Gets the sprite filename for a gender indicator icon (0=male, 1=female, 2=genderless).</summary>
+    public static string GetGenderIconSpriteFileName(byte gender) =>
+        $"{SpritesRoot}ac/gender_{gender}.png";
+
+    /// <summary>Gets the sprite filename for a lock icon (indicating a locked Pokémon).</summary>
+    public static string GetLockIconSpriteFileName() =>
+        $"{SpritesRoot}ac/locked.png";
+
+    /// <summary>Gets the sprite filename for a party indicator icon.</summary>
+    public static string GetPartyIndicatorSpriteFileName() =>
+        $"{SpritesRoot}ac/party.png";
+
+    /// <summary>Gets the sprite filename for a legality indicator (valid Pokémon).</summary>
+    public static string GetLegalityValidSpriteFileName() =>
+        $"{SpritesRoot}ac/valid.png";
+
+    /// <summary>Gets the sprite filename for a legality warning indicator (invalid Pokémon).</summary>
+    public static string GetLegalityWarnSpriteFileName() =>
+        $"{SpritesRoot}ac/warn.png";
+
+    /// <summary>Gets the sprite filename for a box wallpaper background (clean or default style).</summary>
+    public static string GetBoxWallpaperBackgroundSpriteFileName(bool isClean = false) =>
+        $"{SpritesRoot}ac/box_wp_{(isClean ? "clean" : "default")}.png";
+
+    /// <summary>Gets the sprite filename for a ribbon affix state indicator.</summary>
+    public static string GetRibbonAffixSpriteFileName(string affixState = "none") =>
+        $"{SpritesRoot}ac/ribbon_affix_{affixState}.png";
+
+    #endregion
+
+    #region Markings (m folder)
+
+    /// <summary>Gets the sprite filename for a box mark/marking icon (1-6, representing the colored marks).</summary>
+    public static string GetBoxMarkSpriteFileName(int markNumber) =>
+        $"{SpritesRoot}m/box_mark_{markNumber:00}.png";
+
+    /// <summary>Gets the sprite filename for a generation origin icon (gen_6, gen_7, gen_8, etc.).</summary>
+    public static string GetGenerationOriginSpriteFileName(string generationCode)
+    {
+        var code = generationCode.ToLowerInvariant();
+        return $"{SpritesRoot}m/gen_{code}.png";
+    }
+
+    /// <summary>Gets the sprite filename for a shiny indicator (rare icon).</summary>
+    public static string GetShinyIndicatorSpriteFileName(bool isAlt = false) =>
+        $"{SpritesRoot}m/rare_icon{(isAlt ? "_2" : string.Empty)}.png";
+
+    /// <summary>Gets the sprite filename for an Alola origin indicator.</summary>
+    public static string GetAlolaOriginSpriteFileName() =>
+        $"{SpritesRoot}m/alora.png";
+
+    /// <summary>Gets the sprite filename for a Galar region crown indicator (Crown Tundra).</summary>
+    public static string GetGalarCrownSpriteFileName() =>
+        $"{SpritesRoot}m/crown.png";
+
+    /// <summary>Gets the sprite filename for a Hisui origin indicator.</summary>
+    public static string GetHisuiOriginSpriteFileName() =>
+        $"{SpritesRoot}m/leaf.png";
+
+    /// <summary>Gets the sprite filename for a Virtual Console indicator.</summary>
+    public static string GetVirtualConsoleSpriteFileName() =>
+        $"{SpritesRoot}m/vc.png";
+
+    /// <summary>Gets the sprite filename for a Battle ROM indicator.</summary>
+    public static string GetBattleRomIndicatorSpriteFileName() =>
+        $"{SpritesRoot}m/icon_btlrom.png";
+
+    /// <summary>Gets the sprite filename for a favorite/marked indicator.</summary>
+    public static string GetFavoriteIndicatorSpriteFileName() =>
+        $"{SpritesRoot}m/icon_favo.png";
+
+    /// <summary>Gets the sprite filename for an anti-Pokerus icon.</summary>
+    public static string GetAntiPokerusIconSpriteFileName() =>
+        $"{SpritesRoot}m/anti_pokerus_icon.png";
+
+    /// <summary>Gets the sprite filename for a Pokémon Go indicator.</summary>
+    public static string GetPokemonGoIndicatorSpriteFileName() =>
+        $"{SpritesRoot}m/gen_go.png";
+
+    #endregion
+
+    #region Overlay Icons (overlay folder)
+
+    /// <summary>Gets the sprite filename for an alpha indicator (Pokémon Legends: Arceus).</summary>
+    public static string GetAlphaIndicatorSpriteFileName(bool isAlt = false) =>
+        $"{SpritesRoot}overlay/alpha{(isAlt ? "_alt" : string.Empty)}.png";
+
+    /// <summary>Gets the sprite filename for a Dynamax indicator (Gigantamax).</summary>
+    public static string GetDynamaxIndicatorSpriteFileName() =>
+        $"{SpritesRoot}overlay/dyna.png";
+
+    /// <summary>Gets the sprite filename for a held item indicator.</summary>
+    public static string GetHeldItemIndicatorSpriteFileName() =>
+        $"{SpritesRoot}overlay/helditem.png";
+
+    /// <summary>Gets the sprite filename for a locked/locked Pokémon overlay.</summary>
+    public static string GetLockedOverlaySpriteFileName() =>
+        $"{SpritesRoot}overlay/locked.png";
+
+    /// <summary>Gets the sprite filename for a party slot indicator (slots 1-6).</summary>
+    public static string GetPartySlotIndicatorSpriteFileName(int slotNumber) =>
+        $"{SpritesRoot}overlay/party{slotNumber}.png";
+
+    /// <summary>Gets the sprite filename for a rare/shiny indicator overlay.</summary>
+    public static string GetRareIndicatorSpriteFileName(bool isAlt = false) =>
+        $"{SpritesRoot}overlay/rare_icon{(isAlt ? "_alt" : string.Empty)}.png";
+
+    /// <summary>Gets the sprite filename for a rare indicator overlay (second variant).</summary>
+    public static string GetRareIconSecondSpriteFileName(bool isAlt = false) =>
+        $"{SpritesRoot}overlay/rare_icon_2{(isAlt ? "_alt" : string.Empty)}.png";
+
+    /// <summary>Gets the sprite filename for a starter Pokémon indicator.</summary>
+    public static string GetStarterIndicatorSpriteFileName() =>
+        $"{SpritesRoot}overlay/starter.png";
+
+    /// <summary>Gets the sprite filename for a team indicator overlay.</summary>
+    public static string GetTeamIndicatorSpriteFileName() =>
+        $"{SpritesRoot}overlay/team.png";
+
+    #endregion
+
+    #region Status Condition Icons (status folder)
+
+    /// <summary>Gets the sprite filename for a burn status icon.</summary>
+    public static string GetBurnStatusSpriteFileName() =>
+        $"{SpritesRoot}status/sickburn.png";
+
+    /// <summary>Gets the sprite filename for a faint status icon.</summary>
+    public static string GetFaintStatusSpriteFileName() =>
+        $"{SpritesRoot}status/sickfaint.png";
+
+    /// <summary>Gets the sprite filename for a frostbite status icon.</summary>
+    public static string GetFrostbiteStatusSpriteFileName() =>
+        $"{SpritesRoot}status/sickfrostbite.png";
+
+    /// <summary>Gets the sprite filename for a paralysis status icon.</summary>
+    public static string GetParalysisStatusSpriteFileName() =>
+        $"{SpritesRoot}status/sickparalyze.png";
+
+    /// <summary>Gets the sprite filename for a poison status icon.</summary>
+    public static string GetPoisonStatusSpriteFileName() =>
+        $"{SpritesRoot}status/sickpoison.png";
+
+    /// <summary>Gets the sprite filename for a sleep status icon.</summary>
+    public static string GetSleepStatusSpriteFileName() =>
+        $"{SpritesRoot}status/sicksleep.png";
+
+    /// <summary>Gets the sprite filename for a toxic poison status icon.</summary>
+    public static string GetToxicStatusSpriteFileName() =>
+        $"{SpritesRoot}status/sicktoxic.png";
+
+    #endregion
 }
