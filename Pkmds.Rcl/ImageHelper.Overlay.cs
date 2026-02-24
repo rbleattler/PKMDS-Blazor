@@ -18,7 +18,7 @@ public static partial class ImageHelper
     public static string GetHeldItemIndicatorSpriteFileName() =>
         $"{SpritesRoot}overlay/helditem.png";
 
-    /// <summary>Gets the sprite filename for a locked/locked Pokémon overlay.</summary>
+    /// <summary>Gets the sprite filename for a locked Pokémon overlay.</summary>
     public static string GetLockedOverlaySpriteFileName() =>
         $"{SpritesRoot}overlay/locked.png";
 
