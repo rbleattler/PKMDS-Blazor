@@ -14,7 +14,7 @@
                         var tabText = GetPouchName(pouch);
                     }
                     <MudStack Row>
-                        <MudImage Src="@SpriteHelper.GetBagPouchSpriteFileName(pouch.Type)"
+                        <MudImage Src="@ImageHelper.GetBagPouchSpriteFileName(pouch.Type)"
                                   Alt="@tabText"
                                   title="@tabText"/>
                         @if (string.Equals(PouchTabs?.ActivePanel?.ID?.ToString(), pouch.Type.ToString()))
@@ -86,10 +86,10 @@
                                                             <object class="item-sprite"
                                                                     type="image/png"
                                                                     style="object-fit: contain;"
-                                                                    data="@SpriteHelper.GetItemSpriteFilename(item.Value, saveFile.Context)"
+                                                                    data="@ImageHelper.GetItemSpriteFilename(item.Value, saveFile.Context)"
                                                                     title="@item.Text">
                                                                 <img class="pkm-sprite"
-                                                                     src="@SpriteHelper.ItemFallbackImageFileName"
+                                                                     src="@ImageHelper.ItemFallbackImageFileName"
                                                                      title="@item.Text"
                                                                      alt="@item.Text">
                                                             </object>
@@ -106,10 +106,10 @@
                                                 <object class="item-sprite"
                                                         type="image/png"
                                                         style="object-fit: contain;"
-                                                        data="@SpriteHelper.GetItemSpriteFilename(context.Item.Index, saveFile.Context)"
+                                                        data="@ImageHelper.GetItemSpriteFilename(context.Item.Index, saveFile.Context)"
                                                         title="@itemText">
                                                     <img class="pkm-sprite"
-                                                         src="@SpriteHelper.ItemFallbackImageFileName"
+                                                         src="@ImageHelper.ItemFallbackImageFileName"
                                                          title="@itemText"
                                                          alt="@itemText">
                                                 </object>

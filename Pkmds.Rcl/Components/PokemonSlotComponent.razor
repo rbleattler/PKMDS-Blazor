@@ -9,7 +9,7 @@
           @ondragover="@HandleDragOver"
           @ondragleave="@HandleDragLeave"
           @ondrop="@HandleDrop"
-          Class="@($"square-slot {GetClass()} {GetDragClass()} {SpriteHelper.GetSpriteCssClass(Pokemon)}")">
+          Class="@($"square-slot {GetClass()} {GetDragClass()} {ImageHelper.GetSpriteCssClass(Pokemon)}")">
     <div
         class="w-full h-full aspect-square flex items-center justify-center overflow-hidden p-0 box-border border border-transparent">
         @if (Pokemon is not null && Pokemon.Species > 0)
@@ -18,11 +18,11 @@
             <object class="pkm-sprite w-full h-auto object-contain block"
                     type="image/png"
                     data="@(Pokemon is { Species: > 0 }
-                              ? SpriteHelper.GetPokemonSpriteFilename(Pokemon)
+                              ? ImageHelper.GetPokemonSpriteFilename(Pokemon)
                               : null)"
                     title="@title">
                 <img class="pkm-sprite w-full h-auto object-contain block"
-                     src="@SpriteHelper.PokemonFallbackImageFileName"
+                     src="@ImageHelper.PokemonFallbackImageFileName"
                      title="@title"
                      alt="@title">
             </object>

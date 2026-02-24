@@ -4,7 +4,7 @@
 /// Helper class for generating file paths to Pokémon and item sprite images.
 /// Handles sprite selection based on species, form, gender, context, and other attributes.
 /// </summary>
-public static class SpriteHelper
+public static class ImageHelper
 {
     private const string SpritesRoot = "_content/Pkmds.Rcl/sprites/";
     private const int PikachuStarterForm = 8;
