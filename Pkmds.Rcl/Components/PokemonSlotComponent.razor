@@ -26,6 +26,16 @@
                      title="@title"
                      alt="@title">
             </object>
+            @if (Pokemon.GetIsShinySafe())
+            {
+                <div class="shiny-indicator-icon"
+                     title="Shiny">
+                    <img src="@ImageHelper.GetShinyIndicatorSpriteFileName()"
+                         alt="Shiny"
+                         class="w-full h-full object-contain">
+                </div>
+            }
+
             @if (Pokemon.HeldItem != 0)
             {
                 var itemTitle = GetItemTitle();
