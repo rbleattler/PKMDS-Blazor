@@ -48,6 +48,13 @@ public partial class PokemonSlotComponent : IDisposable
         ? AppService.GetItemComboItem(Pokemon.HeldItem).Text
         : "Unknown";
 
+    private bool IsAlphaPokemon() => Pokemon switch
+    {
+        IAlpha alpha => alpha.IsAlpha,
+        IAlphaReadOnly alphaReadOnly => alphaReadOnly.IsAlpha,
+        _ => false
+    };
+
     private bool IsDraggable()
     {
         // Don't allow dragging if no Pokémon

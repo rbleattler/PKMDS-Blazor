@@ -36,6 +36,16 @@
                 </div>
             }
 
+            @if (IsAlphaPokemon())
+            {
+                <div class="alpha-indicator-icon"
+                     title="Alpha">
+                    <img src="@ImageHelper.GetAlphaIndicatorSpriteFileName()"
+                         alt="Alpha"
+                         class="w-full h-full object-contain">
+                </div>
+            }
+
             @if (Pokemon.HeldItem != 0)
             {
                 var itemTitle = GetItemTitle();
