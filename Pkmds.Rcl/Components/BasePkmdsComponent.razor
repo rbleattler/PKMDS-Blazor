@@ -8,14 +8,14 @@
             <MudText>
                 Type:
             </MudText>
-            <MudImage Src="@SpriteHelper.GetTypeWideSpriteFileName(type1)"
+            <MudImage Src="@ImageHelper.GetTypeWideSpriteFileName(type1)"
                       Alt="@GameInfo.Strings.Types[type1]"
                       title="@GameInfo.Strings.Types[type1]"
                       ObjectFit="@ObjectFit.Contain"
                       ObjectPosition="@ObjectPosition.Center"/>
             @if (type1 != type2)
             {
-                <MudImage Src="@SpriteHelper.GetTypeWideSpriteFileName(type2)"
+                <MudImage Src="@ImageHelper.GetTypeWideSpriteFileName(type2)"
                           Alt="@GameInfo.Strings.Types[type2]"
                           title="@GameInfo.Strings.Types[type2]"
                           ObjectFit="@ObjectFit.Contain"
@@ -27,7 +27,7 @@
         TypeSummary(types.Type1, types.Type2);
 
     protected static RenderFragment MoveTypeSummary(byte type) =>
-        @<MudImage Src="@SpriteHelper.GetTypeSquareSpriteFileName(type)"
+        @<MudImage Src="@ImageHelper.GetTypeSquareSpriteFileName(type)"
                    Alt="@GameInfo.Strings.Types[type]"
                    title="@GameInfo.Strings.Types[type]"
                    ObjectFit="@ObjectFit.Contain"
@@ -35,7 +35,7 @@
                    Width="30"/>;
 
     public static RenderFragment MoveCategorySummary(int categoryId) =>
-        @<MudImage Src="@SpriteHelper.GetMoveCategorySpriteFileName(categoryId)"
+        @<MudImage Src="@ImageHelper.GetMoveCategorySpriteFileName(categoryId)"
                    Alt="@GameInfoUtilities.GetCategoryName(categoryId)"
                    title="@GameInfoUtilities.GetCategoryName(categoryId)"
                    ObjectFit="@ObjectFit.Contain"

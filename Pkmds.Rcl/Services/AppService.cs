@@ -796,8 +796,8 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
     }
 
     /// <summary>
-    ///     Compacts a box by shifting all Pokémon left to fill gaps (for Gen 1 and Gen 2 games).
-    ///     In these generations, boxes were lists, not grids, so they should have no gaps.
+    /// Compacts a box by shifting all Pokémon left to fill gaps (for Gen 1 and Gen 2 games).
+    /// In these generations, boxes were lists, not grids, so they should have no gaps.
     /// </summary>
     private static void CompactBox(SaveFile saveFile, int boxNumber)
     {

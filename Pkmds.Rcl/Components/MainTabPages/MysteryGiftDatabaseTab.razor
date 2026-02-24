@@ -89,12 +89,12 @@
                                     <object class="pkm-sprite"
                                             type="image/png"
                                             style="object-fit: contain;"
-                                            data="@SpriteHelper.GetMysteryGiftSpriteFileName(mysteryGift)"
+                                            data="@ImageHelper.GetMysteryGiftSpriteFileName(mysteryGift)"
                                             title="@pokemonName">
                                         <img class="pkm-sprite"
                                              src="@(mysteryGift.IsItem
-                                                      ? SpriteHelper.ItemFallbackImageFileName
-                                                      : SpriteHelper.PokemonFallbackImageFileName)"
+                                                      ? ImageHelper.ItemFallbackImageFileName
+                                                      : ImageHelper.PokemonFallbackImageFileName)"
                                              alt="@pokemonName"
                                              title="@pokemonName">
                                     </object>
