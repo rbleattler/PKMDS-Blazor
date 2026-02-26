@@ -31,26 +31,14 @@ public partial class RibbonsTab : IDisposable
             return;
         }
 
-        var prop = Pokemon.GetType().GetProperty(propertyName);
-        if (prop?.PropertyType != typeof(bool))
-        {
-            return;
-        }
-
-        var current = (bool)(prop.GetValue(Pokemon) ?? false);
-        prop.SetValue(Pokemon, !current);
+        var current = ReflectUtil.GetValue(Pokemon, propertyName) is bool value && value;
+        ReflectUtil.SetValue(Pokemon, propertyName, !current);
         StateHasChanged();
     }
 
     private void SetRibbonCount(string propertyName, int count)
     {
         if (Pokemon is null)
-        {
-            return;
-        }
-
-        var prop = Pokemon.GetType().GetProperty(propertyName);
-        if (prop?.PropertyType != typeof(byte))
         {
             return;
         }
@@ -79,7 +67,7 @@ public partial class RibbonsTab : IDisposable
             clamped = maxAllowed;
         }
 
-        prop.SetValue(Pokemon, (byte)clamped);
+        ReflectUtil.SetValue(Pokemon, propertyName, (byte)clamped);
         StateHasChanged();
     }
 
@@ -92,15 +80,8 @@ public partial class RibbonsTab : IDisposable
 
         foreach (var ribbon in GetAllRibbonInfo())
         {
-            var prop = Pokemon.GetType().GetProperty(ribbon.Name);
-            if (prop?.PropertyType == typeof(bool))
-            {
-                prop.SetValue(Pokemon, true);
-            }
-            else if (prop?.PropertyType == typeof(byte))
-            {
-                prop.SetValue(Pokemon, (byte)ribbon.MaxCount);
-            }
+            var value = ribbon.Type is RibbonValueType.Boolean ? (object)true : (byte)ribbon.MaxCount;
+            ReflectUtil.SetValue(Pokemon, ribbon.Name, value);
         }
 
         StateHasChanged();
@@ -115,15 +96,8 @@ public partial class RibbonsTab : IDisposable
 
         foreach (var ribbon in GetAllRibbonInfo())
         {
-            var prop = Pokemon.GetType().GetProperty(ribbon.Name);
-            if (prop?.PropertyType == typeof(bool))
-            {
-                prop.SetValue(Pokemon, false);
-            }
-            else if (prop?.PropertyType == typeof(byte))
-            {
-                prop.SetValue(Pokemon, (byte)0);
-            }
+            var value = ribbon.Type is RibbonValueType.Boolean ? (object)false : (byte)0;
+            ReflectUtil.SetValue(Pokemon, ribbon.Name, value);
         }
 
         StateHasChanged();
