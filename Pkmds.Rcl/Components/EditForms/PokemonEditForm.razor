@@ -110,6 +110,13 @@
                 </MudTabPanel>
             }
 
+            @if (saveGeneration >= 3)
+            {
+                <MudTabPanel Text="Ribbons">
+                    <RibbonsTab Pokemon="@Pokemon"/>
+                </MudTabPanel>
+            }
+
             <MudTabPanel Text="OT/Misc">
                 <OtMiscTab Pokemon="@Pokemon"/>
             </MudTabPanel>

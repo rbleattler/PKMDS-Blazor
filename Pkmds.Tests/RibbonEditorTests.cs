@@ -1,0 +1,117 @@
+namespace Pkmds.Tests;
+
+/// <summary>
+///     Tests for the ribbon editor logic in RibbonHelper.
+/// </summary>
+public class RibbonEditorTests
+{
+    [Theory]
+    [InlineData("RibbonMarkLunchtime", true)]
+    [InlineData("RibbonMarkSleepyTime", true)]
+    [InlineData("RibbonMarkDusk", true)]
+    [InlineData("RibbonMarkSlump", true)]
+    [InlineData("RibbonMarkAlpha", true)]
+    [InlineData("RibbonMarkMightiest", true)]
+    [InlineData("RibbonMarkTitan", true)]
+    [InlineData("RibbonMarkJumbo", false)]
+    [InlineData("RibbonMarkMini", false)]
+    [InlineData("RibbonMarkPartner", false)]
+    [InlineData("RibbonMarkGourmand", false)]
+    [InlineData("RibbonMarkItemfinder", false)]
+    [InlineData("RibbonChampionKalos", false)]
+    [InlineData("RibbonMasterRank", false)]
+    [InlineData("RibbonCountMemoryContest", false)]
+    public void IsMarkEntry_ReturnsCorrectResult(string ribbonName, bool expected)
+    {
+        // Act
+        var result = RibbonHelper.IsMarkEntry(ribbonName);
+
+        // Assert
+        result.Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData("RibbonChampionKalos", "Champion Kalos")]
+    [InlineData("RibbonMarkLunchtime", "Mark Lunchtime")]
+    [InlineData("RibbonMasterRank", "Master Rank")]
+    public void GetRibbonDisplayName_ReturnsHumanizedName(string propertyName, string expected)
+    {
+        // Act
+        var result = RibbonHelper.GetRibbonDisplayName(propertyName);
+
+        // Assert
+        result.Should().Be(expected);
+    }
+
+    [Fact]
+    public void GetAllRibbonInfo_PK9_ReturnsNonEmptyList()
+    {
+        // Arrange
+        var pk9 = new PK9();
+
+        // Act
+        var ribbons = RibbonHelper.GetAllRibbonInfo(pk9);
+
+        // Assert
+        ribbons.Should().NotBeEmpty();
+        ribbons.Should().Contain(r => r.Name == "RibbonChampionKalos");
+        ribbons.Should().Contain(r => r.Name == "RibbonMarkLunchtime");
+    }
+
+    [Fact]
+    public void GetAllRibbonInfo_PK3_ReturnsGen3Ribbons()
+    {
+        // Arrange
+        var pk3 = new PK3();
+
+        // Act
+        var ribbons = RibbonHelper.GetAllRibbonInfo(pk3);
+
+        // Assert
+        ribbons.Should().NotBeEmpty();
+        ribbons.Should().Contain(r => r.Name == "RibbonChampionG3");
+    }
+
+    [Fact]
+    public void GetRibbonSprite_ReturnsExpectedPath()
+    {
+        // Arrange
+        var infoList = RibbonInfo.GetRibbonInfo(new PK9());
+        var champKalos = infoList.First(r => r.Name == "RibbonChampionKalos");
+
+        // Act
+        var sprite = RibbonHelper.GetRibbonSprite(champKalos);
+
+        // Assert
+        sprite.Should().EndWith("ribbonchampionkalos.png");
+    }
+
+    [Fact]
+    public void GetAllRibbonInfo_NullPokemon_ReturnsEmpty()
+    {
+        // Act
+        var ribbons = RibbonHelper.GetAllRibbonInfo(null);
+
+        // Assert
+        ribbons.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void GetAllRibbonInfo_PK9_HasSeparateRibbonsAndMarks()
+    {
+        // Arrange
+        var pk9 = new PK9();
+
+        // Act
+        var allRibbons = RibbonHelper.GetAllRibbonInfo(pk9);
+        var ribbons = allRibbons.Where(r => !RibbonHelper.IsMarkEntry(r.Name)).ToList();
+        var marks = allRibbons.Where(r => RibbonHelper.IsMarkEntry(r.Name)).ToList();
+
+        // Assert
+        ribbons.Should().NotBeEmpty();
+        marks.Should().NotBeEmpty();
+        ribbons.Should().Contain(r => r.Name == "RibbonChampionKalos");
+        marks.Should().Contain(r => r.Name == "RibbonMarkLunchtime");
+        ribbons.Should().NotContain(r => r.Name == "RibbonMarkLunchtime");
+    }
+}
