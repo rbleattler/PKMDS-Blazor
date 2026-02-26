@@ -131,9 +131,8 @@ public partial class MainLayout : IDisposable
         }
 
         Logger.LogInformation("Loading save file: {FileName}", selectedFile.Name);
+        AppService.ClearSelection();
         AppState.SaveFile = null;
-        AppState.SelectedBoxNumber = null;
-        AppState.SelectedBoxSlotNumber = null;
         AppState.ShowProgressIndicator = true;
 
         try
