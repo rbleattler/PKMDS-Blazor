@@ -6,15 +6,23 @@ on:
     types: [created]
   issues:
     types: [opened, assigned]
+  pull_request:
+    types: [opened, ready_for_review]
 permissions:
+  contents: write
+  issues: write
+  pull-requests: write
   id-token: write
-
 
 jobs:
   claude:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     steps:
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          claude_args: "--max-turns 10"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          claude_args: "--max-turns 25"
+          use_commit_signing: "true"
