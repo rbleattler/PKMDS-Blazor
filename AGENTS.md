@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Guidance for WARP (warp.dev) when working in this repository.
+Guidance for AI agents and coding assistants working in this repository.
 
 ## Quick commands
 
@@ -58,7 +58,14 @@ Runtime wiring (Web)
   - Setup .NET + wasm tools, restore, publish Web to `release/`, copy `index.html` → `404.html`, add `.nojekyll`, replace `%%CACHE_VERSION%%` in `service-worker.published.js`, deploy `release/wwwroot` to `gh-pages`.
 - `.github/workflows/codeql.yml`: CodeQL for C# and JS/TS (manual C# build step).
 
+## PKHeX.Core
+
+This app depends heavily on [PKHeX.Core](https://github.com/kwsch/PKHeX). When implementing features, use the PKHeX WinForms app as a reference for how to leverage PKHeX.Core — both for UI/UX patterns and for understanding the correct API usage.
+
+If you encounter bugs or limitations in PKHeX.Core while working on an issue or PR, note them in a code comment at the relevant site and report them on the GitHub issue or PR you are working on.
+
 ## Notes
 
+- Respect the existing code style. Reference `.editorconfig` for formatting rules; Debug builds treat warnings as errors.
 - Use `watch.ps1` for a consistent local dev experience.
 - If WASM crypto errors occur, ensure `libman restore` has brought down `crypto-js` (or run LibMan in your IDE). CI publishes without requiring LibMan on the runner because the published output contains required assets.
