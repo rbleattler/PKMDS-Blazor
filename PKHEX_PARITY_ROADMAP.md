@@ -42,22 +42,22 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 ### 1.1 Pokemon Editor Enhancements
 
 #### Ribbon Editor
-**Status:** ❌ Not Implemented  
+**Status:** ⚠️ Partial (ribbon legality checking and search/filter not yet implemented)  
 **Complexity:** High  
 **Tasks:**
-- [ ] Design Ribbon UI component with tabs for different ribbon categories
-- [ ] Implement ribbon data binding to PKHeX.Core ribbon properties
-- [ ] Add support for all ribbon types:
-  - [ ] Contest ribbons (Cool, Beauty, Cute, Smart, Tough, etc.)
-  - [ ] Battle ribbons (Battle Tower, Battle Tree, etc.)
-  - [ ] Event ribbons (Classic, Premier, etc.)
-  - [ ] Memorial ribbons
-  - [ ] Mark ribbons (Gen 8+)
-  - [ ] Generation-specific ribbons
-- [ ] Display ribbon icons/images
+- [x] Design Ribbon UI component with tabs for different ribbon categories
+- [x] Implement ribbon data binding to PKHeX.Core ribbon properties
+- [x] Add support for all ribbon types:
+  - [x] Contest ribbons (Cool, Beauty, Cute, Smart, Tough, etc.)
+  - [x] Battle ribbons (Battle Tower, Battle Tree, etc.)
+  - [x] Event ribbons (Classic, Premier, etc.)
+  - [x] Memorial ribbons
+  - [x] Mark ribbons (Gen 8+)
+  - [x] Generation-specific ribbons
+- [x] Display ribbon icons/images
 - [ ] Implement ribbon legality checking (prevent illegal combinations)
 - [ ] Add search/filter for ribbons
-- [ ] Create unit tests for ribbon editing
+- [x] Create unit tests for ribbon editing
 
 #### Memory Editor
 **Status:** ❌ Not Implemented  
@@ -97,16 +97,16 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - [ ] Validate form legality based on origin/capture method
 
 #### PID/EC Generator
-**Status:** ⚠️ Partial (basic PID editing exists)  
+**Status:** ✅ Implemented  
 **Complexity:** Medium  
 **Tasks:**
-- [ ] Create PID generator with options:
-  - [ ] Method 1/2/4 (Gen 3-4)
-  - [ ] Shiny PID generation
-  - [ ] Gender-locked PID generation
-  - [ ] Nature-locked PID generation
-- [ ] Add Encryption Constant (EC) generator (Gen 6+)
-- [ ] Implement shiny type selection (Star/Square for Gen 8+)
+- [x] Create PID generator with options:
+  - [x] Method 1/2/4 (Gen 3-4)
+  - [x] Shiny PID generation
+  - [x] Gender-locked PID generation
+  - [x] Nature-locked PID generation
+- [x] Add Encryption Constant (EC) generator (Gen 6+)
+- [x] Implement shiny type selection (Star/Square for Gen 8+)
 - [ ] Add PID-to-IV correlation for Gen 3-4
 - [ ] Create PID reroller for legal PIDs
 
