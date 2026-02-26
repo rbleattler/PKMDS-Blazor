@@ -21,9 +21,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: read
+      pull-requests: write
       issues: read
       id-token: write
+      actions: read # Required for Claude to read CI results on PRs
 
     steps:
       - name: Checkout repository
@@ -36,9 +37,18 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
-          plugins: 'code-review@claude-code-plugins'
-          prompt: '/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
+          prompt: |
+            Review this pull request and post your findings as a review comment.
+
+            Focus on:
+            - Correctness and potential bugs
+            - C# and Blazor best practices (nullable reference types, async/await, DI patterns)
+            - PKHeX.Core API usage — reference PKHeX WinForms as the authoritative usage guide
+            - Performance and memory concerns (WASM constraints apply)
+            - Code style consistency with the existing codebase and .editorconfig rules
+
+            Keep feedback constructive and actionable. Note any PKHeX.Core limitations
+            as code comments per AGENTS.md guidance.
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
 
