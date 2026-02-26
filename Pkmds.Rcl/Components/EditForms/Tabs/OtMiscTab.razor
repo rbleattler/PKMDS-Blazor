@@ -413,8 +413,7 @@
                 </MudItem>
             }
 
-            <MudItem xs="6"
-                     Class="@ColumnClass">
+            <MudItem xs="12">
                 <MudButton OnClick="@ClearOtMemory"
                            Variant="@Variant.Outlined"
                            Color="@Color.Error"
@@ -522,14 +521,85 @@
                 </MudItem>
             }
 
-            <MudItem xs="6"
-                     Class="@ColumnClass">
+            <MudItem xs="12">
                 <MudButton OnClick="@ClearHtMemory"
                            Variant="@Variant.Outlined"
                            Color="@Color.Error"
                            Size="@Size.Small"
                            StartIcon="@Icons.Material.Filled.Clear">
                     Clear HT Memory
+                </MudButton>
+            </MudItem>
+        }
+
+        @* Geo Locations / Residence (Gen 6/7 IGeoTrack) *@
+        @if (Pokemon is IGeoTrack geoTrack)
+        {
+            var countries = AppService.GetGeoCountryComboItems().ToList();
+
+            <MudItem xs="12">
+                <MudDivider Class="my-2"/>
+                <MudText Typo="@Typo.subtitle2"
+                         Class="mt-1 mb-1">Geo Locations</MudText>
+            </MudItem>
+
+            @for (var geoSlot = 1; geoSlot <= 5; geoSlot++)
+            {
+                var slotIndex = geoSlot; // capture for lambdas
+                var slotCountry = GetGeoCountry(geoTrack, slotIndex);
+                var slotRegions = slotCountry != 0
+                    ? AppService.GetGeoRegionComboItems(slotCountry).ToList()
+                    : null;
+                var slotLabel = slotIndex == 1 ? "Latest Country" : $"Past Country {slotIndex - 1}";
+                var regionLabel = slotIndex == 1 ? "Latest Region" : $"Past Region {slotIndex - 1}";
+
+                <MudItem xs="6"
+                         Class="@ColumnClass">
+                    <MudSelect T="byte"
+                               Label="@slotLabel"
+                               Variant="@Variant.Outlined"
+                               FullWidth
+                               MaxHeight="300"
+                               Value="@slotCountry"
+                               ValueChanged="@(v => SetGeoCountry(geoTrack, slotIndex, v))">
+                        @foreach (var item in countries)
+                        {
+                            <MudSelectItem T="byte" Value="@((byte)item.Value)">@item.Text</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+
+                @if (slotRegions is not null)
+                {
+                    <MudItem xs="6"
+                             Class="@ColumnClass">
+                        <MudSelect T="byte"
+                                   Label="@regionLabel"
+                                   Variant="@Variant.Outlined"
+                                   FullWidth
+                                   MaxHeight="300"
+                                   Value="@GetGeoRegion(geoTrack, slotIndex)"
+                                   ValueChanged="@(v => SetGeoRegion(geoTrack, slotIndex, v))">
+                            @foreach (var item in slotRegions)
+                            {
+                                <MudSelectItem T="byte" Value="@((byte)item.Value)">@item.Text</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                }
+                else
+                {
+                    <MudItem xs="6"/>
+                }
+            }
+
+            <MudItem xs="12">
+                <MudButton OnClick="@(() => ClearGeoData(geoTrack))"
+                           Variant="@Variant.Outlined"
+                           Color="@Color.Error"
+                           Size="@Size.Small"
+                           StartIcon="@Icons.Material.Filled.Clear">
+                    Clear Geo Data
                 </MudButton>
             </MudItem>
         }

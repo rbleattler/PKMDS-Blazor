@@ -816,6 +816,41 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
     public IEnumerable<ComboItem> GetLanguageComboItems(int generation, EntityContext context) =>
         GameInfo.LanguageDataSource((byte)generation, context);
 
+    public IEnumerable<ComboItem> GetGeoCountryComboItems()
+    {
+        var items = new List<ComboItem> { new("—", 0) };
+        for (var i = 1; i <= 255; i++)
+        {
+            var name = GeoLocation.GetCountryName("en", (byte)i);
+            if (!string.IsNullOrWhiteSpace(name) && name != "INVALID")
+            {
+                items.Add(new ComboItem(name, i));
+            }
+        }
+
+        return items;
+    }
+
+    public IEnumerable<ComboItem> GetGeoRegionComboItems(byte country)
+    {
+        if (country == 0)
+        {
+            return [new ComboItem("—", 0)];
+        }
+
+        var items = new List<ComboItem> { new("—", 0) };
+        for (var regionId = 1; regionId <= 255; regionId++)
+        {
+            var name = GeoLocation.GetRegionName("en", country, (byte)regionId);
+            if (!string.IsNullOrWhiteSpace(name) && name != "INVALID")
+            {
+                items.Add(new ComboItem(name, regionId));
+            }
+        }
+
+        return items;
+    }
+
     /// <summary>
     /// Compacts a box by shifting all Pokémon left to fill gaps (for Gen 1 and Gen 2 games).
     /// In these generations, boxes were lists, not grids, so they should have no gaps.

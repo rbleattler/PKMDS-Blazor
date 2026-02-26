@@ -263,4 +263,16 @@ public interface IAppService
 
     /// <summary>Gets language combo items for the given generation.</summary>
     IEnumerable<ComboItem> GetLanguageComboItems(int generation, EntityContext context);
+
+    /// <summary>
+    ///     Gets all valid geo-location country combo items (ID → English name).
+    ///     Entry 0 is the "none/blank" country (—).
+    /// </summary>
+    IEnumerable<ComboItem> GetGeoCountryComboItems();
+
+    /// <summary>
+    ///     Gets all geo-location region combo items for a given country (ID → English name).
+    ///     Only valid when <paramref name="country"/> is non-zero.
+    /// </summary>
+    IEnumerable<ComboItem> GetGeoRegionComboItems(byte country);
 }

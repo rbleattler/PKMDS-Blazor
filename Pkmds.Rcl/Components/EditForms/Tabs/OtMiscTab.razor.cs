@@ -181,6 +181,53 @@ public partial class OtMiscTab : IDisposable
         htMemory.HandlingTrainerMemoryVariable = 0;
     }
 
+    private void ClearGeoData(IGeoTrack geoTrack) =>
+        PKHeX.Core.Extensions.ClearGeoLocationData(geoTrack);
+
+    private static byte GetGeoCountry(IGeoTrack geo, int slot) => slot switch
+    {
+        1 => geo.Geo1_Country,
+        2 => geo.Geo2_Country,
+        3 => geo.Geo3_Country,
+        4 => geo.Geo4_Country,
+        5 => geo.Geo5_Country,
+        _ => 0,
+    };
+
+    private static byte GetGeoRegion(IGeoTrack geo, int slot) => slot switch
+    {
+        1 => geo.Geo1_Region,
+        2 => geo.Geo2_Region,
+        3 => geo.Geo3_Region,
+        4 => geo.Geo4_Region,
+        5 => geo.Geo5_Region,
+        _ => 0,
+    };
+
+    private static void SetGeoCountry(IGeoTrack geo, int slot, byte value)
+    {
+        switch (slot)
+        {
+            case 1: geo.Geo1_Country = value; geo.Geo1_Region = 0; break;
+            case 2: geo.Geo2_Country = value; geo.Geo2_Region = 0; break;
+            case 3: geo.Geo3_Country = value; geo.Geo3_Region = 0; break;
+            case 4: geo.Geo4_Country = value; geo.Geo4_Region = 0; break;
+            case 5: geo.Geo5_Country = value; geo.Geo5_Region = 0; break;
+        }
+    }
+
+    private static void SetGeoRegion(IGeoTrack geo, int slot, byte value)
+    {
+        switch (slot)
+        {
+            case 1: geo.Geo1_Region = value; break;
+            case 2: geo.Geo2_Region = value; break;
+            case 3: geo.Geo3_Region = value; break;
+            case 4: geo.Geo4_Region = value; break;
+            case 5: geo.Geo5_Region = value; break;
+        }
+    }
+
     private void FillFromGame()
     {
         if (Pokemon is null || AppState.SaveFile is not { } saveFile)
