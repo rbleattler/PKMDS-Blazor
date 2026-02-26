@@ -18,6 +18,12 @@ public partial class PokemonEditForm : IDisposable
             new() { { nameof(ShowdownExportDialog.Pokemon), Pokemon } },
             new() { CloseOnEscapeKey = true });
 
+    private void SaveAndClose()
+    {
+        AppService.SavePokemon(Pokemon);
+        AppService.ClearSelection();
+    }
+
     private void DeletePokemon()
     {
         var parameters = new DialogParameters

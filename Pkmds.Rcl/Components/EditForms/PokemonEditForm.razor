@@ -28,7 +28,7 @@
             Delete
         </MudButton>
 
-        <MudButton OnClick="@(() => AppService.SavePokemon(Pokemon))"
+        <MudButton OnClick="@SaveAndClose"
                    ButtonType="@ButtonType.Button"
                    Variant="@Variant.Filled"
                    StartIcon="@Icons.Material.Filled.Save"
