@@ -1,5 +1,7 @@
 namespace Pkmds.Rcl.Components.Layout;
 
+using Pkmds.Rcl.Models;
+
 public partial class MainLayout : IDisposable
 {
     [StringSyntax(StringSyntaxAttribute.Uri)]
@@ -68,11 +70,9 @@ public partial class MainLayout : IDisposable
 
         try
         {
-            var response = await JSRuntime.InvokeAsync<System.Text.Json.JsonElement>("checkForUpdate");
-            var result = response.GetProperty("result").GetString() ?? string.Empty;
-            var detail = response.TryGetProperty("detail", out var detailProp)
-                ? detailProp.GetString() ?? string.Empty
-                : string.Empty;
+            var response = await JSRuntime.InvokeAsync<UpdateCheckResponse>("checkForUpdate");
+            var result = response.Result;
+            var detail = response.Detail ?? string.Empty;
 
             var (message, severity) = result switch
             {
@@ -131,9 +131,8 @@ public partial class MainLayout : IDisposable
         }
 
         Logger.LogInformation("Loading save file: {FileName}", selectedFile.Name);
+        AppService.ClearSelection();
         AppState.SaveFile = null;
-        AppState.SelectedBoxNumber = null;
-        AppState.SelectedBoxSlotNumber = null;
         AppState.ShowProgressIndicator = true;
 
         try

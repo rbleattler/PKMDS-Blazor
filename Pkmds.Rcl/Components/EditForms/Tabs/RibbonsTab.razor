@@ -1,0 +1,103 @@
+@inherits BasePkmdsComponent
+
+@if (Pokemon is not null &&
+     AppState is
+     {
+         SaveFile.Context: not
+         (EntityContext.None or
+         EntityContext.SplitInvalid or
+         EntityContext.MaxInvalid),
+         SelectedSlotsAreValid: true
+     })
+{
+    var allRibbons = GetAllRibbonInfo();
+    var ribbons = allRibbons.Where(r => !IsMarkEntry(r.Name)).ToList();
+    var marks = allRibbons.Where(r => IsMarkEntry(r.Name)).ToList();
+
+    <MudStack Spacing="2"
+              Class="mt-2">
+
+        <MudStack Row>
+            <MudButton OnClick="@GiveAllRibbons"
+                       Variant="@Variant.Outlined"
+                       Color="@Color.Primary"
+                       Size="@Size.Small"
+                       StartIcon="@Icons.Material.Filled.EmojiEvents">
+                Give All
+            </MudButton>
+            <MudButton OnClick="@ClearAllRibbons"
+                       Variant="@Variant.Outlined"
+                       Color="@Color.Error"
+                       Size="@Size.Small"
+                       StartIcon="@Icons.Material.Filled.Clear">
+                Clear All
+            </MudButton>
+        </MudStack>
+
+        @if (ribbons.Count > 0)
+        {
+            var byteRibbons = ribbons.Where(r => r.Type == RibbonValueType.Byte).ToList();
+            var boolRibbons = ribbons.Where(r => r.Type == RibbonValueType.Boolean).ToList();
+
+            <MudText Typo="@Typo.subtitle1">Ribbons</MudText>
+
+            @if (byteRibbons.Count > 0)
+            {
+                <div class="flex flex-wrap gap-2">
+                    @foreach (var ribbon in byteRibbons)
+                    {
+                        <MudNumericField T="@int"
+                                         Label="@GetRibbonDisplayName(ribbon.Name)"
+                                         Min="0"
+                                         Max="@ribbon.MaxCount"
+                                         Value="@ribbon.RibbonCount"
+                                         ValueChanged="@(v => SetRibbonCount(ribbon.Name, v))"
+                                         Variant="@Variant.Outlined"
+                                         Style="width: 160px"/>
+                    }
+                </div>
+                <MudDivider Class="my-2"/>
+            }
+
+            @if (boolRibbons.Count > 0)
+            {
+                <div class="flex flex-wrap gap-2">
+                    @foreach (var ribbon in boolRibbons)
+                    {
+                        var ribbonDisplayName = GetRibbonDisplayName(ribbon.Name);
+                        <MudTooltip Text="@ribbonDisplayName">
+                            <MudImage Src="@GetRibbonSprite(ribbon)"
+                                      Width="32"
+                                      Height="32"
+                                      Alt="@ribbonDisplayName"
+                                      title="@ribbonDisplayName"
+                                      Class="@(ribbon.HasRibbon ? "cursor-pointer" : "cursor-pointer opacity-30")"
+                                      @onclick="@(() => ToggleRibbon(ribbon.Name))"/>
+                        </MudTooltip>
+                    }
+                </div>
+            }
+        }
+
+        @if (marks.Count > 0)
+        {
+            <MudText Typo="@Typo.subtitle1">Marks</MudText>
+            <div class="flex flex-wrap gap-2">
+                @foreach (var mark in marks)
+                {
+                    var markDisplayName = GetRibbonDisplayName(mark.Name);
+                    <MudTooltip Text="@markDisplayName">
+                        <MudImage Src="@GetRibbonSprite(mark)"
+                                  Width="32"
+                                  Height="32"
+                                  Alt="@markDisplayName"
+                                  title="@markDisplayName"
+                                  Class="@(mark.HasRibbon ? "cursor-pointer" : "cursor-pointer opacity-30")"
+                                  @onclick="@(() => ToggleRibbon(mark.Name))"/>
+                    </MudTooltip>
+                }
+            </div>
+        }
+
+    </MudStack>
+}
