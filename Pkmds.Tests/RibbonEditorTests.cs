@@ -114,4 +114,25 @@ public class RibbonEditorTests
         marks.Should().Contain(r => r.Name == "RibbonMarkLunchtime");
         ribbons.Should().NotContain(r => r.Name == "RibbonMarkLunchtime");
     }
+
+    [Fact]
+    public void GetAllRibbonInfo_ReflectsRibbonStateFromPKM()
+    {
+        // Arrange
+        var pk9 = new PK9();
+        pk9.RibbonChampionKalos = true;
+        pk9.RibbonMarkLunchtime = true;
+
+        // Act
+        var allRibbons = RibbonHelper.GetAllRibbonInfo(pk9);
+
+        // Assert - HasRibbon reflects PKM state
+        var champKalos = allRibbons.First(r => r.Name == "RibbonChampionKalos");
+        var lunchtime = allRibbons.First(r => r.Name == "RibbonMarkLunchtime");
+        var master = allRibbons.First(r => r.Name == "RibbonMasterRank");
+
+        champKalos.HasRibbon.Should().BeTrue();
+        lunchtime.HasRibbon.Should().BeTrue();
+        master.HasRibbon.Should().BeFalse();
+    }
 }
