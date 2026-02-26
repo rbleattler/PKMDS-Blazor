@@ -73,6 +73,10 @@ public partial class RibbonsTab : IDisposable
             {
                 prop.SetValue(Pokemon, true);
             }
+            else if (prop?.PropertyType == typeof(byte))
+            {
+                prop.SetValue(Pokemon, (byte)ribbon.MaxCount);
+            }
         }
 
         StateHasChanged();

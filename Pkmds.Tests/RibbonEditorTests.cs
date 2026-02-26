@@ -137,4 +137,20 @@ public class RibbonEditorTests
         lunchtime.HasRibbon.Should().BeTrue();
         master.HasRibbon.Should().BeFalse();
     }
+
+    [Fact]
+    public void ByteRibbons_HaveNonZeroMaxCount()
+    {
+        // Arrange
+        var pk3 = new PK3();
+
+        // Act
+        var byteRibbons = RibbonHelper.GetAllRibbonInfo(pk3)
+            .Where(r => r.Type == RibbonValueType.Byte)
+            .ToList();
+
+        // Assert - MaxCount should be > 0 so Give All can set them to max
+        byteRibbons.Should().NotBeEmpty();
+        byteRibbons.Should().AllSatisfy(r => r.MaxCount.Should().BeGreaterThan(0));
+    }
 }
