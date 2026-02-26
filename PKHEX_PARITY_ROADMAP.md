@@ -73,15 +73,15 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - [ ] Create unit tests for memory editing
 
 #### Contest Stats Editor
-**Status:** ❌ Not Implemented  
+**Status:** ✅ Implemented  
 **Complexity:** Low  
 **Tasks:**
-- [ ] Create Contest Stats UI component
-- [ ] Add fields for Cool, Beauty, Cute, Smart, Tough stats
-- [ ] Add Sheen field (Gen 3-4)
-- [ ] Implement contest stat validation (max values per generation)
-- [ ] Support generation-specific contest stat limits
-- [ ] Create unit tests for contest stats
+- [x] Create Contest Stats UI component
+- [x] Add fields for Cool, Beauty, Cute, Smart, Tough stats
+- [x] Add Sheen field (Gen 3-4)
+- [x] Implement contest stat validation (max values per generation)
+- [x] Support generation-specific contest stat limits
+- [x] Create unit tests for contest stats
 
 #### Form/Appearance Editor
 **Status:** ⚠️ Partial (basic form support exists)  

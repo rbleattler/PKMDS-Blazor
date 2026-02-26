@@ -110,6 +110,13 @@
                 </MudTabPanel>
             }
 
+            @if (Pokemon is IContestStats)
+            {
+                <MudTabPanel Text="Contest">
+                    <ContestStatsTab Pokemon="@Pokemon"/>
+                </MudTabPanel>
+            }
+
             @if (saveGeneration >= 3)
             {
                 <MudTabPanel Text="Ribbons">
