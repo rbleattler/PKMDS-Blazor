@@ -46,7 +46,7 @@
                 <div class="flex flex-wrap gap-2">
                     @foreach (var ribbon in byteRibbons)
                     {
-                        <MudNumericField T="int"
+                        <MudNumericField T="@int"
                                          Label="@GetRibbonDisplayName(ribbon.Name)"
                                          Min="0"
                                          Max="@ribbon.MaxCount"
