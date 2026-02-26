@@ -31,10 +31,12 @@ public class RibbonEditorTests
     }
 
     [Theory]
-    [InlineData("RibbonChampionKalos", "Champion Kalos")]
-    [InlineData("RibbonMarkLunchtime", "Mark Lunchtime")]
+    [InlineData("RibbonChampionKalos", "Kalos Champion")]
+    [InlineData("RibbonMarkLunchtime", "Lunchtime Mark")]
     [InlineData("RibbonMasterRank", "Master Rank")]
-    public void GetRibbonDisplayName_ReturnsHumanizedName(string propertyName, string expected)
+    [InlineData("RibbonChampionG3", "Champion (Gen3)")]
+    [InlineData("RibbonCountMemoryContest", "Contest Memory")]
+    public void GetRibbonDisplayName_ReturnsRibbonStringsName(string propertyName, string expected)
     {
         // Act
         var result = RibbonHelper.GetRibbonDisplayName(propertyName);

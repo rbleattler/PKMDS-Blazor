@@ -36,11 +36,33 @@
 
         @if (ribbons.Count > 0)
         {
+            var byteRibbons = ribbons.Where(r => r.Type == RibbonValueType.Byte).ToList();
+            var boolRibbons = ribbons.Where(r => r.Type == RibbonValueType.Boolean).ToList();
+
             <MudText Typo="@Typo.subtitle1">Ribbons</MudText>
-            <div class="flex flex-wrap gap-2">
-                @foreach (var ribbon in ribbons)
-                {
-                    @if (ribbon.Type == RibbonValueType.Boolean)
+
+            @if (byteRibbons.Count > 0)
+            {
+                <div class="flex flex-wrap gap-2">
+                    @foreach (var ribbon in byteRibbons)
+                    {
+                        <MudNumericField T="int"
+                                         Label="@GetRibbonDisplayName(ribbon.Name)"
+                                         Min="0"
+                                         Max="@ribbon.MaxCount"
+                                         Value="@ribbon.RibbonCount"
+                                         ValueChanged="@(v => SetRibbonCount(ribbon.Name, v))"
+                                         Variant="@Variant.Outlined"
+                                         Style="width: 160px"/>
+                    }
+                </div>
+                <MudDivider Class="my-2"/>
+            }
+
+            @if (boolRibbons.Count > 0)
+            {
+                <div class="flex flex-wrap gap-2">
+                    @foreach (var ribbon in boolRibbons)
                     {
                         <MudTooltip Text="@GetRibbonDisplayName(ribbon.Name)">
                             <MudImage Src="@GetRibbonSprite(ribbon)"
@@ -50,19 +72,8 @@
                                       @onclick="@(() => ToggleRibbon(ribbon.Name))"/>
                         </MudTooltip>
                     }
-                    else
-                    {
-                        <MudNumericField T="int"
-                                         Label="@GetRibbonDisplayName(ribbon.Name)"
-                                         Min="0"
-                                         Max="@ribbon.MaxCount"
-                                         Value="@ribbon.RibbonCount"
-                                         ValueChanged="@(v => SetRibbonCount(ribbon.Name, v))"
-                                         Variant="@Variant.Outlined"
-                                         Style="width: 140px"/>
-                    }
-                }
-            </div>
+                </div>
+            }
         }
 
         @if (marks.Count > 0)

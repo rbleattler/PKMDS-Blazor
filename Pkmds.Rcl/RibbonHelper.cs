@@ -1,5 +1,3 @@
-using Humanizer;
-
 namespace Pkmds.Rcl;
 
 /// <summary>
@@ -8,14 +6,10 @@ namespace Pkmds.Rcl;
 public static class RibbonHelper
 {
     /// <summary>Gets a human-friendly display name for a ribbon property name.</summary>
+    /// <remarks>Uses <see cref="RibbonStrings"/> from <see cref="GameInfo.Strings"/> when available, falling back to the property name itself.</remarks>
     /// <param name="propertyName">The property name, e.g. "RibbonChampionKalos".</param>
-    public static string GetRibbonDisplayName(string propertyName)
-    {
-        var name = propertyName.StartsWith("Ribbon", StringComparison.Ordinal)
-            ? propertyName["Ribbon".Length..]
-            : propertyName;
-        return name.Humanize(LetterCasing.Title);
-    }
+    public static string GetRibbonDisplayName(string propertyName) =>
+        GameInfo.Strings.Ribbons.GetNameSafe(propertyName, out var name) ? name : propertyName;
 
     /// <summary>Gets the sprite path for a ribbon by its <see cref="RibbonInfo"/>.</summary>
     public static string GetRibbonSprite(RibbonInfo info) =>
