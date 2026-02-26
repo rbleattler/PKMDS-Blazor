@@ -261,6 +261,40 @@
         </MudStack>
     }
 
+    @if (Pokemon is PK1 pk1)
+    {
+        <MudNumericField T="byte"
+                         Label="Catch Rate"
+                         Variant="@Variant.Outlined"
+                         Min="@byte.MinValue"
+                         Max="@byte.MaxValue"
+                         @bind-Value="@pk1.CatchRate"
+                         title="Catch rate. This byte also determines the held item when traded to Gen 2."/>
+    }
+
+    @if (saveGeneration <= 2)
+    {
+        <MudSelect T="@StatusCondition"
+                   Label="Status Condition"
+                   Variant="@Variant.Outlined"
+                   Value="@((StatusCondition)Pokemon.Status_Condition)"
+                   ValueChanged="@(sc => Pokemon.Status_Condition = (int)sc)">
+            <MudSelectItem Value="@StatusCondition.None">Healthy</MudSelectItem>
+            <MudSelectItem Value="@StatusCondition.Sleep1">Sleeping (1 turn)</MudSelectItem>
+            <MudSelectItem Value="@StatusCondition.Sleep2">Sleeping (2 turns)</MudSelectItem>
+            <MudSelectItem Value="@StatusCondition.Sleep3">Sleeping (3 turns)</MudSelectItem>
+            <MudSelectItem Value="@StatusCondition.Sleep4">Sleeping (4 turns)</MudSelectItem>
+            <MudSelectItem Value="@StatusCondition.Sleep5">Sleeping (5 turns)</MudSelectItem>
+            <MudSelectItem Value="@StatusCondition.Sleep6">Sleeping (6 turns)</MudSelectItem>
+            <MudSelectItem Value="@StatusCondition.Sleep7">Sleeping (7 turns)</MudSelectItem>
+            <MudSelectItem Value="@StatusCondition.Poison">Poisoned</MudSelectItem>
+            <MudSelectItem Value="@StatusCondition.Burn">Burned</MudSelectItem>
+            <MudSelectItem Value="@StatusCondition.Freeze">Frozen</MudSelectItem>
+            <MudSelectItem Value="@StatusCondition.Paralysis">Paralyzed</MudSelectItem>
+            <MudSelectItem Value="@StatusCondition.PoisonBad">Badly Poisoned</MudSelectItem>
+        </MudSelect>
+    }
+
     @switch (saveGeneration)
     {
         case 3:
