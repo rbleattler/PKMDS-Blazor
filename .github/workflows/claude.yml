@@ -27,12 +27,37 @@ jobs:
         with:
           persist-credentials: true
 
+      - name: Setup Node (for MCP servers via npx)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Write MCP config (GitHub only)
+        shell: bash
+        run: |
+          cat > .mcp.json <<'JSON'
+          {
+            "mcpServers": {
+              "github": {
+                "command": "npx",
+                "args": ["-y", "@anthropic-ai/mcp-server-github"],
+                "env": {
+                  "GITHUB_TOKEN": "${{ github.token }}"
+                }
+              }
+            }
+          }
+          JSON
+
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          claude_args: "--max-turns 25"
+          github_token: ${{ github.token }}
           use_commit_signing: "true"
+          claude_args: |
+            --max-turns 25
+            --mcp-config .mcp.json
+            --disallowedTools mcp__playwright__*
 
   claude-review:
     runs-on: ubuntu-latest
@@ -44,12 +69,37 @@ jobs:
         with:
           persist-credentials: true
 
+      - name: Setup Node (for MCP servers via npx)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Write MCP config (GitHub only)
+        shell: bash
+        run: |
+          cat > .mcp.json <<'JSON'
+          {
+            "mcpServers": {
+              "github": {
+                "command": "npx",
+                "args": ["-y", "@anthropic-ai/mcp-server-github"],
+                "env": {
+                  "GITHUB_TOKEN": "${{ github.token }}"
+                }
+              }
+            }
+          }
+          JSON
+
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          claude_args: "--max-turns 25"
+          github_token: ${{ github.token }}
           use_commit_signing: "true"
+          claude_args: |
+            --max-turns 25
+            --mcp-config .mcp.json
+            --disallowedTools mcp__playwright__*
           prompt: |
             Review this pull request for code quality, correctness, and adherence to project conventions.
 
