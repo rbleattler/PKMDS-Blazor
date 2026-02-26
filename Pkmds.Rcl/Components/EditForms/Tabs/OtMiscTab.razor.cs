@@ -90,7 +90,7 @@ public partial class OtMiscTab : IDisposable
         }
 
         CommonEdits.SetRandomEC(Pokemon);
-        RefreshService.Refresh();
+        SetPokemonEc(Pokemon.EncryptionConstant);
     }
 
     private void SetPokemonEc(string newEcHex)

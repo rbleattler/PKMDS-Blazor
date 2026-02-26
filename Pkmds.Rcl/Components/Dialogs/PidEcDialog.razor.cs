@@ -115,6 +115,7 @@ public partial class PidEcDialog
         }
 
         CommonEdits.SetRandomEC(Pokemon);
+        AppService.LoadPokemonStats(Pokemon);
         RefreshService.Refresh();
     }
 
