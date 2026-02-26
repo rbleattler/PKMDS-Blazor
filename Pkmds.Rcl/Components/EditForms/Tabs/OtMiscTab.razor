@@ -97,49 +97,13 @@
             </MudButton>
         </MudItem>
 
-        @* Latest (Not OT) Handler – only relevant for Gen 6+ *@
+        @* EC and Home Tracker first, so OT/HT sections are contiguous below *@
         @if (saveGeneration >= 6)
         {
             <MudItem xs="12">
                 <MudDivider Class="my-2"/>
-                <MudText Typo="@Typo.subtitle2"
-                         Class="mt-1 mb-1">Latest (Not OT) Handler</MudText>
             </MudItem>
 
-            <MudItem xs="6"
-                     Class="@ColumnClass">
-                <MudTextField Label="Handler Name"
-                              Variant="@Variant.Outlined"
-                              @bind-Value="@Pokemon.HandlingTrainerName"
-                              MaxLength="@saveFile.MaxStringLengthTrainer"/>
-            </MudItem>
-
-            <MudItem xs="6"
-                     Class="d-flex">
-                <GenderDisplayComponent Gender="@((Gender)Pokemon.HandlingTrainerGender)"
-                                        OnChange="@(g => Pokemon.HandlingTrainerGender = (byte)g)"/>
-            </MudItem>
-
-            @if (Pokemon is IHandlerLanguage htLang)
-            {
-                <MudItem xs="6"
-                         Class="@ColumnClass">
-                    <MudSelect T="byte"
-                               Label="Handler Language"
-                               Variant="@Variant.Outlined"
-                               Value="@htLang.HandlingTrainerLanguage"
-                               ValueChanged="@(v => htLang.HandlingTrainerLanguage = v)">
-                        @foreach (var item in AppService.GetLanguageComboItems(saveGeneration, saveFile.Context))
-                        {
-                            <MudSelectItem T="byte" Value="@((byte)item.Value)">@item.Text</MudSelectItem>
-                        }
-                    </MudSelect>
-                </MudItem>
-            }
-        }
-
-        @if (saveGeneration >= 6)
-        {
             <MudItem xs="6"
                      Class="@ColumnClass">
 
@@ -195,6 +159,47 @@
                               @bind-Value:set="@((string newHomeTrackerHex) => SetPokemonHomeTracker(newHomeTrackerHex))"/>
 
             </MudItem>
+        }
+
+        @* Latest (Not OT) Handler – only relevant for Gen 6+ *@
+        @if (saveGeneration >= 6)
+        {
+            <MudItem xs="12">
+                <MudDivider Class="my-2"/>
+                <MudText Typo="@Typo.subtitle2"
+                         Class="mt-1 mb-1">Latest (Not OT) Handler</MudText>
+            </MudItem>
+
+            <MudItem xs="6"
+                     Class="@ColumnClass">
+                <MudTextField Label="Handler Name"
+                              Variant="@Variant.Outlined"
+                              @bind-Value="@Pokemon.HandlingTrainerName"
+                              MaxLength="@saveFile.MaxStringLengthTrainer"/>
+            </MudItem>
+
+            <MudItem xs="6"
+                     Class="d-flex">
+                <GenderDisplayComponent Gender="@((Gender)Pokemon.HandlingTrainerGender)"
+                                        OnChange="@(g => Pokemon.HandlingTrainerGender = (byte)g)"/>
+            </MudItem>
+
+            @if (Pokemon is IHandlerLanguage htLang)
+            {
+                <MudItem xs="6"
+                         Class="@ColumnClass">
+                    <MudSelect T="byte"
+                               Label="Handler Language"
+                               Variant="@Variant.Outlined"
+                               Value="@htLang.HandlingTrainerLanguage"
+                               ValueChanged="@(v => htLang.HandlingTrainerLanguage = v)">
+                        @foreach (var item in AppService.GetLanguageComboItems(saveGeneration, saveFile.Context))
+                        {
+                            <MudSelectItem T="byte" Value="@((byte)item.Value)">@item.Text</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+            }
         }
 
         @* Friendship *@
@@ -397,7 +402,7 @@
                 </MudSelect>
             </MudItem>
 
-            if (!string.IsNullOrEmpty(otPreview))
+            @if (!string.IsNullOrEmpty(otPreview))
             {
                 <MudItem xs="12">
                     <MudText Typo="@Typo.body2"
@@ -506,7 +511,7 @@
                 </MudSelect>
             </MudItem>
 
-            if (!string.IsNullOrEmpty(htPreview))
+            @if (!string.IsNullOrEmpty(htPreview))
             {
                 <MudItem xs="12">
                     <MudText Typo="@Typo.body2"

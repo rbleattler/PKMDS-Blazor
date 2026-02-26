@@ -275,14 +275,14 @@ public partial class OtMiscTab : IDisposable
         RefreshService.Refresh();
     }
 
-    private void SetPokemonHomeTracker(string newPidHex)
+    private void SetPokemonHomeTracker(string newTrackerHex)
     {
         if (Pokemon is not IHomeTrack homeTrack ||
-            !uint.TryParse(newPidHex, NumberStyles.HexNumber, null, out var parsedPid))
+            !ulong.TryParse(newTrackerHex, NumberStyles.HexNumber, null, out var parsedTracker))
         {
             return;
         }
 
-        homeTrack.Tracker = parsedPid;
+        homeTrack.Tracker = parsedTracker;
     }
 }
