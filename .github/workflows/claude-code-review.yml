@@ -23,6 +23,7 @@ jobs:
       contents: read
       pull-requests: write
       issues: read
+      id-token: write
       actions: read # Required for Claude to read CI results on PRs
 
     steps:
@@ -35,8 +36,7 @@ jobs:
         id: claude-review
         uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          mcp_config: '{"mcpServers": {}}'
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
             Review this pull request and post your findings as a review comment.
 
