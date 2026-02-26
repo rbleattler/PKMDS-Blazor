@@ -32,32 +32,51 @@ jobs:
         with:
           node-version: 20
 
-      - name: Write MCP config (GitHub only)
+      # Managed MCP: exclusive control over which MCP servers can load on this runner
+      - name: Configure managed MCP (GitHub only)
+        shell: bash
+        run: |
+          sudo mkdir -p /etc/claude-code
+          sudo tee /etc/claude-code/managed-mcp.json > /dev/null <<'JSON'
+          {
+            "mcpServers": {
+              "github": {
+                "type": "http",
+                "url": "https://api.githubcopilot.com/mcp/"
+              }
+            }
+          }
+          JSON
+
+      # Optional: project-scoped MCP config for the GitHub server (not strictly needed if managed-mcp.json works,
+      # but keeps things explicit and makes local debugging easier)
+      - name: Write project MCP config (GitHub only)
         shell: bash
         run: |
           cat > .mcp.json <<'JSON'
           {
             "mcpServers": {
               "github": {
-                "command": "npx",
-                "args": ["-y", "@anthropic-ai/mcp-server-github"],
-                "env": {
-                  "GITHUB_TOKEN": "${{ github.token }}"
+                "type": "http",
+                "url": "https://api.githubcopilot.com/mcp/",
+                "headers": {
+                  "Authorization": "Bearer ${GITHUB_TOKEN}"
                 }
               }
             }
           }
           JSON
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
 
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ github.token }}
           use_commit_signing: "true"
-          claude_args: |
-            --max-turns 25
-            --mcp-config .mcp.json
-            --disallowedTools mcp__playwright__*
+          max_turns: "25"
+          mcp_config: ".mcp.json"
+          disallowed_tools: "mcp__playwright__*"
 
   claude-review:
     runs-on: ubuntu-latest
@@ -74,32 +93,48 @@ jobs:
         with:
           node-version: 20
 
-      - name: Write MCP config (GitHub only)
+      - name: Configure managed MCP (GitHub only)
+        shell: bash
+        run: |
+          sudo mkdir -p /etc/claude-code
+          sudo tee /etc/claude-code/managed-mcp.json > /dev/null <<'JSON'
+          {
+            "mcpServers": {
+              "github": {
+                "type": "http",
+                "url": "https://api.githubcopilot.com/mcp/"
+              }
+            }
+          }
+          JSON
+
+      - name: Write project MCP config (GitHub only)
         shell: bash
         run: |
           cat > .mcp.json <<'JSON'
           {
             "mcpServers": {
               "github": {
-                "command": "npx",
-                "args": ["-y", "@anthropic-ai/mcp-server-github"],
-                "env": {
-                  "GITHUB_TOKEN": "${{ github.token }}"
+                "type": "http",
+                "url": "https://api.githubcopilot.com/mcp/",
+                "headers": {
+                  "Authorization": "Bearer ${GITHUB_TOKEN}"
                 }
               }
             }
           }
           JSON
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
 
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ github.token }}
           use_commit_signing: "true"
-          claude_args: |
-            --max-turns 25
-            --mcp-config .mcp.json
-            --disallowedTools mcp__playwright__*
+          max_turns: "25"
+          mcp_config: ".mcp.json"
+          disallowed_tools: "mcp__playwright__*"
           prompt: |
             Review this pull request for code quality, correctness, and adherence to project conventions.
 
