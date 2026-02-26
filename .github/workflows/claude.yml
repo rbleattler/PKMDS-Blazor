@@ -18,7 +18,7 @@ jobs:
   claude:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    if: github.event_name != 'pull_request'
     steps:
       - uses: anthropics/claude-code-action@v1
         with:
@@ -26,3 +26,23 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           claude_args: "--max-turns 25"
           use_commit_signing: "true"
+
+  claude-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: github.event_name == 'pull_request' && github.event.pull_request.draft == false
+    steps:
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          claude_args: "--max-turns 25"
+          use_commit_signing: "true"
+          prompt: |
+            Review this pull request for code quality, correctness, and adherence to project conventions.
+
+            Focus on:
+            - Correct use of PKHeX.Core APIs (reference https://github.com/kwsch/PKHeX for the source)
+            - Adherence to .editorconfig formatting rules and existing code style
+            - Potential bugs or regressions
+            - Test coverage for new functionality
