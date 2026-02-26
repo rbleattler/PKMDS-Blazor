@@ -133,7 +133,7 @@ public partial class MovesTab
     private int? GetPokemonRelearnMove(int relearnIndex) =>
         Pokemon?.GetRelearnMove(relearnIndex);
 
-    private async void OpenRelearnFlagsDialog()
+    private async Task OpenRelearnFlagsDialog()
     {
         var parameters = new DialogParameters<RelearnFlagsDialog> { { x => x.Pokemon, Pokemon } };
 
@@ -145,7 +145,7 @@ public partial class MovesTab
         await DialogService.ShowAsync<RelearnFlagsDialog>("TR Relearn Editor", parameters, options);
     }
 
-    private async void OpenPlusFlagsDialog()
+    private async Task OpenPlusFlagsDialog()
     {
         var parameters = new DialogParameters<PlusFlagsDialog> { { x => x.Pokemon, Pokemon } };
 
@@ -157,7 +157,7 @@ public partial class MovesTab
         await DialogService.ShowAsync<PlusFlagsDialog>("Plus Flags Editor", parameters, options);
     }
 
-    private async void OpenMoveShopDialog()
+    private async Task OpenMoveShopDialog()
     {
         var parameters = new DialogParameters<MoveShopDialog> { { x => x.Pokemon, Pokemon } };
 

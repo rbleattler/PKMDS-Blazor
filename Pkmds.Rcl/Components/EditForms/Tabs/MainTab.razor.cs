@@ -112,7 +112,7 @@ public partial class MainTab : IDisposable
         RefreshService.Refresh();
     }
 
-    private async void OpenPidEcDialog()
+    private async Task OpenPidEcDialog()
     {
         var parameters = new DialogParameters<PidEcDialog> { { x => x.Pokemon, Pokemon } };
 
