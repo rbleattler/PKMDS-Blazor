@@ -878,5 +878,5 @@ This roadmap is a living document. Community contributions are welcome!
 
 **For questions, suggestions, or to discuss the roadmap, please open an issue on GitHub or contact the maintainer.**
 
-**Last Updated:** 2026-02-17  
-**Next Review:** 2026-03-17
+**Last Updated:** 2026-02-26
+**Next Review:** 2026-03-26
