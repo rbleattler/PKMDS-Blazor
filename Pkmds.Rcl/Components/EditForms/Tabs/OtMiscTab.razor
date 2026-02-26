@@ -121,6 +121,14 @@
                               @bind-Value:get="@Pokemon.EncryptionConstant.ToString("X8")"
                               @bind-Value:set="@((string newEcHex) => SetPokemonEc(newEcHex))"/>
             </MudItem>
+
+            <MudItem xs="12">
+                <MudButton OnClick="@RandomizeEc"
+                           Variant="@Variant.Outlined"
+                           StartIcon="@Icons.Material.Filled.Shuffle">
+                    Randomize EC
+                </MudButton>
+            </MudItem>
         }
 
         @if (Pokemon is IHomeTrack homeTrack)

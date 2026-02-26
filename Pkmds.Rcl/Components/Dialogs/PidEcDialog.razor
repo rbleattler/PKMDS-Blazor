@@ -1,0 +1,141 @@
+@inherits BasePkmdsComponent
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="@Typo.h6">PID / EC Generator</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (Pokemon is not null)
+        {
+            @if (SaveGeneration >= 3)
+            {
+                <MudText Typo="@Typo.subtitle1"
+                         Class="mb-2">
+                    PID Generator
+                </MudText>
+
+                <MudStack Row
+                          Wrap="@Wrap.Wrap"
+                          Spacing="1"
+                          Class="mb-2">
+
+                    <MudButton Variant="@Variant.Outlined"
+                               OnClick="@RerollPid"
+                               StartIcon="@Icons.Material.Filled.Refresh">
+                        Reroll PID
+                    </MudButton>
+
+                    <MudButton Variant="@Variant.Outlined"
+                               OnClick="@MakeShinyPid"
+                               StartIcon="@Icons.Material.Filled.Star">
+                        Make Shiny PID
+                    </MudButton>
+
+                    <MudButton Variant="@Variant.Outlined"
+                               OnClick="@SetGenderLockedPid"
+                               StartIcon="@Icons.Material.Filled.People"
+                               Disabled="@(!Pokemon.PersonalInfo.IsDualGender)">
+                        Gender-Locked PID
+                    </MudButton>
+
+                    <MudButton Variant="@Variant.Outlined"
+                               OnClick="@SetNatureLockedPid"
+                               StartIcon="@Icons.Material.Filled.Psychology">
+                        Nature-Locked PID
+                    </MudButton>
+
+                </MudStack>
+
+                @if (SaveGeneration is 3 or 4)
+                {
+                    <MudDivider Class="my-3"/>
+
+                    <MudText Typo="@Typo.subtitle2"
+                             Class="mb-2">
+                        Gen 3/4 Method with IV Correlation
+                    </MudText>
+
+                    <MudStack Row
+                              AlignItems="@AlignItems.Center"
+                              Spacing="2">
+
+                        <MudSelect T="@PIDType"
+                                   Label="Method"
+                                   Variant="@Variant.Outlined"
+                                   @bind-Value="@SelectedMethod">
+                            <MudSelectItem Value="@PIDType.Method_1">Method 1</MudSelectItem>
+                            <MudSelectItem Value="@PIDType.Method_2">Method 2</MudSelectItem>
+                            <MudSelectItem Value="@PIDType.Method_4">Method 4</MudSelectItem>
+                        </MudSelect>
+
+                        <MudButton Variant="@Variant.Filled"
+                                   OnClick="@GenerateWithMethod"
+                                   Color="@Color.Primary">
+                            Generate
+                        </MudButton>
+
+                    </MudStack>
+                }
+            }
+
+            @if (SaveGeneration >= 6)
+            {
+                <MudDivider Class="my-3"/>
+
+                <MudText Typo="@Typo.subtitle1"
+                         Class="mb-2">
+                    Encryption Constant (EC)
+                </MudText>
+
+                <MudStack Row
+                          Wrap="@Wrap.Wrap"
+                          Spacing="1"
+                          Class="mb-2">
+
+                    <MudButton Variant="@Variant.Outlined"
+                               OnClick="@RandomizeEc"
+                               StartIcon="@Icons.Material.Filled.Shuffle">
+                        Randomize EC
+                    </MudButton>
+
+                </MudStack>
+
+                @if (SaveGeneration >= 8)
+                {
+                    <MudDivider Class="my-3"/>
+
+                    <MudText Typo="@Typo.subtitle2"
+                             Class="mb-2">
+                        Shiny Type (Gen 8+)
+                    </MudText>
+
+                    <MudStack Row
+                              AlignItems="@AlignItems.Center"
+                              Spacing="2">
+
+                        <MudSelect T="@Shiny"
+                                   Label="Shiny Type"
+                                   Variant="@Variant.Outlined"
+                                   @bind-Value="@SelectedShinyType">
+                            <MudSelectItem Value="@Shiny.AlwaysStar">Star Shiny</MudSelectItem>
+                            <MudSelectItem Value="@Shiny.AlwaysSquare">Square Shiny</MudSelectItem>
+                        </MudSelect>
+
+                        <MudButton Variant="@Variant.Filled"
+                                   OnClick="@ApplyShinyType"
+                                   Color="@Color.Primary">
+                            Apply
+                        </MudButton>
+
+                    </MudStack>
+                }
+            }
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@Close"
+                   Variant="@Variant.Outlined">
+            Close
+        </MudButton>
+    </DialogActions>
+</MudDialog>

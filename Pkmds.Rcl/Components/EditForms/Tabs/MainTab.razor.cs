@@ -112,6 +112,18 @@ public partial class MainTab : IDisposable
         RefreshService.Refresh();
     }
 
+    private async void OpenPidEcDialog()
+    {
+        var parameters = new DialogParameters<PidEcDialog> { { x => x.Pokemon, Pokemon } };
+
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true
+        };
+
+        await DialogService.ShowAsync<PidEcDialog>("PID / EC Generator", parameters, options);
+    }
+
     private void SetPokemonPid(string newPidHex)
     {
         if (Pokemon is null || !uint.TryParse(newPidHex, NumberStyles.HexNumber, null, out var parsedPid))

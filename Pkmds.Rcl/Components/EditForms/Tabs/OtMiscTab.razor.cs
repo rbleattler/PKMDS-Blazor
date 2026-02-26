@@ -82,6 +82,17 @@ public partial class OtMiscTab : IDisposable
         RefreshService.Refresh();
     }
 
+    private void RandomizeEc()
+    {
+        if (Pokemon is null)
+        {
+            return;
+        }
+
+        CommonEdits.SetRandomEC(Pokemon);
+        RefreshService.Refresh();
+    }
+
     private void SetPokemonEc(string newEcHex)
     {
         if (Pokemon is null || !uint.TryParse(newEcHex, NumberStyles.HexNumber, null, out var parsedEc))
