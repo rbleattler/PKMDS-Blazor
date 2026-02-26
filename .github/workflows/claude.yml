@@ -6,6 +6,9 @@ on:
     types: [created]
   issues:
     types: [opened, assigned]
+permissions:
+  id-token: write
+
 
 jobs:
   claude:
