@@ -37,6 +37,7 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          mcp_config: '{"mcpServers": {}}'
           prompt: |
             Review this pull request and post your findings as a review comment.
 
