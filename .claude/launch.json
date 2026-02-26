@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Pkmds.Web (HTTP)",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["watch", "--project", "Pkmds.Web/Pkmds.Web.csproj", "run", "-c", "Debug", "-v", "n", "--no-hot-reload"],
+      "port": 5283
+    },
+    {
+      "name": "Pkmds.Web (HTTPS)",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["watch", "--project", "Pkmds.Web/Pkmds.Web.csproj", "run", "-c", "Debug", "-v", "n", "--no-hot-reload", "--launch-profile", "https"],
+      "port": 7267
+    }
+  ]
+}
