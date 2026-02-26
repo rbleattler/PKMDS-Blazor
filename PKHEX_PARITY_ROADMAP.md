@@ -111,13 +111,13 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - [ ] Create PID reroller for legal PIDs
 
 #### Catch Rate / Status Condition Editor
-**Status:** ❌ Not Implemented  
+**Status:** ✅ Implemented  
 **Complexity:** Low  
 **Tasks:**
-- [ ] Add Catch Rate field (Gen 1-2)
-- [ ] Create Status Condition editor (Gen 1-2)
-- [ ] Add held item slot for Gen 1-2 (linked to catch rate byte)
-- [ ] Implement generation-specific validation
+- [x] Add Catch Rate field (Gen 1-2)
+- [x] Create Status Condition editor (Gen 1-2)
+- [x] Add held item slot for Gen 1-2 (linked to catch rate byte)
+- [x] Implement generation-specific validation
 
 ### 1.2 Legality Checker
 **Status:** ❌ Not Implemented  
