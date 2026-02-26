@@ -87,7 +87,7 @@
                                   Width="32"
                                   Height="32"
                                   Alt="@GetRibbonDisplayName(mark.Name)"
-                                  Title="@GetRibbonDisplayName(mark.Name)"
+                                  title="@GetRibbonDisplayName(mark.Name)"
                                   Class="@(mark.HasRibbon ? "cursor-pointer" : "cursor-pointer opacity-30")"
                                   @onclick="@(() => ToggleRibbon(mark.Name))"/>
                     </MudTooltip>
