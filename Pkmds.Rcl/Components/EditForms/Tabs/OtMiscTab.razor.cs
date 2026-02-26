@@ -6,11 +6,89 @@ public partial class OtMiscTab : IDisposable
     [EditorRequired]
     public PKM? Pokemon { get; set; }
 
+    /// <summary>
+    ///     Cached list of memory combo items, populated when the Pokémon supports memories (Gen 6+).
+    /// </summary>
+    private List<ComboItem>? CachedMemoryItems { get; set; }
+
+    /// <summary>
+    ///     Cached list of memory feeling combo items, populated when the Pokémon supports memories (Gen 6+).
+    /// </summary>
+    private List<ComboItem>? CachedFeelingItems { get; set; }
+
     public void Dispose() =>
         RefreshService.OnAppStateChanged -= StateHasChanged;
 
     protected override void OnInitialized() =>
         RefreshService.OnAppStateChanged += StateHasChanged;
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+
+        if (Pokemon is IMemoryOT or IMemoryHT)
+        {
+            CachedMemoryItems = AppService.GetMemoryComboItems().ToList();
+            CachedFeelingItems = AppService.GetMemoryFeelingComboItems(MemoryGen).ToList();
+        }
+        else
+        {
+            CachedMemoryItems = null;
+            CachedFeelingItems = null;
+        }
+    }
+
+    /// <summary>
+    ///     Returns the memory generation (6 or 8) used for feeling/argument lookups.
+    ///     Gen 6/7 Pokémon use generation 6 memory sets; Gen 8+ use generation 8 memory sets.
+    /// </summary>
+    private int MemoryGen => Pokemon?.Context switch
+    {
+        EntityContext.Gen6 or EntityContext.Gen7 => 6,
+        _ => 8,
+    };
+
+    /// <summary>
+    ///     Returns true when the specified memory ID uses a variable argument ({2} placeholder).
+    /// </summary>
+    private static bool MemoryHasVariable(byte memoryId, IEnumerable<ComboItem> memoryItems)
+    {
+        foreach (var item in memoryItems)
+        {
+            if (item.Value == memoryId)
+            {
+                return item.Text.Contains("{2}", StringComparison.Ordinal);
+            }
+        }
+
+        return false;
+    }
+
+    private void ClearOtMemory()
+    {
+        if (Pokemon is not IMemoryOT otMemory)
+        {
+            return;
+        }
+
+        otMemory.OriginalTrainerMemory = 0;
+        otMemory.OriginalTrainerMemoryIntensity = 0;
+        otMemory.OriginalTrainerMemoryFeeling = 0;
+        otMemory.OriginalTrainerMemoryVariable = 0;
+    }
+
+    private void ClearHtMemory()
+    {
+        if (Pokemon is not IMemoryHT htMemory)
+        {
+            return;
+        }
+
+        htMemory.HandlingTrainerMemory = 0;
+        htMemory.HandlingTrainerMemoryIntensity = 0;
+        htMemory.HandlingTrainerMemoryFeeling = 0;
+        htMemory.HandlingTrainerMemoryVariable = 0;
+    }
 
     private void FillFromGame()
     {

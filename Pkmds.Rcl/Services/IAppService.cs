@@ -241,4 +241,17 @@ public interface IAppService
     /// <param name="isDestParty">Whether the destination is a party slot.</param>
     void MovePokemon(int? sourceBoxNumber, int sourceSlotNumber, bool isSourceParty,
         int? destBoxNumber, int destSlotNumber, bool isDestParty);
+
+    /// <summary>
+    ///     Gets all available memory combo items for the memory ID dropdown.
+    /// </summary>
+    /// <returns>A collection of memories as combo items.</returns>
+    IEnumerable<ComboItem> GetMemoryComboItems();
+
+    /// <summary>
+    ///     Gets all available memory feeling combo items for the given memory generation.
+    /// </summary>
+    /// <param name="memoryGen">The memory generation (6 for Gen 6/7, 8 for Gen 8+).</param>
+    /// <returns>A collection of feelings as combo items.</returns>
+    IEnumerable<ComboItem> GetMemoryFeelingComboItems(int memoryGen);
 }

@@ -795,6 +795,15 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         // BlankPKM from PKHeX.Core should already have the correct version set.
     }
 
+    public IEnumerable<ComboItem> GetMemoryComboItems() =>
+        new MemoryStrings(GameInfo.Strings).Memory;
+
+    public IEnumerable<ComboItem> GetMemoryFeelingComboItems(int memoryGen)
+    {
+        var feelings = new MemoryStrings(GameInfo.Strings).GetMemoryFeelings(memoryGen).ToArray();
+        return feelings.Select((f, i) => new ComboItem(f, i));
+    }
+
     /// <summary>
     /// Compacts a box by shifting all Pokémon left to fill gaps (for Gen 1 and Gen 2 games).
     /// In these generations, boxes were lists, not grids, so they should have no gaps.

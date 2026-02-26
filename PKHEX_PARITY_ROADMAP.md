@@ -2,7 +2,7 @@
 
 This roadmap outlines the path to achieving 100% feature parity with PKHeX. Tasks are broken down into actionable items organized by feature category and priority.
 
-**Last Updated:** 2026-02-17
+**Last Updated:** 2026-02-26
 
 ---
 
@@ -27,7 +27,7 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - **Records** - Game statistics, Hall of Fame timing
 - **Mystery Gift Database** - Browse, search, filter, import mystery gifts
 - **Met Data** - Met location, ball, level, origin game, generation-specific fields
-- **OT/Misc Data** - Original trainer info, generation-specific format support
+- **OT/Misc Data** - Original trainer info, generation-specific format support, memory editing (Gen 6+), affection/friendship
 - **Cosmetic Features** - Markings, height/weight scalars, scale rating
 - **Pokerus** - Infection status display/editing
 - **Hidden Power** - Type selection
@@ -60,17 +60,17 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - [x] Create unit tests for ribbon editing
 
 #### Memory Editor
-**Status:** ❌ Not Implemented  
+**Status:** ✅ Implemented  
 **Complexity:** Medium  
 **Tasks:**
-- [ ] Create Memory editing UI component
-- [ ] Implement OT Memory editing (Gen 6+)
-- [ ] Implement HT (Handling Trainer) Memory editing (Gen 6+)
-- [ ] Add memory intensity/feeling/text selection
-- [ ] Support memory location selection
-- [ ] Add memory validation based on game version
-- [ ] Implement affection/friendship display and editing
-- [ ] Create unit tests for memory editing
+- [x] Create Memory editing UI component
+- [x] Implement OT Memory editing (Gen 6+)
+- [x] Implement HT (Handling Trainer) Memory editing (Gen 6+)
+- [x] Add memory intensity/feeling/text selection
+- [x] Support memory variable selection
+- [x] Add memory validation based on game version
+- [x] Implement affection/friendship display and editing
+- [x] Create unit tests for memory editing
 
 #### Contest Stats Editor
 **Status:** ✅ Implemented  
