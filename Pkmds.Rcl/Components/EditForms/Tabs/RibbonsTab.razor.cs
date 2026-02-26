@@ -55,7 +55,31 @@ public partial class RibbonsTab : IDisposable
             return;
         }
 
-        prop.SetValue(Pokemon, (byte)count);
+        // Clamp the incoming count to a valid range before casting to byte.
+        var maxAllowed = (int)byte.MaxValue;
+        foreach (var ribbon in GetAllRibbonInfo())
+        {
+            if (ribbon.Name == propertyName)
+            {
+                if (ribbon.MaxCount < maxAllowed)
+                {
+                    maxAllowed = ribbon.MaxCount;
+                }
+                break;
+            }
+        }
+
+        var clamped = count;
+        if (clamped < 0)
+        {
+            clamped = 0;
+        }
+        if (clamped > maxAllowed)
+        {
+            clamped = maxAllowed;
+        }
+
+        prop.SetValue(Pokemon, (byte)clamped);
         StateHasChanged();
     }
 
