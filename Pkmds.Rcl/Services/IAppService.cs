@@ -254,4 +254,13 @@ public interface IAppService
     /// <param name="memoryGen">The memory generation (6 for Gen 6/7, 8 for Gen 8+).</param>
     /// <returns>A collection of feelings as combo items.</returns>
     IEnumerable<ComboItem> GetMemoryFeelingComboItems(int memoryGen);
+
+    /// <summary>Gets memory intensity/quality combo items.</summary>
+    IEnumerable<ComboItem> GetMemoryQualityComboItems();
+
+    /// <summary>Gets argument combo items for a given memory argument type and generation.</summary>
+    IEnumerable<ComboItem> GetMemoryArgumentComboItems(MemoryArgType argType, int memoryGen);
+
+    /// <summary>Gets language combo items for the given generation.</summary>
+    IEnumerable<ComboItem> GetLanguageComboItems(int generation, EntityContext context);
 }

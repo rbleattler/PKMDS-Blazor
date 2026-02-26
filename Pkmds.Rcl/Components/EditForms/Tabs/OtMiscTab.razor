@@ -97,6 +97,47 @@
             </MudButton>
         </MudItem>
 
+        @* Latest (Not OT) Handler – only relevant for Gen 6+ *@
+        @if (saveGeneration >= 6)
+        {
+            <MudItem xs="12">
+                <MudDivider Class="my-2"/>
+                <MudText Typo="@Typo.subtitle2"
+                         Class="mt-1 mb-1">Latest (Not OT) Handler</MudText>
+            </MudItem>
+
+            <MudItem xs="6"
+                     Class="@ColumnClass">
+                <MudTextField Label="Handler Name"
+                              Variant="@Variant.Outlined"
+                              @bind-Value="@Pokemon.HandlingTrainerName"
+                              MaxLength="@saveFile.MaxStringLengthTrainer"/>
+            </MudItem>
+
+            <MudItem xs="6"
+                     Class="d-flex">
+                <GenderDisplayComponent Gender="@((Gender)Pokemon.HandlingTrainerGender)"
+                                        OnChange="@(g => Pokemon.HandlingTrainerGender = (byte)g)"/>
+            </MudItem>
+
+            @if (Pokemon is IHandlerLanguage htLang)
+            {
+                <MudItem xs="6"
+                         Class="@ColumnClass">
+                    <MudSelect T="byte"
+                               Label="Handler Language"
+                               Variant="@Variant.Outlined"
+                               Value="@htLang.HandlingTrainerLanguage"
+                               ValueChanged="@(v => htLang.HandlingTrainerLanguage = v)">
+                        @foreach (var item in AppService.GetLanguageComboItems(saveGeneration, saveFile.Context))
+                        {
+                            <MudSelectItem T="byte" Value="@((byte)item.Value)">@item.Text</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+            }
+        }
+
         @if (saveGeneration >= 6)
         {
             <MudItem xs="6"
@@ -213,20 +254,91 @@
             </MudItem>
         }
 
-        @* OT Memory (Gen 6+) *@
-        @if (Pokemon is IMemoryOT otMemory && CachedMemoryItems is not null && CachedFeelingItems is not null)
+        @* Fullness and Enjoyment (Gen 6-8) *@
+        @if (Pokemon is IFullnessEnjoyment fullnessEnjoyment)
         {
+            <MudItem xs="6"
+                     Class="@ColumnClass">
+                <MudNumericField T="byte"
+                                 Label="Fullness"
+                                 Variant="@Variant.Outlined"
+                                 Min="0"
+                                 Max="@byte.MaxValue"
+                                 Value="@fullnessEnjoyment.Fullness"
+                                 ValueChanged="@(v => fullnessEnjoyment.Fullness = v)"/>
+            </MudItem>
+
+            <MudItem xs="6"
+                     Class="@ColumnClass">
+                <MudNumericField T="byte"
+                                 Label="Enjoyment"
+                                 Variant="@Variant.Outlined"
+                                 Min="0"
+                                 Max="@byte.MaxValue"
+                                 Value="@fullnessEnjoyment.Enjoyment"
+                                 ValueChanged="@(v => fullnessEnjoyment.Enjoyment = v)"/>
+            </MudItem>
+        }
+
+        @* Sociability (Gen 8 BDSP/PLA) *@
+        @if (Pokemon is ISociability sociability)
+        {
+            <MudItem xs="6"
+                     Class="@ColumnClass">
+                <MudNumericField T="uint"
+                                 Label="Sociability"
+                                 Variant="@Variant.Outlined"
+                                 Min="0U"
+                                 Max="@uint.MaxValue"
+                                 Value="@sociability.Sociability"
+                                 ValueChanged="@(v => sociability.Sociability = v)"/>
+            </MudItem>
+        }
+
+        @* Current Handler *@
+        @if (Pokemon is IMemoryHT && saveGeneration >= 6)
+        {
+            <MudItem xs="6"
+                     Class="@ColumnClass">
+                <MudSelect T="byte"
+                           Label="Current Handler"
+                           Variant="@Variant.Outlined"
+                           Value="@Pokemon.CurrentHandler"
+                           ValueChanged="@(v => Pokemon.CurrentHandler = v)">
+                    <MudSelectItem T="byte" Value="@((byte)0)">OT</MudSelectItem>
+                    <MudSelectItem T="byte" Value="@((byte)1)">HT</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+        }
+
+        @* OT Memory (Gen 6+) *@
+        @if (Pokemon is IMemoryOT otMemory && CachedMemoryItems is not null && CachedFeelingItems is not null && CachedQualityItems is not null)
+        {
+            var otArgType = GetMemoryArgType(otMemory.OriginalTrainerMemory);
+            var otArgItems = otArgType != MemoryArgType.None
+                ? AppService.GetMemoryArgumentComboItems(otArgType, MemoryGen).ToList()
+                : null;
+            var otPreview = FormatMemoryText(
+                otMemory.OriginalTrainerMemory,
+                otMemory.OriginalTrainerMemoryVariable,
+                otMemory.OriginalTrainerMemoryIntensity,
+                otMemory.OriginalTrainerMemoryFeeling,
+                Pokemon.OriginalTrainerName,
+                CachedMemoryItems,
+                CachedQualityItems,
+                CachedFeelingItems);
+
             <MudItem xs="12">
                 <MudDivider Class="my-2"/>
                 <MudText Typo="@Typo.subtitle2"
                          Class="mt-1 mb-1">OT Memory</MudText>
             </MudItem>
 
-            <MudItem xs="12"
-                     Class="@ColumnClass">
+            <MudItem xs="12">
                 <MudSelect T="byte"
                            Label="Memory"
                            Variant="@Variant.Outlined"
+                           FullWidth
                            MaxHeight="300"
                            Value="@otMemory.OriginalTrainerMemory"
                            ValueChanged="@(v => otMemory.OriginalTrainerMemory = v)">
@@ -237,14 +349,37 @@
                 </MudSelect>
             </MudItem>
 
+            @if (otArgItems is not null)
+            {
+                <MudItem xs="12">
+                    <MudSelect T="ushort"
+                               Label="@GetMemoryArgLabel(otArgType)"
+                               Variant="@Variant.Outlined"
+                               FullWidth
+                               MaxHeight="300"
+                               Value="@otMemory.OriginalTrainerMemoryVariable"
+                               ValueChanged="@(v => otMemory.OriginalTrainerMemoryVariable = v)">
+                        @foreach (var item in otArgItems)
+                        {
+                            <MudSelectItem T="ushort" Value="@((ushort)item.Value)">@item.Text</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+            }
+
             <MudItem xs="6"
                      Class="@ColumnClass">
-                <MudNumericField T="byte"
-                                 Label="Intensity"
-                                 Variant="@Variant.Outlined"
-                                 Min="0"
-                                 Max="@MemoryContext6.MaxIntensity"
-                                 @bind-Value="@otMemory.OriginalTrainerMemoryIntensity"/>
+                <MudSelect T="byte"
+                           Label="Intensity"
+                           Variant="@Variant.Outlined"
+                           FullWidth
+                           Value="@otMemory.OriginalTrainerMemoryIntensity"
+                           ValueChanged="@(v => otMemory.OriginalTrainerMemoryIntensity = v)">
+                    @foreach (var item in CachedQualityItems)
+                    {
+                        <MudSelectItem T="byte" Value="@((byte)item.Value)">@item.Text</MudSelectItem>
+                    }
+                </MudSelect>
             </MudItem>
 
             <MudItem xs="6"
@@ -252,6 +387,7 @@
                 <MudSelect T="byte"
                            Label="Feeling"
                            Variant="@Variant.Outlined"
+                           FullWidth
                            Value="@otMemory.OriginalTrainerMemoryFeeling"
                            ValueChanged="@(v => otMemory.OriginalTrainerMemoryFeeling = v)">
                     @foreach (var item in CachedFeelingItems)
@@ -261,16 +397,14 @@
                 </MudSelect>
             </MudItem>
 
-            @if (MemoryHasVariable(otMemory.OriginalTrainerMemory, CachedMemoryItems))
+            if (!string.IsNullOrEmpty(otPreview))
             {
-                <MudItem xs="6"
-                         Class="@ColumnClass">
-                    <MudNumericField T="ushort"
-                                     Label="Variable"
-                                     Variant="@Variant.Outlined"
-                                     Min="0"
-                                     Max="@ushort.MaxValue"
-                                     @bind-Value="@otMemory.OriginalTrainerMemoryVariable"/>
+                <MudItem xs="12">
+                    <MudText Typo="@Typo.body2"
+                             Class="mud-text-secondary pa-2"
+                             Style="white-space: pre-wrap; border: 1px solid var(--mud-palette-lines-default); border-radius: 4px;">
+                        @otPreview
+                    </MudText>
                 </MudItem>
             }
 
@@ -287,33 +421,33 @@
         }
 
         @* HT Memory (Gen 6+) *@
-        @if (Pokemon is IMemoryHT htMemory && CachedMemoryItems is not null && CachedFeelingItems is not null)
+        @if (Pokemon is IMemoryHT htMemory && CachedMemoryItems is not null && CachedFeelingItems is not null && CachedQualityItems is not null)
         {
+            var htArgType = GetMemoryArgType(htMemory.HandlingTrainerMemory);
+            var htArgItems = htArgType != MemoryArgType.None
+                ? AppService.GetMemoryArgumentComboItems(htArgType, MemoryGen).ToList()
+                : null;
+            var htPreview = FormatMemoryText(
+                htMemory.HandlingTrainerMemory,
+                htMemory.HandlingTrainerMemoryVariable,
+                htMemory.HandlingTrainerMemoryIntensity,
+                htMemory.HandlingTrainerMemoryFeeling,
+                Pokemon.HandlingTrainerName,
+                CachedMemoryItems,
+                CachedQualityItems,
+                CachedFeelingItems);
+
             <MudItem xs="12">
                 <MudDivider Class="my-2"/>
                 <MudText Typo="@Typo.subtitle2"
                          Class="mt-1 mb-1">HT Memory</MudText>
             </MudItem>
 
-            <MudItem xs="6"
-                     Class="@ColumnClass">
-                <MudTextField Label="HT Name"
-                              Variant="@Variant.Outlined"
-                              @bind-Value="@Pokemon.HandlingTrainerName"
-                              MaxLength="@saveFile.MaxStringLengthTrainer"/>
-            </MudItem>
-
-            <MudItem xs="6"
-                     Class="d-flex">
-                <GenderDisplayComponent Gender="@((Gender)Pokemon.HandlingTrainerGender)"
-                                        OnChange="@(g => Pokemon.HandlingTrainerGender = (byte)g)"/>
-            </MudItem>
-
-            <MudItem xs="12"
-                     Class="@ColumnClass">
+            <MudItem xs="12">
                 <MudSelect T="byte"
                            Label="Memory"
                            Variant="@Variant.Outlined"
+                           FullWidth
                            MaxHeight="300"
                            Value="@htMemory.HandlingTrainerMemory"
                            ValueChanged="@(v => htMemory.HandlingTrainerMemory = v)">
@@ -324,14 +458,37 @@
                 </MudSelect>
             </MudItem>
 
+            @if (htArgItems is not null)
+            {
+                <MudItem xs="12">
+                    <MudSelect T="ushort"
+                               Label="@GetMemoryArgLabel(htArgType)"
+                               Variant="@Variant.Outlined"
+                               FullWidth
+                               MaxHeight="300"
+                               Value="@htMemory.HandlingTrainerMemoryVariable"
+                               ValueChanged="@(v => htMemory.HandlingTrainerMemoryVariable = v)">
+                        @foreach (var item in htArgItems)
+                        {
+                            <MudSelectItem T="ushort" Value="@((ushort)item.Value)">@item.Text</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+            }
+
             <MudItem xs="6"
                      Class="@ColumnClass">
-                <MudNumericField T="byte"
-                                 Label="Intensity"
-                                 Variant="@Variant.Outlined"
-                                 Min="0"
-                                 Max="@MemoryContext6.MaxIntensity"
-                                 @bind-Value="@htMemory.HandlingTrainerMemoryIntensity"/>
+                <MudSelect T="byte"
+                           Label="Intensity"
+                           Variant="@Variant.Outlined"
+                           FullWidth
+                           Value="@htMemory.HandlingTrainerMemoryIntensity"
+                           ValueChanged="@(v => htMemory.HandlingTrainerMemoryIntensity = v)">
+                    @foreach (var item in CachedQualityItems)
+                    {
+                        <MudSelectItem T="byte" Value="@((byte)item.Value)">@item.Text</MudSelectItem>
+                    }
+                </MudSelect>
             </MudItem>
 
             <MudItem xs="6"
@@ -339,6 +496,7 @@
                 <MudSelect T="byte"
                            Label="Feeling"
                            Variant="@Variant.Outlined"
+                           FullWidth
                            Value="@htMemory.HandlingTrainerMemoryFeeling"
                            ValueChanged="@(v => htMemory.HandlingTrainerMemoryFeeling = v)">
                     @foreach (var item in CachedFeelingItems)
@@ -348,16 +506,14 @@
                 </MudSelect>
             </MudItem>
 
-            @if (MemoryHasVariable(htMemory.HandlingTrainerMemory, CachedMemoryItems!))
+            if (!string.IsNullOrEmpty(htPreview))
             {
-                <MudItem xs="6"
-                         Class="@ColumnClass">
-                    <MudNumericField T="ushort"
-                                     Label="Variable"
-                                     Variant="@Variant.Outlined"
-                                     Min="0"
-                                     Max="@ushort.MaxValue"
-                                     @bind-Value="@htMemory.HandlingTrainerMemoryVariable"/>
+                <MudItem xs="12">
+                    <MudText Typo="@Typo.body2"
+                             Class="mud-text-secondary pa-2"
+                             Style="white-space: pre-wrap; border: 1px solid var(--mud-palette-lines-default); border-radius: 4px;">
+                        @htPreview
+                    </MudText>
                 </MudItem>
             }
 

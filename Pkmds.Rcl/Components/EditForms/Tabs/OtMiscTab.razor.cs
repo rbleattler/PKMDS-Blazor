@@ -6,15 +6,9 @@ public partial class OtMiscTab : IDisposable
     [EditorRequired]
     public PKM? Pokemon { get; set; }
 
-    /// <summary>
-    ///     Cached list of memory combo items, populated when the Pokémon supports memories (Gen 6+).
-    /// </summary>
     private List<ComboItem>? CachedMemoryItems { get; set; }
-
-    /// <summary>
-    ///     Cached list of memory feeling combo items, populated when the Pokémon supports memories (Gen 6+).
-    /// </summary>
     private List<ComboItem>? CachedFeelingItems { get; set; }
+    private List<ComboItem>? CachedQualityItems { get; set; }
 
     public void Dispose() =>
         RefreshService.OnAppStateChanged -= StateHasChanged;
@@ -30,11 +24,13 @@ public partial class OtMiscTab : IDisposable
         {
             CachedMemoryItems = AppService.GetMemoryComboItems().ToList();
             CachedFeelingItems = AppService.GetMemoryFeelingComboItems(MemoryGen).ToList();
+            CachedQualityItems = AppService.GetMemoryQualityComboItems().ToList();
         }
         else
         {
             CachedMemoryItems = null;
             CachedFeelingItems = null;
+            CachedQualityItems = null;
         }
     }
 
@@ -48,20 +44,99 @@ public partial class OtMiscTab : IDisposable
         _ => 8,
     };
 
-    /// <summary>
-    ///     Returns true when the specified memory ID uses a variable argument ({2} placeholder).
-    /// </summary>
-    private static bool MemoryHasVariable(byte memoryId, IEnumerable<ComboItem> memoryItems)
+    // Memory ID → MemoryArgType mapping (based on PKHeX.Core memory text format strings)
+    private static readonly MemoryArgType[] MemoryArgTypes =
+    [
+        // 0-9
+        MemoryArgType.None, MemoryArgType.SpecificLocation, MemoryArgType.SpecificLocation, MemoryArgType.GeneralLocation,
+        MemoryArgType.GeneralLocation, MemoryArgType.Item, MemoryArgType.None, MemoryArgType.Species,
+        MemoryArgType.None, MemoryArgType.Item,
+        // 10-19
+        MemoryArgType.None, MemoryArgType.None, MemoryArgType.Move, MemoryArgType.Species,
+        MemoryArgType.Species, MemoryArgType.Item, MemoryArgType.Item, MemoryArgType.Species,
+        MemoryArgType.Species, MemoryArgType.SpecificLocation,
+        // 20-29
+        MemoryArgType.None, MemoryArgType.Species, MemoryArgType.None, MemoryArgType.None,
+        MemoryArgType.SpecificLocation, MemoryArgType.Species, MemoryArgType.Item, MemoryArgType.None,
+        MemoryArgType.None, MemoryArgType.Species,
+        // 30-39
+        MemoryArgType.None, MemoryArgType.GeneralLocation, MemoryArgType.GeneralLocation, MemoryArgType.GeneralLocation,
+        MemoryArgType.Item, MemoryArgType.Move, MemoryArgType.Move, MemoryArgType.GeneralLocation,
+        MemoryArgType.GeneralLocation, MemoryArgType.GeneralLocation,
+        // 40-49
+        MemoryArgType.Item, MemoryArgType.None, MemoryArgType.GeneralLocation, MemoryArgType.None,
+        MemoryArgType.Species, MemoryArgType.Species, MemoryArgType.None, MemoryArgType.None,
+        MemoryArgType.Move, MemoryArgType.Move,
+        // 50-59
+        MemoryArgType.Species, MemoryArgType.Item, MemoryArgType.Item, MemoryArgType.None,
+        MemoryArgType.None, MemoryArgType.None, MemoryArgType.None, MemoryArgType.None,
+        MemoryArgType.None, MemoryArgType.GeneralLocation,
+        // 60-69
+        MemoryArgType.Species, MemoryArgType.None, MemoryArgType.None, MemoryArgType.None,
+        MemoryArgType.None, MemoryArgType.None, MemoryArgType.None, MemoryArgType.None,
+        MemoryArgType.None, MemoryArgType.None,
+        // 70-79
+        MemoryArgType.GeneralLocation, MemoryArgType.Species, MemoryArgType.Species, MemoryArgType.None,
+        MemoryArgType.None, MemoryArgType.Species, MemoryArgType.None, MemoryArgType.None,
+        MemoryArgType.None, MemoryArgType.None,
+        // 80-89
+        MemoryArgType.Move, MemoryArgType.Move, MemoryArgType.Species, MemoryArgType.Species,
+        MemoryArgType.Item, MemoryArgType.None, MemoryArgType.GeneralLocation, MemoryArgType.Species,
+        MemoryArgType.Item, MemoryArgType.Move,
+    ];
+
+    private static MemoryArgType GetMemoryArgType(byte memoryId) =>
+        memoryId < MemoryArgTypes.Length ? MemoryArgTypes[memoryId] : MemoryArgType.None;
+
+    private static string GetMemoryArgLabel(MemoryArgType argType) => argType switch
     {
-        foreach (var item in memoryItems)
+        MemoryArgType.Species => "Pokémon",
+        MemoryArgType.Move => "Move",
+        MemoryArgType.Item => "Item",
+        MemoryArgType.GeneralLocation or MemoryArgType.SpecificLocation => "Location",
+        _ => "Variable",
+    };
+
+    /// <summary>
+    ///     Builds the fully-formatted memory preview string, substituting all placeholders.
+    /// </summary>
+    private string FormatMemoryText(
+        byte memoryId,
+        ushort variable,
+        byte intensity,
+        byte feeling,
+        string trainerName,
+        IEnumerable<ComboItem>? memoryItems,
+        IEnumerable<ComboItem>? qualityItems,
+        IEnumerable<ComboItem>? feelingItems)
+    {
+        if (memoryItems is null || qualityItems is null || feelingItems is null)
         {
-            if (item.Value == memoryId)
-            {
-                return item.Text.Contains("{2}", StringComparison.Ordinal);
-            }
+            return string.Empty;
         }
 
-        return false;
+        var template = memoryItems!.FirstOrDefault(m => m.Value == memoryId)?.Text;
+        if (string.IsNullOrEmpty(template))
+        {
+            return string.Empty;
+        }
+
+        var argType = GetMemoryArgType(memoryId);
+        var variableText = argType != MemoryArgType.None
+            ? (AppService!.GetMemoryArgumentComboItems(argType, MemoryGen)
+                .FirstOrDefault(i => i.Value == variable)?.Text ?? variable.ToString())
+            : string.Empty;
+
+        var qualityText = qualityItems!.FirstOrDefault(q => q.Value == intensity)?.Text ?? string.Empty;
+        var feelingText = feelingItems!.FirstOrDefault(f => f.Value == feeling)?.Text ?? string.Empty;
+        var pokemonName = Pokemon is not null ? AppService!.GetPokemonSpeciesName(Pokemon.Species) ?? Pokemon.Nickname ?? string.Empty : string.Empty;
+
+        return template
+            .Replace("{0}", pokemonName)
+            .Replace("{1}", trainerName)
+            .Replace("{2}", variableText)
+            .Replace("{3}", feelingText)
+            .Replace("{4}", qualityText);
     }
 
     private void ClearOtMemory()

@@ -804,6 +804,18 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         return feelings.Select((f, i) => new ComboItem(f, i));
     }
 
+    public IEnumerable<ComboItem> GetMemoryQualityComboItems()
+    {
+        var qualities = new MemoryStrings(GameInfo.Strings).GetMemoryQualities().ToArray();
+        return qualities.Select((q, i) => new ComboItem(q, i));
+    }
+
+    public IEnumerable<ComboItem> GetMemoryArgumentComboItems(MemoryArgType argType, int memoryGen) =>
+        new MemoryStrings(GameInfo.Strings).GetArgumentStrings(argType, memoryGen);
+
+    public IEnumerable<ComboItem> GetLanguageComboItems(int generation, EntityContext context) =>
+        GameInfo.LanguageDataSource((byte)generation, context);
+
     /// <summary>
     /// Compacts a box by shifting all Pokémon left to fill gaps (for Gen 1 and Gen 2 games).
     /// In these generations, boxes were lists, not grids, so they should have no gaps.
