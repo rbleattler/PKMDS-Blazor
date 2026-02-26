@@ -64,10 +64,13 @@
                 <div class="flex flex-wrap gap-2">
                     @foreach (var ribbon in boolRibbons)
                     {
-                        <MudTooltip Text="@GetRibbonDisplayName(ribbon.Name)">
+                        var ribbonDisplayName = GetRibbonDisplayName(ribbon.Name);
+                        <MudTooltip Text="@ribbonDisplayName">
                             <MudImage Src="@GetRibbonSprite(ribbon)"
                                       Width="32"
                                       Height="32"
+                                      Alt="@ribbonDisplayName"
+                                      title="@ribbonDisplayName"
                                       Class="@(ribbon.HasRibbon ? "cursor-pointer" : "cursor-pointer opacity-30")"
                                       @onclick="@(() => ToggleRibbon(ribbon.Name))"/>
                         </MudTooltip>
@@ -82,12 +85,13 @@
             <div class="flex flex-wrap gap-2">
                 @foreach (var mark in marks)
                 {
-                    <MudTooltip Text="@GetRibbonDisplayName(mark.Name)">
+                    var markDisplayName = GetRibbonDisplayName(mark.Name);
+                    <MudTooltip Text="@markDisplayName">
                         <MudImage Src="@GetRibbonSprite(mark)"
                                   Width="32"
                                   Height="32"
-                                  Alt="@GetRibbonDisplayName(mark.Name)"
-                                  title="@GetRibbonDisplayName(mark.Name)"
+                                  Alt="@markDisplayName"
+                                  title="@markDisplayName"
                                   Class="@(mark.HasRibbon ? "cursor-pointer" : "cursor-pointer opacity-30")"
                                   @onclick="@(() => ToggleRibbon(mark.Name))"/>
                     </MudTooltip>
