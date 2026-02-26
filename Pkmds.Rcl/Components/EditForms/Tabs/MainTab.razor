@@ -30,6 +30,13 @@
                       Mask="@Constants.HexMask"
                       @bind-Value:get="@Pokemon.PID.ToString("X8")"
                       @bind-Value:set="@((string newPidHex) => SetPokemonPid(newPidHex))"/>
+
+        <MudButton OnClick="@OpenPidEcDialog"
+                   Variant="@Variant.Outlined"
+                   StartIcon="@Icons.Material.Filled.AutoFixHigh"
+                   Class="mb-2">
+            Generate PID / EC...
+        </MudButton>
     }
 
     @* ReSharper disable once CSharpWarnings::CS8603 *@
