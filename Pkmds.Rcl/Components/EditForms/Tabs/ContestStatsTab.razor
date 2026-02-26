@@ -1,0 +1,89 @@
+@inherits BasePkmdsComponent
+
+@if (Pokemon is IContestStats contestStats &&
+     AppState is
+     {
+         SaveFile.Context: not
+         (EntityContext.None or
+         EntityContext.SplitInvalid or
+         EntityContext.MaxInvalid),
+         SelectedSlotsAreValid: true
+     })
+{
+    <MudStack Class="mt-2"
+              Spacing="2">
+
+        <MudStack Row
+                  AlignItems="@AlignItems.Center">
+            <MudButton OnClick="@(() => MaxAllStats(contestStats))"
+                       Variant="@Variant.Outlined"
+                       Color="@Color.Primary"
+                       Size="@Size.Small"
+                       StartIcon="@Icons.Material.Filled.BarChart">
+                Max All
+            </MudButton>
+            <MudButton OnClick="@(() => ClearAllStats(contestStats))"
+                       Variant="@Variant.Outlined"
+                       Color="@Color.Error"
+                       Size="@Size.Small"
+                       StartIcon="@Icons.Material.Filled.Clear">
+                Clear All
+            </MudButton>
+        </MudStack>
+
+        <MudNumericField T="@byte"
+                         Label="Cool"
+                         title="Contest Cool stat"
+                         Min="0"
+                         Max="@ContestStatMax"
+                         Value="@contestStats.ContestCool"
+                         ValueChanged="@(v => { contestStats.ContestCool = v; })"
+                         Variant="@Variant.Outlined"/>
+
+        <MudNumericField T="@byte"
+                         Label="Beauty"
+                         title="Contest Beauty stat"
+                         Min="0"
+                         Max="@ContestStatMax"
+                         Value="@contestStats.ContestBeauty"
+                         ValueChanged="@(v => { contestStats.ContestBeauty = v; })"
+                         Variant="@Variant.Outlined"/>
+
+        <MudNumericField T="@byte"
+                         Label="Cute"
+                         title="Contest Cute stat"
+                         Min="0"
+                         Max="@ContestStatMax"
+                         Value="@contestStats.ContestCute"
+                         ValueChanged="@(v => { contestStats.ContestCute = v; })"
+                         Variant="@Variant.Outlined"/>
+
+        <MudNumericField T="@byte"
+                         Label="Smart"
+                         title="Contest Smart stat"
+                         Min="0"
+                         Max="@ContestStatMax"
+                         Value="@contestStats.ContestSmart"
+                         ValueChanged="@(v => { contestStats.ContestSmart = v; })"
+                         Variant="@Variant.Outlined"/>
+
+        <MudNumericField T="@byte"
+                         Label="Tough"
+                         title="Contest Tough stat"
+                         Min="0"
+                         Max="@ContestStatMax"
+                         Value="@contestStats.ContestTough"
+                         ValueChanged="@(v => { contestStats.ContestTough = v; })"
+                         Variant="@Variant.Outlined"/>
+
+        <MudNumericField T="@byte"
+                         Label="Sheen"
+                         title="Contest Sheen"
+                         Min="0"
+                         Max="@ContestStatMax"
+                         Value="@contestStats.ContestSheen"
+                         ValueChanged="@(v => { contestStats.ContestSheen = v; })"
+                         Variant="@Variant.Outlined"/>
+
+    </MudStack>
+}
