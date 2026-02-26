@@ -110,26 +110,42 @@ public partial class OtMiscTab : IDisposable
         IEnumerable<ComboItem>? qualityItems,
         IEnumerable<ComboItem>? feelingItems)
     {
-        if (memoryItems is null || qualityItems is null || feelingItems is null)
+        if (memoryItems is null)
         {
             return string.Empty;
         }
 
-        var template = memoryItems!.FirstOrDefault(m => m.Value == memoryId)?.Text;
+        if (qualityItems is null)
+        {
+            return string.Empty;
+        }
+
+        if (feelingItems is null)
+        {
+            return string.Empty;
+        }
+
+        var template = memoryItems.FirstOrDefault(m => m.Value == memoryId)?.Text ?? string.Empty;
         if (string.IsNullOrEmpty(template))
         {
             return string.Empty;
         }
 
         var argType = GetMemoryArgType(memoryId);
-        var variableText = argType != MemoryArgType.None
-            ? (AppService!.GetMemoryArgumentComboItems(argType, MemoryGen)
-                .FirstOrDefault(i => i.Value == variable)?.Text ?? variable.ToString())
-            : string.Empty;
+        string variableText;
+        if (argType != MemoryArgType.None)
+        {
+            var argMatch = AppService.GetMemoryArgumentComboItems(argType, MemoryGen).FirstOrDefault(i => i.Value == variable);
+            variableText = argMatch?.Text ?? variable.ToString() ?? string.Empty;
+        }
+        else
+        {
+            variableText = string.Empty;
+        }
 
-        var qualityText = qualityItems!.FirstOrDefault(q => q.Value == intensity)?.Text ?? string.Empty;
-        var feelingText = feelingItems!.FirstOrDefault(f => f.Value == feeling)?.Text ?? string.Empty;
-        var pokemonName = Pokemon is not null ? AppService!.GetPokemonSpeciesName(Pokemon.Species) ?? Pokemon.Nickname ?? string.Empty : string.Empty;
+        var qualityText = qualityItems.FirstOrDefault(q => q.Value == intensity)?.Text ?? string.Empty;
+        var feelingText = feelingItems.FirstOrDefault(f => f.Value == feeling)?.Text ?? string.Empty;
+        var pokemonName = AppService.GetPokemonSpeciesName(Pokemon?.Species ?? 0) ?? Pokemon?.Nickname ?? string.Empty;
 
         return template
             .Replace("{0}", pokemonName)
