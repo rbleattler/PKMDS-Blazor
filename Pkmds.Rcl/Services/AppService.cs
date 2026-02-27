@@ -789,10 +789,20 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
             return;
         }
 
-        EditFormPokemon ??= saveFile.BlankPKM;
+        if (EditFormPokemon is not null)
+        {
+            return;
+        }
 
-        // Note: Removed the call to GetSingleVersion() as it can cause freezes for certain games (e.g., Legends Z-A).
-        // BlankPKM from PKHeX.Core should already have the correct version set.
+        // Apply trainer data and other defaults to the blank PKM so new Pokémon
+        // start with correct OT/ID/Language/Version/MetDate/Ball — matching what
+        // PKHeX WinForms does via EntityTemplates.TemplateFields.
+        // Species is reset to 0 afterward so the user is prompted to pick one.
+        var blank = saveFile.BlankPKM.Clone();
+        EntityTemplates.TemplateFields(blank, saveFile);
+        blank.Species = 0;
+        blank.ClearNickname(); // Remove the template species name set by TemplateFields
+        EditFormPokemon = blank;
     }
 
     public IEnumerable<ComboItem> GetMemoryComboItems() =>

@@ -190,6 +190,32 @@ public partial class MainTab : IDisposable
         }
 
         Pokemon.Species = species;
+
+        // AbilityNumber 0 is invalid for every encounter. SetAbilityIndex sets
+        // both the Ability ID and AbilityNumber together, which is required —
+        // setting AbilityNumber alone leaves Ability at 0 (AbilityUnexpected).
+        if (Pokemon.AbilityNumber is not (1 or 2 or 4))
+        {
+            Pokemon.SetAbilityIndex(0);
+        }
+
+        // Ensure gender is valid for the new species.
+        Pokemon.Gender = Pokemon.GetSaneGender();
+
+        // Keep the nickname in sync when it is not manually set.
+        if (!Pokemon.IsNicknamed)
+        {
+            Pokemon.ClearNickname();
+        }
+
+        // EC = 0 causes a legality error (PIDEqualsEC when PID is also 0).
+        // Generate a random EC on first species assignment so the Pokémon is
+        // not flagged before the user has had a chance to fix anything.
+        if (Pokemon.EncryptionConstant == 0)
+        {
+            Pokemon.SetRandomEC();
+        }
+
         AppService.LoadPokemonStats(Pokemon);
         RefreshService.Refresh();
     }
