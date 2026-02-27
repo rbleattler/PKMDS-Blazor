@@ -26,6 +26,16 @@ public partial class MetTab : IDisposable
 
     private bool PokemonMetAsEgg => Pokemon is not null && (Pokemon.IsEgg || Pokemon.WasEgg || Pokemon.WasTradedEgg);
 
+    private bool ShowGroundTile => Pokemon is IGroundTile && Pokemon.Gen4 && Pokemon.Format < 7;
+
+    private GroundTileType GetGroundTile() => Pokemon is IGroundTile g ? g.GroundTile : GroundTileType.None;
+
+    private void SetGroundTile(GroundTileType tile)
+    {
+        if (Pokemon is IGroundTile g)
+            g.GroundTile = tile;
+    }
+
     public void Dispose() =>
         RefreshService.OnAppStateChanged -= StateHasChanged;
 

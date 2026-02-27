@@ -104,6 +104,23 @@
         </MudStack>
     }
 
+    @if (ShowGroundTile)
+    {
+        <MudSelect Label="Encountered On"
+                   T="@GroundTileType"
+                   Variant="@Variant.Outlined"
+                   Value="@GetGroundTile()"
+                   ValueChanged="@SetGroundTile">
+            @foreach (var item in GameInfo.FilteredSources.G4GroundTiles)
+            {
+                <MudSelectItem Value="@((GroundTileType)item.Value)"
+                               @key="@item.Value">
+                    @item.Text
+                </MudSelectItem>
+            }
+        </MudSelect>
+    }
+
     @switch (saveGeneration)
     {
         case 2 when Pokemon is PK2:
