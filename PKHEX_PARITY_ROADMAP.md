@@ -2,7 +2,7 @@
 
 This roadmap outlines the path to achieving 100% feature parity with PKHeX. Tasks are broken down into actionable items organized by feature category and priority.
 
-**Last Updated:** 2026-02-26
+**Last Updated:** 2026-02-27
 
 ---
 
@@ -34,7 +34,7 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - **Showdown Export** - Export Pokemon to Showdown format
 - **Multi-Save Support** - Load/save multiple save files
 - **PWA Support** - Offline functionality, installable web app
-- **Legality Checker (Core)** - `LegalityAnalysis` integration with per-check detail view, color-coded results, full verbose report, and slot-level valid/warn icon overlays
+- **Legality Checker** - Full `LegalityAnalysis` integration: per-check detail view, color-coded results, full verbose report, slot-level valid/warn icon overlays, one-click fix buttons (ball, met location, moves, TechRecord), and a batch "Legality Report" tab that sweeps all party and box Pokémon with a sortable/filterable table, aggregate Legal/Fishy/Illegal counts, and jump-to-slot navigation
 
 ---
 
@@ -121,7 +121,7 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - [x] Implement generation-specific validation
 
 ### 1.2 Legality Checker
-**Status:** ⚠️ Partial (core analysis + UI implemented; fix buttons, batch checking, and unit tests remain)
+**Status:** ⚠️ Partial (core analysis, UI, fix buttons, and batch report implemented; comprehensive unit tests remain)
 **Complexity:** Very High
 **Priority:** Critical
 **Tasks:**
@@ -138,10 +138,11 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
   - [x] Ball legality (`CheckIdentifier.Ball`)
   - [x] Ability legality (`CheckIdentifier.Ability`)
   - [x] Level/experience validation (`CheckIdentifier.Level`)
-- [ ] Add "Fix" buttons for common legality issues
-- [ ] Implement batch legality checking
+- [x] Add "Fix" buttons for common legality issues (ball, met location, moves, TechRecord) — closes #401
+- [x] Implement batch legality checking — "Legality Report" tab sweeps all party/box slots, sortable/filterable table, Legal/Fishy/Illegal counts, click-to-jump-to-slot — closes #402
 - [x] Show legality warnings on Pokémon slot display (valid/warn icon overlay)
 - [ ] Create comprehensive unit tests
+- **Note:** `ParseSettings.InitFromSaveFileData` is intentionally not called (see `MainLayout.razor.cs` comment); relies on default `AllowGBCartEra = false` so VC encounters are always checked regardless of filename. PKHeX bug filed: [kwsch/PKHeX#4734](https://github.com/kwsch/PKHeX/issues/4734).
 
 ### 1.3 Batch Editor
 **Status:** ❌ Not Implemented  
@@ -827,7 +828,7 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 
 ### Completion Tracking
 - **Total Features Identified:** ~250+ individual tasks
-- **Currently Implemented:** ~50 tasks (20%)
+- **Currently Implemented:** ~55 tasks (22%)
 - **Target for Phase 1:** 80 tasks (32%)
 - **Target for Full Parity:** 100%
 
@@ -879,6 +880,7 @@ This roadmap is a living document. Community contributions are welcome!
 
 **For questions, suggestions, or to discuss the roadmap, please open an issue on GitHub or contact the maintainer.**
 
-**Last Updated:** 2026-02-26
-**Next Review:** 2026-03-26
-<!-- Legality Checker (§1.2): core analysis + UI done 2026-02-26; fix buttons / batch / tests still pending -->
+**Last Updated:** 2026-02-27
+**Next Review:** 2026-03-27
+<!-- Legality Checker (§1.2): fix buttons (#401) + batch report (#402) done 2026-02-27; comprehensive unit tests still pending -->
+<!-- PKHeX bug filed 2026-02-27: SAV1.IsVirtualConsole filename heuristic causes false cart-era detection for renamed VC saves → kwsch/PKHeX#4734 -->
