@@ -892,5 +892,5 @@ This roadmap is a living document. Community contributions are welcome!
 **Last Updated:** 2026-02-27
 **Next Review:** 2026-03-27
 <!-- Legality Checker (§1.2): fix buttons (#401) + batch report (#402) done 2026-02-27; comprehensive unit tests still pending -->
-<!-- Legality Checker (§1.2): per-field inline indicators (#411) filed 2026-02-27; covers Moves/Stats/Main/Met/OT-Misc/Ribbons tabs -->
+<!-- Legality Checker (§1.2): per-field inline indicators (#411) implemented 2026-02-27; covers Moves/Stats/Main/Met/OT-Misc/Ribbons tabs -->
 <!-- PKHeX bug filed 2026-02-27: SAV1.IsVirtualConsole filename heuristic causes false cart-era detection for renamed VC saves → kwsch/PKHeX#4734 -->

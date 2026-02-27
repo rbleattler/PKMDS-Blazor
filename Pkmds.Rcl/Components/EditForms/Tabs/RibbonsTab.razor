@@ -48,26 +48,29 @@
                     {
                         var ribbonCheck = GetRibbonCheckResult(ribbon.Name);
                         <MudStack Spacing="0">
-                            <MudNumericField T="@int"
-                                             Label="@GetRibbonDisplayName(ribbon.Name)"
-                                             Min="0"
-                                             Max="@ribbon.MaxCount"
-                                             Value="@ribbon.RibbonCount"
-                                             ValueChanged="@(v => SetRibbonCount(ribbon.Name, v))"
-                                             Variant="@Variant.Outlined"
-                                             Style="width: 160px"
-                                             Adornment="@(ribbonCheck.HasValue
-                                                            ? Adornment.End
-                                                            : Adornment.None)"
-                                             AdornmentIcon="@(ribbonCheck?.Judgement == PKHeX.Core.Severity.Fishy
-                                                                ? Icons.Material.Filled.Warning
-                                                                : Icons.Material.Filled.Cancel)"
-                                             AdornmentColor="@(ribbonCheck?.Judgement == PKHeX.Core.Severity.Fishy
-                                                                 ? Color.Warning
-                                                                 : Color.Error)"
-                                             AdornmentAriaLabel="@(ribbonCheck.HasValue
-                                                                     ? HumanizeRibbonCheckResult(ribbonCheck.Value)
-                                                                     : string.Empty)"/>
+                            <MudTooltip Text="@(ribbonCheck.HasValue ? HumanizeRibbonCheckResult(ribbonCheck.Value) : string.Empty)"
+                                        Disabled="@(!ribbonCheck.HasValue)">
+                                <MudNumericField T="@int"
+                                                 Label="@GetRibbonDisplayName(ribbon.Name)"
+                                                 Min="0"
+                                                 Max="@ribbon.MaxCount"
+                                                 Value="@ribbon.RibbonCount"
+                                                 ValueChanged="@(v => SetRibbonCount(ribbon.Name, v))"
+                                                 Variant="@Variant.Outlined"
+                                                 Style="width: 160px"
+                                                 Adornment="@(ribbonCheck.HasValue
+                                                                ? Adornment.End
+                                                                : Adornment.None)"
+                                                 AdornmentIcon="@(ribbonCheck?.Judgement == PKHeX.Core.Severity.Fishy
+                                                                    ? Icons.Material.Filled.Warning
+                                                                    : Icons.Material.Filled.Cancel)"
+                                                 AdornmentColor="@(ribbonCheck?.Judgement == PKHeX.Core.Severity.Fishy
+                                                                     ? Color.Warning
+                                                                     : Color.Error)"
+                                                 AdornmentAriaLabel="@(ribbonCheck.HasValue
+                                                                         ? HumanizeRibbonCheckResult(ribbonCheck.Value)
+                                                                         : string.Empty)"/>
+                            </MudTooltip>
                         </MudStack>
                     }
                 </div>
@@ -91,7 +94,7 @@
                                               Width="32"
                                               Height="32"
                                               Alt="@ribbonDisplayName"
-                                              title="@ribbonDisplayName"
+                                              title="@(ribbonCheck.HasValue ? HumanizeRibbonCheckResult(ribbonCheck.Value) : ribbonDisplayName)"
                                               Class="@(ribbon.HasRibbon
                                                          ? "cursor-pointer"
                                                          : "cursor-pointer opacity-30")"
@@ -133,7 +136,7 @@
                                           Width="32"
                                           Height="32"
                                           Alt="@markDisplayName"
-                                          title="@markDisplayName"
+                                          title="@(markCheck.HasValue ? HumanizeRibbonCheckResult(markCheck.Value) : markDisplayName)"
                                           Class="@(mark.HasRibbon
                                                      ? "cursor-pointer"
                                                      : "cursor-pointer opacity-30")"

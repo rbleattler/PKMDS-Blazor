@@ -120,7 +120,7 @@
                                          Max="@uint.MaxValue"
                                          @bind-Value:get="@Pokemon.EncryptionConstant"
                                          @bind-Value:set="@(newEc => SetPokemonEc(newEc))"
-                                         For="@(() => Pokemon.PID)"/>
+                                         For="@(() => Pokemon.EncryptionConstant)"/>
                     </div>
                     <LegalityIndicator Severity="@(GetCheckResult(CheckIdentifier.EC)?.Judgement ?? PKHeX.Core.Severity.Valid)"
                                        Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.EC))"/>
