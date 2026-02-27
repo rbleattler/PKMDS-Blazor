@@ -160,6 +160,57 @@ public partial class LegalityTab : IDisposable
         Snackbar.Add("Met location and level updated. Click Save to apply changes.", Severity.Success);
     }
 
+    private IReadOnlyList<(MoveResult Result, int SlotNumber)> GetInvalidMoves()
+    {
+        if (Analysis is not { } la)
+        {
+            return [];
+        }
+
+        var result = new List<(MoveResult, int)>();
+        var moves = la.Info.Moves;
+        for (var i = 0; i < moves.Length; i++)
+        {
+            if (!moves[i].Valid)
+            {
+                result.Add((moves[i], i + 1));
+            }
+        }
+
+        return result;
+    }
+
+    private IReadOnlyList<(MoveResult Result, int SlotNumber)> GetInvalidRelearnMoves()
+    {
+        if (Analysis is not { } la)
+        {
+            return [];
+        }
+
+        var result = new List<(MoveResult, int)>();
+        var relearns = la.Info.Relearn;
+        for (var i = 0; i < relearns.Length; i++)
+        {
+            if (!relearns[i].Valid)
+            {
+                result.Add((relearns[i], i + 1));
+            }
+        }
+
+        return result;
+    }
+
+    private string GetMoveSummary(MoveResult result)
+    {
+        if (Analysis is not { } la)
+        {
+            return string.Empty;
+        }
+
+        var ctx = LegalityLocalizationContext.Create(la);
+        return result.Summary(ctx);
+    }
+
     private static Color GetSeverityColor(PKHexSeverity severity) => severity switch
     {
         PKHexSeverity.Valid => Color.Success,
