@@ -137,6 +137,21 @@ public partial class LegalityTab : IDisposable
         }
 
         Pokemon.MetLocation = encounter.Location;
+
+        // If the suggested encounter is for a pre-evolution (e.g. Trophy Garden Pichu → Pikachu),
+        // the Pokémon must have leveled up at least once from the encounter level to evolve.
+        // Raise CurrentLevel to encounter.LevelMin + 1 before calling GetSuggestedMetLevel so
+        // the brute-force loop considers a range that can include a valid MetLevel.
+        if (encounter.Encounter is { } enc && enc.Species != Pokemon.Species)
+        {
+            var minRequired = (byte)(encounter.LevelMin + 1);
+            if (Pokemon.CurrentLevel < minRequired)
+            {
+                Pokemon.CurrentLevel = minRequired;
+                AppService.LoadPokemonStats(Pokemon);
+            }
+        }
+
         var metLevel = encounter.GetSuggestedMetLevel(Pokemon);
         Pokemon.MetLevel = metLevel;
 
