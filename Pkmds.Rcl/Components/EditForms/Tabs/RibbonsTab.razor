@@ -86,37 +86,24 @@
                     {
                         var ribbonDisplayName = GetRibbonDisplayName(ribbon.Name);
                         var ribbonCheck = GetRibbonCheckResult(ribbon.Name);
-                        <div class="relative"
-                             style="display: inline-block;">
-                            <MudTooltip Text="@(ribbonCheck.HasValue
-                                                  ? HumanizeRibbonCheckResult(ribbonCheck.Value)
-                                                  : ribbonDisplayName)">
-                                <div style="position: relative; display: inline-block;">
-                                    <MudImage Src="@GetRibbonSprite(ribbon)"
-                                              Width="32"
-                                              Height="32"
-                                              Alt="@ribbonDisplayName"
-                                              title="@(ribbonCheck.HasValue
-                                                         ? HumanizeRibbonCheckResult(ribbonCheck.Value)
-                                                         : ribbonDisplayName)"
-                                              Class="@(ribbon.HasRibbon
-                                                         ? "cursor-pointer"
-                                                         : "cursor-pointer opacity-30")"
-                                              @onclick="@(() => ToggleRibbon(ribbon.Name))"/>
-                                    @if (ribbonCheck.HasValue)
-                                    {
-                                        <MudIcon Icon="@(ribbonCheck.Value.Judgement == PKHeX.Core.Severity.Fishy
-                                                           ? Icons.Material.Filled.Warning
-                                                           : Icons.Material.Filled.Cancel)"
-                                                 Color="@(ribbonCheck.Value.Judgement == PKHeX.Core.Severity.Fishy
-                                                            ? Color.Warning
-                                                            : Color.Error)"
-                                                 Size="@Size.Small"
-                                                 Style="position: absolute; bottom: -4px; right: -4px; pointer-events: none;"/>
-                                    }
-                                </div>
-                            </MudTooltip>
-                        </div>
+                        var ribbonOutlineColor = ribbonCheck.HasValue
+                            ? ribbonCheck.Value.Judgement == PKHeX.Core.Severity.Fishy
+                                ? "var(--mud-palette-warning)"
+                                : "var(--mud-palette-error)"
+                            : "transparent";
+                        <MudTooltip Text="@(ribbonCheck.HasValue
+                                              ? HumanizeRibbonCheckResult(ribbonCheck.Value)
+                                              : ribbonDisplayName)">
+                            <MudImage Src="@GetRibbonSprite(ribbon)"
+                                      Width="32"
+                                      Height="32"
+                                      Alt="@ribbonDisplayName"
+                                      Class="@(ribbon.HasRibbon
+                                                 ? "cursor-pointer"
+                                                 : "cursor-pointer opacity-30")"
+                                      Style="@($"outline: 2px solid {ribbonOutlineColor}; border-radius: 4px;")"
+                                      @onclick="@(() => ToggleRibbon(ribbon.Name))"/>
+                        </MudTooltip>
                     }
                 </div>
             }
@@ -130,39 +117,52 @@
                 {
                     var markDisplayName = GetRibbonDisplayName(mark.Name);
                     var markCheck = GetRibbonCheckResult(mark.Name);
-                    <div class="relative"
-                         style="display: inline-block;">
-                        <MudTooltip Text="@(markCheck.HasValue
-                                              ? HumanizeRibbonCheckResult(markCheck.Value)
-                                              : markDisplayName)">
-                            <div style="position: relative; display: inline-block;">
-                                <MudImage Src="@GetRibbonSprite(mark)"
-                                          Width="32"
-                                          Height="32"
-                                          Alt="@markDisplayName"
-                                          title="@(markCheck.HasValue
-                                                     ? HumanizeRibbonCheckResult(markCheck.Value)
-                                                     : markDisplayName)"
-                                          Class="@(mark.HasRibbon
-                                                     ? "cursor-pointer"
-                                                     : "cursor-pointer opacity-30")"
-                                          @onclick="@(() => ToggleRibbon(mark.Name))"/>
-                                @if (markCheck.HasValue)
-                                {
-                                    <MudIcon Icon="@(markCheck.Value.Judgement == PKHeX.Core.Severity.Fishy
-                                                       ? Icons.Material.Filled.Warning
-                                                       : Icons.Material.Filled.Cancel)"
-                                             Color="@(markCheck.Value.Judgement == PKHeX.Core.Severity.Fishy
-                                                        ? Color.Warning
-                                                        : Color.Error)"
-                                             Size="@Size.Small"
-                                             Style="position: absolute; bottom: -4px; right: -4px; pointer-events: none;"/>
-                                }
-                            </div>
-                        </MudTooltip>
-                    </div>
+                    var markOutlineColor = markCheck.HasValue
+                        ? markCheck.Value.Judgement == PKHeX.Core.Severity.Fishy
+                            ? "var(--mud-palette-warning)"
+                            : "var(--mud-palette-error)"
+                        : "transparent";
+                    <MudTooltip Text="@(markCheck.HasValue
+                                          ? HumanizeRibbonCheckResult(markCheck.Value)
+                                          : markDisplayName)">
+                        <MudImage Src="@GetRibbonSprite(mark)"
+                                  Width="32"
+                                  Height="32"
+                                  Alt="@markDisplayName"
+                                  Class="@(mark.HasRibbon
+                                             ? "cursor-pointer"
+                                             : "cursor-pointer opacity-30")"
+                                  Style="@($"outline: 2px solid {markOutlineColor}; border-radius: 4px;")"
+                                  @onclick="@(() => ToggleRibbon(mark.Name))"/>
+                    </MudTooltip>
                 }
             </div>
+        }
+
+        @{
+            var invalidRibbonResults = GetInvalidRibbonResults().ToList();
+        }
+        @if (invalidRibbonResults.Count > 0)
+        {
+            <MudDivider Class="my-2"/>
+            <MudText Typo="@Typo.subtitle2">Ribbon Issues</MudText>
+            <MudList T="string"
+                     Dense>
+                @foreach (var (displayName, result) in invalidRibbonResults)
+                {
+                    <MudListItem Icon="@(result.Judgement == PKHeX.Core.Severity.Fishy
+                                           ? Icons.Material.Filled.Warning
+                                           : Icons.Material.Filled.Cancel)"
+                                 IconColor="@(result.Judgement == PKHeX.Core.Severity.Fishy
+                                                ? Color.Warning
+                                                : Color.Error)"
+                                 Dense="true">
+                        <MudText Typo="@Typo.body2">
+                            <strong>@displayName</strong>: @HumanizeRibbonCheckResult(result)
+                        </MudText>
+                    </MudListItem>
+                }
+            </MudList>
         }
 
     </MudStack>

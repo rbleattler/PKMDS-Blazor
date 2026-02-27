@@ -65,6 +65,30 @@ public partial class RibbonsTab : IDisposable
         return worst;
     }
 
+    internal IEnumerable<(string DisplayName, CheckResult Result)> GetInvalidRibbonResults()
+    {
+        if (Analysis is not { } la)
+        {
+            yield break;
+        }
+
+        foreach (var r in la.Results)
+        {
+            if (r.Valid)
+            {
+                continue;
+            }
+
+            if (r.Identifier is not (CheckIdentifier.Ribbon or CheckIdentifier.RibbonMark))
+            {
+                continue;
+            }
+
+            var propertyName = "Ribbon" + ((RibbonIndex)r.Argument);
+            yield return (GetRibbonDisplayName(propertyName), r);
+        }
+    }
+
     internal string HumanizeRibbonCheckResult(CheckResult result)
     {
         if (Analysis is not { } la)
