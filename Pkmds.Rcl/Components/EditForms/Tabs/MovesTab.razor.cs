@@ -6,7 +6,21 @@ public partial class MovesTab
     [EditorRequired]
     public PKM? Pokemon { get; set; }
 
+    [Parameter]
+    public LegalityAnalysis? Analysis { get; set; }
+
     private bool UseTextSearch { get; set; } = true;
+
+    private string FormatMoveMessage(MoveResult result, int index)
+    {
+        if (Analysis is not { } la)
+        {
+            return string.Empty;
+        }
+
+        var ctx = LegalityLocalizationContext.Create(la);
+        return ctx.FormatMove(result, index + 1, (byte)AppState.SaveFile!.Context);
+    }
 
     private Task<IEnumerable<ComboItem>> SearchMoves(string searchString, CancellationToken token) =>
         Task.FromResult(AppService.SearchMoves(searchString));

@@ -71,12 +71,20 @@
 
         <MudItem xs="6"
                  Class="@ColumnClass">
-            <MudTextField Label="OT"
-                          Variant="@Variant.Outlined"
-                          Text="@Pokemon.OriginalTrainerName"
-                          TextChanged="SetPokemonOtName"
-                          MaxLength="@saveFile.MaxStringLengthTrainer"
-                          For="@(() => Pokemon.OriginalTrainerName)"/>
+            <MudStack Row
+                      AlignItems="@AlignItems.Center"
+                      Spacing="1">
+                <MudStack Style="flex: 1; min-width: 0;">
+                    <MudTextField Label="OT"
+                                  Variant="@Variant.Outlined"
+                                  Text="@Pokemon.OriginalTrainerName"
+                                  TextChanged="@SetPokemonOtName"
+                                  MaxLength="@saveFile.MaxStringLengthTrainer"
+                                  For="@(() => Pokemon.OriginalTrainerName)"/>
+                </MudStack>
+                <LegalityIndicator Severity="@(GetCheckResult(CheckIdentifier.Trainer)?.Judgement ?? PKHeX.Core.Severity.Valid)"
+                                   Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Trainer))"/>
+            </MudStack>
         </MudItem>
 
         @if (saveGeneration >= 2)
@@ -106,14 +114,21 @@
 
             <MudItem xs="6"
                      Class="@ColumnClass">
-
-                <MudNumericField Label="EC"
-                                 Variant="@Variant.Outlined"
-                                 Min="0U"
-                                 Max="@uint.MaxValue"
-                                 @bind-Value:get="@Pokemon.EncryptionConstant"
-                                 @bind-Value:set="@(newEc => SetPokemonEc(newEc))"
-                                 For="@(() => Pokemon.PID)"/>
+                <MudStack Row
+                          AlignItems="@AlignItems.Center"
+                          Spacing="1">
+                    <MudStack Style="flex: 1; min-width: 0;">
+                        <MudNumericField Label="EC"
+                                         Variant="@Variant.Outlined"
+                                         Min="0U"
+                                         Max="@uint.MaxValue"
+                                         @bind-Value:get="@Pokemon.EncryptionConstant"
+                                         @bind-Value:set="@(newEc => SetPokemonEc(newEc))"
+                                         For="@(() => Pokemon.PID)"/>
+                    </MudStack>
+                    <LegalityIndicator Severity="@(GetCheckResult(CheckIdentifier.EC)?.Judgement ?? PKHeX.Core.Severity.Valid)"
+                                       Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.EC))"/>
+                </MudStack>
             </MudItem>
 
             <MudItem xs="6"
@@ -173,10 +188,18 @@
 
             <MudItem xs="6"
                      Class="@ColumnClass">
-                <MudTextField Label="Handler Name"
-                              Variant="@Variant.Outlined"
-                              @bind-Value="@Pokemon.HandlingTrainerName"
-                              MaxLength="@saveFile.MaxStringLengthTrainer"/>
+                <MudStack Row
+                          AlignItems="@AlignItems.Center"
+                          Spacing="1">
+                    <MudStack Style="flex: 1; min-width: 0;">
+                        <MudTextField Label="Handler Name"
+                                      Variant="@Variant.Outlined"
+                                      @bind-Value="@Pokemon.HandlingTrainerName"
+                                      MaxLength="@saveFile.MaxStringLengthTrainer"/>
+                    </MudStack>
+                    <LegalityIndicator Severity="@(GetCheckResult(CheckIdentifier.Handler)?.Judgement ?? PKHeX.Core.Severity.Valid)"
+                                       Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Handler))"/>
+                </MudStack>
             </MudItem>
 
             <MudItem xs="6"
@@ -341,9 +364,15 @@
 
             <MudItem xs="12">
                 <MudDivider Class="my-2"/>
-                <MudText Typo="@Typo.subtitle2"
-                         Class="mt-1 mb-1">OT Memory
-                </MudText>
+                <MudStack Row
+                          AlignItems="@AlignItems.Center"
+                          Spacing="1">
+                    <MudText Typo="@Typo.subtitle2"
+                             Class="mt-1 mb-1">OT Memory
+                    </MudText>
+                    <LegalityIndicator Severity="@(GetCheckResult(CheckIdentifier.Memory)?.Judgement ?? PKHeX.Core.Severity.Valid)"
+                                       Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Memory))"/>
+                </MudStack>
             </MudItem>
 
             <MudItem xs="12">

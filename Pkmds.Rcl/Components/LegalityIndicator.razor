@@ -1,0 +1,12 @@
+@using PKHexSeverity = PKHeX.Core.Severity
+
+@if (Severity != PKHexSeverity.Valid)
+{
+    <MudTooltip Text="@Message"
+                Placement="@Placement.Right">
+        <MudIcon Icon="@GetIcon()"
+                 Color="@GetColor()"
+                 Size="@Size.Small"
+                 Style="vertical-align: middle;"/>
+    </MudTooltip>
+}

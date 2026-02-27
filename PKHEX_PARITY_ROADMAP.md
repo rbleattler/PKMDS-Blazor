@@ -141,15 +141,15 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - [x] Add "Fix" buttons for common legality issues (ball, met location, moves, TechRecord) — closes #401
 - [x] Implement batch legality checking — "Legality Report" tab sweeps all party/box slots, sortable/filterable table, Legal/Fishy/Illegal counts, click-to-jump-to-slot — closes #402
 - [x] Show legality warnings on Pokémon slot display (valid/warn icon overlay)
-- [ ] Add inline per-field legality indicators throughout Pokémon editor tabs (#411)
-  - Reusable `LegalityIndicator` component (MudTooltip + severity icon, renders nothing when valid)
-  - `LegalityAnalysis` computed once in `PokemonEditForm` and passed to all tabs
-  - Per-move-slot indicators (current moves + relearn moves) in **Moves tab**
-  - Group-level indicators for IVs/EVs/AVs/GVs in **Stats tab**
-  - Field-level indicators (Ability, Gender, Shiny, Nature, Form, Held Item, Nickname) in **Main tab**
-  - Field-level indicators (Ball, Encounter, Level, Game Origin) in **Met tab**
-  - Field-level indicators (EC, PID, Trainer, Handler, Memory) in **OT/Misc tab**
-  - Per-ribbon indicators (stretch) in **Ribbons tab**
+- [x] Add inline per-field legality indicators throughout Pokémon editor tabs (#411)
+  - [x] Reusable `LegalityIndicator` component (MudTooltip + severity icon, renders nothing when valid)
+  - [x] `LegalityAnalysis` computed once in `PokemonEditForm` and passed to all tabs
+  - [x] Per-move-slot indicators (current moves + relearn moves) in **Moves tab**
+  - [x] Group-level indicators for IVs/EVs/AVs/GVs in **Stats tab**
+  - [x] Field-level indicators (PID, Ability, Gender, Shiny, Nature, Form, Held Item, Nickname, Language, Egg) in **Main tab**
+  - [x] Field-level indicators (Ball, Encounter/Met Location, Level, Game Origin) in **Met tab**
+  - [x] Field-level indicators (EC, Trainer/OT, Handler, Memory) in **OT/Misc tab**
+  - [x] Per-ribbon indicators in **Ribbons tab**
 - [ ] Create comprehensive unit tests
 - **Note:** `ParseSettings.InitFromSaveFileData` is intentionally not called (see `MainLayout.razor.cs` comment); relies on default `AllowGBCartEra = false` so VC encounters are always checked regardless of filename. PKHeX bug filed: [kwsch/PKHeX#4734](https://github.com/kwsch/PKHeX/issues/4734).
 

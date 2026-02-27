@@ -6,10 +6,27 @@ public partial class MainTab : IDisposable
     [EditorRequired]
     public PKM? Pokemon { get; set; }
 
+    [Parameter]
+    public LegalityAnalysis? Analysis { get; set; }
+
     private MudSelect<byte>? FormSelect { get; set; }
 
     public void Dispose() =>
         RefreshService.OnAppStateChanged -= Refresh;
+
+    private CheckResult? GetCheckResult(CheckIdentifier identifier) =>
+        Analysis?.Results.FirstOrDefault(r => r.Identifier == identifier && !r.Valid);
+
+    private string HumanizeCheckResult(CheckResult? result)
+    {
+        if (result is not { } r || Analysis is not { } la)
+        {
+            return string.Empty;
+        }
+
+        var ctx = LegalityLocalizationContext.Create(la);
+        return ctx.Humanize(in r, verbose: false);
+    }
 
     protected override void OnInitialized() =>
         RefreshService.OnAppStateChanged += Refresh;

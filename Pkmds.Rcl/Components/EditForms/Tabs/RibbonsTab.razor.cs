@@ -6,8 +6,75 @@ public partial class RibbonsTab : IDisposable
     [EditorRequired]
     public PKM? Pokemon { get; set; }
 
+    [Parameter]
+    public LegalityAnalysis? Analysis { get; set; }
+
     public void Dispose() =>
         RefreshService.OnAppStateChanged -= StateHasChanged;
+
+    /// <summary>
+    /// Returns the worst-severity legality check result for a given ribbon property name,
+    /// or null if the ribbon is valid. Ribbon check results store the <see cref="RibbonIndex" />
+    /// in <see cref="CheckResult.Argument" />; we match by looking up the property name in
+    /// <see cref="RibbonIndex" /> enum values.
+    /// </summary>
+    internal CheckResult? GetRibbonCheckResult(string propertyName)
+    {
+        if (Analysis is not { } la)
+        {
+            return null;
+        }
+
+        // Map property name → RibbonIndex.  The property name is e.g. "RibbonChampionG3",
+        // while RibbonIndex values are e.g. ChampionG3.  Strip the leading "Ribbon" or "Mark" prefix.
+        var shortName = propertyName.StartsWith("RibbonMark", StringComparison.Ordinal)
+            ? propertyName["Ribbon".Length..] // keep "MarkXxx" form
+            : propertyName.StartsWith("Ribbon", StringComparison.Ordinal)
+                ? propertyName["Ribbon".Length..] // strip leading "Ribbon"
+                : propertyName;
+
+        if (!Enum.TryParse<RibbonIndex>(shortName, ignoreCase: true, out var idx))
+        {
+            return null;
+        }
+
+        CheckResult? worst = null;
+        foreach (var r in la.Results)
+        {
+            if (r.Valid)
+            {
+                continue;
+            }
+
+            if (r.Identifier is not (CheckIdentifier.Ribbon or CheckIdentifier.RibbonMark))
+            {
+                continue;
+            }
+
+            if ((RibbonIndex)r.Argument != idx)
+            {
+                continue;
+            }
+
+            if (worst is null || r.Judgement > worst.Value.Judgement)
+            {
+                worst = r;
+            }
+        }
+
+        return worst;
+    }
+
+    internal string HumanizeRibbonCheckResult(CheckResult result)
+    {
+        if (Analysis is not { } la)
+        {
+            return string.Empty;
+        }
+
+        var ctx = LegalityLocalizationContext.Create(la);
+        return ctx.Humanize(in result, verbose: false);
+    }
 
     protected override void OnInitialized() =>
         RefreshService.OnAppStateChanged += StateHasChanged;

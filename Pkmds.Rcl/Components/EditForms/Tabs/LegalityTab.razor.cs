@@ -8,7 +8,8 @@ public partial class LegalityTab : IDisposable
     [EditorRequired]
     public PKM? Pokemon { get; set; }
 
-    private LegalityAnalysis? Analysis { get; set; }
+    [Parameter]
+    public LegalityAnalysis? Analysis { get; set; }
 
     // Moves are validated in la.Info.Moves / la.Info.Relearn (MoveResult[]), not in la.Results.
     // A legal Pokémon must have all of those valid in addition to all CheckResults being valid.
@@ -38,26 +39,10 @@ public partial class LegalityTab : IDisposable
                                          la.Results.Any(r => r is { Valid: false, Identifier: CheckIdentifier.Level or CheckIdentifier.Encounter });
 
     public void Dispose() =>
-        RefreshService.OnAppStateChanged -= Refresh;
+        RefreshService.OnAppStateChanged -= StateHasChanged;
 
-    protected override void OnInitialized()
-    {
-        RefreshService.OnAppStateChanged += Refresh;
-        ComputeAnalysis();
-    }
-
-    protected override void OnParametersSet() => ComputeAnalysis();
-
-    private void Refresh()
-    {
-        ComputeAnalysis();
-        StateHasChanged();
-    }
-
-    private void ComputeAnalysis() =>
-        Analysis = Pokemon is { Species: > 0 }
-            ? AppService.GetLegalityAnalysis(Pokemon)
-            : null;
+    protected override void OnInitialized() =>
+        RefreshService.OnAppStateChanged += StateHasChanged;
 
     private void RemoveInvalidRibbons()
     {

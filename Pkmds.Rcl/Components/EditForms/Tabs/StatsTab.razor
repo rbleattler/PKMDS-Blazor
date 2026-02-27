@@ -115,9 +115,13 @@
 
         <MudItem xs="3">
             <MudStack>
-                <MudText>
-                    IVs
-                </MudText>
+                <MudStack Row
+                          AlignItems="@AlignItems.Center"
+                          Spacing="1">
+                    <MudText>IVs</MudText>
+                    <LegalityIndicator Severity="@(GetCheckResult(CheckIdentifier.IVs)?.Judgement ?? PKHeX.Core.Severity.Valid)"
+                                       Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.IVs))"/>
+                </MudStack>
 
                 <MudNumericField Label="HP"
                                  title="HP IV"
@@ -231,9 +235,13 @@
         {
             <MudItem xs="3">
                 <MudStack>
-                    <MudText>
-                        AVs
-                    </MudText>
+                    <MudStack Row
+                              AlignItems="@AlignItems.Center"
+                              Spacing="1">
+                        <MudText>AVs</MudText>
+                        <LegalityIndicator Severity="@(GetCheckResult(CheckIdentifier.AVs)?.Judgement ?? PKHeX.Core.Severity.Valid)"
+                                           Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.AVs))"/>
+                    </MudStack>
 
                     <MudNumericField Label="HP"
                                      T="@byte"
@@ -314,9 +322,13 @@
         {
             <MudItem xs="3">
                 <MudStack>
-                    <MudText>
-                        GVs
-                    </MudText>
+                    <MudStack Row
+                              AlignItems="@AlignItems.Center"
+                              Spacing="1">
+                        <MudText>GVs</MudText>
+                        <LegalityIndicator Severity="@(GetCheckResult(CheckIdentifier.GVs)?.Judgement ?? PKHeX.Core.Severity.Valid)"
+                                           Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.GVs))"/>
+                    </MudStack>
 
                     <MudNumericField Label="HP"
                                      T="@byte"
@@ -390,9 +402,13 @@
         {
             <MudItem xs="3">
                 <MudStack>
-                    <MudText>
-                        EVs
-                    </MudText>
+                    <MudStack Row
+                              AlignItems="@AlignItems.Center"
+                              Spacing="1">
+                        <MudText>EVs</MudText>
+                        <LegalityIndicator Severity="@(GetCheckResult(CheckIdentifier.EVs)?.Judgement ?? PKHeX.Core.Severity.Valid)"
+                                           Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.EVs))"/>
+                    </MudStack>
 
                     <MudNumericField Label="HP"
                                      title="HP EV"
