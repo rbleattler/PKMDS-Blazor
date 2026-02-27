@@ -6,6 +6,12 @@
 /// </summary>
 public static partial class ImageHelper
 {
+    /// <summary>Gets the sprite filename for the egg overlay icon shown in a slot when a Pokémon is an egg.</summary>
+    public static string GetEggOverlaySpriteFileName(ushort species) =>
+        species == (ushort)Species.Manaphy
+            ? $"{SpritesRoot}a/a_490-e.png"
+            : $"{SpritesRoot}a/a_egg.png";
+
     /// <summary>Gets the sprite filename for an alpha indicator (Pokémon Legends: Arceus).</summary>
     public static string GetAlphaIndicatorSpriteFileName(bool isAlt = false) =>
         $"{SpritesRoot}overlay/alpha{(isAlt ? "_alt" : string.Empty)}.png";

@@ -48,10 +48,6 @@ public static partial class ImageHelper
                 // Let's Go starter forms with partner ribbon
                 { context: EntityContext.Gen7b } and ({ species: (ushort)Species.Pikachu, form: PikachuStarterForm }
                     or { species: (ushort)Species.Eevee, form: EeveeStarterForm }) => $"{species}-{form}p",
-                // Manaphy egg has unique sprite
-                { species: (ushort)Species.Manaphy, isEgg: true } => "490-e",
-                // Generic egg sprite
-                { isEgg: true } => "egg",
                 // Frillish and Jellicent have gender differences
                 {
                         species: (ushort)Species.Frillish or (ushort)Species.Jellicent, gender: (byte)Gender.Female
