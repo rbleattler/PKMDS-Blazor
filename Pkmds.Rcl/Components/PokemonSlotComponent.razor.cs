@@ -28,8 +28,10 @@ public partial class PokemonSlotComponent : IDisposable
 
     protected virtual int? BoxNumber => null;
 
+    private bool? _legalityValid;
+
     public void Dispose() =>
-        RefreshService.OnAppStateChanged -= StateHasChanged;
+        RefreshService.OnAppStateChanged -= RefreshLegality;
 
     private async Task HandleClick() =>
         await OnSlotClick.InvokeAsync();
@@ -37,8 +39,33 @@ public partial class PokemonSlotComponent : IDisposable
     private string GetClass() =>
         GetClassFunction?.Invoke() ?? string.Empty;
 
-    protected override void OnInitialized() =>
-        RefreshService.OnAppStateChanged += StateHasChanged;
+    protected override void OnInitialized()
+    {
+        RefreshService.OnAppStateChanged += RefreshLegality;
+        ComputeLegalityValid();
+    }
+
+    protected override void OnParametersSet() => ComputeLegalityValid();
+
+    private void RefreshLegality()
+    {
+        ComputeLegalityValid();
+        StateHasChanged();
+    }
+
+    private void ComputeLegalityValid()
+    {
+        if (Pokemon is not { Species: > 0 })
+        {
+            _legalityValid = null;
+            return;
+        }
+
+        var la = AppService.GetLegalityAnalysis(Pokemon);
+        _legalityValid = la.Results.All(r => r.Valid)
+            && MoveResult.AllValid(la.Info.Moves)
+            && MoveResult.AllValid(la.Info.Relearn);
+    }
 
     private string GetPokemonTitle() => Pokemon is { Species: > 0 }
         ? AppService.GetPokemonSpeciesName(Pokemon.Species) ?? "Unknown"
@@ -54,6 +81,12 @@ public partial class PokemonSlotComponent : IDisposable
         IAlphaReadOnly alphaReadOnly => alphaReadOnly.IsAlpha,
         _ => false
     };
+
+    /// <returns>
+    ///   <see langword="true"/> = legal, <see langword="false"/> = illegal/fishy,
+    ///   <see langword="null"/> = no Pokémon in slot (skip indicator).
+    /// </returns>
+    private bool? GetLegalityValid() => _legalityValid;
 
     private int? GetLetsGoPartySlotNumber()
     {

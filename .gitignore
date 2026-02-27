@@ -358,3 +358,4 @@ Pkmds.Rcl/bin/tailwindcss*
 Pkmds.Rcl/bin/sha256sums.txt
 .idea
 .claude/worktrees/
+.claude/settings.local.json
