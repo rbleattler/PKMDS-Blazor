@@ -134,7 +134,17 @@ public partial class LegalityTab : IDisposable
         }
 
         Pokemon.MetLocation = encounter.Location;
-        Pokemon.MetLevel = encounter.GetSuggestedMetLevel(Pokemon);
+        var metLevel = encounter.GetSuggestedMetLevel(Pokemon);
+        Pokemon.MetLevel = metLevel;
+
+        // A Pokémon's current level must be at least its met level.
+        // For freshly-created Pokémon the level defaults to 1, so raise it now.
+        if (Pokemon.CurrentLevel < metLevel)
+        {
+            Pokemon.CurrentLevel = metLevel;
+            AppService.LoadPokemonStats(Pokemon);
+        }
+
         RefreshService.Refresh();
         Snackbar.Add("Met location and level updated. Click Save to apply changes.", MudBlazor.Severity.Success);
     }
