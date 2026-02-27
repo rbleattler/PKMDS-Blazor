@@ -14,7 +14,8 @@ public partial class BoxGrid : RefreshAwareComponent
     private void SetSelectedPokemon(PKM? pokemon, int boxNumber, int slotNumber) =>
         AppService.SetSelectedBoxPokemon(pokemon, boxNumber, slotNumber);
 
-    private string GetClass(int slotNumber) => AppState.SelectedBoxSlotNumber == slotNumber
-        ? Constants.SelectedSlotClass
-        : string.Empty;
+    private string GetClass(int slotNumber) =>
+        AppState.SelectedBoxNumber == BoxNumber && AppState.SelectedBoxSlotNumber == slotNumber
+            ? Constants.SelectedSlotClass
+            : string.Empty;
 }
