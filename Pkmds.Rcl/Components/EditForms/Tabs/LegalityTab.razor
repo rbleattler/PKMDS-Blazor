@@ -22,19 +22,22 @@
                 var issues = analysis.Results
                     .Where(r => !r.Valid)
                     .ToList();
+                var invalidMoves = GetInvalidMoves();
+                var invalidRelearns = GetInvalidRelearnMoves();
+                var totalIssues = issues.Count + invalidMoves.Count + invalidRelearns.Count;
             }
 
-            @if (issues.Count > 0)
+            @if (totalIssues > 0)
             {
                 <MudText Typo="@Typo.subtitle2"
-                         Class="mt-2">Issues (@issues.Count)
+                         Class="mt-2">Issues (@totalIssues)
                 </MudText>
 
-                <MudList T="CheckResult"
+                <MudList T="string"
                          Dense>
                     @foreach (var result in issues)
                     {
-                        <MudListItem T="CheckResult"
+                        <MudListItem T="string"
                                      Icon="@GetSeverityIcon(result.Judgement)"
                                      IconColor="@GetSeverityColor(result.Judgement)"
                                      @key="@($"{result.Identifier}:{result.Result}")">
@@ -48,6 +51,44 @@
                                     @GetIdentifierLabel(result.Identifier)
                                 </MudChip>
                                 <MudText Typo="@Typo.body2">@HumanizeResult(result)</MudText>
+                            </MudStack>
+                        </MudListItem>
+                    }
+                    @foreach (var (moveResult, slotNum) in invalidMoves)
+                    {
+                        <MudListItem T="string"
+                                     Icon="@GetSeverityIcon(moveResult.Judgement)"
+                                     IconColor="@GetSeverityColor(moveResult.Judgement)"
+                                     @key="@($"move:{slotNum}")">
+                            <MudStack Row
+                                      AlignItems="@AlignItems.Center"
+                                      Spacing="1">
+                                <MudChip T="string"
+                                         Size="@Size.Small"
+                                         Color="@GetSeverityColor(moveResult.Judgement)"
+                                         Variant="@Variant.Outlined">
+                                    Move @slotNum
+                                </MudChip>
+                                <MudText Typo="@Typo.body2">@GetMoveSummary(moveResult)</MudText>
+                            </MudStack>
+                        </MudListItem>
+                    }
+                    @foreach (var (relearnResult, slotNum) in invalidRelearns)
+                    {
+                        <MudListItem T="string"
+                                     Icon="@GetSeverityIcon(relearnResult.Judgement)"
+                                     IconColor="@GetSeverityColor(relearnResult.Judgement)"
+                                     @key="@($"relearn:{slotNum}")">
+                            <MudStack Row
+                                      AlignItems="@AlignItems.Center"
+                                      Spacing="1">
+                                <MudChip T="string"
+                                         Size="@Size.Small"
+                                         Color="@GetSeverityColor(relearnResult.Judgement)"
+                                         Variant="@Variant.Outlined">
+                                    Relearn @slotNum
+                                </MudChip>
+                                <MudText Typo="@Typo.body2">@GetMoveSummary(relearnResult)</MudText>
                             </MudStack>
                         </MudListItem>
                     }

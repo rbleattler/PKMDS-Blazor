@@ -6,11 +6,29 @@ public partial class PokemonEditForm : IDisposable
     [EditorRequired]
     public PKM? Pokemon { get; set; }
 
-    public void Dispose() =>
-        RefreshService.OnAppStateChanged -= StateHasChanged;
+    private LegalityAnalysis? Analysis { get; set; }
 
-    protected override void OnInitialized() =>
-        RefreshService.OnAppStateChanged += StateHasChanged;
+    public void Dispose() =>
+        RefreshService.OnAppStateChanged -= Refresh;
+
+    protected override void OnInitialized()
+    {
+        RefreshService.OnAppStateChanged += Refresh;
+        ComputeAnalysis();
+    }
+
+    protected override void OnParametersSet() => ComputeAnalysis();
+
+    private void Refresh()
+    {
+        ComputeAnalysis();
+        StateHasChanged();
+    }
+
+    private void ComputeAnalysis() =>
+        Analysis = Pokemon is { Species: > 0 }
+            ? AppService.GetLegalityAnalysis(Pokemon)
+            : null;
 
     private void ExportAsShowdown() =>
         DialogService.ShowAsync<ShowdownExportDialog>(

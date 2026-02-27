@@ -8,7 +8,8 @@ public partial class LegalityTab : IDisposable
     [EditorRequired]
     public PKM? Pokemon { get; set; }
 
-    private LegalityAnalysis? Analysis { get; set; }
+    [Parameter]
+    public LegalityAnalysis? Analysis { get; set; }
 
     // Moves are validated in la.Info.Moves / la.Info.Relearn (MoveResult[]), not in la.Results.
     // A legal Pokémon must have all of those valid in addition to all CheckResults being valid.
@@ -38,26 +39,10 @@ public partial class LegalityTab : IDisposable
                                          la.Results.Any(r => r is { Valid: false, Identifier: CheckIdentifier.Level or CheckIdentifier.Encounter });
 
     public void Dispose() =>
-        RefreshService.OnAppStateChanged -= Refresh;
+        RefreshService.OnAppStateChanged -= StateHasChanged;
 
-    protected override void OnInitialized()
-    {
-        RefreshService.OnAppStateChanged += Refresh;
-        ComputeAnalysis();
-    }
-
-    protected override void OnParametersSet() => ComputeAnalysis();
-
-    private void Refresh()
-    {
-        ComputeAnalysis();
-        StateHasChanged();
-    }
-
-    private void ComputeAnalysis() =>
-        Analysis = Pokemon is { Species: > 0 }
-            ? AppService.GetLegalityAnalysis(Pokemon)
-            : null;
+    protected override void OnInitialized() =>
+        RefreshService.OnAppStateChanged += StateHasChanged;
 
     private void RemoveInvalidRibbons()
     {
@@ -173,6 +158,57 @@ public partial class LegalityTab : IDisposable
 
         RefreshService.Refresh();
         Snackbar.Add("Met location and level updated. Click Save to apply changes.", Severity.Success);
+    }
+
+    private IReadOnlyList<(MoveResult Result, int SlotNumber)> GetInvalidMoves()
+    {
+        if (Analysis is not { } la)
+        {
+            return [];
+        }
+
+        var result = new List<(MoveResult, int)>();
+        var moves = la.Info.Moves;
+        for (var i = 0; i < moves.Length; i++)
+        {
+            if (!moves[i].Valid)
+            {
+                result.Add((moves[i], i + 1));
+            }
+        }
+
+        return result;
+    }
+
+    private IReadOnlyList<(MoveResult Result, int SlotNumber)> GetInvalidRelearnMoves()
+    {
+        if (Analysis is not { } la)
+        {
+            return [];
+        }
+
+        var result = new List<(MoveResult, int)>();
+        var relearns = la.Info.Relearn;
+        for (var i = 0; i < relearns.Length; i++)
+        {
+            if (!relearns[i].Valid)
+            {
+                result.Add((relearns[i], i + 1));
+            }
+        }
+
+        return result;
+    }
+
+    private string GetMoveSummary(MoveResult result)
+    {
+        if (Analysis is not { } la)
+        {
+            return string.Empty;
+        }
+
+        var ctx = LegalityLocalizationContext.Create(la);
+        return result.Summary(ctx);
     }
 
     private static Color GetSeverityColor(PKHexSeverity severity) => severity switch

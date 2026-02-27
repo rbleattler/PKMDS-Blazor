@@ -17,14 +17,60 @@ public partial class MetTab : IDisposable
     [EditorRequired]
     public PKM? Pokemon { get; set; }
 
+    [Parameter]
+    public LegalityAnalysis? Analysis { get; set; }
+
     private MetTimeOfDay GetMetTimeOfDay => Pokemon is not (PK2 and ICaughtData2 c2)
         ? MetTimeOfDay.None
         : (MetTimeOfDay)c2.MetTimeOfDay;
 
     private bool PokemonMetAsEgg => Pokemon is not null && (Pokemon.IsEgg || Pokemon.WasEgg || Pokemon.WasTradedEgg);
 
+    private bool ShowGroundTile => Pokemon is IGroundTile && Pokemon.Gen4 && Pokemon.Format < 7;
+
     public void Dispose() =>
         RefreshService.OnAppStateChanged -= StateHasChanged;
+
+    private GroundTileType GetGroundTile() => Pokemon is IGroundTile g
+        ? g.GroundTile
+        : GroundTileType.None;
+
+    private void SetGroundTile(GroundTileType tile)
+    {
+        if (Pokemon is IGroundTile g)
+        {
+            g.GroundTile = tile;
+        }
+    }
+
+    private CheckResult? GetCheckResult(CheckIdentifier identifier)
+    {
+        if (Analysis is not { } la)
+        {
+            return null;
+        }
+
+        foreach (var r in la.Results)
+        {
+            if (r.Identifier == identifier && !r.Valid)
+            {
+                return r;
+            }
+        }
+
+        return null;
+    }
+
+    private string HumanizeCheckResult(CheckResult? result)
+    {
+        if (result is not { } r || Analysis is not { } la)
+        {
+            return string.Empty;
+        }
+
+        var ctx = LegalityLocalizationContext.Create(la);
+        return ctx.Humanize(in r, verbose: false);
+    }
 
     protected override void OnInitialized() =>
         RefreshService.OnAppStateChanged += StateHasChanged;

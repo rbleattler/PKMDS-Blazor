@@ -151,16 +151,14 @@ public partial class MainLayout : IDisposable
                 // matching PKHeX WinForms behaviour and preventing false-positive legality errors on
                 // Pokémon whose OT matches the loaded trainer (e.g. BDSP Palkia).
                 //
-                // InitFromSaveFileData also sets AllowGBCartEra based on SAV1.IsVirtualConsole — a
-                // filename-only heuristic that incorrectly treats renamed VC save files (e.g.
-                // "blue_vconsole.dat") as cartridge saves. We immediately reset AllowGBCartEra = false
-                // so that VC encounter slots are always checked regardless of filename.
-                //
-                // See: PKHeX.Core SAV1.IsVirtualConsole, ParseSettings.InitFromSaveFileData,
-                //      EncounterEnumerator1.YieldState.EventVC
-                // PKHeX bug filed: https://github.com/kwsch/PKHeX/issues/4734
+                // InitFromSaveFileData also sets AllowGBCartEra based on SAV1/SAV2.IsVirtualConsole,
+                // which gates AllowGBEraEvents (Nintendo Event Mew, GS Ball Celebi, etc.) and
+                // AllowGBStadium2. Physical Gen 1/2 saves correctly get AllowGBCartEra = true;
+                // VC saves (filename "sav*.dat") get false. Renamed VC saves may be misidentified as
+                // physical cartridge saves — that is a PKHeX bug tracked at
+                // https://github.com/kwsch/PKHeX/issues/4734 and is not something we work around here,
+                // as doing so breaks legitimate GB era events on real physical cartridge saves.
                 ParseSettings.InitFromSaveFileData(saveFile);
-                ParseSettings.AllowGBCartEra = false;
                 AppState.SaveFile = saveFile;
                 AppState.BoxEdit?.LoadBox(saveFile.CurrentBox);
                 Logger.LogInformation("Successfully loaded save file: {SaveType}, Generation: {Generation}",

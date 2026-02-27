@@ -14,62 +14,111 @@
          SelectedSlotsAreValid: true
      })
 {
-    <MudSelect Label="Origin Game"
-               Variant="@Variant.Outlined"
-               @bind-Value="@Pokemon.Version"
-               @bind-Value:after="@OriginGameChanged"
-               ToStringFunc="@(version => GameInfo.GetVersionName(version))"
-               Disabled="@(saveGeneration <= 2)"
-               For="@(() => Pokemon.Version)">
-        @foreach (var gameVersion in GameInfo.FilteredSources.Games)
-        {
-            <MudSelectItem Value="@((GameVersion)gameVersion.Value)"
-                           @key="@((GameVersion)gameVersion.Value)"/>
-        }
-    </MudSelect>
+    <MudStack Row
+              AlignItems="@AlignItems.Center"
+              Spacing="1">
+        <MudStack Style="flex: 1; min-width: 0;">
+            <MudSelect Label="Origin Game"
+                       Variant="@Variant.Outlined"
+                       @bind-Value="@Pokemon.Version"
+                       @bind-Value:after="@OriginGameChanged"
+                       ToStringFunc="@(version => GameInfo.GetVersionName(version))"
+                       Disabled="@(saveGeneration <= 2)"
+                       For="@(() => Pokemon.Version)">
+                @foreach (var gameVersion in GameInfo.FilteredSources.Games)
+                {
+                    <MudSelectItem Value="@((GameVersion)gameVersion.Value)"
+                                   @key="@((GameVersion)gameVersion.Value)"/>
+                }
+            </MudSelect>
+        </MudStack>
+        <LegalityIndicator Severity="@(GetCheckResult(CheckIdentifier.GameOrigin)?.Judgement ?? PKHeX.Core.Severity.Valid)"
+                           Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.GameOrigin))"/>
+    </MudStack>
 
-    @* ReSharper disable once CSharpWarnings::CS8603 *@
-    <MudAutocomplete T="@ComboItem"
-                     Label="Met Location"
-                     Variant="@Variant.Outlined"
-                     @bind-Value:get="@GetMetLocation()"
-                     @bind-Value:set="@(metLocation => Pokemon.MetLocation = (ushort)metLocation.Value)"
-                     SearchFunc="@SearchMetLocations"
-                     ToStringFunc="@(metLocation => metLocation?.Text)"/>
+    <MudStack Row
+              AlignItems="@AlignItems.Center"
+              Spacing="1">
+        <MudStack Style="flex: 1; min-width: 0;">
+            @* ReSharper disable once CSharpWarnings::CS8603 *@
+            <MudAutocomplete T="@ComboItem"
+                             Label="Met Location"
+                             Variant="@Variant.Outlined"
+                             @bind-Value:get="@GetMetLocation()"
+                             @bind-Value:set="@(metLocation => Pokemon.MetLocation = (ushort)metLocation.Value)"
+                             SearchFunc="@SearchMetLocations"
+                             ToStringFunc="@(metLocation => metLocation?.Text)"/>
+        </MudStack>
+        <LegalityIndicator Severity="@(GetCheckResult(CheckIdentifier.Encounter)?.Judgement ?? PKHeX.Core.Severity.Valid)"
+                           Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Encounter))"/>
+    </MudStack>
 
     @if (saveGeneration >= 3)
     {
-        <MudSelect Label="Ball"
-                   Variant="@Variant.Outlined"
-                   @bind-Value="@Pokemon.Ball"
-                   For="@(() => Pokemon.Ball)">
-            @foreach (var ball in GameInfo.FilteredSources.Balls.DistinctBy(ball => ball.Value))
-            {
-                <MudSelectItem Value="@((byte)ball.Value)"
-                               @key="@ball.Value">
-                    <MudStack Row>
-                        <MudImage Src="@ImageHelper.GetBallSpriteFilename(ball.Value)"
-                                  Alt="@ball.Text"
-                                  title="@ball.Text"
-                                  ObjectFit="@ObjectFit.Contain"
-                                  ObjectPosition="@ObjectPosition.Center"
-                                  Width="22"
-                                  Height="22"/>
-                        <MudText>
-                            @ball.Text
-                        </MudText>
-                    </MudStack>
-                </MudSelectItem>
-            }
-        </MudSelect>
+        <MudStack Row
+                  AlignItems="@AlignItems.Center"
+                  Spacing="1">
+            <MudStack Style="flex: 1; min-width: 0;">
+                <MudSelect Label="Ball"
+                           Variant="@Variant.Outlined"
+                           @bind-Value="@Pokemon.Ball"
+                           For="@(() => Pokemon.Ball)">
+                    @foreach (var ball in GameInfo.FilteredSources.Balls.DistinctBy(ball => ball.Value))
+                    {
+                        <MudSelectItem Value="@((byte)ball.Value)"
+                                       @key="@ball.Value">
+                            <MudStack Row>
+                                <MudImage Src="@ImageHelper.GetBallSpriteFilename(ball.Value)"
+                                          Alt="@ball.Text"
+                                          title="@ball.Text"
+                                          ObjectFit="@ObjectFit.Contain"
+                                          ObjectPosition="@ObjectPosition.Center"
+                                          Width="22"
+                                          Height="22"/>
+                                <MudText>
+                                    @ball.Text
+                                </MudText>
+                            </MudStack>
+                        </MudSelectItem>
+                    }
+                </MudSelect>
+            </MudStack>
+            <LegalityIndicator Severity="@(GetCheckResult(CheckIdentifier.Ball)?.Judgement ?? PKHeX.Core.Severity.Valid)"
+                               Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Ball))"/>
+        </MudStack>
     }
 
     @if (saveGeneration >= 2)
     {
-        <MudNumericField Label="Met Level"
-                         Variant="@Variant.Outlined"
-                         @bind-Value="@Pokemon.MetLevel"
-                         For="@(() => Pokemon.MetLevel)"/>
+        <MudStack Row
+                  AlignItems="@AlignItems.Center"
+                  Spacing="1">
+            <MudStack Style="flex: 1; min-width: 0;">
+                <MudNumericField Label="Met Level"
+                                 Variant="@Variant.Outlined"
+                                 @bind-Value="@Pokemon.MetLevel"
+                                 For="@(() => Pokemon.MetLevel)"/>
+            </MudStack>
+            <LegalityIndicator Severity="@(GetCheckResult(CheckIdentifier.Level)?.Judgement ?? PKHeX.Core.Severity.Valid)"
+                               Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Level))"/>
+        </MudStack>
+    }
+
+    @if (ShowGroundTile)
+    {
+        <MudSelect Label="Encountered On"
+                   T="@GroundTileType"
+                   Variant="@Variant.Outlined"
+                   Value="@GetGroundTile()"
+                   ValueChanged="@SetGroundTile">
+            @foreach (var item in GameInfo.FilteredSources.G4GroundTiles)
+            {
+                <MudSelectItem Value="@((GroundTileType)item.Value)"
+                               @key="@item.Value">
+                    @item.Text
+                </MudSelectItem>
+            }
+        </MudSelect>
     }
 
     @switch (saveGeneration)

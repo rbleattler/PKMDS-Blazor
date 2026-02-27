@@ -141,6 +141,15 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - [x] Add "Fix" buttons for common legality issues (ball, met location, moves, TechRecord) — closes #401
 - [x] Implement batch legality checking — "Legality Report" tab sweeps all party/box slots, sortable/filterable table, Legal/Fishy/Illegal counts, click-to-jump-to-slot — closes #402
 - [x] Show legality warnings on Pokémon slot display (valid/warn icon overlay)
+- [x] Add inline per-field legality indicators throughout Pokémon editor tabs (#411)
+  - [x] Reusable `LegalityIndicator` component (MudTooltip + severity icon, renders nothing when valid)
+  - [x] `LegalityAnalysis` computed once in `PokemonEditForm` and passed to all tabs
+  - [x] Per-move-slot indicators (current moves + relearn moves) in **Moves tab**
+  - [x] Group-level indicators for IVs/EVs/AVs/GVs in **Stats tab**
+  - [x] Field-level indicators (PID, Ability, Gender, Shiny, Nature, Form, Held Item, Nickname, Language, Egg) in **Main tab**
+  - [x] Field-level indicators (Ball, Encounter/Met Location, Level, Game Origin) in **Met tab**
+  - [x] Field-level indicators (EC, Trainer/OT, Handler, Memory) in **OT/Misc tab**
+  - [x] Per-ribbon indicators in **Ribbons tab**
 - [ ] Create comprehensive unit tests
 - **Note:** `ParseSettings.InitFromSaveFileData` is intentionally not called (see `MainLayout.razor.cs` comment); relies on default `AllowGBCartEra = false` so VC encounters are always checked regardless of filename. PKHeX bug filed: [kwsch/PKHeX#4734](https://github.com/kwsch/PKHeX/issues/4734).
 
@@ -883,4 +892,5 @@ This roadmap is a living document. Community contributions are welcome!
 **Last Updated:** 2026-02-27
 **Next Review:** 2026-03-27
 <!-- Legality Checker (§1.2): fix buttons (#401) + batch report (#402) done 2026-02-27; comprehensive unit tests still pending -->
+<!-- Legality Checker (§1.2): per-field inline indicators (#411) implemented 2026-02-27; covers Moves/Stats/Main/Met/OT-Misc/Ribbons tabs -->
 <!-- PKHeX bug filed 2026-02-27: SAV1.IsVirtualConsole filename heuristic causes false cart-era detection for renamed VC saves → kwsch/PKHeX#4734 -->

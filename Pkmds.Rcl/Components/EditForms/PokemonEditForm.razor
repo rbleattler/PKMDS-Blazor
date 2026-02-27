@@ -85,22 +85,26 @@
                  Border>
 
             <MudTabPanel Text="Main">
-                <MainTab Pokemon="@Pokemon"/>
+                <MainTab Pokemon="@Pokemon"
+                         Analysis="@Analysis"/>
             </MudTabPanel>
 
             @if (saveGeneration >= 2)
             {
                 <MudTabPanel Text="Met">
-                    <MetTab Pokemon="@Pokemon"/>
+                    <MetTab Pokemon="@Pokemon"
+                            Analysis="@Analysis"/>
                 </MudTabPanel>
             }
 
             <MudTabPanel Text="Stats">
-                <StatsTab Pokemon="@Pokemon"/>
+                <StatsTab Pokemon="@Pokemon"
+                          Analysis="@Analysis"/>
             </MudTabPanel>
 
             <MudTabPanel Text="Moves">
-                <MovesTab Pokemon="@Pokemon"/>
+                <MovesTab Pokemon="@Pokemon"
+                          Analysis="@Analysis"/>
             </MudTabPanel>
 
             @if (saveGeneration >= 3)
@@ -120,16 +124,19 @@
             @if (saveGeneration >= 3)
             {
                 <MudTabPanel Text="Ribbons">
-                    <RibbonsTab Pokemon="@Pokemon"/>
+                    <RibbonsTab Pokemon="@Pokemon"
+                                Analysis="@Analysis"/>
                 </MudTabPanel>
             }
 
             <MudTabPanel Text="OT/Misc">
-                <OtMiscTab Pokemon="@Pokemon"/>
+                <OtMiscTab Pokemon="@Pokemon"
+                           Analysis="@Analysis"/>
             </MudTabPanel>
 
             <MudTabPanel Text="Legality">
-                <LegalityTab Pokemon="@Pokemon"/>
+                <LegalityTab Pokemon="@Pokemon"
+                             Analysis="@Analysis"/>
             </MudTabPanel>
 
         </MudTabs>

@@ -30,7 +30,7 @@
             {
                 <div class="shiny-indicator-icon"
                      title="Shiny">
-                    <img src="@ImageHelper.GetShinyIndicatorSpriteFileName(ShinyExtensions.GetType(Pokemon) is Shiny and Shiny.AlwaysSquare)"
+                    <img src="@ImageHelper.GetShinyIndicatorSpriteFileName(ShinyExtensions.GetType(Pokemon) is Shiny.AlwaysSquare)"
                          alt="Shiny"
                          class="w-full h-full object-contain">
                 </div>
@@ -72,7 +72,16 @@
                 </div>
             }
 
-            @if (Pokemon.HeldItem != 0)
+            @if (Pokemon.IsEgg)
+            {
+                <div class="egg-indicator-icon"
+                     title="Egg">
+                    <img src="@ImageHelper.GetEggOverlaySpriteFileName(Pokemon.Species)"
+                         alt="Egg"
+                         class="w-full h-full object-contain">
+                </div>
+            }
+            else if (Pokemon.HeldItem != 0)
             {
                 var itemTitle = GetItemTitle();
                 <div class="held-item-icon">
