@@ -241,4 +241,38 @@ public interface IAppService
     /// <param name="isDestParty">Whether the destination is a party slot.</param>
     void MovePokemon(int? sourceBoxNumber, int sourceSlotNumber, bool isSourceParty,
         int? destBoxNumber, int destSlotNumber, bool isDestParty);
+
+    /// <summary>
+    ///     Gets all available memory combo items for the memory ID dropdown.
+    /// </summary>
+    /// <returns>A collection of memories as combo items.</returns>
+    IEnumerable<ComboItem> GetMemoryComboItems();
+
+    /// <summary>
+    ///     Gets all available memory feeling combo items for the given memory generation.
+    /// </summary>
+    /// <param name="memoryGen">The memory generation (6 for Gen 6/7, 8 for Gen 8+).</param>
+    /// <returns>A collection of feelings as combo items.</returns>
+    IEnumerable<ComboItem> GetMemoryFeelingComboItems(int memoryGen);
+
+    /// <summary>Gets memory intensity/quality combo items.</summary>
+    IEnumerable<ComboItem> GetMemoryQualityComboItems();
+
+    /// <summary>Gets argument combo items for a given memory argument type and generation.</summary>
+    IEnumerable<ComboItem> GetMemoryArgumentComboItems(MemoryArgType argType, int memoryGen);
+
+    /// <summary>Gets language combo items for the given generation.</summary>
+    IEnumerable<ComboItem> GetLanguageComboItems(int generation, EntityContext context);
+
+    /// <summary>
+    ///     Gets all valid geo-location country combo items (ID → English name).
+    ///     Entry 0 is the "none/blank" country (—).
+    /// </summary>
+    IEnumerable<ComboItem> GetGeoCountryComboItems();
+
+    /// <summary>
+    ///     Gets all geo-location region combo items for a given country (ID → English name).
+    ///     Only valid when <paramref name="country"/> is non-zero.
+    /// </summary>
+    IEnumerable<ComboItem> GetGeoRegionComboItems(byte country);
 }
