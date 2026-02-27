@@ -83,7 +83,7 @@
                                 Add Valid Ribbons
                             </MudButton>
                         }
-                        @if (HasMoveIssues)
+                        @if (HasMoveIssues || HasEncounterIssues)
                         {
                             <MudButton Variant="@Variant.Outlined"
                                        Color="@Color.Warning"

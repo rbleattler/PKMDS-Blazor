@@ -24,6 +24,9 @@ public partial class LegalityTab : IDisposable
     private bool HasBallIssues => Analysis is { } la &&
         la.Results.Any(r => !r.Valid && r.Identifier is CheckIdentifier.Ball);
 
+    private bool HasEncounterIssues => Analysis is { } la &&
+        la.Results.Any(r => !r.Valid && r.Identifier is CheckIdentifier.Encounter);
+
     private bool HasMetLocationIssues => Analysis is { } la &&
         la.Results.Any(r => !r.Valid && r.Identifier is CheckIdentifier.Level or CheckIdentifier.Encounter);
 
