@@ -12,6 +12,15 @@ public partial class LegalityTab : IDisposable
 
     private bool IsLegal => Analysis is { } la && la.Results.All(r => r.Valid);
 
+    private bool HasRibbonIssues => Analysis is { } la &&
+        la.Results.Any(r => !r.Valid && r.Identifier is CheckIdentifier.Ribbon or CheckIdentifier.RibbonMark);
+
+    private bool HasMoveIssues => Analysis is { } la &&
+        la.Results.Any(r => !r.Valid && r.Identifier is CheckIdentifier.CurrentMove);
+
+    private bool HasRelearnMoveIssues => Analysis is { } la &&
+        la.Results.Any(r => !r.Valid && r.Identifier is CheckIdentifier.RelearnMove);
+
     public void Dispose() =>
         RefreshService.OnAppStateChanged -= Refresh;
 
@@ -33,6 +42,54 @@ public partial class LegalityTab : IDisposable
         Analysis = Pokemon is { Species: > 0 }
             ? AppService.GetLegalityAnalysis(Pokemon)
             : null;
+
+    private void RemoveInvalidRibbons()
+    {
+        if (Pokemon is null || Analysis is not { } la)
+        {
+            return;
+        }
+
+        RibbonApplicator.RemoveAllValidRibbons(la);
+        RefreshService.Refresh();
+        Snackbar.Add("Invalid ribbons removed. Click Save to apply changes.", MudBlazor.Severity.Success);
+    }
+
+    private void AddValidRibbons()
+    {
+        if (Pokemon is null || Analysis is not { } la)
+        {
+            return;
+        }
+
+        RibbonApplicator.SetAllValidRibbons(la);
+        RefreshService.Refresh();
+        Snackbar.Add("All obtainable ribbons added. Click Save to apply changes.", MudBlazor.Severity.Success);
+    }
+
+    private void SuggestMoves()
+    {
+        if (Pokemon is null)
+        {
+            return;
+        }
+
+        MoveSetApplicator.SetMoveset(Pokemon, random: false);
+        RefreshService.Refresh();
+        Snackbar.Add("Moves updated with a legal move set. Click Save to apply changes.", MudBlazor.Severity.Success);
+    }
+
+    private void SuggestRelearnMoves()
+    {
+        if (Pokemon is null || Analysis is not { } la)
+        {
+            return;
+        }
+
+        MoveSetApplicator.SetRelearnMoves(Pokemon, la);
+        RefreshService.Refresh();
+        Snackbar.Add("Relearn moves updated. Click Save to apply changes.", MudBlazor.Severity.Success);
+    }
 
     private static Color GetSeverityColor(PKHexSeverity severity) => severity switch
     {
