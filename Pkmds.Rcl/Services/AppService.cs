@@ -204,6 +204,12 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         AppState.SelectedBoxSlotNumber = slotNumber;
         EditFormPokemon = pkm;
 
+        if (AppState is { SaveFile: { } saveFile, BoxEdit: { } boxEdit })
+        {
+            boxEdit.LoadBox(boxNumber);
+            saveFile.CurrentBox = boxEdit.CurrentBox;
+        }
+
         HandleNullOrEmptyPokemon();
         RefreshService.Refresh();
     }
