@@ -14,8 +14,23 @@ public partial class MainTab : IDisposable
     public void Dispose() =>
         RefreshService.OnAppStateChanged -= Refresh;
 
-    private CheckResult? GetCheckResult(CheckIdentifier identifier) =>
-        Analysis?.Results.FirstOrDefault(r => r.Identifier == identifier && !r.Valid);
+    private CheckResult? GetCheckResult(CheckIdentifier identifier)
+    {
+        if (Analysis is not { } la)
+        {
+            return null;
+        }
+
+        foreach (var r in la.Results)
+        {
+            if (r.Identifier == identifier && !r.Valid)
+            {
+                return r;
+            }
+        }
+
+        return null;
+    }
 
     private string HumanizeCheckResult(CheckResult? result)
     {

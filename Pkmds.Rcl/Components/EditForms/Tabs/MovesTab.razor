@@ -26,6 +26,9 @@
 
                 var moveResult = Analysis?.Info.Moves[i];
                 var hasMoveIssue = moveResult is { Valid: false };
+                var moveMsgText = hasMoveIssue && moveResult is { } mr0
+                    ? FormatMoveMessage(mr0, i)
+                    : string.Empty;
 
                 var moveTextColumns = 6;
                 if (UseTextSearch)
@@ -95,11 +98,13 @@
                                     </MudSelect>
                                 }
                             </MudStack>
-                            @if (hasMoveIssue && moveResult is { } mr)
-                            {
-                                <LegalityIndicator Severity="@mr.Judgement"
-                                                   Message="@FormatMoveMessage(mr, i)"/>
-                            }
+                            <div style="width: 20px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+                                @if (hasMoveIssue && moveResult is { } mr)
+                                {
+                                    <LegalityIndicator Severity="@mr.Judgement"
+                                                       Message="@moveMsgText"/>
+                                }
+                            </div>
                         </MudStack>
                     </MudItem>
 
@@ -182,6 +187,9 @@
                     var relearnMoveId = Pokemon.GetRelearnMove(i);
                     var relearnResult = Analysis?.Info.Relearn[i];
                     var hasRelearnIssue = relearnResult is { Valid: false };
+                    var relearnMsgText = hasRelearnIssue && relearnResult is { } rr0
+                        ? FormatMoveMessage(rr0, i)
+                        : string.Empty;
 
                     <MudGrid Spacing="1">
                         @if (UseTextSearch)
@@ -245,11 +253,13 @@
                                         </MudSelect>
                                     }
                                 </MudStack>
-                                @if (hasRelearnIssue && relearnResult is { } rr)
-                                {
-                                    <LegalityIndicator Severity="@rr.Judgement"
-                                                       Message="@FormatMoveMessage(rr, i)"/>
-                                }
+                                <div style="width: 20px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+                                    @if (hasRelearnIssue && relearnResult is { } rr)
+                                    {
+                                        <LegalityIndicator Severity="@rr.Judgement"
+                                                           Message="@relearnMsgText"/>
+                                    }
+                                </div>
                             </MudStack>
                         </MudItem>
                     </MudGrid>
