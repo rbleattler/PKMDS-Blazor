@@ -158,7 +158,12 @@
                                                 : Color.Error)"
                                  Dense="true">
                         <MudText Typo="@Typo.body2">
-                            <strong>@displayName</strong>: @HumanizeRibbonCheckResult(result)
+                            @if (!string.IsNullOrEmpty(displayName))
+                            {
+                                <strong>@displayName</strong>
+                                <text>: </text>
+                            }
+                            @GetRibbonIssueMessage(result)
                         </MudText>
                     </MudListItem>
                 }

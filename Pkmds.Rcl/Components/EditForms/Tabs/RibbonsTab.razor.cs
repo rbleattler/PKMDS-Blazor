@@ -87,8 +87,9 @@ public partial class RibbonsTab : IDisposable
             if (r.Identifier == CheckIdentifier.Ribbon)
             {
                 // Grouped result — Argument is the count of invalid ribbons, not a RibbonIndex.
-                // The humanized message already enumerates the ribbon names.
-                yield return ("Ribbons", r);
+                // The humanized message already enumerates the ribbon names; use empty display name
+                // so the template doesn't duplicate "Ribbons:" alongside "Invalid Ribbons:".
+                yield return (string.Empty, r);
             }
             else if (r.Identifier == CheckIdentifier.RibbonMark)
             {
@@ -108,6 +109,19 @@ public partial class RibbonsTab : IDisposable
 
         var ctx = LegalityLocalizationContext.Create(la);
         return ctx.Humanize(in result, verbose: false);
+    }
+
+    /// <summary>
+    /// Returns the message portion of a humanized check result, stripping the leading "Severity: "
+    /// prefix. Used in the Ribbon Issues list where the icon already communicates severity.
+    /// </summary>
+    private string GetRibbonIssueMessage(CheckResult result)
+    {
+        var humanized = HumanizeRibbonCheckResult(result);
+        var colonIdx = humanized.IndexOf(": ", StringComparison.Ordinal);
+        return colonIdx >= 0
+            ? humanized[(colonIdx + 2)..]
+            : humanized;
     }
 
     protected override void OnInitialized() =>
