@@ -146,7 +146,7 @@
         {
             <MudDivider Class="my-2"/>
             <MudText Typo="@Typo.subtitle2">Ribbon Issues</MudText>
-            <MudList T="string"
+            <MudList T="@string"
                      Dense>
                 @foreach (var (displayName, result) in invalidRibbonResults)
                 {

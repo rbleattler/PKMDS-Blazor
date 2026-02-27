@@ -18,7 +18,7 @@ public partial class RibbonsTab : IDisposable
     /// in <see cref="CheckResult.Argument" />; we match by looking up the property name in
     /// <see cref="RibbonIndex" /> enum values.
     /// </summary>
-    internal CheckResult? GetRibbonCheckResult(string propertyName)
+    private CheckResult? GetRibbonCheckResult(string propertyName)
     {
         if (Analysis is not { } la)
         {
@@ -65,7 +65,7 @@ public partial class RibbonsTab : IDisposable
         return worst;
     }
 
-    internal IEnumerable<(string DisplayName, CheckResult Result)> GetInvalidRibbonResults()
+    private IEnumerable<(string DisplayName, CheckResult Result)> GetInvalidRibbonResults()
     {
         if (Analysis is not { } la)
         {
@@ -89,7 +89,7 @@ public partial class RibbonsTab : IDisposable
         }
     }
 
-    internal string HumanizeRibbonCheckResult(CheckResult result)
+    private string HumanizeRibbonCheckResult(CheckResult result)
     {
         if (Analysis is not { } la)
         {
@@ -103,16 +103,16 @@ public partial class RibbonsTab : IDisposable
     protected override void OnInitialized() =>
         RefreshService.OnAppStateChanged += StateHasChanged;
 
-    internal static string GetRibbonDisplayName(string propertyName) =>
+    private static string GetRibbonDisplayName(string propertyName) =>
         RibbonHelper.GetRibbonDisplayName(propertyName);
 
-    internal static string GetRibbonSprite(RibbonInfo info) =>
+    private static string GetRibbonSprite(RibbonInfo info) =>
         RibbonHelper.GetRibbonSprite(info);
 
-    internal static bool IsMarkEntry(string name) =>
+    private static bool IsMarkEntry(string name) =>
         RibbonHelper.IsMarkEntry(name);
 
-    internal List<RibbonInfo> GetAllRibbonInfo() =>
+    private List<RibbonInfo> GetAllRibbonInfo() =>
         RibbonHelper.GetAllRibbonInfo(Pokemon);
 
     private void ToggleRibbon(string propertyName)
@@ -138,15 +138,17 @@ public partial class RibbonsTab : IDisposable
         var maxAllowed = (int)byte.MaxValue;
         foreach (var ribbon in GetAllRibbonInfo())
         {
-            if (ribbon.Name == propertyName)
+            if (ribbon.Name != propertyName)
             {
-                if (ribbon.MaxCount < maxAllowed)
-                {
-                    maxAllowed = ribbon.MaxCount;
-                }
-
-                break;
+                continue;
             }
+
+            if (ribbon.MaxCount < maxAllowed)
+            {
+                maxAllowed = ribbon.MaxCount;
+            }
+
+            break;
         }
 
         var clamped = count;
