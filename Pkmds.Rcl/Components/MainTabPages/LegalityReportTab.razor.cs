@@ -1,6 +1,6 @@
-namespace Pkmds.Rcl.Components.MainTabPages;
-
 using PKHexSeverity = PKHeX.Core.Severity;
+
+namespace Pkmds.Rcl.Components.MainTabPages;
 
 public partial class LegalityReportTab : RefreshAwareComponent
 {

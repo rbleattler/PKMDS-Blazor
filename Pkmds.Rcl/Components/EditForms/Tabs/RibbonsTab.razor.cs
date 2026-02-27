@@ -31,7 +31,7 @@ public partial class RibbonsTab : IDisposable
             return;
         }
 
-        var current = ReflectUtil.GetValue(Pokemon, propertyName) is bool value && value;
+        var current = ReflectUtil.GetValue(Pokemon, propertyName) is bool and true;
         ReflectUtil.SetValue(Pokemon, propertyName, !current);
         StateHasChanged();
     }
