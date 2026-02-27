@@ -41,70 +41,70 @@
                         </MudListItem>
                     }
                 </MudList>
+            }
 
-                @if (HasRibbonIssues || HasMoveIssues || HasRelearnMoveIssues || HasBallIssues || HasMetLocationIssues)
-                {
-                    <MudText Typo="@Typo.subtitle2" Class="mt-2">Quick Fixes</MudText>
-                    <MudStack Row Wrap="@Wrap.Wrap" Spacing="1">
-                        @if (HasBallIssues)
-                        {
-                            <MudButton Variant="@Variant.Outlined"
-                                       Color="@Color.Warning"
-                                       StartIcon="@Icons.Material.Filled.AutoFixHigh"
-                                       Size="@Size.Small"
-                                       OnClick="@SuggestBall">
-                                Suggest Ball
-                            </MudButton>
-                        }
-                        @if (HasMetLocationIssues)
-                        {
-                            <MudButton Variant="@Variant.Outlined"
-                                       Color="@Color.Warning"
-                                       StartIcon="@Icons.Material.Filled.AutoFixHigh"
-                                       Size="@Size.Small"
-                                       OnClick="@SuggestMetLocation">
-                                Fix Met Location
-                            </MudButton>
-                        }
-                        @if (HasRibbonIssues)
-                        {
-                            <MudButton Variant="@Variant.Outlined"
-                                       Color="@Color.Warning"
-                                       StartIcon="@Icons.Material.Filled.AutoFixHigh"
-                                       Size="@Size.Small"
-                                       OnClick="@RemoveInvalidRibbons">
-                                Remove Invalid Ribbons
-                            </MudButton>
-                            <MudButton Variant="@Variant.Outlined"
-                                       Color="@Color.Info"
-                                       StartIcon="@Icons.Material.Filled.EmojiEvents"
-                                       Size="@Size.Small"
-                                       OnClick="@AddValidRibbons">
-                                Add Valid Ribbons
-                            </MudButton>
-                        }
-                        @if (HasMoveIssues || HasEncounterIssues)
-                        {
-                            <MudButton Variant="@Variant.Outlined"
-                                       Color="@Color.Warning"
-                                       StartIcon="@Icons.Material.Filled.AutoFixHigh"
-                                       Size="@Size.Small"
-                                       OnClick="@SuggestMoves">
-                                Suggest Moves
-                            </MudButton>
-                        }
-                        @if (HasRelearnMoveIssues)
-                        {
-                            <MudButton Variant="@Variant.Outlined"
-                                       Color="@Color.Warning"
-                                       StartIcon="@Icons.Material.Filled.AutoFixHigh"
-                                       Size="@Size.Small"
-                                       OnClick="@SuggestRelearnMoves">
-                                Suggest Relearn Moves
-                            </MudButton>
-                        }
-                    </MudStack>
-                }
+            @if (HasRibbonIssues || HasMoveIssues || HasRelearnMoveIssues || HasBallIssues || HasMetLocationIssues)
+            {
+                <MudText Typo="@Typo.subtitle2" Class="mt-2">Quick Fixes</MudText>
+                <MudStack Row Wrap="@Wrap.Wrap" Spacing="1">
+                    @if (HasBallIssues)
+                    {
+                        <MudButton Variant="@Variant.Outlined"
+                                   Color="@Color.Warning"
+                                   StartIcon="@Icons.Material.Filled.AutoFixHigh"
+                                   Size="@Size.Small"
+                                   OnClick="@SuggestBall">
+                            Suggest Ball
+                        </MudButton>
+                    }
+                    @if (HasMetLocationIssues)
+                    {
+                        <MudButton Variant="@Variant.Outlined"
+                                   Color="@Color.Warning"
+                                   StartIcon="@Icons.Material.Filled.AutoFixHigh"
+                                   Size="@Size.Small"
+                                   OnClick="@SuggestMetLocation">
+                            Fix Met Location
+                        </MudButton>
+                    }
+                    @if (HasRibbonIssues)
+                    {
+                        <MudButton Variant="@Variant.Outlined"
+                                   Color="@Color.Warning"
+                                   StartIcon="@Icons.Material.Filled.AutoFixHigh"
+                                   Size="@Size.Small"
+                                   OnClick="@RemoveInvalidRibbons">
+                            Remove Invalid Ribbons
+                        </MudButton>
+                        <MudButton Variant="@Variant.Outlined"
+                                   Color="@Color.Info"
+                                   StartIcon="@Icons.Material.Filled.EmojiEvents"
+                                   Size="@Size.Small"
+                                   OnClick="@AddValidRibbons">
+                            Add Valid Ribbons
+                        </MudButton>
+                    }
+                    @if (HasMoveIssues || HasEncounterIssues)
+                    {
+                        <MudButton Variant="@Variant.Outlined"
+                                   Color="@Color.Warning"
+                                   StartIcon="@Icons.Material.Filled.AutoFixHigh"
+                                   Size="@Size.Small"
+                                   OnClick="@SuggestMoves">
+                            Suggest Moves
+                        </MudButton>
+                    }
+                    @if (HasRelearnMoveIssues)
+                    {
+                        <MudButton Variant="@Variant.Outlined"
+                                   Color="@Color.Warning"
+                                   StartIcon="@Icons.Material.Filled.AutoFixHigh"
+                                   Size="@Size.Small"
+                                   OnClick="@SuggestRelearnMoves">
+                            Suggest Relearn Moves
+                        </MudButton>
+                    }
+                </MudStack>
             }
 
             <MudExpansionPanels>

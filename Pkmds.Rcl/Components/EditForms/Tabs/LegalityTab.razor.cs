@@ -10,16 +10,23 @@ public partial class LegalityTab : IDisposable
 
     private LegalityAnalysis? Analysis { get; set; }
 
-    private bool IsLegal => Analysis is { } la && la.Results.All(r => r.Valid);
+    // Moves are validated in la.Info.Moves / la.Info.Relearn (MoveResult[]), not in la.Results.
+    // A legal Pokémon must have all of those valid in addition to all CheckResults being valid.
+    private bool IsLegal => Analysis is { } la
+        && la.Results.All(r => r.Valid)
+        && MoveResult.AllValid(la.Info.Moves)
+        && MoveResult.AllValid(la.Info.Relearn);
 
     private bool HasRibbonIssues => Analysis is { } la &&
         la.Results.Any(r => !r.Valid && r.Identifier is CheckIdentifier.Ribbon or CheckIdentifier.RibbonMark);
 
     private bool HasMoveIssues => Analysis is { } la &&
-        la.Results.Any(r => !r.Valid && r.Identifier is CheckIdentifier.CurrentMove);
+        (!MoveResult.AllValid(la.Info.Moves) ||
+         la.Results.Any(r => !r.Valid && r.Identifier is CheckIdentifier.CurrentMove));
 
     private bool HasRelearnMoveIssues => Analysis is { } la &&
-        la.Results.Any(r => !r.Valid && r.Identifier is CheckIdentifier.RelearnMove);
+        (!MoveResult.AllValid(la.Info.Relearn) ||
+         la.Results.Any(r => !r.Valid && r.Identifier is CheckIdentifier.RelearnMove));
 
     private bool HasBallIssues => Analysis is { } la &&
         la.Results.Any(r => !r.Valid && r.Identifier is CheckIdentifier.Ball);
