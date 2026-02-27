@@ -789,7 +789,10 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
             return;
         }
 
-        if (EditFormPokemon is not null)
+        // Empty box slots in PKHeX return a non-null PKM with Species=0, not null.
+        // Apply the template for both cases so new Pokémon start with the correct
+        // OT/ID/Language/Version/MetDate/Ball — matching EntityTemplates.TemplateFields.
+        if (EditFormPokemon is not (null or { Species: 0 }))
         {
             return;
         }
