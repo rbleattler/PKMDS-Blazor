@@ -21,6 +21,12 @@ public partial class LegalityTab : IDisposable
     private bool HasRelearnMoveIssues => Analysis is { } la &&
         la.Results.Any(r => !r.Valid && r.Identifier is CheckIdentifier.RelearnMove);
 
+    private bool HasBallIssues => Analysis is { } la &&
+        la.Results.Any(r => !r.Valid && r.Identifier is CheckIdentifier.Ball);
+
+    private bool HasMetLocationIssues => Analysis is { } la &&
+        la.Results.Any(r => !r.Valid && r.Identifier is CheckIdentifier.Level or CheckIdentifier.Encounter);
+
     public void Dispose() =>
         RefreshService.OnAppStateChanged -= Refresh;
 
@@ -75,6 +81,16 @@ public partial class LegalityTab : IDisposable
         }
 
         MoveSetApplicator.SetMoveset(Pokemon, random: false);
+
+        // Update Technical Records (Gen 8+ SwSh / SV / ZA) to reflect the new moves,
+        // mirroring PKMEditor's SetSuggestedMoves behaviour.
+        if (Pokemon is ITechRecord tr)
+        {
+            tr.ClearRecordFlags();
+            var freshLa = AppService.GetLegalityAnalysis(Pokemon);
+            tr.SetRecordFlags(Pokemon, TechnicalRecordApplicatorOption.LegalCurrent, freshLa);
+        }
+
         RefreshService.Refresh();
         Snackbar.Add("Moves updated with a legal move set. Click Save to apply changes.", MudBlazor.Severity.Success);
     }
@@ -89,6 +105,38 @@ public partial class LegalityTab : IDisposable
         MoveSetApplicator.SetRelearnMoves(Pokemon, la);
         RefreshService.Refresh();
         Snackbar.Add("Relearn moves updated. Click Save to apply changes.", MudBlazor.Severity.Success);
+    }
+
+    private void SuggestBall()
+    {
+        if (Pokemon is null || Analysis is not { } la)
+        {
+            return;
+        }
+
+        BallApplicator.ApplyBallLegalByColor(Pokemon, la, PersonalColorUtil.GetColor(Pokemon));
+        RefreshService.Refresh();
+        Snackbar.Add("Ball updated to a legal option. Click Save to apply changes.", MudBlazor.Severity.Success);
+    }
+
+    private void SuggestMetLocation()
+    {
+        if (Pokemon is null)
+        {
+            return;
+        }
+
+        var encounter = EncounterSuggestion.GetSuggestedMetInfo(Pokemon);
+        if (encounter is null)
+        {
+            Snackbar.Add("No met location suggestion is available for this Pokémon.", MudBlazor.Severity.Warning);
+            return;
+        }
+
+        Pokemon.MetLocation = encounter.Location;
+        Pokemon.MetLevel = encounter.GetSuggestedMetLevel(Pokemon);
+        RefreshService.Refresh();
+        Snackbar.Add("Met location and level updated. Click Save to apply changes.", MudBlazor.Severity.Success);
     }
 
     private static Color GetSeverityColor(PKHexSeverity severity) => severity switch
