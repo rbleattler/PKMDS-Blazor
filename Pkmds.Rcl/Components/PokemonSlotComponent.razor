@@ -36,6 +36,16 @@
                 </div>
             }
 
+            @if (GetLegalityValid() is { } isLegal)
+            {
+                <div class="legality-indicator-icon"
+                     title="@(isLegal ? "Legal" : "Illegal")">
+                    <img src="@(isLegal ? ImageHelper.GetLegalityValidSpriteFileName() : ImageHelper.GetLegalityWarnSpriteFileName())"
+                         alt="@(isLegal ? "Legal" : "Illegal")"
+                         class="w-full h-full object-contain">
+                </div>
+            }
+
             @if (IsAlphaPokemon())
             {
                 <div class="alpha-indicator-icon"

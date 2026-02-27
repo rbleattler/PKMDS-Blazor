@@ -851,6 +851,8 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         return items;
     }
 
+    public LegalityAnalysis GetLegalityAnalysis(PKM pkm) => new(pkm);
+
     /// <summary>
     /// Compacts a box by shifting all Pokémon left to fill gaps (for Gen 1 and Gen 2 games).
     /// In these generations, boxes were lists, not grids, so they should have no gaps.

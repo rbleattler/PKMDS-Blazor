@@ -1,0 +1,61 @@
+@inherits BasePkmdsComponent
+
+@if (Pokemon is not null &&
+     AppState is { SaveFile: { Context: not (EntityContext.None or EntityContext.SplitInvalid or EntityContext.MaxInvalid) }, SelectedSlotsAreValid: true })
+{
+    @if (Analysis is { } analysis)
+    {
+        <MudStack Class="pa-2">
+
+            <MudAlert Severity="@(IsLegal ? MudBlazor.Severity.Success : MudBlazor.Severity.Error)"
+                      Icon="@(IsLegal ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)">
+                @(IsLegal ? "This Pokémon is legal." : "This Pokémon has legality issues.")
+            </MudAlert>
+
+            @{
+                var issues = analysis.Results
+                    .Where(r => !r.Valid)
+                    .ToList();
+            }
+
+            @if (issues.Count > 0)
+            {
+                <MudText Typo="@Typo.subtitle2" Class="mt-2">Issues (@issues.Count)</MudText>
+
+                <MudList T="CheckResult" Dense>
+                    @foreach (var result in issues)
+                    {
+                        <MudListItem T="CheckResult"
+                                     Icon="@GetSeverityIcon(result.Judgement)"
+                                     IconColor="@GetSeverityColor(result.Judgement)"
+                                     @key="@($"{result.Identifier}:{result.Result}")">
+                            <MudStack Row AlignItems="@AlignItems.Center" Spacing="1">
+                                <MudChip T="string"
+                                         Size="@Size.Small"
+                                         Color="@GetSeverityColor(result.Judgement)"
+                                         Variant="@Variant.Outlined">
+                                    @GetIdentifierLabel(result.Identifier)
+                                </MudChip>
+                                <MudText Typo="@Typo.body2">@HumanizeResult(result)</MudText>
+                            </MudStack>
+                        </MudListItem>
+                    }
+                </MudList>
+            }
+
+            <MudExpansionPanels>
+                <MudExpansionPanel Text="Full Legality Report">
+                    <MudText Typo="@Typo.body2"
+                             Style="white-space: pre-wrap; font-family: monospace; font-size: 0.75rem;">
+                        @analysis.Report(verbose: true)
+                    </MudText>
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+
+        </MudStack>
+    }
+    else
+    {
+        <MudText Class="pa-2" Color="@Color.Default">No Pokémon selected.</MudText>
+    }
+}
