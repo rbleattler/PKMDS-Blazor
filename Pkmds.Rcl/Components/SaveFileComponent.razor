@@ -29,7 +29,8 @@ else
 
     <MudTabs Outlined
              Rounded
-             Border>
+             Border
+             @bind-ActivePanelIndex="activeTabIndex">
 
         <MudTabPanel Text="Party / Box">
             <div class="mt-3">
@@ -71,6 +72,12 @@ else
                 <PokedexTab/>
             </MudTabPanel>
         }
+
+        <MudTabPanel Text="Legality Report">
+            <div class="mt-3">
+                <LegalityReportTab OnJumpToPartyBox="@JumpToPartyBox"/>
+            </div>
+        </MudTabPanel>
 
     </MudTabs>
 }
