@@ -13,10 +13,11 @@ public partial class RibbonsTab : IDisposable
         RefreshService.OnAppStateChanged -= StateHasChanged;
 
     /// <summary>
-    /// Returns the worst-severity legality check result for a given ribbon property name,
-    /// or null if the ribbon is valid. Ribbon check results store the <see cref="RibbonIndex" />
-    /// in <see cref="CheckResult.Argument" />; we match by looking up the property name in
-    /// <see cref="RibbonIndex" /> enum values.
+    /// Returns the worst-severity legality check result for a given mark property name,
+    /// or null if the mark is valid or is a regular ribbon (not a mark).
+    /// Only marks have per-entry <see cref="CheckResult" />s with <see cref="CheckResult.Argument" />
+    /// set to the <see cref="RibbonIndex" />. Regular ribbon checks are grouped into a single result
+    /// with Argument = count, so per-ribbon targeting is not possible for them.
     /// </summary>
     private CheckResult? GetRibbonCheckResult(string propertyName)
     {
@@ -25,13 +26,17 @@ public partial class RibbonsTab : IDisposable
             return null;
         }
 
-        // Map property name → RibbonIndex.  The property name is e.g. "RibbonChampionG3",
-        // while RibbonIndex values are e.g. ChampionG3.  Strip the leading "Ribbon" or "Mark" prefix.
-        var shortName = propertyName.StartsWith("RibbonMark", StringComparison.Ordinal)
-            ? propertyName["Ribbon".Length..] // keep "MarkXxx" form
-            : propertyName.StartsWith("Ribbon", StringComparison.Ordinal)
-                ? propertyName["Ribbon".Length..] // strip leading "Ribbon"
-                : propertyName;
+        // Regular ribbon results are grouped (Argument = count of invalid ribbons, not a RibbonIndex).
+        // Only mark results are per-entry with Argument = RibbonIndex.
+        if (!IsMarkEntry(propertyName))
+        {
+            return null;
+        }
+
+        // "RibbonMarkCurry" → short name "MarkCurry" → RibbonIndex.MarkCurry
+        var shortName = propertyName.StartsWith("Ribbon", StringComparison.Ordinal)
+            ? propertyName["Ribbon".Length..]
+            : propertyName;
 
         if (!Enum.TryParse<RibbonIndex>(shortName, ignoreCase: true, out var idx))
         {
@@ -46,7 +51,7 @@ public partial class RibbonsTab : IDisposable
                 continue;
             }
 
-            if (r.Identifier is not (CheckIdentifier.Ribbon or CheckIdentifier.RibbonMark))
+            if (r.Identifier is not CheckIdentifier.RibbonMark)
             {
                 continue;
             }
@@ -79,13 +84,18 @@ public partial class RibbonsTab : IDisposable
                 continue;
             }
 
-            if (r.Identifier is not (CheckIdentifier.Ribbon or CheckIdentifier.RibbonMark))
+            if (r.Identifier == CheckIdentifier.Ribbon)
             {
-                continue;
+                // Grouped result — Argument is the count of invalid ribbons, not a RibbonIndex.
+                // The humanized message already enumerates the ribbon names.
+                yield return ("Ribbons", r);
             }
-
-            var propertyName = "Ribbon" + ((RibbonIndex)r.Argument);
-            yield return (GetRibbonDisplayName(propertyName), r);
+            else if (r.Identifier == CheckIdentifier.RibbonMark)
+            {
+                // Per-mark result — Argument is the RibbonIndex of the specific mark.
+                var propertyName = "Ribbon" + (RibbonIndex)r.Argument;
+                yield return (GetRibbonDisplayName(propertyName), r);
+            }
         }
     }
 
