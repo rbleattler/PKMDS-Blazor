@@ -187,6 +187,52 @@ public class AppServiceTests
         showdown.Should().BeEmpty();
     }
 
+    [Fact]
+    public void SetSelectedBoxPokemon_NullPokemon_AppliesTemplateWithSpeciesZero()
+    {
+        // Arrange - HandleNullOrEmptyPokemon applies EntityTemplates.TemplateFields when
+        // EditFormPokemon is null or has Species == 0, so blank slots get trainer data defaults.
+        var filePath = Path.Combine(TestFilesPath, "Black - Full Completion.sav");
+        var data = File.ReadAllBytes(filePath);
+        SaveUtil.TryGetSaveFile(data, out var saveFile, "Black - Full Completion.sav").Should().BeTrue();
+
+        var appState = new TestAppState { SaveFile = saveFile };
+        var refreshService = new TestRefreshService();
+        var appService = new AppService(appState, refreshService);
+
+        // Act
+        appService.SetSelectedBoxPokemon(null, 0, 0);
+
+        // Assert: blank slot should produce a non-null PKM with Species=0 and OT from save
+        appService.EditFormPokemon.Should().NotBeNull();
+        appService.EditFormPokemon!.Species.Should().Be(0);
+        appService.EditFormPokemon.OriginalTrainerName.Should().Be(saveFile!.OT);
+    }
+
+    [Fact]
+    public void SetSelectedBoxPokemon_SpeciesZeroPokemon_AppliesTemplateWithSpeciesZero()
+    {
+        // Arrange
+        var filePath = Path.Combine(TestFilesPath, "Black - Full Completion.sav");
+        var data = File.ReadAllBytes(filePath);
+        SaveUtil.TryGetSaveFile(data, out var saveFile, "Black - Full Completion.sav").Should().BeTrue();
+
+        var appState = new TestAppState { SaveFile = saveFile };
+        var refreshService = new TestRefreshService();
+        var appService = new AppService(appState, refreshService);
+
+        // A PKM with Species=0 represents an empty slot; the template should be applied.
+        var emptySlot = saveFile!.BlankPKM;
+
+        // Act
+        appService.SetSelectedBoxPokemon(emptySlot, 0, 0);
+
+        // Assert
+        appService.EditFormPokemon.Should().NotBeNull();
+        appService.EditFormPokemon!.Species.Should().Be(0);
+        appService.EditFormPokemon.OriginalTrainerName.Should().Be(saveFile.OT);
+    }
+
     private class TestAppState : IAppState
     {
         public string CurrentLanguage { get; set; } = "en";

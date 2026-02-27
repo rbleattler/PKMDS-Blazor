@@ -66,7 +66,8 @@ public partial class LegalityTab : IDisposable
             return;
         }
 
-        RibbonApplicator.RemoveAllValidRibbons(la);
+        var args = new RibbonVerifierArguments(Pokemon, la.EncounterMatch, la.Info.EvoChainsAllGens);
+        RibbonApplicator.FixInvalidRibbons(in args);
         RefreshService.Refresh();
         Snackbar.Add("Invalid ribbons removed. Click Save to apply changes.", MudBlazor.Severity.Success);
     }

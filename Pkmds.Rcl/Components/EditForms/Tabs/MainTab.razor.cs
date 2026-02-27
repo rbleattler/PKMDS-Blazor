@@ -213,7 +213,7 @@ public partial class MainTab : IDisposable
         // not flagged before the user has had a chance to fix anything.
         if (Pokemon.EncryptionConstant == 0)
         {
-            Pokemon.SetRandomEC();
+            CommonEdits.SetRandomEC(Pokemon);
         }
 
         AppService.LoadPokemonStats(Pokemon);
