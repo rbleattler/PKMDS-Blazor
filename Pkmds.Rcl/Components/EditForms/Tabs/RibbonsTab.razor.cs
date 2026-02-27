@@ -53,6 +53,7 @@ public partial class RibbonsTab : IDisposable
                 {
                     maxAllowed = ribbon.MaxCount;
                 }
+
                 break;
             }
         }
@@ -62,6 +63,7 @@ public partial class RibbonsTab : IDisposable
         {
             clamped = 0;
         }
+
         if (clamped > maxAllowed)
         {
             clamped = maxAllowed;
@@ -80,7 +82,9 @@ public partial class RibbonsTab : IDisposable
 
         foreach (var ribbon in GetAllRibbonInfo())
         {
-            var value = ribbon.Type is RibbonValueType.Boolean ? (object)true : (byte)ribbon.MaxCount;
+            var value = ribbon.Type is RibbonValueType.Boolean
+                ? (object)true
+                : (byte)ribbon.MaxCount;
             ReflectUtil.SetValue(Pokemon, ribbon.Name, value);
         }
 
@@ -96,7 +100,9 @@ public partial class RibbonsTab : IDisposable
 
         foreach (var ribbon in GetAllRibbonInfo())
         {
-            var value = ribbon.Type is RibbonValueType.Boolean ? (object)false : (byte)0;
+            var value = ribbon.Type is RibbonValueType.Boolean
+                ? (object)false
+                : (byte)0;
             ReflectUtil.SetValue(Pokemon, ribbon.Name, value);
         }
 

@@ -2,11 +2,11 @@ namespace Pkmds.Rcl.Components.EditForms.Tabs;
 
 public partial class ContestStatsTab : IDisposable
 {
+    private const byte ContestStatMax = byte.MaxValue;
+
     [Parameter]
     [EditorRequired]
     public PKM? Pokemon { get; set; }
-
-    private const byte ContestStatMax = byte.MaxValue;
 
     public void Dispose() =>
         RefreshService.OnAppStateChanged -= StateHasChanged;

@@ -13,29 +13,29 @@ public partial class LegalityTab : IDisposable
     // Moves are validated in la.Info.Moves / la.Info.Relearn (MoveResult[]), not in la.Results.
     // A legal Pokémon must have all of those valid in addition to all CheckResults being valid.
     private bool IsLegal => Analysis is { } la
-        && la.Results.All(r => r.Valid)
-        && MoveResult.AllValid(la.Info.Moves)
-        && MoveResult.AllValid(la.Info.Relearn);
+                            && la.Results.All(r => r.Valid)
+                            && MoveResult.AllValid(la.Info.Moves)
+                            && MoveResult.AllValid(la.Info.Relearn);
 
     private bool HasRibbonIssues => Analysis is { } la &&
-        la.Results.Any(r => !r.Valid && r.Identifier is CheckIdentifier.Ribbon or CheckIdentifier.RibbonMark);
+                                    la.Results.Any(r => !r.Valid && r.Identifier is CheckIdentifier.Ribbon or CheckIdentifier.RibbonMark);
 
     private bool HasMoveIssues => Analysis is { } la &&
-        (!MoveResult.AllValid(la.Info.Moves) ||
-         la.Results.Any(r => !r.Valid && r.Identifier is CheckIdentifier.CurrentMove));
+                                  (!MoveResult.AllValid(la.Info.Moves) ||
+                                   la.Results.Any(r => !r.Valid && r.Identifier is CheckIdentifier.CurrentMove));
 
     private bool HasRelearnMoveIssues => Analysis is { } la &&
-        (!MoveResult.AllValid(la.Info.Relearn) ||
-         la.Results.Any(r => !r.Valid && r.Identifier is CheckIdentifier.RelearnMove));
+                                         (!MoveResult.AllValid(la.Info.Relearn) ||
+                                          la.Results.Any(r => !r.Valid && r.Identifier is CheckIdentifier.RelearnMove));
 
     private bool HasBallIssues => Analysis is { } la &&
-        la.Results.Any(r => !r.Valid && r.Identifier is CheckIdentifier.Ball);
+                                  la.Results.Any(r => !r.Valid && r.Identifier is CheckIdentifier.Ball);
 
     private bool HasEncounterIssues => Analysis is { } la &&
-        la.Results.Any(r => !r.Valid && r.Identifier is CheckIdentifier.Encounter);
+                                       la.Results.Any(r => !r.Valid && r.Identifier is CheckIdentifier.Encounter);
 
     private bool HasMetLocationIssues => Analysis is { } la &&
-        la.Results.Any(r => !r.Valid && r.Identifier is CheckIdentifier.Level or CheckIdentifier.Encounter);
+                                         la.Results.Any(r => !r.Valid && r.Identifier is CheckIdentifier.Level or CheckIdentifier.Encounter);
 
     public void Dispose() =>
         RefreshService.OnAppStateChanged -= Refresh;
@@ -69,7 +69,7 @@ public partial class LegalityTab : IDisposable
         var args = new RibbonVerifierArguments(Pokemon, la.EncounterMatch, la.Info.EvoChainsAllGens);
         RibbonApplicator.FixInvalidRibbons(in args);
         RefreshService.Refresh();
-        Snackbar.Add("Invalid ribbons removed. Click Save to apply changes.", MudBlazor.Severity.Success);
+        Snackbar.Add("Invalid ribbons removed. Click Save to apply changes.", Severity.Success);
     }
 
     private void AddValidRibbons()
@@ -81,7 +81,7 @@ public partial class LegalityTab : IDisposable
 
         RibbonApplicator.SetAllValidRibbons(la);
         RefreshService.Refresh();
-        Snackbar.Add("All obtainable ribbons added. Click Save to apply changes.", MudBlazor.Severity.Success);
+        Snackbar.Add("All obtainable ribbons added. Click Save to apply changes.", Severity.Success);
     }
 
     private void SuggestMoves()
@@ -91,7 +91,7 @@ public partial class LegalityTab : IDisposable
             return;
         }
 
-        MoveSetApplicator.SetMoveset(Pokemon, random: false);
+        Pokemon.SetMoveset(random: false);
 
         // Update Technical Records (Gen 8+ SwSh / SV / ZA) to reflect the new moves,
         // mirroring PKMEditor's SetSuggestedMoves behaviour.
@@ -103,7 +103,7 @@ public partial class LegalityTab : IDisposable
         }
 
         RefreshService.Refresh();
-        Snackbar.Add("Moves updated with a legal move set. Click Save to apply changes.", MudBlazor.Severity.Success);
+        Snackbar.Add("Moves updated with a legal move set. Click Save to apply changes.", Severity.Success);
     }
 
     private void SuggestRelearnMoves()
@@ -113,9 +113,9 @@ public partial class LegalityTab : IDisposable
             return;
         }
 
-        MoveSetApplicator.SetRelearnMoves(Pokemon, la);
+        Pokemon.SetRelearnMoves(la);
         RefreshService.Refresh();
-        Snackbar.Add("Relearn moves updated. Click Save to apply changes.", MudBlazor.Severity.Success);
+        Snackbar.Add("Relearn moves updated. Click Save to apply changes.", Severity.Success);
     }
 
     private void SuggestBall()
@@ -127,7 +127,7 @@ public partial class LegalityTab : IDisposable
 
         BallApplicator.ApplyBallLegalByColor(Pokemon, la, PersonalColorUtil.GetColor(Pokemon));
         RefreshService.Refresh();
-        Snackbar.Add("Ball updated to a legal option. Click Save to apply changes.", MudBlazor.Severity.Success);
+        Snackbar.Add("Ball updated to a legal option. Click Save to apply changes.", Severity.Success);
     }
 
     private void SuggestMetLocation()
@@ -140,7 +140,7 @@ public partial class LegalityTab : IDisposable
         var encounter = EncounterSuggestion.GetSuggestedMetInfo(Pokemon);
         if (encounter is null)
         {
-            Snackbar.Add("No met location suggestion is available for this Pokémon.", MudBlazor.Severity.Warning);
+            Snackbar.Add("No met location suggestion is available for this Pokémon.", Severity.Warning);
             return;
         }
 
@@ -172,21 +172,21 @@ public partial class LegalityTab : IDisposable
         }
 
         RefreshService.Refresh();
-        Snackbar.Add("Met location and level updated. Click Save to apply changes.", MudBlazor.Severity.Success);
+        Snackbar.Add("Met location and level updated. Click Save to apply changes.", Severity.Success);
     }
 
     private static Color GetSeverityColor(PKHexSeverity severity) => severity switch
     {
         PKHexSeverity.Valid => Color.Success,
         PKHexSeverity.Fishy => Color.Warning,
-        _ => Color.Error,
+        _ => Color.Error
     };
 
     private static string GetSeverityIcon(PKHexSeverity severity) => severity switch
     {
         PKHexSeverity.Valid => Icons.Material.Filled.CheckCircle,
         PKHexSeverity.Fishy => Icons.Material.Filled.Warning,
-        _ => Icons.Material.Filled.Cancel,
+        _ => Icons.Material.Filled.Cancel
     };
 
     private static string GetIdentifierLabel(CheckIdentifier id) => id switch
@@ -225,7 +225,7 @@ public partial class LegalityTab : IDisposable
         CheckIdentifier.TrashBytes => "Trash Bytes",
         CheckIdentifier.SlotType => "Slot Type",
         CheckIdentifier.Handler => "Handler",
-        _ => id.ToString(),
+        _ => id.ToString()
     };
 
     private string HumanizeResult(CheckResult result)
@@ -235,7 +235,7 @@ public partial class LegalityTab : IDisposable
             return result.Result.ToString();
         }
 
-        var ctx = LegalityLocalizationContext.Create(la, "en");
+        var ctx = LegalityLocalizationContext.Create(la);
         return ctx.Humanize(in result, verbose: false);
     }
 }

@@ -2,48 +2,6 @@ namespace Pkmds.Rcl.Components.EditForms.Tabs;
 
 public partial class OtMiscTab : IDisposable
 {
-    [Parameter]
-    [EditorRequired]
-    public PKM? Pokemon { get; set; }
-
-    private List<ComboItem>? CachedMemoryItems { get; set; }
-    private List<ComboItem>? CachedFeelingItems { get; set; }
-    private List<ComboItem>? CachedQualityItems { get; set; }
-
-    public void Dispose() =>
-        RefreshService.OnAppStateChanged -= StateHasChanged;
-
-    protected override void OnInitialized() =>
-        RefreshService.OnAppStateChanged += StateHasChanged;
-
-    protected override void OnParametersSet()
-    {
-        base.OnParametersSet();
-
-        if (Pokemon is IMemoryOT or IMemoryHT)
-        {
-            CachedMemoryItems = AppService.GetMemoryComboItems().ToList();
-            CachedFeelingItems = AppService.GetMemoryFeelingComboItems(MemoryGen).ToList();
-            CachedQualityItems = AppService.GetMemoryQualityComboItems().ToList();
-        }
-        else
-        {
-            CachedMemoryItems = null;
-            CachedFeelingItems = null;
-            CachedQualityItems = null;
-        }
-    }
-
-    /// <summary>
-    ///     Returns the memory generation (6 or 8) used for feeling/argument lookups.
-    ///     Gen 6/7 Pokémon use generation 6 memory sets; Gen 8+ use generation 8 memory sets.
-    /// </summary>
-    private int MemoryGen => Pokemon?.Context switch
-    {
-        EntityContext.Gen6 or EntityContext.Gen7 => 6,
-        _ => 8,
-    };
-
     // Memory ID → MemoryArgType mapping (based on PKHeX.Core memory text format strings)
     private static readonly MemoryArgType[] MemoryArgTypes =
     [
@@ -82,11 +40,55 @@ public partial class OtMiscTab : IDisposable
         // 80-89
         MemoryArgType.Move, MemoryArgType.Move, MemoryArgType.Species, MemoryArgType.Species,
         MemoryArgType.Item, MemoryArgType.None, MemoryArgType.GeneralLocation, MemoryArgType.Species,
-        MemoryArgType.Item, MemoryArgType.Move,
+        MemoryArgType.Item, MemoryArgType.Move
     ];
 
+    [Parameter]
+    [EditorRequired]
+    public PKM? Pokemon { get; set; }
+
+    private List<ComboItem>? CachedMemoryItems { get; set; }
+    private List<ComboItem>? CachedFeelingItems { get; set; }
+    private List<ComboItem>? CachedQualityItems { get; set; }
+
+    /// <summary>
+    /// Returns the memory generation (6 or 8) used for feeling/argument lookups.
+    /// Gen 6/7 Pokémon use generation 6 memory sets; Gen 8+ use generation 8 memory sets.
+    /// </summary>
+    private int MemoryGen => Pokemon?.Context switch
+    {
+        EntityContext.Gen6 or EntityContext.Gen7 => 6,
+        _ => 8
+    };
+
+    public void Dispose() =>
+        RefreshService.OnAppStateChanged -= StateHasChanged;
+
+    protected override void OnInitialized() =>
+        RefreshService.OnAppStateChanged += StateHasChanged;
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+
+        if (Pokemon is IMemoryOT or IMemoryHT)
+        {
+            CachedMemoryItems = AppService.GetMemoryComboItems().ToList();
+            CachedFeelingItems = AppService.GetMemoryFeelingComboItems(MemoryGen).ToList();
+            CachedQualityItems = AppService.GetMemoryQualityComboItems().ToList();
+        }
+        else
+        {
+            CachedMemoryItems = null;
+            CachedFeelingItems = null;
+            CachedQualityItems = null;
+        }
+    }
+
     private static MemoryArgType GetMemoryArgType(byte memoryId) =>
-        memoryId < MemoryArgTypes.Length ? MemoryArgTypes[memoryId] : MemoryArgType.None;
+        memoryId < MemoryArgTypes.Length
+            ? MemoryArgTypes[memoryId]
+            : MemoryArgType.None;
 
     private static string GetMemoryArgLabel(MemoryArgType argType) => argType switch
     {
@@ -94,11 +96,11 @@ public partial class OtMiscTab : IDisposable
         MemoryArgType.Move => "Move",
         MemoryArgType.Item => "Item",
         MemoryArgType.GeneralLocation or MemoryArgType.SpecificLocation => "Location",
-        _ => "Variable",
+        _ => "Variable"
     };
 
     /// <summary>
-    ///     Builds the fully-formatted memory preview string, substituting all placeholders.
+    /// Builds the fully-formatted memory preview string, substituting all placeholders.
     /// </summary>
     private string FormatMemoryText(
         byte memoryId,
@@ -182,7 +184,7 @@ public partial class OtMiscTab : IDisposable
     }
 
     private void ClearGeoData(IGeoTrack geoTrack) =>
-        PKHeX.Core.Extensions.ClearGeoLocationData(geoTrack);
+        geoTrack.ClearGeoLocationData();
 
     private static byte GetGeoCountry(IGeoTrack geo, int slot) => slot switch
     {
@@ -191,7 +193,7 @@ public partial class OtMiscTab : IDisposable
         3 => geo.Geo3_Country,
         4 => geo.Geo4_Country,
         5 => geo.Geo5_Country,
-        _ => 0,
+        _ => 0
     };
 
     private static byte GetGeoRegion(IGeoTrack geo, int slot) => slot switch
@@ -201,18 +203,33 @@ public partial class OtMiscTab : IDisposable
         3 => geo.Geo3_Region,
         4 => geo.Geo4_Region,
         5 => geo.Geo5_Region,
-        _ => 0,
+        _ => 0
     };
 
     private static void SetGeoCountry(IGeoTrack geo, int slot, byte value)
     {
         switch (slot)
         {
-            case 1: geo.Geo1_Country = value; geo.Geo1_Region = 0; break;
-            case 2: geo.Geo2_Country = value; geo.Geo2_Region = 0; break;
-            case 3: geo.Geo3_Country = value; geo.Geo3_Region = 0; break;
-            case 4: geo.Geo4_Country = value; geo.Geo4_Region = 0; break;
-            case 5: geo.Geo5_Country = value; geo.Geo5_Region = 0; break;
+            case 1:
+                geo.Geo1_Country = value;
+                geo.Geo1_Region = 0;
+                break;
+            case 2:
+                geo.Geo2_Country = value;
+                geo.Geo2_Region = 0;
+                break;
+            case 3:
+                geo.Geo3_Country = value;
+                geo.Geo3_Region = 0;
+                break;
+            case 4:
+                geo.Geo4_Country = value;
+                geo.Geo4_Region = 0;
+                break;
+            case 5:
+                geo.Geo5_Country = value;
+                geo.Geo5_Region = 0;
+                break;
         }
     }
 
@@ -257,28 +274,28 @@ public partial class OtMiscTab : IDisposable
 
     private void OnGenderToggle(Gender newGender) => Pokemon?.OriginalTrainerGender = (byte)newGender;
 
-    private void SetPokemonOTName(string newOTName)
+    private void SetPokemonOtName(string newOtName)
     {
         if (Pokemon is null || AppState.SaveFile is not { } saveFile)
         {
             return;
         }
 
-        if (newOTName is not { Length: > 0 })
+        if (newOtName is not { Length: > 0 })
         {
-            newOTName = saveFile.OT;
+            newOtName = saveFile.OT;
         }
 
-        if (newOTName is not { Length: > 0 })
+        if (newOtName is not { Length: > 0 })
         {
             return;
         }
 
-        Pokemon.OriginalTrainerName = newOTName;
+        Pokemon.OriginalTrainerName = newOtName;
 
         // For Gen I/II, verify the OT name was set correctly
         // If it becomes empty, the characters were not valid for the Pokémon's language/encoding
-        if (Pokemon.Format <= 2 && string.IsNullOrEmpty(Pokemon.OriginalTrainerName) && newOTName.Length > 0)
+        if (Pokemon.Format <= 2 && string.IsNullOrEmpty(Pokemon.OriginalTrainerName) && newOtName.Length > 0)
         {
             // Fallback to save file's OT name if couldn't be encoded
             Pokemon.OriginalTrainerName = saveFile.OT;
@@ -305,7 +322,7 @@ public partial class OtMiscTab : IDisposable
             return;
         }
 
-        CommonEdits.SetRandomEC(Pokemon);
+        Pokemon.SetRandomEC();
         SetPokemonEc(Pokemon.EncryptionConstant);
     }
 

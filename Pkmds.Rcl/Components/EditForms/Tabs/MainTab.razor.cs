@@ -116,10 +116,7 @@ public partial class MainTab : IDisposable
     {
         var parameters = new DialogParameters<PidEcDialog> { { x => x.Pokemon, Pokemon } };
 
-        var options = new DialogOptions
-        {
-            MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true
-        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
 
         await DialogService.ShowAsync<PidEcDialog>("PID / EC Generator", parameters, options);
     }
@@ -213,7 +210,7 @@ public partial class MainTab : IDisposable
         // not flagged before the user has had a chance to fix anything.
         if (Pokemon.EncryptionConstant == 0)
         {
-            CommonEdits.SetRandomEC(Pokemon);
+            Pokemon.SetRandomEC();
         }
 
         AppService.LoadPokemonStats(Pokemon);

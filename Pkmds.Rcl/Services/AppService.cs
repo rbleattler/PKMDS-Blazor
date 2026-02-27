@@ -782,32 +782,6 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         }
     }
 
-    private void HandleNullOrEmptyPokemon()
-    {
-        if (AppState.SaveFile is not { } saveFile)
-        {
-            return;
-        }
-
-        // Empty box slots in PKHeX return a non-null PKM with Species=0, not null.
-        // Apply the template for both cases so new Pokémon start with the correct
-        // OT/ID/Language/Version/MetDate/Ball — matching EntityTemplates.TemplateFields.
-        if (EditFormPokemon is not (null or { Species: 0 }))
-        {
-            return;
-        }
-
-        // Apply trainer data and other defaults to the blank PKM so new Pokémon
-        // start with correct OT/ID/Language/Version/MetDate/Ball — matching what
-        // PKHeX WinForms does via EntityTemplates.TemplateFields.
-        // Species is reset to 0 afterward so the user is prompted to pick one.
-        var blank = saveFile.BlankPKM.Clone();
-        EntityTemplates.TemplateFields(blank, saveFile);
-        blank.Species = 0;
-        blank.ClearNickname(); // Remove the template species name set by TemplateFields
-        EditFormPokemon = blank;
-    }
-
     public IEnumerable<ComboItem> GetMemoryComboItems() =>
         new MemoryStrings(GameInfo.Strings).Memory;
 
@@ -865,6 +839,32 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
     }
 
     public LegalityAnalysis GetLegalityAnalysis(PKM pkm) => new(pkm);
+
+    private void HandleNullOrEmptyPokemon()
+    {
+        if (AppState.SaveFile is not { } saveFile)
+        {
+            return;
+        }
+
+        // Empty box slots in PKHeX return a non-null PKM with Species=0, not null.
+        // Apply the template for both cases so new Pokémon start with the correct
+        // OT/ID/Language/Version/MetDate/Ball — matching EntityTemplates.TemplateFields.
+        if (EditFormPokemon is not (null or { Species: 0 }))
+        {
+            return;
+        }
+
+        // Apply trainer data and other defaults to the blank PKM so new Pokémon
+        // start with correct OT/ID/Language/Version/MetDate/Ball — matching what
+        // PKHeX WinForms does via EntityTemplates.TemplateFields.
+        // Species is reset to 0 afterward so the user is prompted to pick one.
+        var blank = saveFile.BlankPKM.Clone();
+        EntityTemplates.TemplateFields(blank, saveFile);
+        blank.Species = 0;
+        blank.ClearNickname(); // Remove the template species name set by TemplateFields
+        EditFormPokemon = blank;
+    }
 
     /// <summary>
     /// Compacts a box by shifting all Pokémon left to fill gaps (for Gen 1 and Gen 2 games).

@@ -2,6 +2,7 @@ namespace Pkmds.Rcl.Components;
 
 public partial class PokemonSlotComponent : IDisposable
 {
+    private bool? legalityValid;
     // Removed isDragOverWithFile field - no longer showing drag indicators
 
     [Parameter]
@@ -27,8 +28,6 @@ public partial class PokemonSlotComponent : IDisposable
     private IDragDropService DragDropService { get; set; } = null!;
 
     protected virtual int? BoxNumber => null;
-
-    private bool? _legalityValid;
 
     public void Dispose() =>
         RefreshService.OnAppStateChanged -= RefreshLegality;
@@ -57,14 +56,14 @@ public partial class PokemonSlotComponent : IDisposable
     {
         if (Pokemon is not { Species: > 0 })
         {
-            _legalityValid = null;
+            legalityValid = null;
             return;
         }
 
         var la = AppService.GetLegalityAnalysis(Pokemon);
-        _legalityValid = la.Results.All(r => r.Valid)
-            && MoveResult.AllValid(la.Info.Moves)
-            && MoveResult.AllValid(la.Info.Relearn);
+        legalityValid = la.Results.All(r => r.Valid)
+                         && MoveResult.AllValid(la.Info.Moves)
+                         && MoveResult.AllValid(la.Info.Relearn);
     }
 
     private string GetPokemonTitle() => Pokemon is { Species: > 0 }
@@ -83,10 +82,10 @@ public partial class PokemonSlotComponent : IDisposable
     };
 
     /// <returns>
-    ///   <see langword="true"/> = legal, <see langword="false"/> = illegal/fishy,
-    ///   <see langword="null"/> = no Pokémon in slot (skip indicator).
+    /// <see langword="true" /> = legal, <see langword="false" /> = illegal/fishy,
+    /// <see langword="null" /> = no Pokémon in slot (skip indicator).
     /// </returns>
-    private bool? GetLegalityValid() => _legalityValid;
+    private bool? GetLegalityValid() => legalityValid;
 
     private int? GetLetsGoPartySlotNumber()
     {
