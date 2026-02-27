@@ -48,7 +48,9 @@
                     {
                         var ribbonCheck = GetRibbonCheckResult(ribbon.Name);
                         <MudStack Spacing="0">
-                            <MudTooltip Text="@(ribbonCheck.HasValue ? HumanizeRibbonCheckResult(ribbonCheck.Value) : string.Empty)"
+                            <MudTooltip Text="@(ribbonCheck.HasValue
+                                                  ? HumanizeRibbonCheckResult(ribbonCheck.Value)
+                                                  : string.Empty)"
                                         Disabled="@(!ribbonCheck.HasValue)">
                                 <MudNumericField T="@int"
                                                  Label="@GetRibbonDisplayName(ribbon.Name)"
@@ -94,7 +96,9 @@
                                               Width="32"
                                               Height="32"
                                               Alt="@ribbonDisplayName"
-                                              title="@(ribbonCheck.HasValue ? HumanizeRibbonCheckResult(ribbonCheck.Value) : ribbonDisplayName)"
+                                              title="@(ribbonCheck.HasValue
+                                                         ? HumanizeRibbonCheckResult(ribbonCheck.Value)
+                                                         : ribbonDisplayName)"
                                               Class="@(ribbon.HasRibbon
                                                          ? "cursor-pointer"
                                                          : "cursor-pointer opacity-30")"
@@ -136,7 +140,9 @@
                                           Width="32"
                                           Height="32"
                                           Alt="@markDisplayName"
-                                          title="@(markCheck.HasValue ? HumanizeRibbonCheckResult(markCheck.Value) : markDisplayName)"
+                                          title="@(markCheck.HasValue
+                                                     ? HumanizeRibbonCheckResult(markCheck.Value)
+                                                     : markDisplayName)"
                                           Class="@(mark.HasRibbon
                                                      ? "cursor-pointer"
                                                      : "cursor-pointer opacity-30")"
