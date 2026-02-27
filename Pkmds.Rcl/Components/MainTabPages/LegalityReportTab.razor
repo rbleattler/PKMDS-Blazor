@@ -1,0 +1,168 @@
+@inherits RefreshAwareComponent
+
+<MudStack Class="pa-2"
+          Spacing="3">
+
+    @if (AppState.SaveFile is null)
+    {
+        <MudAlert Severity="@Severity.Info">No save file is loaded.</MudAlert>
+    }
+    else
+    {
+        <MudStack Row
+                  AlignItems="@AlignItems.Center"
+                  Spacing="2">
+
+            <MudButton Variant="@Variant.Filled"
+                       Color="@Color.Primary"
+                       StartIcon="@Icons.Material.Filled.FactCheck"
+                       OnClick="@RunScanAsync"
+                       Disabled="@isScanning">
+                @(isScanning ? "Scanning…" : (hasRun ? "Re-run Report" : "Run Legality Report"))
+            </MudButton>
+
+            @if (isScanning)
+            {
+                <MudProgressCircular Indeterminate
+                                     Size="@Size.Small"
+                                     Color="@Color.Primary"/>
+            }
+
+        </MudStack>
+
+        @if (hasRun || isScanning)
+        {
+            <MudStack Row
+                      Spacing="2"
+                      Wrap="@Wrap.Wrap">
+
+                <MudChip T="@string"
+                         Color="@Color.Success"
+                         Variant="@Variant.Filled"
+                         Icon="@Icons.Material.Filled.CheckCircle">
+                    @LegalCount Legal
+                </MudChip>
+
+                <MudChip T="@string"
+                         Color="@Color.Warning"
+                         Variant="@Variant.Filled"
+                         Icon="@Icons.Material.Filled.Warning">
+                    @FishyCount Fishy
+                </MudChip>
+
+                <MudChip T="@string"
+                         Color="@Color.Error"
+                         Variant="@Variant.Filled"
+                         Icon="@Icons.Material.Filled.Cancel">
+                    @IllegalCount Illegal
+                </MudChip>
+
+                <MudChip T="@string"
+                         Color="@Color.Default"
+                         Variant="@Variant.Outlined">
+                    @allEntries.Count Total
+                </MudChip>
+
+            </MudStack>
+
+            <MudButtonGroup Variant="@Variant.Outlined"
+                            Size="@Size.Small">
+
+                <MudButton Color="@(statusFilter is null ? Color.Primary : Color.Default)"
+                           OnClick="@(() => SetFilter(null))">
+                    All
+                </MudButton>
+
+                <MudButton Color="@(statusFilter == LegalityStatus.Legal ? Color.Success : Color.Default)"
+                           OnClick="@(() => SetFilter(LegalityStatus.Legal))">
+                    Legal Only
+                </MudButton>
+
+                <MudButton Color="@(statusFilter == LegalityStatus.Fishy ? Color.Warning : Color.Default)"
+                           OnClick="@(() => SetFilter(LegalityStatus.Fishy))">
+                    Fishy Only
+                </MudButton>
+
+                <MudButton Color="@(statusFilter == LegalityStatus.Illegal ? Color.Error : Color.Default)"
+                           OnClick="@(() => SetFilter(LegalityStatus.Illegal))">
+                    Illegal Only
+                </MudButton>
+
+            </MudButtonGroup>
+
+            <div style="overflow-y: auto; max-height: calc(100vh - 340px);">
+                <MudTable T="@LegalityReportEntry"
+                          Items="@filteredEntries"
+                          Dense
+                          Hover
+                          Bordered
+                          SortLabel="Sort By"
+                          OnRowClick="@OnRowClickAsync"
+                          RowStyleFunc="@((_, _) => "cursor: pointer;")"
+                          RowsPerPage="25">
+
+                    <HeaderContent>
+
+                        <MudTh>
+                            <MudTableSortLabel SortBy="@(new Func<LegalityReportEntry, object>(e => e.SpeciesName))">
+                                Species
+                            </MudTableSortLabel>
+                        </MudTh>
+
+                        <MudTh>
+                            <MudTableSortLabel SortBy="@(new Func<LegalityReportEntry, object>(e => e.Location))">
+                                Location
+                            </MudTableSortLabel>
+                        </MudTh>
+
+                        <MudTh>
+                            <MudTableSortLabel SortBy="@(new Func<LegalityReportEntry, object>(e => (int)e.Status))">
+                                Status
+                            </MudTableSortLabel>
+                        </MudTh>
+
+                        <MudTh>First Issue</MudTh>
+
+                    </HeaderContent>
+
+                    <RowTemplate>
+
+                        <MudTd DataLabel="Species">@context.SpeciesName</MudTd>
+
+                        <MudTd DataLabel="Location">@context.Location</MudTd>
+
+                        <MudTd DataLabel="Status">
+                            <MudChip T="@string"
+                                     Color="@GetStatusColor(context.Status)"
+                                     Size="@Size.Small"
+                                     Icon="@GetStatusIcon(context.Status)"
+                                     Variant="@Variant.Filled">
+                                @GetStatusLabel(context.Status)
+                            </MudChip>
+                        </MudTd>
+
+                        <MudTd DataLabel="First Issue">@context.FirstIssue</MudTd>
+
+                    </RowTemplate>
+
+                    <NoRecordsContent>
+                        @if (isScanning)
+                        {
+                            <MudText>Scanning…</MudText>
+                        }
+                        else
+                        {
+                            <MudText>No Pokémon match the current filter.</MudText>
+                        }
+                    </NoRecordsContent>
+
+                    <PagerContent>
+                        <MudTablePager/>
+                    </PagerContent>
+
+                </MudTable>
+            </div>
+        }
+    }
+
+</MudStack>

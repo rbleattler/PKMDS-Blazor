@@ -145,6 +145,18 @@ public partial class MainLayout : IDisposable
 
             if (SaveUtil.TryGetSaveFile(data, out var saveFile, selectedFile.Name))
             {
+                // NOTE: We intentionally do NOT call ParseSettings.InitFromSaveFileData(saveFile) here.
+                // PKHeX WinForms calls this after loading a save file, which sets AllowGBCartEra based on
+                // SAV1.IsVirtualConsole — a filename-only heuristic (requires filename to start with "sav"
+                // and contain ".dat", e.g. "sav.dat"). Renamed VC save files (e.g. "blue_vconsole.dat")
+                // are incorrectly detected as cartridge saves, causing VC-era Mews and other events to
+                // fail encounter matching (AllowGBVirtualConsole3DS = false → VC slots skipped).
+                // By not calling InitFromSaveFileData, ParseSettings.AllowGBCartEra stays false (default),
+                // so VC encounters are always checked — the correct behavior for a web app where users may
+                // upload arbitrarily-named save files.
+                // See: PKHeX.Core SAV1.IsVirtualConsole, ParseSettings.InitFromSaveFileData,
+                //      EncounterEnumerator1.YieldState.EventVC
+                // TODO: Report PKHeX bug: SAV1.IsVirtualConsole should not rely solely on filename heuristics.
                 AppState.SaveFile = saveFile;
                 AppState.BoxEdit?.LoadBox(saveFile.CurrentBox);
                 Logger.LogInformation("Successfully loaded save file: {SaveType}, Generation: {Generation}",
