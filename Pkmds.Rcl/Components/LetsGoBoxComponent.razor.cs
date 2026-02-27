@@ -28,10 +28,6 @@ public partial class LetsGoBoxComponent : RefreshAwareComponent
         }
 
         AppState.BoxEdit.LoadBox(AppState.BoxEdit.CurrentBox);
-
-        AppState.SelectedBoxNumber = null;
-        AppState.SelectedBoxSlotNumber = null;
-
         StateHasChanged();
     }
 }

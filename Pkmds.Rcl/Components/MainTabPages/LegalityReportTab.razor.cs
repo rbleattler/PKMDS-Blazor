@@ -1,20 +1,20 @@
-namespace Pkmds.Rcl.Components.MainTabPages;
-
 using PKHexSeverity = PKHeX.Core.Severity;
+
+namespace Pkmds.Rcl.Components.MainTabPages;
 
 public partial class LegalityReportTab : RefreshAwareComponent
 {
+    private List<LegalityReportEntry> allEntries = [];
+    private List<LegalityReportEntry> filteredEntries = [];
+    private bool hasRun;
+    private bool isScanning;
+    private LegalityStatus? statusFilter;
+
     /// <summary>
     /// Callback invoked after a row is clicked to jump to the Party / Box tab.
     /// </summary>
     [Parameter]
     public EventCallback OnJumpToPartyBox { get; set; }
-
-    private List<LegalityReportEntry> allEntries = [];
-    private List<LegalityReportEntry> filteredEntries = [];
-    private bool isScanning;
-    private bool hasRun;
-    private LegalityStatus? statusFilter;
 
     private int LegalCount => allEntries.Count(e => e.Status == LegalityStatus.Legal);
     private int FishyCount => allEntries.Count(e => e.Status == LegalityStatus.Fishy);
@@ -94,7 +94,7 @@ public partial class LegalityReportTab : RefreshAwareComponent
             FirstIssue = GetFirstIssue(la),
             IsParty = isParty,
             BoxNumber = box,
-            SlotNumber = slot,
+            SlotNumber = slot
         };
     }
 
@@ -110,7 +110,9 @@ public partial class LegalityReportTab : RefreshAwareComponent
         }
 
         var hasFishy = la.Results.Any(r => r.Judgement == PKHexSeverity.Fishy);
-        return hasFishy ? LegalityStatus.Fishy : LegalityStatus.Legal;
+        return hasFishy
+            ? LegalityStatus.Fishy
+            : LegalityStatus.Legal;
     }
 
     private static string GetFirstIssue(LegalityAnalysis la)
@@ -160,6 +162,13 @@ public partial class LegalityReportTab : RefreshAwareComponent
         {
             AppService.SetSelectedPartyPokemon(entry.Pokemon, entry.SlotNumber);
         }
+        else if (AppState.SaveFile is SAV7b lgsave)
+        {
+            // Let's Go renders all boxes as a single flat scrollable list.
+            // Convert box+slot to the flat index (0..999) that SetSelectedLetsGoPokemon expects.
+            var flatSlot = entry.BoxNumber * lgsave.BoxSlotCount + entry.SlotNumber;
+            AppService.SetSelectedLetsGoPokemon(entry.Pokemon, flatSlot);
+        }
         else
         {
             AppService.SetSelectedBoxPokemon(entry.Pokemon, entry.BoxNumber, entry.SlotNumber);
@@ -173,7 +182,7 @@ public partial class LegalityReportTab : RefreshAwareComponent
         LegalityStatus.Legal => Color.Success,
         LegalityStatus.Fishy => Color.Warning,
         LegalityStatus.Illegal => Color.Error,
-        _ => Color.Default,
+        _ => Color.Default
     };
 
     private static string GetStatusIcon(LegalityStatus status) => status switch
@@ -181,7 +190,7 @@ public partial class LegalityReportTab : RefreshAwareComponent
         LegalityStatus.Legal => Icons.Material.Filled.CheckCircle,
         LegalityStatus.Fishy => Icons.Material.Filled.Warning,
         LegalityStatus.Illegal => Icons.Material.Filled.Cancel,
-        _ => Icons.Material.Filled.Help,
+        _ => Icons.Material.Filled.Help
     };
 
     private static string GetStatusLabel(LegalityStatus status) => status switch
@@ -189,6 +198,6 @@ public partial class LegalityReportTab : RefreshAwareComponent
         LegalityStatus.Legal => "Legal",
         LegalityStatus.Fishy => "Fishy",
         LegalityStatus.Illegal => "Illegal",
-        _ => "Unknown",
+        _ => "Unknown"
     };
 }
