@@ -160,6 +160,13 @@ public partial class LegalityReportTab : RefreshAwareComponent
         {
             AppService.SetSelectedPartyPokemon(entry.Pokemon, entry.SlotNumber);
         }
+        else if (AppState.SaveFile is SAV7b lgsave)
+        {
+            // Let's Go renders all boxes as a single flat scrollable list.
+            // Convert box+slot to the flat index (0..999) that SetSelectedLetsGoPokemon expects.
+            var flatSlot = entry.BoxNumber * lgsave.BoxSlotCount + entry.SlotNumber;
+            AppService.SetSelectedLetsGoPokemon(entry.Pokemon, flatSlot);
+        }
         else
         {
             AppService.SetSelectedBoxPokemon(entry.Pokemon, entry.BoxNumber, entry.SlotNumber);
