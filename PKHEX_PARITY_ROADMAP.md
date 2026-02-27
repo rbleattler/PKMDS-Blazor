@@ -34,6 +34,7 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - **Showdown Export** - Export Pokemon to Showdown format
 - **Multi-Save Support** - Load/save multiple save files
 - **PWA Support** - Offline functionality, installable web app
+- **Legality Checker (Core)** - `LegalityAnalysis` integration with per-check detail view, color-coded results, full verbose report, and slot-level valid/warn icon overlays
 
 ---
 
@@ -120,26 +121,26 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - [x] Implement generation-specific validation
 
 ### 1.2 Legality Checker
-**Status:** ❌ Not Implemented  
-**Complexity:** Very High  
-**Priority:** Critical  
+**Status:** ⚠️ Partial (core analysis + UI implemented; fix buttons, batch checking, and unit tests remain)
+**Complexity:** Very High
+**Priority:** Critical
 **Tasks:**
-- [ ] Design Legality Checker UI component
-- [ ] Integrate PKHeX.Core LegalityAnalysis
-- [ ] Display legality results with color coding (legal/illegal/suspicious)
-- [ ] Show detailed legality report with:
-  - [ ] Encounter type validation
-  - [ ] Relearn moves validation
-  - [ ] PID/EC validation
-  - [ ] Ribbon validation
-  - [ ] Memory validation
-  - [ ] Met location validation
-  - [ ] Ball legality
-  - [ ] Ability legality
-  - [ ] Level/experience validation
+- [x] Design Legality Checker UI component (`LegalityTab`)
+- [x] Integrate PKHeX.Core `LegalityAnalysis` (`IAppService.GetLegalityAnalysis`)
+- [x] Display legality results with color coding (legal/illegal/suspicious)
+- [x] Show detailed legality report with:
+  - [x] Encounter type validation (`CheckIdentifier.Encounter`)
+  - [x] Relearn moves validation (`CheckIdentifier.RelearnMove`)
+  - [x] PID/EC validation (`CheckIdentifier.PID` / `CheckIdentifier.EC`)
+  - [x] Ribbon validation (`CheckIdentifier.Ribbon` / `CheckIdentifier.RibbonMark`)
+  - [x] Memory validation (`CheckIdentifier.Memory`)
+  - [x] Met location validation (part of encounter analysis)
+  - [x] Ball legality (`CheckIdentifier.Ball`)
+  - [x] Ability legality (`CheckIdentifier.Ability`)
+  - [x] Level/experience validation (`CheckIdentifier.Level`)
 - [ ] Add "Fix" buttons for common legality issues
 - [ ] Implement batch legality checking
-- [ ] Show legality warnings on Pokemon slot display
+- [x] Show legality warnings on Pokémon slot display (valid/warn icon overlay)
 - [ ] Create comprehensive unit tests
 
 ### 1.3 Batch Editor
@@ -880,3 +881,4 @@ This roadmap is a living document. Community contributions are welcome!
 
 **Last Updated:** 2026-02-26
 **Next Review:** 2026-03-26
+<!-- Legality Checker (§1.2): core analysis + UI done 2026-02-26; fix buttons / batch / tests still pending -->

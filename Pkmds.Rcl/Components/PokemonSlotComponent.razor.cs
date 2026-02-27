@@ -55,6 +55,21 @@ public partial class PokemonSlotComponent : IDisposable
         _ => false
     };
 
+    /// <returns>
+    ///   <see langword="true"/> = legal, <see langword="false"/> = illegal/fishy,
+    ///   <see langword="null"/> = no Pokémon in slot (skip indicator).
+    /// </returns>
+    private bool? GetLegalityValid()
+    {
+        if (Pokemon is not { Species: > 0 })
+        {
+            return null;
+        }
+
+        var la = AppService.GetLegalityAnalysis(Pokemon);
+        return la.Results.All(r => r.Valid);
+    }
+
     private int? GetLetsGoPartySlotNumber()
     {
         // Only show party slot indicators for Let's Go games in the BOX view

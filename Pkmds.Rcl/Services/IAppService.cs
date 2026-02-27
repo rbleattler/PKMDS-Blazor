@@ -275,4 +275,12 @@ public interface IAppService
     ///     Only valid when <paramref name="country"/> is non-zero.
     /// </summary>
     IEnumerable<ComboItem> GetGeoRegionComboItems(byte country);
+
+    /// <summary>
+    ///     Performs a full legality analysis on the given Pokémon using PKHeX.Core's
+    ///     <see cref="LegalityAnalysis"/> engine.
+    /// </summary>
+    /// <param name="pkm">The Pokémon to analyse.</param>
+    /// <returns>A <see cref="LegalityAnalysis"/> result.</returns>
+    LegalityAnalysis GetLegalityAnalysis(PKM pkm);
 }
