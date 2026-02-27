@@ -12,5 +12,5 @@ public enum LegalityStatus
     Fishy,
 
     /// <summary>At least one check returned an invalid result.</summary>
-    Illegal,
+    Illegal
 }

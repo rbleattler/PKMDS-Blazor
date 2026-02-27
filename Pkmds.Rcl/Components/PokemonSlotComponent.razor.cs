@@ -62,8 +62,8 @@ public partial class PokemonSlotComponent : IDisposable
 
         var la = AppService.GetLegalityAnalysis(Pokemon);
         legalityValid = la.Results.All(r => r.Valid)
-                         && MoveResult.AllValid(la.Info.Moves)
-                         && MoveResult.AllValid(la.Info.Relearn);
+                        && MoveResult.AllValid(la.Info.Moves)
+                        && MoveResult.AllValid(la.Info.Relearn);
     }
 
     private string GetPokemonTitle() => Pokemon is { Species: > 0 }
