@@ -74,7 +74,7 @@
             <MudTextField Label="OT"
                           Variant="@Variant.Outlined"
                           Text="@Pokemon.OriginalTrainerName"
-                          TextChanged="SetPokemonOTName"
+                          TextChanged="SetPokemonOtName"
                           MaxLength="@saveFile.MaxStringLengthTrainer"
                           For="@(() => Pokemon.OriginalTrainerName)"/>
         </MudItem>
@@ -167,7 +167,8 @@
             <MudItem xs="12">
                 <MudDivider Class="my-2"/>
                 <MudText Typo="@Typo.subtitle2"
-                         Class="mt-1 mb-1">Latest (Not OT) Handler</MudText>
+                         Class="mt-1 mb-1">Latest (Not OT) Handler
+                </MudText>
             </MudItem>
 
             <MudItem xs="6"
@@ -195,7 +196,8 @@
                                ValueChanged="@(v => htLang.HandlingTrainerLanguage = v)">
                         @foreach (var item in AppService.GetLanguageComboItems(saveGeneration, saveFile.Context))
                         {
-                            <MudSelectItem T="byte" Value="@((byte)item.Value)">@item.Text</MudSelectItem>
+                            <MudSelectItem T="byte"
+                                           Value="@((byte)item.Value)">@item.Text</MudSelectItem>
                         }
                     </MudSelect>
                 </MudItem>
@@ -310,8 +312,12 @@
                            Variant="@Variant.Outlined"
                            Value="@Pokemon.CurrentHandler"
                            ValueChanged="@(v => Pokemon.CurrentHandler = v)">
-                    <MudSelectItem T="byte" Value="@((byte)0)">OT</MudSelectItem>
-                    <MudSelectItem T="byte" Value="@((byte)1)">HT</MudSelectItem>
+                    <MudSelectItem T="byte"
+                                   Value="@((byte)0)">OT
+                    </MudSelectItem>
+                    <MudSelectItem T="byte"
+                                   Value="@((byte)1)">HT
+                    </MudSelectItem>
                 </MudSelect>
             </MudItem>
         }
@@ -336,7 +342,8 @@
             <MudItem xs="12">
                 <MudDivider Class="my-2"/>
                 <MudText Typo="@Typo.subtitle2"
-                         Class="mt-1 mb-1">OT Memory</MudText>
+                         Class="mt-1 mb-1">OT Memory
+                </MudText>
             </MudItem>
 
             <MudItem xs="12">
@@ -349,7 +356,8 @@
                            ValueChanged="@(v => otMemory.OriginalTrainerMemory = v)">
                     @foreach (var item in CachedMemoryItems)
                     {
-                        <MudSelectItem T="byte" Value="@((byte)item.Value)">@item.Text</MudSelectItem>
+                        <MudSelectItem T="byte"
+                                       Value="@((byte)item.Value)">@item.Text</MudSelectItem>
                     }
                 </MudSelect>
             </MudItem>
@@ -366,7 +374,8 @@
                                ValueChanged="@(v => otMemory.OriginalTrainerMemoryVariable = v)">
                         @foreach (var item in otArgItems)
                         {
-                            <MudSelectItem T="ushort" Value="@((ushort)item.Value)">@item.Text</MudSelectItem>
+                            <MudSelectItem T="ushort"
+                                           Value="@((ushort)item.Value)">@item.Text</MudSelectItem>
                         }
                     </MudSelect>
                 </MudItem>
@@ -382,7 +391,8 @@
                            ValueChanged="@(v => otMemory.OriginalTrainerMemoryIntensity = v)">
                     @foreach (var item in CachedQualityItems)
                     {
-                        <MudSelectItem T="byte" Value="@((byte)item.Value)">@item.Text</MudSelectItem>
+                        <MudSelectItem T="byte"
+                                       Value="@((byte)item.Value)">@item.Text</MudSelectItem>
                     }
                 </MudSelect>
             </MudItem>
@@ -397,7 +407,8 @@
                            ValueChanged="@(v => otMemory.OriginalTrainerMemoryFeeling = v)">
                     @foreach (var item in CachedFeelingItems)
                     {
-                        <MudSelectItem T="byte" Value="@((byte)item.Value)">@item.Text</MudSelectItem>
+                        <MudSelectItem T="byte"
+                                       Value="@((byte)item.Value)">@item.Text</MudSelectItem>
                     }
                 </MudSelect>
             </MudItem>
@@ -444,7 +455,8 @@
             <MudItem xs="12">
                 <MudDivider Class="my-2"/>
                 <MudText Typo="@Typo.subtitle2"
-                         Class="mt-1 mb-1">HT Memory</MudText>
+                         Class="mt-1 mb-1">HT Memory
+                </MudText>
             </MudItem>
 
             <MudItem xs="12">
@@ -457,7 +469,8 @@
                            ValueChanged="@(v => htMemory.HandlingTrainerMemory = v)">
                     @foreach (var item in CachedMemoryItems)
                     {
-                        <MudSelectItem T="byte" Value="@((byte)item.Value)">@item.Text</MudSelectItem>
+                        <MudSelectItem T="byte"
+                                       Value="@((byte)item.Value)">@item.Text</MudSelectItem>
                     }
                 </MudSelect>
             </MudItem>
@@ -474,7 +487,8 @@
                                ValueChanged="@(v => htMemory.HandlingTrainerMemoryVariable = v)">
                         @foreach (var item in htArgItems)
                         {
-                            <MudSelectItem T="ushort" Value="@((ushort)item.Value)">@item.Text</MudSelectItem>
+                            <MudSelectItem T="ushort"
+                                           Value="@((ushort)item.Value)">@item.Text</MudSelectItem>
                         }
                     </MudSelect>
                 </MudItem>
@@ -490,7 +504,8 @@
                            ValueChanged="@(v => htMemory.HandlingTrainerMemoryIntensity = v)">
                     @foreach (var item in CachedQualityItems)
                     {
-                        <MudSelectItem T="byte" Value="@((byte)item.Value)">@item.Text</MudSelectItem>
+                        <MudSelectItem T="byte"
+                                       Value="@((byte)item.Value)">@item.Text</MudSelectItem>
                     }
                 </MudSelect>
             </MudItem>
@@ -505,7 +520,8 @@
                            ValueChanged="@(v => htMemory.HandlingTrainerMemoryFeeling = v)">
                     @foreach (var item in CachedFeelingItems)
                     {
-                        <MudSelectItem T="byte" Value="@((byte)item.Value)">@item.Text</MudSelectItem>
+                        <MudSelectItem T="byte"
+                                       Value="@((byte)item.Value)">@item.Text</MudSelectItem>
                     }
                 </MudSelect>
             </MudItem>
@@ -540,7 +556,8 @@
             <MudItem xs="12">
                 <MudDivider Class="my-2"/>
                 <MudText Typo="@Typo.subtitle2"
-                         Class="mt-1 mb-1">Geo Locations</MudText>
+                         Class="mt-1 mb-1">Geo Locations
+                </MudText>
             </MudItem>
 
             @for (var geoSlot = 1; geoSlot <= 5; geoSlot++)
@@ -550,8 +567,12 @@
                 var slotRegions = slotCountry != 0
                     ? AppService.GetGeoRegionComboItems(slotCountry).ToList()
                     : null;
-                var slotLabel = slotIndex == 1 ? "Latest Country" : $"Past Country {slotIndex - 1}";
-                var regionLabel = slotIndex == 1 ? "Latest Region" : $"Past Region {slotIndex - 1}";
+                var slotLabel = slotIndex == 1
+                    ? "Latest Country"
+                    : $"Past Country {slotIndex - 1}";
+                var regionLabel = slotIndex == 1
+                    ? "Latest Region"
+                    : $"Past Region {slotIndex - 1}";
 
                 <MudItem xs="6"
                          Class="@ColumnClass">
@@ -564,7 +585,8 @@
                                ValueChanged="@(v => SetGeoCountry(geoTrack, slotIndex, v))">
                         @foreach (var item in countries)
                         {
-                            <MudSelectItem T="byte" Value="@((byte)item.Value)">@item.Text</MudSelectItem>
+                            <MudSelectItem T="byte"
+                                           Value="@((byte)item.Value)">@item.Text</MudSelectItem>
                         }
                     </MudSelect>
                 </MudItem>
@@ -582,7 +604,8 @@
                                    ValueChanged="@(v => SetGeoRegion(geoTrack, slotIndex, v))">
                             @foreach (var item in slotRegions)
                             {
-                                <MudSelectItem T="byte" Value="@((byte)item.Value)">@item.Text</MudSelectItem>
+                                <MudSelectItem T="byte"
+                                               Value="@((byte)item.Value)">@item.Text</MudSelectItem>
                             }
                         </MudSelect>
                     </MudItem>

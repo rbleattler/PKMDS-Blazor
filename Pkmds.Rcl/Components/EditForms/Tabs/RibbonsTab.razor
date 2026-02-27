@@ -71,7 +71,9 @@
                                       Height="32"
                                       Alt="@ribbonDisplayName"
                                       title="@ribbonDisplayName"
-                                      Class="@(ribbon.HasRibbon ? "cursor-pointer" : "cursor-pointer opacity-30")"
+                                      Class="@(ribbon.HasRibbon
+                                                 ? "cursor-pointer"
+                                                 : "cursor-pointer opacity-30")"
                                       @onclick="@(() => ToggleRibbon(ribbon.Name))"/>
                         </MudTooltip>
                     }
@@ -92,7 +94,9 @@
                                   Height="32"
                                   Alt="@markDisplayName"
                                   title="@markDisplayName"
-                                  Class="@(mark.HasRibbon ? "cursor-pointer" : "cursor-pointer opacity-30")"
+                                  Class="@(mark.HasRibbon
+                                             ? "cursor-pointer"
+                                             : "cursor-pointer opacity-30")"
                                   @onclick="@(() => ToggleRibbon(mark.Name))"/>
                     </MudTooltip>
                 }

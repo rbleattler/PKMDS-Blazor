@@ -25,7 +25,7 @@ public partial class PidEcDialog
         var pid = EntityPID.GetRandomPID(
             Random.Shared,
             Pokemon.Species,
-            (byte)Pokemon.Gender,
+            Pokemon.Gender,
             Pokemon.Version,
             Pokemon.Nature,
             Pokemon.Form,
@@ -43,7 +43,7 @@ public partial class PidEcDialog
             return;
         }
 
-        CommonEdits.SetIsShiny(Pokemon, true);
+        Pokemon.SetIsShiny(true);
         RefreshService.Refresh();
     }
 
@@ -54,7 +54,7 @@ public partial class PidEcDialog
             return;
         }
 
-        Pokemon.SetPIDGender((byte)Pokemon.Gender);
+        Pokemon.SetPIDGender(Pokemon.Gender);
         AppService.LoadPokemonStats(Pokemon);
         RefreshService.Refresh();
     }
@@ -95,7 +95,7 @@ public partial class PidEcDialog
                 var iv1 = LCRNG.Next15(ref seed);
                 LCRNG.Next16(ref seed); // skip one frame between IV halves
                 var iv2 = LCRNG.Next15(ref seed);
-                ivs = iv1 | (iv2 << 15);
+                ivs = iv1 | iv2 << 15;
                 break;
             default:
                 return;
@@ -114,7 +114,7 @@ public partial class PidEcDialog
             return;
         }
 
-        CommonEdits.SetRandomEC(Pokemon);
+        Pokemon.SetRandomEC();
         AppService.LoadPokemonStats(Pokemon);
         RefreshService.Refresh();
     }
@@ -126,7 +126,7 @@ public partial class PidEcDialog
             return;
         }
 
-        CommonEdits.SetShiny(Pokemon, SelectedShinyType);
+        Pokemon.SetShiny(SelectedShinyType);
         RefreshService.Refresh();
     }
 

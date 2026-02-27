@@ -1,7 +1,7 @@
 namespace Pkmds.Tests;
 
 /// <summary>
-///     Tests for contest stat validation and Pokémon contest stat support.
+/// Tests for contest stat validation and Pokémon contest stat support.
 /// </summary>
 public class ContestStatsTests
 {
@@ -15,20 +15,16 @@ public class ContestStatsTests
     [InlineData(typeof(PB8))]
     [InlineData(typeof(PA8))]
     [InlineData(typeof(PK9))]
-    public void PKM_ImplementsIContestStats(Type pkmType)
-    {
+    public void PKM_ImplementsIContestStats(Type pkmType) =>
         // Assert
         typeof(IContestStats).IsAssignableFrom(pkmType).Should().BeTrue();
-    }
 
     [Theory]
     [InlineData(typeof(PK1))]
     [InlineData(typeof(PK2))]
-    public void PKM_DoesNotImplementIContestStats(Type pkmType)
-    {
+    public void PKM_DoesNotImplementIContestStats(Type pkmType) =>
         // Assert
         typeof(IContestStats).IsAssignableFrom(pkmType).Should().BeFalse();
-    }
 
     [Fact]
     public void ContestStats_PK3_CanBeSetAndRead()
@@ -100,11 +96,9 @@ public class ContestStatsTests
     }
 
     [Fact]
-    public void ContestStats_MaxValue_IsByteMaxValue()
-    {
+    public void ContestStats_MaxValue_IsByteMaxValue() =>
         // Assert
         ((int)byte.MaxValue).Should().Be(255);
-    }
 
     [Fact]
     public void ContestStats_NewPKM_DefaultsToZero()

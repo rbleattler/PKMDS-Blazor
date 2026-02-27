@@ -1,7 +1,7 @@
 namespace Pkmds.Tests;
 
 /// <summary>
-///     Tests for Gen 1-2 Catch Rate and Status Condition editing.
+/// Tests for Gen 1-2 Catch Rate and Status Condition editing.
 /// </summary>
 public class CatchRateStatusConditionTests
 {
@@ -105,25 +105,19 @@ public class CatchRateStatusConditionTests
     }
 
     [Fact]
-    public void PK1_HasCatchRateProperty()
-    {
+    public void PK1_HasCatchRateProperty() =>
         // Assert
         typeof(PK1).GetProperty(nameof(PK1.CatchRate)).Should().NotBeNull();
-    }
 
     [Fact]
-    public void PK1_HasStatusConditionProperty()
-    {
+    public void PK1_HasStatusConditionProperty() =>
         // Assert
         typeof(PK1).GetProperty(nameof(PKM.Status_Condition)).Should().NotBeNull();
-    }
 
     [Fact]
-    public void PK2_HasStatusConditionProperty()
-    {
+    public void PK2_HasStatusConditionProperty() =>
         // Assert
         typeof(PK2).GetProperty(nameof(PKM.Status_Condition)).Should().NotBeNull();
-    }
 
     [Fact]
     public void PK1_CatchRate_DefaultsToZero()

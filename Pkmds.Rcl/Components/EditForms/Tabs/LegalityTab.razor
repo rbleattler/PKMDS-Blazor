@@ -7,9 +7,15 @@
     {
         <MudStack Class="pa-2">
 
-            <MudAlert Severity="@(IsLegal ? MudBlazor.Severity.Success : MudBlazor.Severity.Error)"
-                      Icon="@(IsLegal ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)">
-                @(IsLegal ? "This Pokémon is legal." : "This Pokémon has legality issues.")
+            <MudAlert Severity="@(IsLegal
+                                    ? Severity.Success
+                                    : Severity.Error)"
+                      Icon="@(IsLegal
+                                ? Icons.Material.Filled.CheckCircle
+                                : Icons.Material.Filled.Cancel)">
+                @(IsLegal
+                    ? "This Pokémon is legal."
+                    : "This Pokémon has legality issues.")
             </MudAlert>
 
             @{
@@ -20,16 +26,21 @@
 
             @if (issues.Count > 0)
             {
-                <MudText Typo="@Typo.subtitle2" Class="mt-2">Issues (@issues.Count)</MudText>
+                <MudText Typo="@Typo.subtitle2"
+                         Class="mt-2">Issues (@issues.Count)
+                </MudText>
 
-                <MudList T="CheckResult" Dense>
+                <MudList T="CheckResult"
+                         Dense>
                     @foreach (var result in issues)
                     {
                         <MudListItem T="CheckResult"
                                      Icon="@GetSeverityIcon(result.Judgement)"
                                      IconColor="@GetSeverityColor(result.Judgement)"
                                      @key="@($"{result.Identifier}:{result.Result}")">
-                            <MudStack Row AlignItems="@AlignItems.Center" Spacing="1">
+                            <MudStack Row
+                                      AlignItems="@AlignItems.Center"
+                                      Spacing="1">
                                 <MudChip T="string"
                                          Size="@Size.Small"
                                          Color="@GetSeverityColor(result.Judgement)"
@@ -45,8 +56,12 @@
 
             @if (HasRibbonIssues || HasMoveIssues || HasRelearnMoveIssues || HasBallIssues || HasMetLocationIssues)
             {
-                <MudText Typo="@Typo.subtitle2" Class="mt-2">Quick Fixes</MudText>
-                <MudStack Row Wrap="@Wrap.Wrap" Spacing="1">
+                <MudText Typo="@Typo.subtitle2"
+                         Class="mt-2">Quick Fixes
+                </MudText>
+                <MudStack Row
+                          Wrap="@Wrap.Wrap"
+                          Spacing="1">
                     @if (HasBallIssues)
                     {
                         <MudButton Variant="@Variant.Outlined"
@@ -120,6 +135,8 @@
     }
     else
     {
-        <MudText Class="pa-2" Color="@Color.Default">No Pokémon selected.</MudText>
+        <MudText Class="pa-2"
+                 Color="@Color.Default">No Pokémon selected.
+        </MudText>
     }
 }

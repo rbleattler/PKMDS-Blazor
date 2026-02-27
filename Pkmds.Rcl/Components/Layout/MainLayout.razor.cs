@@ -1,6 +1,6 @@
-namespace Pkmds.Rcl.Components.Layout;
-
 using Pkmds.Rcl.Models;
+
+namespace Pkmds.Rcl.Components.Layout;
 
 public partial class MainLayout : IDisposable
 {
@@ -10,8 +10,8 @@ public partial class MainLayout : IDisposable
     private const string GitHubTooltip = "Source code on GitHub";
 
     private IBrowserFile? browserLoadSaveFile;
-    private bool isDarkMode;
     private bool isCheckingForUpdate;
+    private bool isDarkMode;
     private MudThemeProvider? mudThemeProvider;
 
     public void Dispose() => RefreshService.OnAppStateChanged -= StateHasChanged;
@@ -80,9 +80,9 @@ public partial class MainLayout : IDisposable
                 "no-update" => ("You're up to date — no updates available.", Severity.Info),
                 "no-sw" => ($"Service worker is not available. {detail}", Severity.Warning),
                 "error" => ($"An error occurred while checking for updates: {detail}", Severity.Error),
-                _ => ($"Unexpected update check result: {result}. {detail}", Severity.Warning),
+                _ => ($"Unexpected update check result: {result}. {detail}", Severity.Warning)
             };
-            
+
             Logger.LogInformation("Update check result: {Result} - {Detail}", result, detail);
             Snackbar.Add(message, severity);
         }
