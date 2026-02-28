@@ -282,7 +282,154 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - [ ] Support batch operations on search results
 - [ ] Add search export functionality
 
-### 2.5 Event Flags & Story Progress
+### 2.5 Pokédex Editor
+**Tracks:** #414
+**Status:** ⚠️ Partial (Gen 1–3 seen/caught counts and bulk fill implemented; all per-generation advanced fields absent)
+**Complexity:** High
+**PKHeX Reference:** `SAV_SimplePokedex.cs`, `SAV_Pokedex4.cs`, `SAV_Pokedex5.cs`, `SAV_PokedexXY.cs`, `SAV_PokedexORAS.cs`, `SAV_PokedexSM.cs`, `SAV_PokedexGG.cs`, `SAV_PokedexSWSH.cs`, `SAV_PokedexBDSP.cs`, `SAV_PokedexLA.cs`, `SAV_PokedexSV.cs`, `SAV_PokedexSVKitakami.cs`, `SAV_Pokedex9a.cs`
+**Core API:** `ZukanBase` / `Zukan4` / `Zukan5` / `Zukan6` / `Zukan7` / `Zukan7b` / `Zukan8` / `Zukan8b` / `PokedexSave8a` / `Zukan9Paldea` / `Zukan9Kitakami` / `Zukan9a` in `PKHeX.Core/Saves/Substructures/PokeDex/`
+
+**Common API (all gens):**
+- `GetSeen(ushort species)` / `SetSeen(...)` / `GetCaught(ushort species)` / `SetCaught(...)`
+- `SeenAll(bool shinyToo)` / `CaughtAll(bool shinyToo)` / `CompleteDex(bool shinyToo)`
+- `SeenNone()` / `CaughtNone()` / `ClearDexEntryAll(ushort species)`
+- `SetDex(PKM pk)` — auto-update entry from a Pokémon object
+
+#### Gen 1–3 (SAV1 / SAV2 / SAV3)
+**Status:** ✅ Implemented (simple seen/caught bitflags)
+- [x] Seen flag per species
+- [x] Caught flag per species
+- [x] Bulk fill / clear
+- [ ] Per-species edit UI (currently only aggregate counts shown)
+
+#### Gen 4 (Zukan4) — Diamond / Pearl / Platinum / HeartGold / SoulSilver
+**Status:** ❌ Not Implemented
+- [ ] Seen flag (basic)
+- [ ] Caught flag
+- [ ] Gender-seen tracking: male-first and female-first regions (2 separate bitfields)
+- [ ] Form tracking (species-specific; varies by game):
+  - Unown ×28, Deoxys ×4, Shellos/Gastrodon ×2
+  - Rotom ×6, Shaymin ×2, Giratina ×2, Pichu ×3 (HG/SS only)
+- [ ] Spinda: store first-seen Spinda's PID (32-bit, offset `0x0104`)
+- [ ] Language flags (HG/SS only — DP/Pt lack language data)
+- [ ] Per-species edit UI
+
+#### Gen 5 (Zukan5BW / Zukan5B2W2) — Black / White / Black 2 / White 2
+**Status:** ❌ Not Implemented
+- [ ] 4-region gender×shiny seen tracking (male, female, male-shiny, female-shiny)
+- [ ] Display variant selection per species (which gender/shiny combo shows in Pokédex)
+- [ ] Form tracking (Unown ×28, Castform ×4; B2W2 adds more species)
+- [ ] Language flags (7 languages: JPN, ENG, FRE, ITA, GER, SPA, KOR)
+- [ ] Spinda PID storage
+- [ ] National Dex unlock flag and mode tracking
+- [ ] Per-species edit UI
+
+#### Gen 6 XY (Zukan6XY) — X / Y
+**Status:** ❌ Not Implemented
+- [ ] Seen / caught flags
+- [ ] 4-region gender×shiny seen tracking
+- [ ] Per-form seen flags (form bits alongside species bits)
+- [ ] Display form, display gender, display shiny selection per species
+- [ ] Language flags (7 languages; slot 6 unused/skipped)
+- [ ] "Foreign" flag per species (tracks Pokémon migrated from Gen 5)
+- [ ] Spinda: store first-seen Spinda's encryption constant
+- [ ] National Dex unlock / mode flags
+- [ ] Per-species edit UI
+
+#### Gen 6 ORAS (Zukan6AO) — Omega Ruby / Alpha Sapphire
+**Status:** ❌ Not Implemented
+- [ ] All XY features above
+- [ ] Encounter count per species (`u16`, running total of wild encounters)
+- [ ] Obtained count per species (`u16`, running total of catches)
+- [ ] Per-species edit UI
+
+#### Gen 7 SM/USUM (Zukan7) — Sun / Moon / Ultra Sun / Ultra Moon
+**Status:** ❌ Not Implemented
+- [ ] Seen / caught flags
+- [ ] 4-region gender×shiny seen tracking
+- [ ] Per-form seen flags
+- [ ] Display form / display gender / display shiny selection per species
+- [ ] Language flags (9 languages: adds Simplified Chinese and Traditional Chinese)
+- [ ] Spinda ×4 storage (separate first-seen per gender×shiny combination)
+- [ ] Current-viewed-dex tracking (Alola regional vs National)
+- [ ] Per-species edit UI
+
+#### Gen 7b LGPE (Zukan7b) — Let's Go Pikachu / Eevee
+**Status:** ❌ Not Implemented
+- [ ] Seen / caught flags for the limited (153-species) Let's Go Pokédex
+- [ ] Per-species edit UI
+
+#### Gen 8 SWSH (Zukan8) — Sword / Shield
+**Status:** ❌ Not Implemented
+- [ ] **3 independent regional dex blocks** (each a separate `Zukan8` instance):
+  - Galar (400 species)
+  - Isle of Armor DLC (211 species)
+  - Crown Tundra DLC (210 species)
+- [ ] Per-form seen tracking (up to 63 forms as bits in a `u64` field)
+- [ ] Gigantamax seen / caught flag (bit 63 of the form `u64`)
+- [ ] Display options per species: form ID, gender, shiny, Gigantamax/Dynamax preference
+- [ ] Language flags (9 languages)
+- [ ] Battled count per species (`u32`)
+- [ ] Per-species edit UI
+
+#### Gen 8 BDSP (Zukan8b) — Brilliant Diamond / Shining Pearl
+**Status:** ❌ Not Implemented
+- [ ] `ZukanState8b` state per species: `None` → `HeardOf` → `Seen` → `Captured`
+- [ ] Gender × shiny seen flags (4 separate `u32` arrays: male, female, male-shiny, female-shiny)
+- [ ] Form tracking per species (Unown ×28, Castform ×4, Deoxys ×4, Rotom ×6, Giratina ×2, Shaymin ×2, Arceus ×18)
+- [ ] Regional (Sinnoh) dex obtained flag vs National Dex obtained flag
+- [ ] Language flags (9 languages)
+- [ ] Per-species edit UI
+
+#### Gen 8 LA (PokedexSave8a) — Legends: Arceus
+**Status:** ❌ Not Implemented
+**Note:** Completely different architecture — no simple seen/caught flags; tracked via per-task research counters. See also §3.3.
+- [ ] Research task progress (22+ task types per species):
+  - Catch, Defeat, Evolve, Use Move (×4 move slots), Defeat With Move Type
+  - Catch Alpha, Catch Large, Catch Small, Catch Heavy, Catch Light
+  - Catch At Time Of Day, Catch Sleeping, Catch In Air, Catch Not Spotted
+  - Give Food, Stun With Items, Scare With Scatter Bang, Lure With Pokéshi Doll
+  - Use Strong Style Move, Use Agile Style Move
+  - Leap From Trees, Leap From Leaves, Leap From Snow, Leap From Ore, Leap From Tussocks
+- [ ] Research rate % (0–100) per species
+- [ ] Perfect research (100%) completion flag per species
+- [ ] Display selection: form, gender, shiny, alpha per species
+- [ ] 5 local-area dex completion flags (Hisui + Local 1–5)
+- [ ] Per-species research edit UI (see `SAV_PokedexResearchEditorLA` for PKHeX reference)
+
+#### Gen 9 SV (Zukan9Paldea / Zukan9Kitakami) — Scarlet / Violet
+**Status:** ❌ Not Implemented
+**Note:** Simple stubs existed in roadmap as "Advanced Pokédex (Kitakami, etc.)"; consolidated here.
+- [ ] 3-tier DLC dex system (separate `Zukan9` instances per save revision):
+  - Paldea (base game)
+  - Kitakami (DLC 1 — The Teal Mask)
+  - Blueberry (DLC 2 — The Indigo Disk)
+- [ ] State system per species: Unknown → Known (adjacent species) → Seen → Caught
+- [ ] Per-form seen and caught flags
+- [ ] Gender seen flags, shiny seen flags, shiny caught flags
+- [ ] Display options: form, gender, shiny, "New" flag
+- [ ] Language flags (9 languages)
+- [ ] Per-species edit UI
+
+#### Gen 9 ZA (Zukan9a) — Legends: Z-A
+**Status:** ❌ Not Implemented
+- [ ] Per-species state tracking
+- [ ] Mega / Mega X / Mega Y form seen flags
+- [ ] Alpha form tracking
+- [ ] Language flags (9 languages)
+- [ ] Per-species edit UI
+
+#### Cross-generation bulk operations
+- [x] Fill all seen — Gen 1–3
+- [x] Fill all caught — Gen 1–3
+- [ ] Fill all seen with gender/shiny variants — Gen 4+
+- [ ] Fill all caught with all form variants — Gen 4+
+- [ ] Set all language flags — Gen 4+
+- [ ] Clear all entries (full reset)
+- [ ] Complete a single species entirely (all forms, genders, shinies, languages)
+- [ ] Complete all research tasks at 100% — Gen 8 LA only
+
+### 2.6 Event Flags & Story Progress
 **Status:** ❌ Not Implemented  
 **Complexity:** Very High  
 **Warning:** Highly game-specific and prone to save corruption  
@@ -327,7 +474,7 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
   - [ ] Raid rewards editor
 - [ ] Fashion/Clothing editor (SAV_Fashion9)
 - [ ] Sandwich/Picnic editor (Donut editor)
-- [ ] Advanced Pokedex (Kitakami, etc.)
+- [ ] Pokédex editor (Paldea / Kitakami / Blueberry) — see §2.5
 - [ ] Tera Orb charge status
 - [ ] Academy class progress
 - [ ] Gym badges & Elite Four
@@ -366,9 +513,8 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
     - [x] Combined Purchased/Mastered dialog
   - [x] **Alpha Move** selector dropdown
   - [x] **Mastered Move** checkboxes (inline with current moves)
-  - [ ] Pokedex Research Tasks (SAV_PokedexResearchEditorLA)
-  - [ ] Research level editor
-  - [ ] Alpha Pokemon caught tracker
+  - [ ] Pokédex Research Tasks editor — see §2.5 (Gen 8 LA)
+  - [ ] Alpha Pokémon caught tracker
   - [ ] Mass Outbreak editor
   - [ ] Space-Time Distortion progress
   - [ ] Pastures management
