@@ -97,9 +97,18 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - [ ] Support all Pokemon with form variations
 - [ ] Validate form legality based on origin/capture method
 
+#### Ability Slot Editor
+**Status:** ⚠️ Partial (ability display exists; unrestricted slot selection not yet supported)
+**Complexity:** Low
+**Tracks:** #176
+**Tasks:**
+- [ ] Allow freely selecting any ability slot (Ability 1 / Ability 2 / Hidden Ability) regardless of species legality
+- [ ] Display all three slots even when a species lacks a Hidden Ability (show as "None")
+- [ ] Let legality checker report illegal ability slots rather than preventing selection
+
 #### PID/EC Generator
-**Status:** ✅ Implemented  
-**Complexity:** Medium  
+**Status:** ✅ Implemented
+**Complexity:** Medium
 **Tasks:**
 - [x] Create PID generator with options:
   - [x] Method 1/2/4 (Gen 3-4)
@@ -495,6 +504,7 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - [ ] Implement multi-select for batch operations
 
 ### 4.2 Import/Export Enhancements
+**Tracks:** #61, #166
 **Tasks:**
 - [ ] Add bulk Pokemon import from files
 - [ ] Support .pk* file drag-and-drop
@@ -630,6 +640,7 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 ## Priority 6: Minor Features & Polishing
 
 ### 6.1 Trainer Customization Enhancements
+**Tracks:** #41
 **Tasks:**
 - [ ] Add trainer appearance/avatar editor
 - [ ] Implement trainer card customization
