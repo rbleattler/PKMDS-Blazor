@@ -2,7 +2,7 @@
 
 This roadmap outlines the path to achieving 100% feature parity with PKHeX. Tasks are broken down into actionable items organized by feature category and priority.
 
-**Last Updated:** 2026-02-27
+**Last Updated:** 2026-02-28
 
 ---
 
@@ -844,6 +844,32 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - [ ] Add save file merger
 - [ ] Implement save file encryption/decryption status
 
+### 5.6 PKHaX / Illegal Mode
+**Status:** ❌ Not Implemented
+**Complexity:** Medium
+**Priority:** Medium
+**Tracks:** #422 *(supersedes #103, which was incorrectly closed as a duplicate of the Batch Editor #329)*
+**PKHeX Reference:**
+- `PKHeX.WinForms/Program.cs` — `public static bool HaX`
+- `PKHeX.Core/Editing/Program/StartupUtil.cs` — `GetIsHaX()`
+- `PKHeX.WinForms/Controls/PKM Editor/StatEditor.cs:45` — `HaX` property gates `CHK_HackedStats`
+- `PKHeX.WinForms/Controls/SAV Editor/SAV_Inventory.cs:139,237` — item pouch HaX bypasses
+- `PKHeX.Core/PKM/PlayerBag.cs:52–58` — `IsQuantitySane` → `MaxQuantityHaX` path
+
+**Overview:** A toggleable "Illegal Mode" for ROM hackers, researchers, and advanced users who need unrestricted editing beyond what standard legality rules permit. In PKHeX this is activated via a command-line flag (`-HaX`), executable rename, or settings toggle. PKMDS surfaces it as a Settings toggle.
+
+**Tasks:**
+- [ ] Add `IsHaXEnabled` bool to `IAppState` (persisted in local storage)
+- [ ] Add toggle to Settings panel with clear warning: _"Enables unrestricted editing. May create illegal/untradable Pokémon."_
+- [ ] Show persistent warning chip/banner in app header while HaX is active
+- [ ] Display a dismissable confirmation dialog on first enable
+- [ ] **Hacked Stats** — unlock the six calculated-stat inputs (HP/Atk/Def/SpA/SpD/Spe) in `StatsTab` when HaX is on; direct writes to `PKM.Stat_HP`, `Stat_ATK`, `Stat_DEF`, `Stat_SPA`, `Stat_SPD`, `Stat_SPE`; revert to read-only calculated display when HaX is off
+- [ ] **Suppress legality overlays** — gate legality icon rendering in `PokemonSlotComponent` on `!AppState.IsHaXEnabled`
+- [ ] **Unrestricted item quantities** — allow quantities up to `ushort.MaxValue` (65,535) in Bag/Inventory editor; Gen 1–2 bags cap at `byte.MaxValue` (255)
+- [ ] **Unrestricted item lists** — show full item list regardless of pouch type when HaX is on
+- [ ] **Unrestricted ability selection (Gen 3 only)** — Gen 3 ability dropdown uses `GetAbilityList(PersonalInfo)` and is restricted to the species' legal abilities; in HaX mode it should show all abilities (matching the `DEV_Ability` behaviour PKHeX provides in HaX mode). **Gen 4+ is already unrestricted** — `MudAutocomplete` in `MainTab.razor` searches `GameInfo.FilteredSources.Abilities` (all abilities), which already matches PKHaX behaviour regardless of mode; no Gen 4+ change needed. *Note: ability slot selection (Ability 1 / Ability 2 / Hidden Ability) is a separate concern tracked in §1.1 / #176 and is not HaX-specific.*
+- [ ] Add unit tests for HaX-gated stat editing path
+
 ---
 
 ## Priority 6: Minor Features & Polishing
@@ -1109,8 +1135,9 @@ This roadmap is a living document. Community contributions are welcome!
 
 **For questions, suggestions, or to discuss the roadmap, please open an issue on GitHub or contact the maintainer.**
 
-**Last Updated:** 2026-02-27
+**Last Updated:** 2026-02-28
 **Next Review:** 2026-03-27
 <!-- Legality Checker (§1.2): fix buttons (#401) + batch report (#402) done 2026-02-27; comprehensive unit tests still pending -->
 <!-- Legality Checker (§1.2): per-field inline indicators (#411) implemented 2026-02-27; covers Moves/Stats/Main/Met/OT-Misc/Ribbons tabs -->
 <!-- PKHeX bug filed 2026-02-27: SAV1.IsVirtualConsole filename heuristic causes false cart-era detection for renamed VC saves → kwsch/PKHeX#4734 -->
+<!-- PKHaX / Illegal Mode (§5.6): added 2026-02-28; issue #422 created; supersedes #103 (incorrectly closed as duplicate of Batch Editor #329) -->
