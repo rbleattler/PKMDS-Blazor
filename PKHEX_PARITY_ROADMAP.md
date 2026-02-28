@@ -10,7 +10,7 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 
 ### ✅ Already Implemented in PKMDS
 - **Pokemon Editor** - Full individual Pokemon editing (species, nickname, gender, level, experience, abilities, held items)
-- **Stats Editing** - IVs, EVs, base stats, calculated battle stats, stats chart visualization
+- **Stats Editing** - IVs, EVs, AVs (LGPE), GVs (LA), base stats, calculated battle stats, stats chart, CP (LGPE), Stat Nature (Gen 8+), Dynamax Level, Can Gigantamax, Tera Type Original/Override (SV), Is Alpha (LA/ZA), Is Noble (LA)
 - **Moves Editing** - 4-move slots with search, type indicators, PP/PP Ups editing
   - **Relearn Moves** (Gen 6+) - 4 relearn move slots with search functionality
   - **Plus Move Checkboxes** (PA9/Legends Z-A) - Mark moves as Plus-enabled inline
@@ -26,9 +26,9 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - **Pokedex** - View seen/caught counts, bulk fill functionality
 - **Records** - Game statistics, Hall of Fame timing
 - **Mystery Gift Database** - Browse, search, filter, import mystery gifts
-- **Met Data** - Met location, ball, level, origin game, generation-specific fields
-- **OT/Misc Data** - Original trainer info, generation-specific format support, memory editing (Gen 6+), affection/friendship
-- **Cosmetic Features** - Markings, height/weight scalars, scale rating
+- **Met Data** - Met location, ball, level, origin game, Ground Tile (Gen 4), Fateful Encounter, Met Date (Gen 4+), Egg Location + Egg Date (Gen 4+), Met Time of Day (Gen 2) *(Battle Version and Obedience Level not yet implemented — see §1.1)*
+- **OT/Misc Data** - Original trainer info, TID/SID (16-bit and 6-digit), handling trainer name/gender/language (Gen 8+), memory editing (Gen 6+), affection/friendship, Geo Locations (Gen 6–7), Home Tracker (Gen 8+) *(Country/Sub-Region/Console Region and Affixed Ribbon not yet implemented — see §1.1)*
+- **Cosmetic Features** - Markings, height/weight scalars, scale rating *(Origin mark display and Favorite toggle not yet implemented — see §1.1)*
 - **Pokerus** - Infection status display/editing
 - **Hidden Power** - Type selection
 - **Showdown Export** - Export Pokemon to Showdown format
@@ -121,13 +121,76 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - [ ] Create PID reroller for legal PIDs
 
 #### Catch Rate / Status Condition Editor
-**Status:** ✅ Implemented  
-**Complexity:** Low  
+**Status:** ✅ Implemented
+**Complexity:** Low
 **Tasks:**
 - [x] Add Catch Rate field (Gen 1-2)
 - [x] Create Status Condition editor (Gen 1-2)
 - [x] Add held item slot for Gen 1-2 (linked to catch rate byte)
 - [x] Implement generation-specific validation
+
+#### Met Tab — Missing Fields
+**Status:** ❌ Not Implemented
+**Complexity:** Low
+**Tracks:** #416
+**PKHeX Reference:** `PKMEditor.cs` Met tab — `CB_BattleVersion`, `TB_ObedienceLevel`
+**Note:** Met Date, Egg Met Date, Egg Met Location, Ground Tile, Met Time of Day (Gen 2), and Fateful Encounter are all ✅ already implemented in `MetTab.razor`.
+**Tasks:**
+- [ ] **Battle Version** (`PKM.BattleVersion`, Gen 8+) — dropdown selecting the game version whose move/move-legality rules apply; important for VGC transferred Pokémon
+- [ ] **Obedience Level** (`PKM.ObedienceLevel`, Gen 9+ / PK9/PA9) — level cap below which a traded Pokémon will obey; shown alongside Met Level in PKHeX
+
+#### OT/Misc Tab — Missing Fields
+**Status:** ❌ Not Implemented (generation-specific)
+**Complexity:** Low
+**Tracks:** #417
+**PKHeX Reference:** `PKMEditor.cs` OT/Misc tab
+**Note:** Handler Language (`IHandlerLanguage`), Home Tracker (`IHomeTrack`), Handling Trainer name/gender, memories, Geo Locations (`IGeoTrack`), and TID/SID format handling are all ✅ already implemented in `OtMiscTab.razor`.
+**Tasks:**
+- [ ] **Country / Sub-Region / Console Region** (`IRegionOrigin`: `Country`, `Region`, `ConsoleRegion`, Gen 6–7 only) — the Pokémon's native 3DS geographic origin; three separate dropdowns; distinct from the five IGeoTrack visited-country slots which are already implemented
+- [ ] **Affixed Ribbon / Mark** (`PKM.AffixedRibbon`, Gen 8+) — selects which ribbon or mark is displayed on the Pokémon's summary screen; stored as a `RibbonIndex` enum value
+
+#### Cosmetic Tab — Origin Mark Display and Favorite
+**Status:** ❌ Not Implemented
+**Complexity:** Low
+**Tracks:** #418
+**PKHeX Reference:** `PB_Origin` and `PB_Favorite` in `PKMEditor.cs`; `OriginMarkUtil.GetOriginMark(pk)` in `PKHeX.Core/PKM/Enums/OriginMark.cs`
+**Tasks:**
+- [ ] **Origin Mark display** (`OriginMarkUtil.GetOriginMark(pk)`, Gen 6+) — read-only icon shown in the Cosmetic tab indicating which generation group the Pokémon originated from; derived from the entity's version, not editable directly:
+  - Gen 6 (X/Y, ORAS) → Pentagon mark
+  - Gen 7 (SM, USUM) → Clover/flower mark
+  - Gen 8 SWSH → Galar mark
+  - Gen 8 BDSP → Trio mark
+  - Gen 8 LA → Arc/triangle mark
+  - Gen 9 SV → Paldea mark
+  - Gen 9 ZA → ZA mark
+  - Virtual Console (Gen 1–2 VC) → Game Boy mark
+  - Pokémon GO transfers → GO mark
+  - LGPE (Let's Go) → Let's Go mark
+- [ ] **Favorite toggle** (`IFavorite.IsFavorite`) — clickable toggle; shown whenever the entity implements `IFavorite`: `PB7` (LGPE), `G8PKM` base (PK8 SWSH + PB8 BDSP), `PA8` (LA), `PK9`/`PA9` (SV); marks the Pokémon as a favorite in the PC box; in PKHeX, `ClickFavorite` uses `Entity is IFavorite` so it works for all these formats, not just LGPE
+
+#### Generation-Specific Fields Not Yet Implemented
+**Status:** ❌ Not Implemented
+**Complexity:** Low
+**Tracks:** #419
+**PKHeX Reference:** `PKMEditor.cs` Cosmetic tab + generation-specific controls
+**Note:** Stat Nature, Tera Types, Is Alpha, Is Noble, Can Gigantamax, Dynamax Level, AVs, GVs, CP, and N's Sparkle (PK5) are all ✅ already implemented. The items below are the remaining gaps.
+**Tasks:**
+- [ ] **Gen 4 HGSS National Park Sparkle** (`PK4.NSparkle`) — boolean flag for Bug-Catching Contest winner; HG/SS only *(N's Sparkle for PK5 is already implemented; PK4's distinct use of the same property is not)*
+- [ ] **Gen 4 HGSS Shiny Leaves** (`PK4.ShinyLeaf`) — 6-part panel: 5 leaf type checkboxes + crown flag; HG/SS only
+- [ ] **Gen 4 HGSS Walking Mood** (`G4PKM.WalkingMood`) — walking partner mood value; HG/SS only
+- [ ] **Gen 5 B2W2 PokéStar Fame** (`PK5.PokeStarFame`) — PokéStar Studios fame value; B2W2 only
+- [ ] **Gen 7b LGPE Spirit** (`PB7.Spirit`) — Go Park spirit value; LGPE only
+- [ ] **Gen 7b LGPE Mood** (`PB7.Mood`) — partner Pokémon mood; LGPE only
+- [ ] **Gen 7b LGPE Received Date/Time** (`PB7.ReceivedYear/Month/Day/Hour/Minute/Second`) — full timestamp of when the Pokémon was received from GO Park; LGPE only
+- [ ] **Gen 3 Colosseum/XD Shadow fields** (`IShadowCapture`: `ShadowID`, `Purification`, `IsShadow`) — Shadow Pokémon identification and purification counter; Colo/XD only
+
+#### Extra Bytes Editor
+**Status:** ❌ Not Implemented
+**Complexity:** Low
+**Tracks:** #420
+**PKHeX Reference:** `CB_ExtraBytes` + `TB_ExtraByte` in OT/Misc tab
+**Tasks:**
+- [ ] Add raw byte editor: offset selector (hex) + value field (0–255) for any byte in the Pokémon's data that is not exposed by a named field; useful for accessing undocumented generation-specific bytes
 
 ### 1.2 Legality Checker
 **Status:** ⚠️ Partial (core analysis, UI, fix buttons, and batch report implemented; comprehensive unit tests remain)
