@@ -659,6 +659,7 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 
 ### 3.8 Generation 3 (Ruby/Sapphire/Emerald, FR/LG, Colosseum/XD)
 **Tasks:**
+- [ ] **WC3 Wonder Card import** (`IGen3Wonder`: write `WonderCard3` from `.wc3` file to save's wonder card slot; Emerald and FR/LG only) — see #423
 - [ ] Secret Base editor (SAV_SecretBase3)
   - [ ] Location
   - [ ] Decorations
