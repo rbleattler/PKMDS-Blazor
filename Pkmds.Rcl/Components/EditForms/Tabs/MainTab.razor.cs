@@ -26,6 +26,17 @@ public partial class MainTab : IDisposable
     private bool IsFlabebebFamily =>
         Pokemon?.Species is (ushort)Species.Flabébé or (ushort)Species.Floette or (ushort)Species.Florges;
 
+    /// <summary>
+    /// Returns the sprite filename for the form-dropdown preview image.
+    /// For Scatterbug and Spewpa, substitutes Vivillon's species so the preview
+    /// shows the actual wing pattern rather than an identical caterpillar silhouette.
+    /// </summary>
+    private string GetFormPreviewSprite() => Pokemon is null
+        ? ImageHelper.PokemonFallbackImageFileName
+        : IsVivillon
+            ? ImageHelper.GetPokemonSpriteFilenameForForm((ushort)Species.Vivillon, Pokemon.Context, Pokemon.Form)
+            : ImageHelper.GetPokemonSpriteFilename(Pokemon);
+
     public void Dispose() =>
         RefreshService.OnAppStateChanged -= Refresh;
 

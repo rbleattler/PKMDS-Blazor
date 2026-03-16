@@ -1,13 +1,13 @@
 @inherits BasePkmdsComponent
 
 <MudDialog>
-    <TitleContent>
-        <MudText Typo="@Typo.h6">Vivillon Wing Pattern</MudText>
-    </TitleContent>
     <DialogContent>
         @if (Pokemon is not null)
         {
-            var forms = FormConverter.GetFormList(Pokemon.Species, GameInfo.Strings.types, GameInfo.Strings.forms,
+            // Always use Vivillon's species for form names and sprites — Scatterbug and Spewpa share
+            // the same 20 regional patterns but their sprites don't show the pattern; Vivillon's do.
+            var vivillonSpecies = (ushort)Species.Vivillon;
+            var forms = FormConverter.GetFormList(vivillonSpecies, GameInfo.Strings.types, GameInfo.Strings.forms,
                 GameInfo.GenderSymbolUnicode, Pokemon.Context);
 
             <MudSwitch T="bool"
@@ -36,11 +36,11 @@
                                                  ? 4
                                                  : 0)"
                                   @onclick="@(() => selectedForm = formIdx)">
-                            <img src="@(ImageHelper.GetPokeApiHomeSpriteUrl(Pokemon.Species, formIdx, null, isPreviewShiny, Pokemon.Gender)
-                                         ?? ImageHelper.GetPokemonSpriteFilenameForForm(Pokemon.Species, Pokemon.Context, formIdx))"
+                            <img src="@(ImageHelper.GetPokeApiHomeSpriteUrl(vivillonSpecies, formIdx, null, isPreviewShiny, Pokemon.Gender)
+                                         ?? ImageHelper.GetPokemonSpriteFilenameForForm(vivillonSpecies, Pokemon.Context, formIdx))"
                                  alt="@forms[formIdx]"
                                  style="width:64px; height:48px; object-fit:contain; display:block;"
-                                 onerror="this.onerror=null; this.src='@ImageHelper.GetPokemonSpriteFilenameForForm(Pokemon.Species, Pokemon.Context, formIdx)'"/>
+                                 onerror="this.onerror=null; this.src='@ImageHelper.GetPokemonSpriteFilenameForForm(vivillonSpecies, Pokemon.Context, formIdx)'"/>
                             <MudText Typo="@Typo.caption"
                                      Align="@Align.Center"
                                      Style="max-width:64px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
