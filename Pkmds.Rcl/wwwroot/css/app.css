@@ -125,6 +125,111 @@ body, html {
     overflow-y: auto;
 }
 
+/* Desktop (lg breakpoint): side-by-side layout with independently scrolling edit form */
+@media (min-width: 1280px) {
+    html, body {
+        overflow: hidden;
+    }
+
+    /* Cascade flex heights from MudMainContent down to the party/box grid.
+       height:100vh + box-sizing:border-box means the AppBar padding-top is absorbed
+       into the explicit height, giving all flex:1 / height:100% descendants a
+       definite size to resolve against (so inner overflow-y:auto produces a scrollbar). */
+    .mud-main-content {
+        height: 100vh;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .mud-main-content > .mud-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        min-height: 0;
+    }
+
+    /* Outer save-file tabs fill remaining vertical space */
+    .save-file-outer-tabs {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .save-file-outer-tabs > .mud-tabs-panels {
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    /* Each outer tab panel fills its available height; overflow managed by inner content */
+    .save-file-outer-tabs > .mud-tabs-panels > .mud-tab-panel {
+        height: 100%;
+        overflow: hidden;
+    }
+
+    /* Party/Box tab content: overflow managed internally */
+    .party-box-tab-content {
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .party-box-grid.mud-grid {
+        height: 100%;
+        overflow: hidden;
+        flex-wrap: nowrap;
+    }
+
+    .edit-form-column {
+        height: 100%;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .edit-form-column > .mud-paper {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    .edit-form-outer {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    .edit-form-outer > .flex {
+        flex-shrink: 0;
+    }
+
+    .edit-form-tabs-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        min-height: 0;
+    }
+
+    .edit-form-tabs {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .edit-form-tabs .mud-tabs-panels {
+        flex: 1;
+        overflow-y: auto;
+        min-height: 0;
+        margin-bottom: 8px;
+    }
+}
+
 .square-slot {
     aspect-ratio: 1 / 1;
 }

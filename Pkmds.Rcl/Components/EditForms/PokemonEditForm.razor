@@ -14,6 +14,8 @@
          SelectedSlotsAreValid: true
      })
 {
+    <div class="edit-form-outer">
+
     <div class="flex flex-wrap gap-2 mt-2">
 
         <MudButton OnClick="@DeletePokemon"
@@ -78,11 +80,12 @@
 
     </div>
 
-    <div class="mb-20">
+    <div class="edit-form-tabs-container">
 
         <MudTabs Outlined
                  Rounded
-                 Border>
+                 Border
+                 Class="edit-form-tabs">
 
             <MudTabPanel Text="Main">
                 <MainTab Pokemon="@Pokemon"
@@ -140,6 +143,8 @@
             </MudTabPanel>
 
         </MudTabs>
+
+    </div>
 
     </div>
 }
