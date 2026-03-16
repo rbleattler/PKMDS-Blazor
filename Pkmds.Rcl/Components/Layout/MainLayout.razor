@@ -132,6 +132,41 @@
                        FullWidth="true">
                 Settings
             </MudButton>
+            @if (IsUpdateAvailable)
+            {
+                <MudButton OnClick="@ReloadApp"
+                           StartIcon="@Icons.Material.Filled.SystemUpdateAlt"
+                           Variant="@Variant.Filled"
+                           Color="@Color.Info"
+                           FullWidth="true">
+                    Update available — reload
+                </MudButton>
+            }
+            else
+            {
+                <MudButton OnClick="@CheckForUpdates"
+                           StartIcon="@(IsUpToDate
+                               ? Icons.Material.Filled.CheckCircle
+                               : Icons.Material.Filled.Refresh)"
+                           Variant="@Variant.Filled"
+                           Color="@(IsUpToDate ? Color.Success : Color.Default)"
+                           Disabled="@IsCheckingForUpdates"
+                           FullWidth="true">
+                    @if (IsCheckingForUpdates)
+                    {
+                        <MudProgressCircular Size="@Size.Small" Indeterminate="true" Class="mr-2"/>
+                        @:Checking…
+                    }
+                    else if (IsUpToDate)
+                    {
+                        @:Up to date!
+                    }
+                    else
+                    {
+                        @:Check for updates
+                    }
+                </MudButton>
+            }
         </MudStack>
 
         <MudSpacer/>

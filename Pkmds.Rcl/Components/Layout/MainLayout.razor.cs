@@ -16,9 +16,50 @@ public partial class MainLayout : IDisposable
     [Inject]
     private ISettingsService SettingsService { get; set; } = null!;
 
-    public void Dispose() => RefreshService.OnAppStateChanged -= StateHasChanged;
+    private bool IsUpdateAvailable { get; set; }
+    private bool IsCheckingForUpdates { get; set; }
+    private bool IsUpToDate { get; set; }
 
-    protected override void OnInitialized() => RefreshService.OnAppStateChanged += StateHasChanged;
+    public void Dispose()
+    {
+        RefreshService.OnAppStateChanged -= StateHasChanged;
+        RefreshService.OnUpdateAvailable -= ShowUpdateMessage;
+    }
+
+    protected override void OnInitialized()
+    {
+        RefreshService.OnAppStateChanged += StateHasChanged;
+        RefreshService.OnUpdateAvailable += ShowUpdateMessage;
+    }
+
+    private void ShowUpdateMessage()
+    {
+        IsUpdateAvailable = true;
+        IsUpToDate = false;
+        StateHasChanged();
+    }
+
+    private async Task CheckForUpdates()
+    {
+        IsCheckingForUpdates = true;
+        IsUpToDate = false;
+        StateHasChanged();
+
+        var result = await JSRuntime.InvokeAsync<string>("checkForUpdates");
+
+        IsCheckingForUpdates = false;
+        if (result is "none")
+        {
+            IsUpToDate = true;
+            StateHasChanged();
+            await Task.Delay(3000);
+            IsUpToDate = false;
+        }
+        StateHasChanged();
+    }
+
+    private async Task ReloadApp() =>
+        await JSRuntime.InvokeVoidAsync("location.reload");
 
     private bool ComputeIsDarkMode() => themeMode switch
     {
