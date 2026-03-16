@@ -14,7 +14,8 @@ public partial class MainTab : IDisposable
     private MudSelect<byte>? FormSelect { get; set; }
 
     private bool IsAlcremie => Pokemon?.Species == (ushort)Species.Alcremie;
-    private bool IsVivillon => Pokemon?.Species == (ushort)Species.Vivillon;
+    private bool IsVivillon =>
+        Pokemon?.Species is (ushort)Species.Scatterbug or (ushort)Species.Spewpa or (ushort)Species.Vivillon;
     private bool IsFurfrou => Pokemon?.Species == (ushort)Species.Furfrou;
 
     private bool IsPumpkabooOrGourgeist =>
@@ -290,7 +291,13 @@ public partial class MainTab : IDisposable
     private async Task OpenVivillonEditorDialog()
     {
         var parameters = new DialogParameters<VivillonEditorDialog> { { x => x.Pokemon, Pokemon } };
-        var dialog = await DialogService.ShowAsync<VivillonEditorDialog>("Vivillon Pattern", parameters, AppearanceDialogOptions);
+        var title = Pokemon?.Species switch
+        {
+            (ushort)Species.Scatterbug => "Scatterbug Pattern",
+            (ushort)Species.Spewpa => "Spewpa Pattern",
+            _ => "Vivillon Pattern",
+        };
+        var dialog = await DialogService.ShowAsync<VivillonEditorDialog>(title, parameters, AppearanceDialogOptions);
         var result = await dialog.Result;
         if (result is { Canceled: false })
         {
