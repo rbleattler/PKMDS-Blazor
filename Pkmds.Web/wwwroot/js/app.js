@@ -34,3 +34,29 @@ window.addUpdateListener = () => {
     });
 };
 
+// Proactively check for a service worker update.
+// Returns: 'found' (update installing/waiting), 'none' (up to date), 'no-sw' (SW unavailable), 'error'
+window.checkForUpdates = async () => {
+    const registration = await window._swRegistrationPromise;
+    if (!registration) return 'no-sw';
+
+    // A waiting worker was already downloaded but not yet activated — notify immediately.
+    if (registration.waiting) {
+        window.dispatchEvent(new CustomEvent('updateAvailable'));
+        return 'found';
+    }
+
+    let updated;
+    try {
+        updated = await registration.update();
+    } catch (err) {
+        if (!(err.name === 'InvalidStateError' || (err.message && err.message.includes('newestWorker is null')))) {
+            console.warn('Manual update check failed:', err);
+        }
+        return 'error';
+    }
+
+    // onupdatefound will fire and forward the notification to Blazor.
+    return updated.installing || updated.waiting ? 'found' : 'none';
+};
+
