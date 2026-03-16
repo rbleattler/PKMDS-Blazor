@@ -4,6 +4,7 @@ public partial class PumpkabooSizeDialog
 {
     private byte selectedForm;
     private bool isPreviewShiny;
+    private readonly HashSet<int> _failedFormSprites = [];
 
     [Parameter]
     [EditorRequired]
@@ -33,6 +34,14 @@ public partial class PumpkabooSizeDialog
 
         Pokemon.Form = selectedForm;
         MudDialog?.Close(DialogResult.Ok(true));
+    }
+
+    private void OnFormSpriteError(int formIdx)
+    {
+        if (_failedFormSprites.Add(formIdx))
+        {
+            StateHasChanged();
+        }
     }
 
     private void Cancel() => MudDialog?.Close(DialogResult.Cancel());

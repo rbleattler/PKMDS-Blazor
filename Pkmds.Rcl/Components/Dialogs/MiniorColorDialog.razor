@@ -38,11 +38,13 @@
                                                  ? 4
                                                  : 0)"
                                   @onclick="@(() => selectedForm = formIdx)">
-                            <img src="@(ImageHelper.GetPokeApiHomeSpriteUrl(Pokemon.Species, formIdx, null, isPreviewShiny, Pokemon.Gender)
-                                         ?? ImageHelper.GetPokemonSpriteFilenameForForm(Pokemon.Species, Pokemon.Context, formIdx))"
+                            <img src="@(_failedFormSprites.Contains(formIdx)
+                                         ? ImageHelper.GetPokemonSpriteFilenameForForm(Pokemon.Species, Pokemon.Context, formIdx)
+                                         : (ImageHelper.GetPokeApiHomeSpriteUrl(Pokemon.Species, formIdx, null, isPreviewShiny, Pokemon.Gender)
+                                            ?? ImageHelper.GetPokemonSpriteFilenameForForm(Pokemon.Species, Pokemon.Context, formIdx)))"
                                  alt="@label"
                                  style="width:56px; height:56px; object-fit:contain; display:block;"
-                                 onerror="this.onerror=null; this.src='@ImageHelper.GetPokemonSpriteFilenameForForm(Pokemon.Species, Pokemon.Context, formIdx)'"/>
+                                 @onerror="@(_ => OnFormSpriteError(formIdx))"/>
                             <MudText Typo="@Typo.caption"
                                      Align="@Align.Center"
                                      Style="max-width:56px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
@@ -75,11 +77,13 @@
                                                  ? 4
                                                  : 0)"
                                   @onclick="@(() => selectedForm = formIdx)">
-                            <img src="@(ImageHelper.GetPokeApiHomeSpriteUrl(Pokemon.Species, formIdx, null, isPreviewShiny, Pokemon.Gender)
-                                         ?? ImageHelper.GetPokemonSpriteFilenameForForm(Pokemon.Species, Pokemon.Context, formIdx))"
+                            <img src="@(_failedFormSprites.Contains(formIdx)
+                                         ? ImageHelper.GetPokemonSpriteFilenameForForm(Pokemon.Species, Pokemon.Context, formIdx)
+                                         : (ImageHelper.GetPokeApiHomeSpriteUrl(Pokemon.Species, formIdx, null, isPreviewShiny, Pokemon.Gender)
+                                            ?? ImageHelper.GetPokemonSpriteFilenameForForm(Pokemon.Species, Pokemon.Context, formIdx)))"
                                  alt="@label"
                                  style="width:56px; height:56px; object-fit:contain; display:block;"
-                                 onerror="this.onerror=null; this.src='@ImageHelper.GetPokemonSpriteFilenameForForm(Pokemon.Species, Pokemon.Context, formIdx)'"/>
+                                 @onerror="@(_ => OnFormSpriteError(formIdx))"/>
                             <MudText Typo="@Typo.caption"
                                      Align="@Align.Center"
                                      Style="max-width:56px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">

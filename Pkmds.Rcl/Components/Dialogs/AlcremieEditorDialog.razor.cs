@@ -19,6 +19,9 @@ public partial class AlcremieEditorDialog
     private byte selectedCream;
     private uint selectedDeco;
     private bool isPreviewShiny;
+    private readonly HashSet<int> _failedCreamSprites = [];
+    private readonly HashSet<int> _failedDecoSprites = [];
+    private bool _previewFailed;
 
     [Parameter]
     [EditorRequired]
@@ -63,6 +66,31 @@ public partial class AlcremieEditorDialog
         }
 
         MudDialog?.Close(DialogResult.Ok(true));
+    }
+
+    private void OnCreamSpriteError(int creamIdx)
+    {
+        if (_failedCreamSprites.Add(creamIdx))
+        {
+            StateHasChanged();
+        }
+    }
+
+    private void OnDecoSpriteError(int decoIdx)
+    {
+        if (_failedDecoSprites.Add(decoIdx))
+        {
+            StateHasChanged();
+        }
+    }
+
+    private void OnPreviewSpriteError()
+    {
+        if (!_previewFailed)
+        {
+            _previewFailed = true;
+            StateHasChanged();
+        }
     }
 
     private void Cancel() => MudDialog?.Close(DialogResult.Cancel());

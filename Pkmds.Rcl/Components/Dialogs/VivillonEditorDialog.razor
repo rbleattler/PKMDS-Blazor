@@ -36,11 +36,13 @@
                                                  ? 4
                                                  : 0)"
                                   @onclick="@(() => selectedForm = formIdx)">
-                            <img src="@(ImageHelper.GetPokeApiHomeSpriteUrl(vivillonSpecies, formIdx, null, isPreviewShiny, Pokemon.Gender)
-                                         ?? ImageHelper.GetPokemonSpriteFilenameForForm(vivillonSpecies, Pokemon.Context, formIdx))"
+                            <img src="@(_failedFormSprites.Contains(formIdx)
+                                         ? ImageHelper.GetPokemonSpriteFilenameForForm(vivillonSpecies, Pokemon.Context, formIdx)
+                                         : (ImageHelper.GetPokeApiHomeSpriteUrl(vivillonSpecies, formIdx, null, isPreviewShiny, Pokemon.Gender)
+                                            ?? ImageHelper.GetPokemonSpriteFilenameForForm(vivillonSpecies, Pokemon.Context, formIdx)))"
                                  alt="@forms[formIdx]"
                                  style="width:64px; height:48px; object-fit:contain; display:block;"
-                                 onerror="this.onerror=null; this.src='@ImageHelper.GetPokemonSpriteFilenameForForm(vivillonSpecies, Pokemon.Context, formIdx)'"/>
+                                 @onerror="@(_ => OnFormSpriteError(formIdx))"/>
                             <MudText Typo="@Typo.caption"
                                      Align="@Align.Center"
                                      Style="max-width:64px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
