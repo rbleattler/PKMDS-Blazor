@@ -85,7 +85,7 @@
             <MudTextField Label="Nickname"
                           Variant="@Variant.Outlined"
                           Text="@Pokemon.Nickname"
-                          TextChanged="SetPokemonNickname"
+                          TextChanged="@SetPokemonNickname"
                           MaxLength="@saveFile.MaxStringLengthNickname"
                           For="@(() => Pokemon.Nickname)"/>
         </MudStack>
@@ -218,6 +218,13 @@
                         }
                     </MudSelect>
                 </MudStack>
+                <MudImage Src="@ImageHelper.GetPokemonSpriteFilename(Pokemon)"
+                          Alt="Form preview"
+                          title="@forms.ElementAtOrDefault(Pokemon.Form)"
+                          ObjectFit="@ObjectFit.Contain"
+                          ObjectPosition="@ObjectPosition.Center"
+                          Width="40"
+                          Height="30"/>
                 <LegalityIndicator
                     Severity="@(GetCheckResult(CheckIdentifier.Form)?.Judgement ?? PKHeX.Core.Severity.Valid)"
                     Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Form))"/>
@@ -247,6 +254,52 @@
                         </MudSelectItem>
                     }
                 </MudSelect>
+            }
+
+            @if (IsAlcremie)
+            {
+                <MudButton OnClick="@OpenAlcremieEditorDialog"
+                           Variant="@Variant.Outlined"
+                           StartIcon="@Icons.Material.Filled.Palette"
+                           Class="mb-2">
+                    Edit Appearance...
+                </MudButton>
+            }
+            else if (IsVivillon)
+            {
+                <MudButton OnClick="@OpenVivillonEditorDialog"
+                           Variant="@Variant.Outlined"
+                           StartIcon="@Icons.Material.Filled.Palette"
+                           Class="mb-2">
+                    Edit Pattern...
+                </MudButton>
+            }
+            else if (IsFurfrou)
+            {
+                <MudButton OnClick="@OpenFurfrouEditorDialog"
+                           Variant="@Variant.Outlined"
+                           StartIcon="@Icons.Material.Filled.ContentCut"
+                           Class="mb-2">
+                    Edit Trim...
+                </MudButton>
+            }
+            else if (IsPumpkabooOrGourgeist)
+            {
+                <MudButton OnClick="@OpenPumpkabooSizeDialog"
+                           Variant="@Variant.Outlined"
+                           StartIcon="@Icons.Material.Filled.Straighten"
+                           Class="mb-2">
+                    Edit Size...
+                </MudButton>
+            }
+            else if (IsMinior)
+            {
+                <MudButton OnClick="@OpenMiniorColorDialog"
+                           Variant="@Variant.Outlined"
+                           StartIcon="@Icons.Material.Filled.ColorLens"
+                           Class="mb-2">
+                    Edit Color...
+                </MudButton>
             }
         }
     }

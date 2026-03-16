@@ -1,0 +1,40 @@
+@inherits BasePkmdsComponent
+
+<MudDialog>
+    <DialogContent>
+        @if (Pokemon is not null)
+        {
+            var forms = FormConverter.GetFormList(Pokemon.Species, GameInfo.Strings.types, GameInfo.Strings.forms,
+                GameInfo.GenderSymbolUnicode, Pokemon.Context);
+
+            <MudStack Row Wrap="@Wrap.Wrap" Spacing="2" Justify="@Justify.Center">
+                @for (byte i = 0; i < forms.Length; i++)
+                {
+                    if (string.IsNullOrEmpty(forms[i]))
+                    {
+                        continue;
+                    }
+
+                    var formIdx = i;
+                    var isSelected = formIdx == selectedForm;
+                    <MudPaper Class="pa-2 cursor-pointer"
+                              Style="@(isSelected ? "border: 2px solid var(--mud-palette-primary); min-width:80px;" : "border: 2px solid transparent; min-width:80px;")"
+                              Elevation="@(isSelected ? 4 : 1)"
+                              @onclick="@(() => selectedForm = formIdx)">
+                        <MudStack AlignItems="@AlignItems.Center" Spacing="0">
+                            <MudImage Src="@ImageHelper.GetPokemonSpriteFilenameForForm(Pokemon.Species, Pokemon.Context, formIdx)"
+                                      Alt="@forms[formIdx]"
+                                      ObjectFit="@ObjectFit.Contain"
+                                      Width="64" Height="64"/>
+                            <MudText Typo="@Typo.body2" Align="@Align.Center">@forms[formIdx]</MudText>
+                        </MudStack>
+                    </MudPaper>
+                }
+            </MudStack>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@Cancel" Variant="@Variant.Outlined">Cancel</MudButton>
+        <MudButton OnClick="@Confirm" Variant="@Variant.Filled" Color="@Color.Primary">Confirm</MudButton>
+    </DialogActions>
+</MudDialog>

@@ -1,0 +1,67 @@
+namespace Pkmds.Rcl.Components.Dialogs;
+
+public partial class AlcremieEditorDialog
+{
+    [Parameter]
+    [EditorRequired]
+    public PKM? Pokemon { get; set; }
+
+    [CascadingParameter]
+    private IMudDialogInstance? MudDialog { get; set; }
+
+    // Cream form names in PKHeX form-index order (0–8)
+    internal static readonly string[] CreamNames =
+    [
+        "Vanilla Cream", "Ruby Cream", "Matcha Cream", "Mint Cream",
+        "Lemon Cream", "Salted Cream", "Ruby Swirl", "Caramel Swirl", "Rainbow Swirl"
+    ];
+
+    // Decoration names in AlcremieDecoration enum order (0–6)
+    internal static readonly string[] DecorationNames =
+    [
+        "Strawberry Sweet", "Berry Sweet", "Love Sweet", "Star Sweet",
+        "Clover Sweet", "Flower Sweet", "Ribbon Sweet"
+    ];
+
+    private byte selectedCream;
+    private uint selectedDeco;
+
+    protected override void OnParametersSet()
+    {
+        if (Pokemon is null)
+        {
+            return;
+        }
+
+        selectedCream = Pokemon.Form < CreamNames.Length
+            ? Pokemon.Form
+            : (byte)0;
+        var arg = Pokemon.GetFormArgument(0) ?? 0;
+        selectedDeco = arg < (uint)DecorationNames.Length
+            ? arg
+            : 0;
+    }
+
+    private void SelectCream(byte cream) => selectedCream = cream;
+
+    private void SelectDeco(uint deco) => selectedDeco = deco;
+
+    private void Confirm()
+    {
+        if (Pokemon is null)
+        {
+            MudDialog?.Close(DialogResult.Cancel());
+            return;
+        }
+
+        Pokemon.Form = selectedCream;
+        if (Pokemon is IFormArgument fa)
+        {
+            fa.FormArgument = selectedDeco;
+        }
+
+        MudDialog?.Close(DialogResult.Ok(true));
+    }
+
+    private void Cancel() => MudDialog?.Close(DialogResult.Cancel());
+}

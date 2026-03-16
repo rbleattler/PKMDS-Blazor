@@ -278,9 +278,7 @@ public static partial class ImageHelper
         // ── Gen 6 alternate forms ─────────────────────────────────────────────
         { (658, 1), 10116 },
         { (658, 2), 10117 }, // Greninja-Battle-Bond / -Ash
-        {
-            (670, 5), 10061
-        }, // Floette-Eternal — sprite not yet on PokeAPI CDN; pre-mapped to resolve automatically when added
+        { (670, 5), 10061 }, // Floette-Eternal — sprite not yet on PokeAPI CDN; pre-mapped to resolve automatically when added
         { (681, 1), 10026 }, // Aegislash-Blade      (PKHeX: 0=Shield, 1=Blade)
         { (710, 1), 10027 },
         { (710, 2), 10028 },
@@ -777,6 +775,14 @@ public static partial class ImageHelper
         ? PokemonFallbackImageFileName
         : GetPokemonSpriteFilename(pokemon.Species, pokemon.Context, pokemon.IsEgg, pokemon.Form,
             pokemon.GetFormArgument(0), pokemon.Gender);
+
+    /// <summary>
+    ///     Gets the bundled sprite filename for a specific species form, for use in form-picker UIs
+    ///     where a full PKM is not available. Does not handle eggs, gender differences, or totem forms.
+    /// </summary>
+    public static string GetPokemonSpriteFilenameForForm(ushort species, EntityContext context, byte form,
+        uint? formArg = null) =>
+        GetPokemonSpriteFilename(species, context, isEgg: false, form, formArg, gender: 0);
 
     /// <summary>
     ///     Internal method to construct the Pokémon sprite filename based on various attributes.

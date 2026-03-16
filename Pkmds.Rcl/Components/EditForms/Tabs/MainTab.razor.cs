@@ -253,14 +253,65 @@ public partial class MainTab : IDisposable
         RefreshService.Refresh();
     }
 
+    private bool IsAlcremie => Pokemon?.Species == (ushort)Species.Alcremie;
+    private bool IsVivillon => Pokemon?.Species == (ushort)Species.Vivillon;
+    private bool IsFurfrou => Pokemon?.Species == (ushort)Species.Furfrou;
+
+    private bool IsPumpkabooOrGourgeist =>
+        Pokemon?.Species is (ushort)Species.Pumpkaboo or (ushort)Species.Gourgeist;
+
+    private bool IsMinior => Pokemon?.Species == (ushort)Species.Minior;
+
+    private static readonly DialogOptions AppearanceDialogOptions = new() { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
+
+    private async Task OpenAlcremieEditorDialog()
+    {
+        var parameters = new DialogParameters<AlcremieEditorDialog> { { x => x.Pokemon, Pokemon } };
+        await DialogService.ShowAsync<AlcremieEditorDialog>("Alcremie Appearance", parameters, AppearanceDialogOptions);
+        AppService.LoadPokemonStats(Pokemon);
+        RefreshService.Refresh();
+    }
+
+    private async Task OpenVivillonEditorDialog()
+    {
+        var parameters = new DialogParameters<VivillonEditorDialog> { { x => x.Pokemon, Pokemon } };
+        await DialogService.ShowAsync<VivillonEditorDialog>("Vivillon Pattern", parameters, AppearanceDialogOptions);
+        AppService.LoadPokemonStats(Pokemon);
+        RefreshService.Refresh();
+    }
+
+    private async Task OpenFurfrouEditorDialog()
+    {
+        var parameters = new DialogParameters<FurfrouEditorDialog> { { x => x.Pokemon, Pokemon } };
+        await DialogService.ShowAsync<FurfrouEditorDialog>("Furfrou Trim", parameters, AppearanceDialogOptions);
+        AppService.LoadPokemonStats(Pokemon);
+        RefreshService.Refresh();
+    }
+
+    private async Task OpenPumpkabooSizeDialog()
+    {
+        var parameters = new DialogParameters<PumpkabooSizeDialog> { { x => x.Pokemon, Pokemon } };
+        var title = Pokemon?.Species == (ushort)Species.Gourgeist
+            ? "Gourgeist Size"
+            : "Pumpkaboo Size";
+        await DialogService.ShowAsync<PumpkabooSizeDialog>(title, parameters, AppearanceDialogOptions);
+        AppService.LoadPokemonStats(Pokemon);
+        RefreshService.Refresh();
+    }
+
+    private async Task OpenMiniorColorDialog()
+    {
+        var parameters = new DialogParameters<MiniorColorDialog> { { x => x.Pokemon, Pokemon } };
+        await DialogService.ShowAsync<MiniorColorDialog>("Minior Form", parameters, AppearanceDialogOptions);
+        AppService.LoadPokemonStats(Pokemon);
+        RefreshService.Refresh();
+    }
+
     private async Task OpenPidEcDialog()
     {
         var parameters = new DialogParameters<PidEcDialog> { { x => x.Pokemon, Pokemon } };
 
-        var options = new DialogOptions
-        {
-            MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true
-        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
 
         await DialogService.ShowAsync<PidEcDialog>("PID / EC Generator", parameters, options);
     }
@@ -315,12 +366,14 @@ public partial class MainTab : IDisposable
 
         // For Gen I/II, verify the nickname was set correctly
         // If it becomes empty, the characters were not valid for the Pokémon's language/encoding
-        if (Pokemon.Format <= 2 && string.IsNullOrEmpty(Pokemon.Nickname))
+        if (Pokemon.Format > 2 || !string.IsNullOrEmpty(Pokemon.Nickname))
         {
-            // Fallback to default name if nickname couldn't be encoded
-            Pokemon.Nickname = defaultName;
-            Pokemon.IsNicknamed = false;
+            return;
         }
+
+        // Fallback to default name if nickname couldn't be encoded
+        Pokemon.Nickname = defaultName;
+        Pokemon.IsNicknamed = false;
     }
 
     private void SetSpecies(ushort species)
