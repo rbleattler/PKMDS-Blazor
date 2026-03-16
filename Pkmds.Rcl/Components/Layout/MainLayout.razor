@@ -9,10 +9,16 @@
 
 <MudLayout>
     <MudAppBar Dense>
-        <MudIconButton Icon="@Icons.Material.Filled.Menu"
-                       Color="@Color.Inherit"
-                       Edge="@Edge.Start"
-                       OnClick="@DrawerToggle"/>
+        <MudBadge Color="@Color.Info"
+                  Dot="true"
+                  Overlap="true"
+                  Visible="@IsUpdateAvailable"
+                  BadgeClass="update-badge">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                           Color="@Color.Inherit"
+                           Edge="@Edge.Start"
+                           OnClick="@DrawerToggle"/>
+        </MudBadge>
         <MudText Typo="@Typo.h4"
                  Class="d-none d-lg-flex">
             @Constants.AppTitle
