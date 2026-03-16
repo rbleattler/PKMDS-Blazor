@@ -6,7 +6,7 @@
         {
             // Always use Vivillon's species for form names and sprites — Scatterbug and Spewpa share
             // the same 20 regional patterns but their sprites don't show the pattern; Vivillon's do.
-            var vivillonSpecies = (ushort)Species.Vivillon;
+            const ushort vivillonSpecies = (ushort)Species.Vivillon;
             var forms = FormConverter.GetFormList(vivillonSpecies, GameInfo.Strings.types, GameInfo.Strings.forms,
                 GameInfo.GenderSymbolUnicode, Pokemon.Context);
 

@@ -19,11 +19,13 @@ public partial class MiniorColorDialog
 
     protected override void OnParametersSet()
     {
-        if (Pokemon is not null)
+        if (Pokemon is null)
         {
-            selectedForm = Pokemon.Form;
-            isPreviewShiny = Pokemon.IsShiny;
+            return;
         }
+
+        selectedForm = Pokemon.Form;
+        isPreviewShiny = Pokemon.IsShiny;
     }
 
     private void Confirm()
