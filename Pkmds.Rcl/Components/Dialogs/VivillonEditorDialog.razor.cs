@@ -4,6 +4,7 @@ public partial class VivillonEditorDialog
 {
     private byte selectedForm;
     private bool isPreviewShiny;
+    private readonly HashSet<int> _failedFormSprites = [];
 
     [Parameter]
     [EditorRequired]
@@ -14,11 +15,13 @@ public partial class VivillonEditorDialog
 
     protected override void OnParametersSet()
     {
-        if (Pokemon is not null)
+        if (Pokemon is null)
         {
-            selectedForm = Pokemon.Form;
-            isPreviewShiny = Pokemon.IsShiny;
+            return;
         }
+
+        selectedForm = Pokemon.Form;
+        isPreviewShiny = Pokemon.IsShiny;
     }
 
     private void Confirm()
@@ -31,6 +34,14 @@ public partial class VivillonEditorDialog
 
         Pokemon.Form = selectedForm;
         MudDialog?.Close(DialogResult.Ok(true));
+    }
+
+    private void OnFormSpriteError(int formIdx)
+    {
+        if (_failedFormSprites.Add(formIdx))
+        {
+            StateHasChanged();
+        }
     }
 
     private void Cancel() => MudDialog?.Close(DialogResult.Cancel());

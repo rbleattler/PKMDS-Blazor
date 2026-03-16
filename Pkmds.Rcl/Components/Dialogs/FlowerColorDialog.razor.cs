@@ -4,6 +4,7 @@ public partial class FlowerColorDialog
 {
     private byte selectedForm;
     private bool isPreviewShiny;
+    private readonly HashSet<int> _failedFormSprites = [];
 
     [Parameter]
     [EditorRequired]
@@ -31,6 +32,14 @@ public partial class FlowerColorDialog
 
         Pokemon.Form = selectedForm;
         MudDialog?.Close(DialogResult.Ok(true));
+    }
+
+    private void OnFormSpriteError(int formIdx)
+    {
+        if (_failedFormSprites.Add(formIdx))
+        {
+            StateHasChanged();
+        }
     }
 
     private void Cancel() => MudDialog?.Close(DialogResult.Cancel());

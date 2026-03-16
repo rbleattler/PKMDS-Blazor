@@ -19,6 +19,7 @@ public partial class MainLayout : IDisposable
     private bool IsUpdateAvailable { get; set; }
     private bool IsCheckingForUpdates { get; set; }
     private bool IsUpToDate { get; set; }
+    private bool IsUpdateCheckFailed { get; set; }
 
     public void Dispose()
     {
@@ -43,17 +44,28 @@ public partial class MainLayout : IDisposable
     {
         IsCheckingForUpdates = true;
         IsUpToDate = false;
+        IsUpdateCheckFailed = false;
         StateHasChanged();
 
         var result = await JSRuntime.InvokeAsync<string>("checkForUpdates");
 
         IsCheckingForUpdates = false;
-        if (result is "none")
+        switch (result)
         {
-            IsUpToDate = true;
-            StateHasChanged();
-            await Task.Delay(3000);
-            IsUpToDate = false;
+            case "none":
+                IsUpToDate = true;
+                StateHasChanged();
+                await Task.Delay(3000);
+                IsUpToDate = false;
+                break;
+            case "error":
+            case "no-sw":
+                IsUpdateCheckFailed = true;
+                StateHasChanged();
+                await Task.Delay(4000);
+                IsUpdateCheckFailed = false;
+                break;
+            // "found": JS already dispatched 'updateAvailable' → ShowUpdateMessage() sets IsUpdateAvailable = true
         }
         StateHasChanged();
     }

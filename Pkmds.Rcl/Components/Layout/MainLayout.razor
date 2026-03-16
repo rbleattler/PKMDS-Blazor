@@ -153,9 +153,11 @@
                 <MudButton OnClick="@CheckForUpdates"
                            StartIcon="@(IsUpToDate
                                ? Icons.Material.Filled.CheckCircle
-                               : Icons.Material.Filled.Refresh)"
+                               : IsUpdateCheckFailed
+                                   ? Icons.Material.Filled.ErrorOutline
+                                   : Icons.Material.Filled.Refresh)"
                            Variant="@Variant.Filled"
-                           Color="@(IsUpToDate ? Color.Success : Color.Default)"
+                           Color="@(IsUpToDate ? Color.Success : IsUpdateCheckFailed ? Color.Error : Color.Default)"
                            Disabled="@IsCheckingForUpdates"
                            FullWidth="true">
                     @if (IsCheckingForUpdates)
@@ -166,6 +168,10 @@
                     else if (IsUpToDate)
                     {
                         @:Up to date!
+                    }
+                    else if (IsUpdateCheckFailed)
+                    {
+                        @:Check failed — try reloading
                     }
                     else
                     {
