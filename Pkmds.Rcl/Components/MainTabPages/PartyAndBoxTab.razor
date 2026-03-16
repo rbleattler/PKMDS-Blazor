@@ -2,7 +2,7 @@
 
 <MudGrid Spacing="1"
          Justify="@Justify.FlexStart"
-         Style="height: calc(100vh - 48px); overflow: hidden; flex-wrap: nowrap;">
+         Class="party-box-grid">
     <MudItem xs="12"
              lg="6"
              Style="max-width: 480px;">
@@ -12,7 +12,7 @@
     </MudItem>
     <MudItem xs="12"
              lg="6"
-             Style="position: sticky; top: 48px; height: calc(100vh - 48px); overflow-y: auto;">
+             Class="edit-form-column">
         <MudPaper Elevation="0">
             <PokemonEditForm Pokemon="@AppService.EditFormPokemon"/>
         </MudPaper>

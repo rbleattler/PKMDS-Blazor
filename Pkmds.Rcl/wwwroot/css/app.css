@@ -1,7 +1,6 @@
 body, html {
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom, 16px) env(safe-area-inset-left, 8px);
     box-sizing: border-box;
-    overflow: hidden;
 }
 
 .menu-container {
@@ -126,11 +125,79 @@ body, html {
     overflow-y: auto;
 }
 
-.edit-form-tabs .mud-tabs-tabbar {
-    position: sticky;
-    top: 46px;
-    z-index: 1;
-    background: var(--mud-palette-surface);
+/* Desktop (lg breakpoint): side-by-side layout with independently scrolling edit form */
+@media (min-width: 1280px) {
+    html, body {
+        overflow: hidden;
+    }
+
+    .party-box-grid.mud-grid {
+        height: calc(100vh - 48px);
+        overflow: hidden;
+        flex-wrap: nowrap;
+    }
+
+    .edit-form-column {
+        height: calc(100vh - 48px);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .edit-form-column > .mud-paper {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    .edit-form-outer {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    .edit-form-outer > .flex {
+        flex-shrink: 0;
+    }
+
+    .edit-form-tabs-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        min-height: 0;
+    }
+
+    .edit-form-tabs {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .edit-form-tabs .mud-tabs-panels {
+        flex: 1;
+        overflow-y: auto;
+        min-height: 0;
+    }
+}
+
+.edit-form-tabs .mud-tabs-tabbar-content {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+}
+
+.edit-form-tabs .mud-tabs-tabbar-content::-webkit-scrollbar {
+    display: none;
+}
+
+.edit-form-tabs .mud-tab {
+    scroll-snap-align: start;
 }
 
 .square-slot {

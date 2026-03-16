@@ -14,8 +14,9 @@
          SelectedSlotsAreValid: true
      })
 {
-    <div class="flex flex-wrap gap-2 mt-2"
-         style="position: sticky; top: 0; z-index: 2; background: var(--mud-palette-surface);">
+    <div class="edit-form-outer">
+
+    <div class="flex flex-wrap gap-2 mt-2">
 
         <MudButton OnClick="@DeletePokemon"
                    ButtonType="@ButtonType.Button"
@@ -79,7 +80,7 @@
 
     </div>
 
-    <div class="mb-20">
+    <div class="edit-form-tabs-container">
 
         <MudTabs Outlined
                  Rounded
@@ -142,6 +143,8 @@
             </MudTabPanel>
 
         </MudTabs>
+
+    </div>
 
     </div>
 }
