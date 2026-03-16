@@ -30,12 +30,22 @@ const manifestUrlList = self.assetsManifest.assets.map(asset => new URL(asset.ur
 async function onInstall(event) {
     console.info('Service worker: Install');
 
-    // Fetch and cache all matching items from the assets manifest
+    // Fetch and cache all matching items from the assets manifest.
+    // Use per-file error handling instead of cache.addAll() (which is all-or-nothing) so that a
+    // single SRI hash mismatch — e.g. during the brief CDN propagation window after a new deploy
+    // reaches GitHub Pages edge nodes at different times — does not abort the entire install.
+    // Any file that fails to pre-cache here will simply be fetched live from the network until
+    // the next successful install picks it up.
     const assetsRequests = self.assetsManifest.assets
         .filter(asset => offlineAssetsInclude.some(pattern => pattern.test(asset.url)))
         .filter(asset => !offlineAssetsExclude.some(pattern => pattern.test(asset.url)))
         .map(asset => new Request(asset.url, {integrity: asset.hash, cache: 'no-cache'}));
-    await caches.open(cacheName).then(cache => cache.addAll(assetsRequests));
+    const cache = await caches.open(cacheName);
+    await Promise.allSettled(
+        assetsRequests.map(req =>
+            cache.add(req).catch(err => console.warn(`SW: Failed to pre-cache ${req.url}:`, err))
+        )
+    );
 }
 
 async function onActivate(event) {
