@@ -22,6 +22,9 @@ public partial class MainTab : IDisposable
 
     private bool IsMinior => Pokemon?.Species == (ushort)Species.Minior;
 
+    private bool IsFlabebebFamily =>
+        Pokemon?.Species is (ushort)Species.Flabébé or (ushort)Species.Floette or (ushort)Species.Florges;
+
     public void Dispose() =>
         RefreshService.OnAppStateChanged -= Refresh;
 
@@ -247,6 +250,14 @@ public partial class MainTab : IDisposable
             Pokemon.SetGender(Pokemon.Form);
         }
 
+        // For Furfrou, auto-set days remaining to the maximum when switching to a trim form via the
+        // dropdown, so the form argument is immediately valid (a 0-day trim reverts to Natural).
+        if (Pokemon is { Species: (ushort)Species.Furfrou, Form: not 0 })
+        {
+            var maxDays = FormArgumentUtil.GetFormArgumentMax(Pokemon.Species, Pokemon.Form, Pokemon.Context);
+            Pokemon.ChangeFormArgument(maxDays);
+        }
+
         AppService.LoadPokemonStats(Pokemon);
         RefreshService.Refresh();
     }
@@ -267,25 +278,37 @@ public partial class MainTab : IDisposable
     private async Task OpenAlcremieEditorDialog()
     {
         var parameters = new DialogParameters<AlcremieEditorDialog> { { x => x.Pokemon, Pokemon } };
-        await DialogService.ShowAsync<AlcremieEditorDialog>("Alcremie Appearance", parameters, AppearanceDialogOptions);
-        AppService.LoadPokemonStats(Pokemon);
-        RefreshService.Refresh();
+        var dialog = await DialogService.ShowAsync<AlcremieEditorDialog>("Alcremie Appearance", parameters, AppearanceDialogOptions);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+        {
+            AppService.LoadPokemonStats(Pokemon);
+            RefreshService.Refresh();
+        }
     }
 
     private async Task OpenVivillonEditorDialog()
     {
         var parameters = new DialogParameters<VivillonEditorDialog> { { x => x.Pokemon, Pokemon } };
-        await DialogService.ShowAsync<VivillonEditorDialog>("Vivillon Pattern", parameters, AppearanceDialogOptions);
-        AppService.LoadPokemonStats(Pokemon);
-        RefreshService.Refresh();
+        var dialog = await DialogService.ShowAsync<VivillonEditorDialog>("Vivillon Pattern", parameters, AppearanceDialogOptions);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+        {
+            AppService.LoadPokemonStats(Pokemon);
+            RefreshService.Refresh();
+        }
     }
 
     private async Task OpenFurfrouEditorDialog()
     {
         var parameters = new DialogParameters<FurfrouEditorDialog> { { x => x.Pokemon, Pokemon } };
-        await DialogService.ShowAsync<FurfrouEditorDialog>("Furfrou Trim", parameters, AppearanceDialogOptions);
-        AppService.LoadPokemonStats(Pokemon);
-        RefreshService.Refresh();
+        var dialog = await DialogService.ShowAsync<FurfrouEditorDialog>("Furfrou Trim", parameters, AppearanceDialogOptions);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+        {
+            AppService.LoadPokemonStats(Pokemon);
+            RefreshService.Refresh();
+        }
     }
 
     private async Task OpenPumpkabooSizeDialog()
@@ -294,17 +317,43 @@ public partial class MainTab : IDisposable
         var title = Pokemon?.Species == (ushort)Species.Gourgeist
             ? "Gourgeist Size"
             : "Pumpkaboo Size";
-        await DialogService.ShowAsync<PumpkabooSizeDialog>(title, parameters, AppearanceDialogOptions);
-        AppService.LoadPokemonStats(Pokemon);
-        RefreshService.Refresh();
+        var dialog = await DialogService.ShowAsync<PumpkabooSizeDialog>(title, parameters, AppearanceDialogOptions);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+        {
+            AppService.LoadPokemonStats(Pokemon);
+            RefreshService.Refresh();
+        }
     }
 
     private async Task OpenMiniorColorDialog()
     {
         var parameters = new DialogParameters<MiniorColorDialog> { { x => x.Pokemon, Pokemon } };
-        await DialogService.ShowAsync<MiniorColorDialog>("Minior Form", parameters, AppearanceDialogOptions);
-        AppService.LoadPokemonStats(Pokemon);
-        RefreshService.Refresh();
+        var dialog = await DialogService.ShowAsync<MiniorColorDialog>("Minior Form", parameters, AppearanceDialogOptions);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+        {
+            AppService.LoadPokemonStats(Pokemon);
+            RefreshService.Refresh();
+        }
+    }
+
+    private async Task OpenFlowerColorDialog()
+    {
+        var parameters = new DialogParameters<FlowerColorDialog> { { x => x.Pokemon, Pokemon } };
+        var title = Pokemon?.Species switch
+        {
+            (ushort)Species.Floette => "Floette Flower Color",
+            (ushort)Species.Florges => "Florges Flower Color",
+            _ => "Flabébé Flower Color"
+        };
+        var dialog = await DialogService.ShowAsync<FlowerColorDialog>(title, parameters, AppearanceDialogOptions);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+        {
+            AppService.LoadPokemonStats(Pokemon);
+            RefreshService.Refresh();
+        }
     }
 
     private async Task OpenPidEcDialog()

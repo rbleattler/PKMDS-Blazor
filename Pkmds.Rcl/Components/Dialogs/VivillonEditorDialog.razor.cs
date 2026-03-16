@@ -3,6 +3,7 @@ namespace Pkmds.Rcl.Components.Dialogs;
 public partial class VivillonEditorDialog
 {
     private byte selectedForm;
+    private bool isPreviewShiny;
 
     [Parameter]
     [EditorRequired]
@@ -16,6 +17,7 @@ public partial class VivillonEditorDialog
         if (Pokemon is not null)
         {
             selectedForm = Pokemon.Form;
+            isPreviewShiny = Pokemon.IsShiny;
         }
     }
 

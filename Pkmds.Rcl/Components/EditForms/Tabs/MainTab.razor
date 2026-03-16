@@ -301,6 +301,15 @@
                     Edit Color...
                 </MudButton>
             }
+            else if (IsFlabebebFamily)
+            {
+                <MudButton OnClick="@OpenFlowerColorDialog"
+                           Variant="@Variant.Outlined"
+                           StartIcon="@Icons.Material.Filled.LocalFlorist"
+                           Class="mb-2">
+                    Edit Flower Color...
+                </MudButton>
+            }
         }
     }
 

@@ -7,6 +7,11 @@
     <DialogContent>
         @if (Pokemon is not null)
         {
+            <MudSwitch T="bool"
+                       @bind-Value="isPreviewShiny"
+                       Color="@Color.Warning"
+                       Label="Shiny Preview"
+                       Class="mb-2"/>
             <MudText Typo="@Typo.subtitle2"
                      Class="mb-1">Cream
             </MudText>
@@ -28,11 +33,10 @@
                                              ? "border: 2px solid var(--mud-palette-primary);"
                                              : "border: 2px solid transparent;")"
                                   @onclick="@(() => SelectCream(creamIdx))">
-                            <MudImage Src="@ImageHelper.GetPokemonSpriteFilenameForForm((ushort)Species.Alcremie, Pokemon.Context, creamIdx, selectedDeco)"
-                                      Alt="@CreamNames[creamIdx]"
-                                      ObjectFit="@ObjectFit.Contain"
-                                      Width="48"
-                                      Height="48"/>
+                            <img src="@ImageHelper.GetPokeApiHomeSpriteUrl((ushort)Species.Alcremie, creamIdx, selectedDeco, isPreviewShiny)"
+                                 alt="@CreamNames[creamIdx]"
+                                 style="width:56px; height:56px; object-fit:contain; display:block;"
+                                 onerror="this.onerror=null; this.src='@ImageHelper.GetPokemonSpriteFilenameForForm((ushort)Species.Alcremie, Pokemon.Context, creamIdx, selectedDeco)'"/>
                         </MudPaper>
                     </MudTooltip>
                 }
@@ -59,11 +63,10 @@
                                              ? "border: 2px solid var(--mud-palette-primary);"
                                              : "border: 2px solid transparent;")"
                                   @onclick="@(() => SelectDeco(decoIdx))">
-                            <MudImage Src="@ImageHelper.GetPokemonSpriteFilenameForForm((ushort)Species.Alcremie, Pokemon.Context, selectedCream, decoIdx)"
-                                      Alt="@DecorationNames[decoIdx]"
-                                      ObjectFit="@ObjectFit.Contain"
-                                      Width="48"
-                                      Height="48"/>
+                            <img src="@ImageHelper.GetPokeApiHomeSpriteUrl((ushort)Species.Alcremie, selectedCream, decoIdx, isPreviewShiny)"
+                                 alt="@DecorationNames[decoIdx]"
+                                 style="width:56px; height:56px; object-fit:contain; display:block;"
+                                 onerror="this.onerror=null; this.src='@ImageHelper.GetPokemonSpriteFilenameForForm((ushort)Species.Alcremie, Pokemon.Context, selectedCream, decoIdx)'"/>
                         </MudPaper>
                     </MudTooltip>
                 }
@@ -71,11 +74,10 @@
 
             <MudStack AlignItems="@AlignItems.Center">
                 <MudText Typo="@Typo.caption">Preview</MudText>
-                <MudImage Src="@ImageHelper.GetPokemonSpriteFilenameForForm((ushort)Species.Alcremie, Pokemon.Context, selectedCream, selectedDeco)"
-                          Alt="Alcremie preview"
-                          ObjectFit="@ObjectFit.Contain"
-                          Width="96"
-                          Height="96"/>
+                <img src="@ImageHelper.GetPokeApiHomeSpriteUrl((ushort)Species.Alcremie, selectedCream, selectedDeco, isPreviewShiny)"
+                     alt="Alcremie preview"
+                     style="width:96px; height:96px; object-fit:contain; display:block;"
+                     onerror="this.onerror=null; this.src='@ImageHelper.GetPokemonSpriteFilenameForForm((ushort)Species.Alcremie, Pokemon.Context, selectedCream, selectedDeco)'"/>
                 <MudText Typo="@Typo.body2">@CreamNames[selectedCream] + @DecorationNames[selectedDeco]</MudText>
             </MudStack>
         }

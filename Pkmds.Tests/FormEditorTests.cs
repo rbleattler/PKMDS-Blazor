@@ -84,6 +84,28 @@ public class FormEditorTests
         pk.Form.Should().Be(form);
     }
 
+    [Theory]
+    [InlineData((ushort)Species.Flabébé, 0)]  // Red
+    [InlineData((ushort)Species.Flabébé, 4)]  // White
+    [InlineData((ushort)Species.Floette, 0)]  // Red
+    [InlineData((ushort)Species.Floette, 4)]  // White
+    [InlineData((ushort)Species.Florges, 0)]  // Red
+    [InlineData((ushort)Species.Florges, 4)]  // White
+    public void FlowerColorDialog_FlowerFormIndex_CanBeSetOnPKM(ushort species, byte form)
+    {
+        var pk = new PK6 { Species = species, Form = form };
+        pk.Form.Should().Be(form);
+    }
+
+    [Fact]
+    public void FlowerColorDialog_FloetteEternalFlower_IsForm5()
+    {
+        // Eternal Flower Floette (AZ's Floette) is form 5 — not selectable in the game but
+        // present in PKHeX for save editing purposes.
+        var pk = new PK6 { Species = (ushort)Species.Floette, Form = 5 };
+        pk.Form.Should().Be(5);
+    }
+
     [Fact]
     public void FormLegality_InvalidVivillonForm_IsNotLegal()
     {

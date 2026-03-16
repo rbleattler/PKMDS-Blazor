@@ -7,6 +7,11 @@
             var forms = FormConverter.GetFormList(Pokemon.Species, GameInfo.Strings.types, GameInfo.Strings.forms,
                 GameInfo.GenderSymbolUnicode, Pokemon.Context);
 
+            <MudSwitch T="bool"
+                       @bind-Value="isPreviewShiny"
+                       Color="@Color.Warning"
+                       Label="Shiny Preview"
+                       Class="mb-2"/>
             <MudStack Row
                       Wrap="@Wrap.Wrap"
                       Spacing="2"
@@ -30,11 +35,11 @@
                               @onclick="@(() => selectedForm = formIdx)">
                         <MudStack AlignItems="@AlignItems.Center"
                                   Spacing="0">
-                            <MudImage Src="@ImageHelper.GetPokemonSpriteFilenameForForm(Pokemon.Species, Pokemon.Context, formIdx)"
-                                      Alt="@forms[formIdx]"
-                                      ObjectFit="@ObjectFit.Contain"
-                                      Width="64"
-                                      Height="64"/>
+                            <img src="@(ImageHelper.GetPokeApiHomeSpriteUrl(Pokemon.Species, formIdx, null, isPreviewShiny, Pokemon.Gender)
+                                         ?? ImageHelper.GetPokemonSpriteFilenameForForm(Pokemon.Species, Pokemon.Context, formIdx))"
+                                 alt="@forms[formIdx]"
+                                 style="width:64px; height:64px; object-fit:contain; display:block;"
+                                 onerror="this.onerror=null; this.src='@ImageHelper.GetPokemonSpriteFilenameForForm(Pokemon.Species, Pokemon.Context, formIdx)'"/>
                             <MudText Typo="@Typo.body2"
                                      Align="@Align.Center">@forms[formIdx]</MudText>
                         </MudStack>

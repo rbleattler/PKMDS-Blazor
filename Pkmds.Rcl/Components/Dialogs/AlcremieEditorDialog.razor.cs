@@ -18,6 +18,7 @@ public partial class AlcremieEditorDialog
 
     private byte selectedCream;
     private uint selectedDeco;
+    private bool isPreviewShiny;
 
     [Parameter]
     [EditorRequired]
@@ -40,6 +41,7 @@ public partial class AlcremieEditorDialog
         selectedDeco = arg < (uint)DecorationNames.Length
             ? arg
             : 0;
+        isPreviewShiny = Pokemon.IsShiny;
     }
 
     private void SelectCream(byte cream) => selectedCream = cream;

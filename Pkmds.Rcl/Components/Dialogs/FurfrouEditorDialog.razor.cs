@@ -5,6 +5,7 @@ public partial class FurfrouEditorDialog
     private uint daysRemaining;
 
     private byte selectedForm;
+    private bool isPreviewShiny;
 
     [Parameter]
     [EditorRequired]
@@ -22,8 +23,9 @@ public partial class FurfrouEditorDialog
 
         selectedForm = Pokemon.Form;
         daysRemaining = Pokemon is IFormArgument fa
-            ? fa.FormArgument
+            ? (uint)fa.FormArgumentRemain
             : 0;
+        isPreviewShiny = Pokemon.IsShiny;
     }
 
     private void SelectForm(byte form)
@@ -45,12 +47,7 @@ public partial class FurfrouEditorDialog
         }
 
         Pokemon.Form = selectedForm;
-        if (Pokemon is IFormArgument fa)
-        {
-            fa.FormArgument = selectedForm == 0
-                ? 0
-                : daysRemaining;
-        }
+        Pokemon.ChangeFormArgument(selectedForm == 0 ? 0 : daysRemaining);
 
         MudDialog?.Close(DialogResult.Ok(true));
     }

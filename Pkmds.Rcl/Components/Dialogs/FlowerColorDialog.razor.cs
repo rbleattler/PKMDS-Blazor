@@ -1,6 +1,6 @@
 namespace Pkmds.Rcl.Components.Dialogs;
 
-public partial class PumpkabooSizeDialog
+public partial class FlowerColorDialog
 {
     private byte selectedForm;
     private bool isPreviewShiny;

@@ -8,6 +8,7 @@ public partial class MiniorColorDialog
     internal const byte MiniorCoreCount = 7;
 
     private byte selectedForm;
+    private bool isPreviewShiny;
 
     [Parameter]
     [EditorRequired]
@@ -21,6 +22,7 @@ public partial class MiniorColorDialog
         if (Pokemon is not null)
         {
             selectedForm = Pokemon.Form;
+            isPreviewShiny = Pokemon.IsShiny;
         }
     }
 
