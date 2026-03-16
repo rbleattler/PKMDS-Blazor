@@ -2,13 +2,6 @@ namespace Pkmds.Rcl.Components.Dialogs;
 
 public partial class AlcremieEditorDialog
 {
-    [Parameter]
-    [EditorRequired]
-    public PKM? Pokemon { get; set; }
-
-    [CascadingParameter]
-    private IMudDialogInstance? MudDialog { get; set; }
-
     // Cream form names in PKHeX form-index order (0–8)
     internal static readonly string[] CreamNames =
     [
@@ -25,6 +18,13 @@ public partial class AlcremieEditorDialog
 
     private byte selectedCream;
     private uint selectedDeco;
+
+    [Parameter]
+    [EditorRequired]
+    public PKM? Pokemon { get; set; }
+
+    [CascadingParameter]
+    private IMudDialogInstance? MudDialog { get; set; }
 
     protected override void OnParametersSet()
     {

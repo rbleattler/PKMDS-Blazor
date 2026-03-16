@@ -2,14 +2,14 @@ namespace Pkmds.Rcl.Components.Dialogs;
 
 public partial class VivillonEditorDialog
 {
+    private byte selectedForm;
+
     [Parameter]
     [EditorRequired]
     public PKM? Pokemon { get; set; }
 
     [CascadingParameter]
     private IMudDialogInstance? MudDialog { get; set; }
-
-    private byte selectedForm;
 
     protected override void OnParametersSet()
     {

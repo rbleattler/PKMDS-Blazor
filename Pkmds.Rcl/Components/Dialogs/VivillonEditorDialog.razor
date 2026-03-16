@@ -10,7 +10,9 @@
             var forms = FormConverter.GetFormList(Pokemon.Species, GameInfo.Strings.types, GameInfo.Strings.forms,
                 GameInfo.GenderSymbolUnicode, Pokemon.Context);
 
-            <MudStack Row Wrap="@Wrap.Wrap" Spacing="1">
+            <MudStack Row
+                      Wrap="@Wrap.Wrap"
+                      Spacing="1">
                 @for (byte i = 0; i < forms.Length; i++)
                 {
                     if (string.IsNullOrEmpty(forms[i]))
@@ -21,15 +23,22 @@
                     var formIdx = i;
                     var isSelected = formIdx == selectedForm;
                     <MudTooltip Text="@forms[formIdx]">
-                        <MudPaper Class="@($"pa-1 cursor-pointer")"
-                                  Style="@(isSelected ? "border: 2px solid var(--mud-palette-primary);" : "border: 2px solid transparent;")"
-                                  Elevation="@(isSelected ? 4 : 0)"
+                        <MudPaper Class="@("pa-1 cursor-pointer")"
+                                  Style="@(isSelected
+                                             ? "border: 2px solid var(--mud-palette-primary);"
+                                             : "border: 2px solid transparent;")"
+                                  Elevation="@(isSelected
+                                                 ? 4
+                                                 : 0)"
                                   @onclick="@(() => selectedForm = formIdx)">
                             <MudImage Src="@ImageHelper.GetPokemonSpriteFilenameForForm(Pokemon.Species, Pokemon.Context, formIdx)"
                                       Alt="@forms[formIdx]"
                                       ObjectFit="@ObjectFit.Contain"
-                                      Width="64" Height="48"/>
-                            <MudText Typo="@Typo.caption" Align="@Align.Center" Style="max-width:64px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                      Width="64"
+                                      Height="48"/>
+                            <MudText Typo="@Typo.caption"
+                                     Align="@Align.Center"
+                                     Style="max-width:64px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
                                 @forms[formIdx]
                             </MudText>
                         </MudPaper>
@@ -39,7 +48,12 @@
         }
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="@Cancel" Variant="@Variant.Outlined">Cancel</MudButton>
-        <MudButton OnClick="@Confirm" Variant="@Variant.Filled" Color="@Color.Primary">Confirm</MudButton>
+        <MudButton OnClick="@Cancel"
+                   Variant="@Variant.Outlined">Cancel
+        </MudButton>
+        <MudButton OnClick="@Confirm"
+                   Variant="@Variant.Filled"
+                   Color="@Color.Primary">Confirm
+        </MudButton>
     </DialogActions>
 </MudDialog>

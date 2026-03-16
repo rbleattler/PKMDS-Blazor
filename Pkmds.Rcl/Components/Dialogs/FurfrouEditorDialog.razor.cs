@@ -2,15 +2,16 @@ namespace Pkmds.Rcl.Components.Dialogs;
 
 public partial class FurfrouEditorDialog
 {
+    private uint daysRemaining;
+
+    private byte selectedForm;
+
     [Parameter]
     [EditorRequired]
     public PKM? Pokemon { get; set; }
 
     [CascadingParameter]
     private IMudDialogInstance? MudDialog { get; set; }
-
-    private byte selectedForm;
-    private uint daysRemaining;
 
     protected override void OnParametersSet()
     {

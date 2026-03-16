@@ -3,8 +3,8 @@
 namespace Pkmds.Rcl;
 
 /// <summary>
-///     Helper class for generating file paths to Pokémon and item sprite images.
-///     Handles sprite selection based on species, form, gender, context, and other attributes.
+/// Helper class for generating file paths to Pokémon and item sprite images.
+/// Handles sprite selection based on species, form, gender, context, and other attributes.
 /// </summary>
 public static partial class ImageHelper
 {
@@ -468,16 +468,16 @@ public static partial class ImageHelper
     private static readonly int[] Gen45MailIds = [137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148];
 
     /// <summary>
-    ///     Returns <see langword="true" /> if PokeAPI hosts a gender-specific home sprite for this species
-    ///     in the <c>female/</c> subdirectory.
+    /// Returns <see langword="true" /> if PokeAPI hosts a gender-specific home sprite for this species
+    /// in the <c>female/</c> subdirectory.
     /// </summary>
     public static bool HasFemaleHomeSprite(ushort species, byte gender) =>
         gender == (byte)Gender.Female && FemaleFormSpecies.Contains(species);
 
     /// <summary>
-    ///     Returns <see langword="true" /> if the given game version's sprite directory on PokeAPI
-    ///     includes a <c>shiny/</c> subdirectory.
-    ///     Gen I (shiny didn't exist), Gen VIII BDSP, and Gen IX do not have one in the CDN repo.
+    /// Returns <see langword="true" /> if the given game version's sprite directory on PokeAPI
+    /// includes a <c>shiny/</c> subdirectory.
+    /// Gen I (shiny didn't exist), Gen VIII BDSP, and Gen IX do not have one in the CDN repo.
     /// </summary>
     private static bool HasShinyCdnSprite(GameVersion version) => version switch
     {
@@ -493,9 +493,9 @@ public static partial class ImageHelper
     };
 
     /// <summary>
-    ///     Returns <see langword="true" /> if the given game version's sprite directory on PokeAPI
-    ///     includes a <c>transparent/</c> subdirectory with background-transparent sprites.
-    ///     Gen I and Gen II CDN directories have transparent/ variants.
+    /// Returns <see langword="true" /> if the given game version's sprite directory on PokeAPI
+    /// includes a <c>transparent/</c> subdirectory with background-transparent sprites.
+    /// Gen I and Gen II CDN directories have transparent/ variants.
     /// </summary>
     private static bool HasTransparentCdnSprite(GameVersion version) => version switch
     {
@@ -509,9 +509,9 @@ public static partial class ImageHelper
     };
 
     /// <summary>
-    ///     Returns <see langword="true" /> if the given game version's sprite directory on PokeAPI
-    ///     includes a <c>female/</c> subdirectory for gender-specific sprites.
-    ///     Gen I, II, III, and VIII (SwSh/PLA/BDSP) do not have one.
+    /// Returns <see langword="true" /> if the given game version's sprite directory on PokeAPI
+    /// includes a <c>female/</c> subdirectory for gender-specific sprites.
+    /// Gen I, II, III, and VIII (SwSh/PLA/BDSP) do not have one.
     /// </summary>
     private static bool HasFemaleGameSprite(GameVersion version) => version switch
     {
@@ -528,8 +528,8 @@ public static partial class ImageHelper
     };
 
     /// <summary>
-    ///     Maps a <see cref="GameVersion" /> to its PokeAPI versions/ subdirectory path segment,
-    ///     or <see langword="null" /> if no game-specific sprite directory exists (e.g. SwSh, PLA).
+    /// Maps a <see cref="GameVersion" /> to its PokeAPI versions/ subdirectory path segment,
+    /// or <see langword="null" /> if no game-specific sprite directory exists (e.g. SwSh, PLA).
     /// </summary>
     private static string? GetPokeApiVersionPath(GameVersion version) => version switch
     {
@@ -567,11 +567,11 @@ public static partial class ImageHelper
     };
 
     /// <summary>
-    ///     Gets the game-version-appropriate PokeAPI sprite URL for a Pokémon.
-    ///     Uses the pixel-art sprite from the save file's specific game directory on the PokeAPI CDN.
-    ///     Returns null when the version has no PokeAPI sprite directory (e.g. SwSh, PLA) or the
-    ///     species/form has no sprite in that generation — callers should fall back to the home sprite or
-    ///     the bundled sprite in those cases.
+    /// Gets the game-version-appropriate PokeAPI sprite URL for a Pokémon.
+    /// Uses the pixel-art sprite from the save file's specific game directory on the PokeAPI CDN.
+    /// Returns null when the version has no PokeAPI sprite directory (e.g. SwSh, PLA) or the
+    /// species/form has no sprite in that generation — callers should fall back to the home sprite or
+    /// the bundled sprite in those cases.
     /// </summary>
     public static string? GetPokeApiVersionSpriteUrl(ushort species, byte form = 0, uint? formArg = null,
         bool isShiny = false, byte gender = 0, GameVersion version = GameVersion.Any)
@@ -668,10 +668,10 @@ public static partial class ImageHelper
     }
 
     /// <summary>
-    ///     Gets the high-resolution PokeAPI home sprite URL for a Pokémon.
-    ///     Handles form variants, gender differences, shiny variants, and Alcremie decorations.
-    ///     Returns null for invalid species or forms with no PokeAPI home sprite.
-    ///     Use as a lazy-load upgrade over the bundled fallback sprite.
+    /// Gets the high-resolution PokeAPI home sprite URL for a Pokémon.
+    /// Handles form variants, gender differences, shiny variants, and Alcremie decorations.
+    /// Returns null for invalid species or forms with no PokeAPI home sprite.
+    /// Use as a lazy-load upgrade over the bundled fallback sprite.
     /// </summary>
     public static string? GetPokeApiHomeSpriteUrl(ushort species, byte form = 0, uint? formArg = null,
         bool isShiny = false, byte gender = 0)
@@ -762,14 +762,14 @@ public static partial class ImageHelper
     }
 
     /// <summary>
-    ///     Gets the sprite filename for a Mystery Gift (either Pokémon or item).
+    /// Gets the sprite filename for a Mystery Gift (either Pokémon or item).
     /// </summary>
     public static string GetMysteryGiftSpriteFileName(MysteryGift gift) => gift.IsItem
         ? GetItemSpriteFilename(gift.ItemID, gift.Context)
         : GetPokemonSpriteFilename(gift.Species, gift.Context, gift.IsEgg, gift.Form, 0, gift.Gender);
 
     /// <summary>
-    ///     Gets the sprite filename for a Pokémon, handling all forms, genders, and special cases.
+    /// Gets the sprite filename for a Pokémon, handling all forms, genders, and special cases.
     /// </summary>
     public static string GetPokemonSpriteFilename(PKM? pokemon) => pokemon is null
         ? PokemonFallbackImageFileName
@@ -777,16 +777,16 @@ public static partial class ImageHelper
             pokemon.GetFormArgument(0), pokemon.Gender);
 
     /// <summary>
-    ///     Gets the bundled sprite filename for a specific species form, for use in form-picker UIs
-    ///     where a full PKM is not available. Does not handle eggs, gender differences, or totem forms.
+    /// Gets the bundled sprite filename for a specific species form, for use in form-picker UIs
+    /// where a full PKM is not available. Does not handle eggs, gender differences, or totem forms.
     /// </summary>
     public static string GetPokemonSpriteFilenameForForm(ushort species, EntityContext context, byte form,
         uint? formArg = null) =>
         GetPokemonSpriteFilename(species, context, isEgg: false, form, formArg, gender: 0);
 
     /// <summary>
-    ///     Internal method to construct the Pokémon sprite filename based on various attributes.
-    ///     Handles special cases like starter Pikachu/Eevee, eggs, gender differences, Alcremie variations, etc.
+    /// Internal method to construct the Pokémon sprite filename based on various attributes.
+    /// Handles special cases like starter Pikachu/Eevee, eggs, gender differences, Alcremie variations, etc.
     /// </summary>
     private static string GetPokemonSpriteFilename(ushort species, EntityContext context, bool isEgg, byte form,
         uint? formArg1, byte gender) =>
@@ -825,14 +825,14 @@ public static partial class ImageHelper
             .ToString();
 
     /// <summary>
-    ///     Gets the sprite filename for a Poké Ball.
+    /// Gets the sprite filename for a Poké Ball.
     /// </summary>
     /// <param name="ball">The ball ID.</param>
     public static string GetBallSpriteFilename(int ball) =>
         $"{SpritesRoot}b/_ball{ball}.png";
 
     /// <summary>
-    ///     Gets the sprite filename for an item, selecting appropriate size/style based on generation.
+    /// Gets the sprite filename for an item, selecting appropriate size/style based on generation.
     /// </summary>
     public static string GetItemSpriteFilename(int item, EntityContext context) => context switch
     {
@@ -892,7 +892,7 @@ public static partial class ImageHelper
     };
 
     /// <summary>
-    ///     Gets the sprite filename for a move category icon (Physical/Special/Status).
+    /// Gets the sprite filename for a move category icon (Physical/Special/Status).
     /// </summary>
     public static string GetMoveCategorySpriteFileName(MoveCategory moveCategory) =>
         moveCategory switch
@@ -908,7 +908,7 @@ public static partial class ImageHelper
         $"{SpritesRoot}ac/gender_{(int)gender}.png";
 
     /// <summary>
-    ///     Gets the CSS class to apply to a Pokémon slot based on whether it contains a valid Pokémon.
+    /// Gets the CSS class to apply to a Pokémon slot based on whether it contains a valid Pokémon.
     /// </summary>
     public static string GetSpriteCssClass(PKM? pkm) => (pkm?.Species).IsValidSpecies()
         ? " slot-fill"
@@ -925,8 +925,8 @@ public static partial class ImageHelper
     };
 
     /// <summary>
-    ///     Converts an item ID to its string representation for sprite filenames.
-    ///     Handles lumped items (TMs, TRs) and mail items specially.
+    /// Converts an item ID to its string representation for sprite filenames.
+    /// Handles lumped items (TMs, TRs) and mail items specially.
     /// </summary>
     private static string GetItemIdString(int item, EntityContext context) =>
         HeldItemLumpUtil.GetIsLump(item, context) switch

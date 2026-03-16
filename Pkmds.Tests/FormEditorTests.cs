@@ -3,7 +3,7 @@ using Pkmds.Rcl.Components.Dialogs;
 namespace Pkmds.Tests;
 
 /// <summary>
-///     Tests for form/appearance editor logic (Alcremie, Furfrou, Minior, Pumpkaboo/Gourgeist, Vivillon).
+/// Tests for form/appearance editor logic (Alcremie, Furfrou, Minior, Pumpkaboo/Gourgeist, Vivillon).
 /// </summary>
 public class FormEditorTests
 {
@@ -89,7 +89,7 @@ public class FormEditorTests
     {
         var pk = new PK6
         {
-            Species = (ushort)Species.Vivillon, Form = 99, // out of range
+            Species = (ushort)Species.Vivillon, Form = 99 // out of range
         };
 
         var la = new LegalityAnalysis(pk);

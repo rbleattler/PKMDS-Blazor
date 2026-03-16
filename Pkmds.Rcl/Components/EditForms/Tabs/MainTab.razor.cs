@@ -2,6 +2,8 @@ namespace Pkmds.Rcl.Components.EditForms.Tabs;
 
 public partial class MainTab : IDisposable
 {
+    private static readonly DialogOptions AppearanceDialogOptions = new() { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
+
     [Parameter]
     [EditorRequired]
     public PKM? Pokemon { get; set; }
@@ -10,6 +12,15 @@ public partial class MainTab : IDisposable
     public LegalityAnalysis? Analysis { get; set; }
 
     private MudSelect<byte>? FormSelect { get; set; }
+
+    private bool IsAlcremie => Pokemon?.Species == (ushort)Species.Alcremie;
+    private bool IsVivillon => Pokemon?.Species == (ushort)Species.Vivillon;
+    private bool IsFurfrou => Pokemon?.Species == (ushort)Species.Furfrou;
+
+    private bool IsPumpkabooOrGourgeist =>
+        Pokemon?.Species is (ushort)Species.Pumpkaboo or (ushort)Species.Gourgeist;
+
+    private bool IsMinior => Pokemon?.Species == (ushort)Species.Minior;
 
     public void Dispose() =>
         RefreshService.OnAppStateChanged -= Refresh;
@@ -252,17 +263,6 @@ public partial class MainTab : IDisposable
         AppService.LoadPokemonStats(Pokemon);
         RefreshService.Refresh();
     }
-
-    private bool IsAlcremie => Pokemon?.Species == (ushort)Species.Alcremie;
-    private bool IsVivillon => Pokemon?.Species == (ushort)Species.Vivillon;
-    private bool IsFurfrou => Pokemon?.Species == (ushort)Species.Furfrou;
-
-    private bool IsPumpkabooOrGourgeist =>
-        Pokemon?.Species is (ushort)Species.Pumpkaboo or (ushort)Species.Gourgeist;
-
-    private bool IsMinior => Pokemon?.Species == (ushort)Species.Minior;
-
-    private static readonly DialogOptions AppearanceDialogOptions = new() { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
 
     private async Task OpenAlcremieEditorDialog()
     {
