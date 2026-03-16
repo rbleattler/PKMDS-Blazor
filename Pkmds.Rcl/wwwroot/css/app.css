@@ -229,16 +229,6 @@ body, html {
     }
 }
 
-.edit-form-tabs .mud-tabs-tabbar-content {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-}
-
-.edit-form-tabs .mud-tabs-tabbar-content::-webkit-scrollbar {
-    display: none;
-}
-
 .square-slot {
     aspect-ratio: 1 / 1;
 }
