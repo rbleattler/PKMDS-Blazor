@@ -1,7 +1,8 @@
 @inherits RefreshAwareComponent
 
 <MudGrid Spacing="1"
-         Justify="@Justify.FlexStart">
+         Justify="@Justify.FlexStart"
+         Style="height: calc(100vh - 48px); overflow: hidden; flex-wrap: nowrap;">
     <MudItem xs="12"
              lg="6"
              Style="max-width: 480px;">
@@ -10,7 +11,8 @@
         </MudPaper>
     </MudItem>
     <MudItem xs="12"
-             lg="6">
+             lg="6"
+             Style="position: sticky; top: 48px; height: calc(100vh - 48px); overflow-y: auto;">
         <MudPaper Elevation="0">
             <PokemonEditForm Pokemon="@AppService.EditFormPokemon"/>
         </MudPaper>
