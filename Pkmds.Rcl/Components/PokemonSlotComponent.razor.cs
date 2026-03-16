@@ -269,11 +269,6 @@ public partial class PokemonSlotComponent : IDisposable
         // No visual indicators - just allow drop to work
     }
 
-    private void HandleDragOver(DragEventArgs e)
-    {
-        // Required for drop to work - preventDefault handled in razor
-    }
-
     private void HandleDragLeave(DragEventArgs e)
     {
         // No visual indicators to clear
@@ -318,6 +313,9 @@ public partial class PokemonSlotComponent : IDisposable
                 SlotNumber,
                 IsPartySlot
             );
+
+            // Clear the selection so the editor panel closes after the move
+            AppService.ClearSelection();
 
             DragDropService.ClearDrag();
             StateHasChanged();

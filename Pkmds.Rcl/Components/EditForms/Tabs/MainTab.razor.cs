@@ -2,6 +2,8 @@ namespace Pkmds.Rcl.Components.EditForms.Tabs;
 
 public partial class MainTab : IDisposable
 {
+    private static readonly DialogOptions AppearanceDialogOptions = new() { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
+
     [Parameter]
     [EditorRequired]
     public PKM? Pokemon { get; set; }
@@ -10,6 +12,30 @@ public partial class MainTab : IDisposable
     public LegalityAnalysis? Analysis { get; set; }
 
     private MudSelect<byte>? FormSelect { get; set; }
+
+    private bool IsAlcremie => Pokemon?.Species == (ushort)Species.Alcremie;
+    private bool IsVivillon =>
+        Pokemon?.Species is (ushort)Species.Scatterbug or (ushort)Species.Spewpa or (ushort)Species.Vivillon;
+    private bool IsFurfrou => Pokemon?.Species == (ushort)Species.Furfrou;
+
+    private bool IsPumpkabooOrGourgeist =>
+        Pokemon?.Species is (ushort)Species.Pumpkaboo or (ushort)Species.Gourgeist;
+
+    private bool IsMinior => Pokemon?.Species == (ushort)Species.Minior;
+
+    private bool IsFlabebebFamily =>
+        Pokemon?.Species is (ushort)Species.Flabébé or (ushort)Species.Floette or (ushort)Species.Florges;
+
+    /// <summary>
+    /// Returns the sprite filename for the form-dropdown preview image.
+    /// For Scatterbug and Spewpa, substitutes Vivillon's species so the preview
+    /// shows the actual wing pattern rather than an identical caterpillar silhouette.
+    /// </summary>
+    private string GetFormPreviewSprite() => Pokemon is null
+        ? ImageHelper.PokemonFallbackImageFileName
+        : IsVivillon
+            ? ImageHelper.GetPokemonSpriteFilenameForForm((ushort)Species.Vivillon, Pokemon.Context, Pokemon.Form)
+            : ImageHelper.GetPokemonSpriteFilename(Pokemon);
 
     public void Dispose() =>
         RefreshService.OnAppStateChanged -= Refresh;
@@ -236,6 +262,14 @@ public partial class MainTab : IDisposable
             Pokemon.SetGender(Pokemon.Form);
         }
 
+        // For Furfrou, auto-set days remaining to the maximum when switching to a trim form via the
+        // dropdown, so the form argument is immediately valid (a 0-day trim reverts to Natural).
+        if (Pokemon is { Species: (ushort)Species.Furfrou, Form: not 0 })
+        {
+            var maxDays = FormArgumentUtil.GetFormArgumentMax(Pokemon.Species, Pokemon.Form, Pokemon.Context);
+            Pokemon.ChangeFormArgument(maxDays);
+        }
+
         AppService.LoadPokemonStats(Pokemon);
         RefreshService.Refresh();
     }
@@ -253,14 +287,98 @@ public partial class MainTab : IDisposable
         RefreshService.Refresh();
     }
 
+    private async Task OpenAlcremieEditorDialog()
+    {
+        var parameters = new DialogParameters<AlcremieEditorDialog> { { x => x.Pokemon, Pokemon } };
+        var dialog = await DialogService.ShowAsync<AlcremieEditorDialog>("Alcremie Appearance", parameters, AppearanceDialogOptions);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+        {
+            AppService.LoadPokemonStats(Pokemon);
+            RefreshService.Refresh();
+        }
+    }
+
+    private async Task OpenVivillonEditorDialog()
+    {
+        var parameters = new DialogParameters<VivillonEditorDialog> { { x => x.Pokemon, Pokemon } };
+        var title = Pokemon?.Species switch
+        {
+            (ushort)Species.Scatterbug => "Scatterbug Pattern",
+            (ushort)Species.Spewpa => "Spewpa Pattern",
+            _ => "Vivillon Pattern",
+        };
+        var dialog = await DialogService.ShowAsync<VivillonEditorDialog>(title, parameters, AppearanceDialogOptions);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+        {
+            AppService.LoadPokemonStats(Pokemon);
+            RefreshService.Refresh();
+        }
+    }
+
+    private async Task OpenFurfrouEditorDialog()
+    {
+        var parameters = new DialogParameters<FurfrouEditorDialog> { { x => x.Pokemon, Pokemon } };
+        var dialog = await DialogService.ShowAsync<FurfrouEditorDialog>("Furfrou Trim", parameters, AppearanceDialogOptions);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+        {
+            AppService.LoadPokemonStats(Pokemon);
+            RefreshService.Refresh();
+        }
+    }
+
+    private async Task OpenPumpkabooSizeDialog()
+    {
+        var parameters = new DialogParameters<PumpkabooSizeDialog> { { x => x.Pokemon, Pokemon } };
+        var title = Pokemon?.Species == (ushort)Species.Gourgeist
+            ? "Gourgeist Size"
+            : "Pumpkaboo Size";
+        var dialog = await DialogService.ShowAsync<PumpkabooSizeDialog>(title, parameters, AppearanceDialogOptions);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+        {
+            AppService.LoadPokemonStats(Pokemon);
+            RefreshService.Refresh();
+        }
+    }
+
+    private async Task OpenMiniorColorDialog()
+    {
+        var parameters = new DialogParameters<MiniorColorDialog> { { x => x.Pokemon, Pokemon } };
+        var dialog = await DialogService.ShowAsync<MiniorColorDialog>("Minior Form", parameters, AppearanceDialogOptions);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+        {
+            AppService.LoadPokemonStats(Pokemon);
+            RefreshService.Refresh();
+        }
+    }
+
+    private async Task OpenFlowerColorDialog()
+    {
+        var parameters = new DialogParameters<FlowerColorDialog> { { x => x.Pokemon, Pokemon } };
+        var title = Pokemon?.Species switch
+        {
+            (ushort)Species.Floette => "Floette Flower Color",
+            (ushort)Species.Florges => "Florges Flower Color",
+            _ => "Flabébé Flower Color"
+        };
+        var dialog = await DialogService.ShowAsync<FlowerColorDialog>(title, parameters, AppearanceDialogOptions);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+        {
+            AppService.LoadPokemonStats(Pokemon);
+            RefreshService.Refresh();
+        }
+    }
+
     private async Task OpenPidEcDialog()
     {
         var parameters = new DialogParameters<PidEcDialog> { { x => x.Pokemon, Pokemon } };
 
-        var options = new DialogOptions
-        {
-            MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true
-        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
 
         await DialogService.ShowAsync<PidEcDialog>("PID / EC Generator", parameters, options);
     }
@@ -315,12 +433,14 @@ public partial class MainTab : IDisposable
 
         // For Gen I/II, verify the nickname was set correctly
         // If it becomes empty, the characters were not valid for the Pokémon's language/encoding
-        if (Pokemon.Format <= 2 && string.IsNullOrEmpty(Pokemon.Nickname))
+        if (Pokemon.Format > 2 || !string.IsNullOrEmpty(Pokemon.Nickname))
         {
-            // Fallback to default name if nickname couldn't be encoded
-            Pokemon.Nickname = defaultName;
-            Pokemon.IsNicknamed = false;
+            return;
         }
+
+        // Fallback to default name if nickname couldn't be encoded
+        Pokemon.Nickname = defaultName;
+        Pokemon.IsNicknamed = false;
     }
 
     private void SetSpecies(ushort species)

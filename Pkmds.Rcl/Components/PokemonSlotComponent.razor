@@ -2,16 +2,16 @@
 
 <MudPaper Elevation="3"
           @onclick="@HandleClick"
-          draggable="@IsDraggable()"
-          @ondragstart="@HandleDragStart"
-          @ondragend="@HandleDragEnd"
-          @ondragenter="@HandleDragEnter"
-          @ondragover="@HandleDragOver"
-          @ondragleave="@HandleDragLeave"
-          @ondrop="@HandleDrop"
           Class="@($"square-slot {GetClass()} {GetDragClass()} {ImageHelper.GetSpriteCssClass(Pokemon)}")">
-    <div
-        class="w-full h-full aspect-square flex items-center justify-center overflow-hidden p-0 box-border border border-transparent relative">
+    <div draggable="@(IsDraggable() ? "true" : "false")"
+         @ondragstart="@HandleDragStart"
+         @ondragend="@HandleDragEnd"
+         @ondragenter="@HandleDragEnter"
+         @ondragover:preventDefault="true"
+         @ondragleave="@HandleDragLeave"
+         @ondrop="@HandleDrop"
+         @ondrop:stopPropagation="true"
+         class="w-full h-full aspect-square flex items-center justify-center overflow-hidden p-0 box-border border border-transparent relative">
         @if (Pokemon is not null && Pokemon.Species > 0)
         {
             var title = GetPokemonTitle();

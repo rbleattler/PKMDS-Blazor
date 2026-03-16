@@ -1,0 +1,85 @@
+@inherits BasePkmdsComponent
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="@Typo.h6">Furfrou Trim Style</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (Pokemon is not null)
+        {
+            var forms = FormConverter.GetFormList(Pokemon.Species, GameInfo.Strings.types, GameInfo.Strings.forms,
+                GameInfo.GenderSymbolUnicode, Pokemon.Context);
+
+            <MudSwitch T="bool"
+                       @bind-Value="isPreviewShiny"
+                       Color="@Color.Warning"
+                       Label="Shiny Preview"
+                       Class="mb-2"/>
+            <MudStack Row
+                      Wrap="@Wrap.Wrap"
+                      Spacing="1"
+                      Class="mb-3">
+                @for (byte i = 0; i < forms.Length; i++)
+                {
+                    if (string.IsNullOrEmpty(forms[i]))
+                    {
+                        continue;
+                    }
+
+                    var formIdx = i;
+                    var isSelected = formIdx == selectedForm;
+                    <MudTooltip Text="@forms[formIdx]">
+                        <MudPaper Class="pa-1 cursor-pointer"
+                                  Style="@(isSelected
+                                             ? "border: 2px solid var(--mud-palette-primary);"
+                                             : "border: 2px solid transparent;")"
+                                  Elevation="@(isSelected
+                                                 ? 4
+                                                 : 0)"
+                                  @onclick="@(() => SelectForm(formIdx))">
+                            <img src="@(ImageHelper.GetPokeApiHomeSpriteUrl(Pokemon.Species, formIdx, null, isPreviewShiny, Pokemon.Gender)
+                                         ?? ImageHelper.GetPokemonSpriteFilenameForForm(Pokemon.Species, Pokemon.Context, formIdx))"
+                                 alt="@forms[formIdx]"
+                                 style="width:56px; height:56px; object-fit:contain; display:block;"
+                                 onerror="this.onerror=null; this.src='@ImageHelper.GetPokemonSpriteFilenameForForm(Pokemon.Species, Pokemon.Context, formIdx)'"/>
+                            <MudText Typo="@Typo.caption"
+                                     Align="@Align.Center"
+                                     Style="max-width:56px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                @forms[formIdx]
+                            </MudText>
+                        </MudPaper>
+                    </MudTooltip>
+                }
+            </MudStack>
+
+            @if (selectedForm != 0 && Pokemon is IFormArgument)
+            {
+                <MudNumericField T="@uint"
+                                 Label="Days remaining in trim (0–5)"
+                                 Variant="@Variant.Outlined"
+                                 Min="@((uint)0)"
+                                 Max="@((uint)5)"
+                                 @bind-Value="@daysRemaining"/>
+            }
+
+            @if (Pokemon.Format == 6)
+            {
+                <MudAlert Severity="@Severity.Info"
+                          Dense="true"
+                          Class="mt-2">
+                    In Gen 6 (XY / ORAS), trim forms only persist while Furfrou is in your party.
+                    Moving it to a box reverts it to Natural form.
+                </MudAlert>
+            }
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@Cancel"
+                   Variant="@Variant.Outlined">Cancel
+        </MudButton>
+        <MudButton OnClick="@Confirm"
+                   Variant="@Variant.Filled"
+                   Color="@Color.Primary">Confirm
+        </MudButton>
+    </DialogActions>
+</MudDialog>

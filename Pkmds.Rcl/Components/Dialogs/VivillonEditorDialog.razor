@@ -1,0 +1,64 @@
+@inherits BasePkmdsComponent
+
+<MudDialog>
+    <DialogContent>
+        @if (Pokemon is not null)
+        {
+            // Always use Vivillon's species for form names and sprites — Scatterbug and Spewpa share
+            // the same 20 regional patterns but their sprites don't show the pattern; Vivillon's do.
+            var vivillonSpecies = (ushort)Species.Vivillon;
+            var forms = FormConverter.GetFormList(vivillonSpecies, GameInfo.Strings.types, GameInfo.Strings.forms,
+                GameInfo.GenderSymbolUnicode, Pokemon.Context);
+
+            <MudSwitch T="bool"
+                       @bind-Value="isPreviewShiny"
+                       Color="@Color.Warning"
+                       Label="Shiny Preview"
+                       Class="mb-2"/>
+            <MudStack Row
+                      Wrap="@Wrap.Wrap"
+                      Spacing="1">
+                @for (byte i = 0; i < forms.Length; i++)
+                {
+                    if (string.IsNullOrEmpty(forms[i]))
+                    {
+                        continue;
+                    }
+
+                    var formIdx = i;
+                    var isSelected = formIdx == selectedForm;
+                    <MudTooltip Text="@forms[formIdx]">
+                        <MudPaper Class="@("pa-1 cursor-pointer")"
+                                  Style="@(isSelected
+                                             ? "border: 2px solid var(--mud-palette-primary);"
+                                             : "border: 2px solid transparent;")"
+                                  Elevation="@(isSelected
+                                                 ? 4
+                                                 : 0)"
+                                  @onclick="@(() => selectedForm = formIdx)">
+                            <img src="@(ImageHelper.GetPokeApiHomeSpriteUrl(vivillonSpecies, formIdx, null, isPreviewShiny, Pokemon.Gender)
+                                         ?? ImageHelper.GetPokemonSpriteFilenameForForm(vivillonSpecies, Pokemon.Context, formIdx))"
+                                 alt="@forms[formIdx]"
+                                 style="width:64px; height:48px; object-fit:contain; display:block;"
+                                 onerror="this.onerror=null; this.src='@ImageHelper.GetPokemonSpriteFilenameForForm(vivillonSpecies, Pokemon.Context, formIdx)'"/>
+                            <MudText Typo="@Typo.caption"
+                                     Align="@Align.Center"
+                                     Style="max-width:64px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                @forms[formIdx]
+                            </MudText>
+                        </MudPaper>
+                    </MudTooltip>
+                }
+            </MudStack>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@Cancel"
+                   Variant="@Variant.Outlined">Cancel
+        </MudButton>
+        <MudButton OnClick="@Confirm"
+                   Variant="@Variant.Filled"
+                   Color="@Color.Primary">Confirm
+        </MudButton>
+    </DialogActions>
+</MudDialog>

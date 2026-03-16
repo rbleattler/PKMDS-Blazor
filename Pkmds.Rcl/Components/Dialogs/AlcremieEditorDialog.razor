@@ -1,0 +1,94 @@
+@inherits BasePkmdsComponent
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="@Typo.h6">Alcremie Appearance</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (Pokemon is not null)
+        {
+            <MudSwitch T="bool"
+                       @bind-Value="isPreviewShiny"
+                       Color="@Color.Warning"
+                       Label="Shiny Preview"
+                       Class="mb-2"/>
+            <MudText Typo="@Typo.subtitle2"
+                     Class="mb-1">Cream
+            </MudText>
+            <MudStack Row
+                      Wrap="@Wrap.Wrap"
+                      Spacing="1"
+                      Class="mb-3">
+                @for (byte i = 0; i < CreamNames.Length; i++)
+                {
+                    var creamIdx = i;
+                    var isSelected = creamIdx == selectedCream;
+                    <MudTooltip Text="@CreamNames[creamIdx]">
+                        <MudPaper Outlined="@(!isSelected)"
+                                  Elevation="@(isSelected
+                                                 ? 4
+                                                 : 0)"
+                                  Class="@($"pa-1 cursor-pointer{(isSelected ? " mud-border-primary" : "")}")"
+                                  Style="@(isSelected
+                                             ? "border: 2px solid var(--mud-palette-primary);"
+                                             : "border: 2px solid transparent;")"
+                                  @onclick="@(() => SelectCream(creamIdx))">
+                            <img src="@ImageHelper.GetPokeApiHomeSpriteUrl((ushort)Species.Alcremie, creamIdx, selectedDeco, isPreviewShiny)"
+                                 alt="@CreamNames[creamIdx]"
+                                 style="width:56px; height:56px; object-fit:contain; display:block;"
+                                 onerror="this.onerror=null; this.src='@ImageHelper.GetPokemonSpriteFilenameForForm((ushort)Species.Alcremie, Pokemon.Context, creamIdx, selectedDeco)'"/>
+                        </MudPaper>
+                    </MudTooltip>
+                }
+            </MudStack>
+
+            <MudText Typo="@Typo.subtitle2"
+                     Class="mb-1">Decoration
+            </MudText>
+            <MudStack Row
+                      Wrap="@Wrap.Wrap"
+                      Spacing="1"
+                      Class="mb-3">
+                @for (uint i = 0; i < DecorationNames.Length; i++)
+                {
+                    var decoIdx = i;
+                    var isSelected = decoIdx == selectedDeco;
+                    <MudTooltip Text="@DecorationNames[decoIdx]">
+                        <MudPaper Outlined="@(!isSelected)"
+                                  Elevation="@(isSelected
+                                                 ? 4
+                                                 : 0)"
+                                  Class="@($"pa-1 cursor-pointer{(isSelected ? " mud-border-primary" : "")}")"
+                                  Style="@(isSelected
+                                             ? "border: 2px solid var(--mud-palette-primary);"
+                                             : "border: 2px solid transparent;")"
+                                  @onclick="@(() => SelectDeco(decoIdx))">
+                            <img src="@ImageHelper.GetPokeApiHomeSpriteUrl((ushort)Species.Alcremie, selectedCream, decoIdx, isPreviewShiny)"
+                                 alt="@DecorationNames[decoIdx]"
+                                 style="width:56px; height:56px; object-fit:contain; display:block;"
+                                 onerror="this.onerror=null; this.src='@ImageHelper.GetPokemonSpriteFilenameForForm((ushort)Species.Alcremie, Pokemon.Context, selectedCream, decoIdx)'"/>
+                        </MudPaper>
+                    </MudTooltip>
+                }
+            </MudStack>
+
+            <MudStack AlignItems="@AlignItems.Center">
+                <MudText Typo="@Typo.caption">Preview</MudText>
+                <img src="@ImageHelper.GetPokeApiHomeSpriteUrl((ushort)Species.Alcremie, selectedCream, selectedDeco, isPreviewShiny)"
+                     alt="Alcremie preview"
+                     style="width:96px; height:96px; object-fit:contain; display:block;"
+                     onerror="this.onerror=null; this.src='@ImageHelper.GetPokemonSpriteFilenameForForm((ushort)Species.Alcremie, Pokemon.Context, selectedCream, selectedDeco)'"/>
+                <MudText Typo="@Typo.body2">@CreamNames[selectedCream] + @DecorationNames[selectedDeco]</MudText>
+            </MudStack>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@Cancel"
+                   Variant="@Variant.Outlined">Cancel
+        </MudButton>
+        <MudButton OnClick="@Confirm"
+                   Variant="@Variant.Filled"
+                   Color="@Color.Primary">Confirm
+        </MudButton>
+    </DialogActions>
+</MudDialog>
