@@ -35,7 +35,7 @@ window.addUpdateListener = () => {
 };
 
 // Proactively check for a service worker update.
-// Returns: 'found' (update installing/waiting), 'none' (up to date), 'no-sw' (SW unavailable), 'error'
+// Returns: 'found' (update ready), 'none' (up to date), 'no-sw' (SW unavailable), 'error' (check/install failed)
 window.checkForUpdates = async () => {
     const registration = await window._swRegistrationPromise;
     if (!registration) return 'no-sw';
@@ -56,7 +56,31 @@ window.checkForUpdates = async () => {
         return 'error';
     }
 
-    // onupdatefound will fire and forward the notification to Blazor.
-    return updated.installing || updated.waiting ? 'found' : 'none';
+    if (updated.waiting) {
+        window.dispatchEvent(new CustomEvent('updateAvailable'));
+        return 'found';
+    }
+
+    if (!updated.installing) {
+        return 'none';
+    }
+
+    // New SW is installing — wait for it to fully succeed or fail before returning.
+    // This prevents a silent no-feedback state when the install errors (e.g. SRI hash mismatch
+    // during a fresh deployment before CDN has fully propagated the new asset files).
+    const installing = updated.installing;
+    return new Promise((resolve) => {
+        const timeoutId = setTimeout(() => resolve('error'), 30000);
+        installing.addEventListener('statechange', function () {
+            if (installing.state === 'installed') {
+                clearTimeout(timeoutId);
+                window.dispatchEvent(new CustomEvent('updateAvailable'));
+                resolve('found');
+            } else if (installing.state === 'redundant') {
+                clearTimeout(timeoutId);
+                resolve('error');
+            }
+        });
+    });
 };
 
