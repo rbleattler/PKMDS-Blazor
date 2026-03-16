@@ -131,14 +131,58 @@ body, html {
         overflow: hidden;
     }
 
+    /* Cascade flex heights from MudMainContent down to the party/box grid.
+       height:100vh + box-sizing:border-box means the AppBar padding-top is absorbed
+       into the explicit height, giving all flex:1 / height:100% descendants a
+       definite size to resolve against (so inner overflow-y:auto produces a scrollbar). */
+    .mud-main-content {
+        height: 100vh;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .mud-main-content > .mud-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        min-height: 0;
+    }
+
+    /* Outer save-file tabs fill remaining vertical space */
+    .save-file-outer-tabs {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .save-file-outer-tabs > .mud-tabs-panels {
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    /* Each outer tab panel fills its available height; overflow managed by inner content */
+    .save-file-outer-tabs > .mud-tabs-panels > .mud-tab-panel {
+        height: 100%;
+        overflow: hidden;
+    }
+
+    /* Party/Box tab content: overflow managed internally */
+    .party-box-tab-content {
+        height: 100%;
+        overflow: hidden;
+    }
+
     .party-box-grid.mud-grid {
-        height: calc(100vh - 48px);
+        height: 100%;
         overflow: hidden;
         flex-wrap: nowrap;
     }
 
     .edit-form-column {
-        height: calc(100vh - 48px);
+        height: 100%;
         overflow: hidden;
         display: flex;
         flex-direction: column;
@@ -189,15 +233,10 @@ body, html {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
-    scroll-snap-type: x mandatory;
 }
 
 .edit-form-tabs .mud-tabs-tabbar-content::-webkit-scrollbar {
     display: none;
-}
-
-.edit-form-tabs .mud-tab {
-    scroll-snap-align: start;
 }
 
 .square-slot {

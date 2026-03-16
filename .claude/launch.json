@@ -13,5 +13,6 @@
       "runtimeArgs": ["watch", "--project", "Pkmds.Web/Pkmds.Web.csproj", "run", "-c", "Debug", "-v", "n", "--no-hot-reload", "--launch-profile", "https"],
       "port": 7267
     }
-  ]
+  ],
+  "autoVerify": false
 }
