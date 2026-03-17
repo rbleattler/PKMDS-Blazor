@@ -64,7 +64,7 @@
                 <MudChip T="@string"
                          Color="@Color.Default"
                          Variant="@Variant.Outlined">
-                    @allEntries.Count Total
+                    @legalityReportEntries.Count Total
                 </MudChip>
 
             </MudStack>
@@ -104,10 +104,12 @@
 
             <div style="overflow-y: auto; max-height: calc(100vh - 340px);">
                 <MudTable T="@LegalityReportEntry"
-                          Items="@filteredEntries"
+                          Items="@legalityReportEntries"
+                          Filter="@TableFilterFunction"
                           Dense
                           Hover
                           Bordered
+                          Striped
                           SortLabel="Sort By"
                           OnRowClick="@OnRowClickAsync"
                           RowStyleFunc="@((_, _) => "cursor: pointer;")"

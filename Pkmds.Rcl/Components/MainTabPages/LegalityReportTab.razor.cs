@@ -4,21 +4,20 @@ namespace Pkmds.Rcl.Components.MainTabPages;
 
 public partial class LegalityReportTab : RefreshAwareComponent
 {
-    private List<LegalityReportEntry> allEntries = [];
-    private List<LegalityReportEntry> filteredEntries = [];
+    private List<LegalityReportEntry> legalityReportEntries = [];
     private bool hasRun;
     private bool isScanning;
     private LegalityStatus? statusFilter;
 
     /// <summary>
-    ///     Callback invoked after a row is clicked to jump to the Party / Box tab.
+    /// Callback invoked after a row is clicked to jump to the Party / Box tab.
     /// </summary>
     [Parameter]
     public EventCallback OnJumpToPartyBox { get; set; }
 
-    private int LegalCount => allEntries.Count(e => e.Status == LegalityStatus.Legal);
-    private int FishyCount => allEntries.Count(e => e.Status == LegalityStatus.Fishy);
-    private int IllegalCount => allEntries.Count(e => e.Status == LegalityStatus.Illegal);
+    private int LegalCount => legalityReportEntries.Count(e => e.Status == LegalityStatus.Legal);
+    private int FishyCount => legalityReportEntries.Count(e => e.Status == LegalityStatus.Fishy);
+    private int IllegalCount => legalityReportEntries.Count(e => e.Status == LegalityStatus.Illegal);
 
     private async Task RunScanAsync()
     {
@@ -29,8 +28,7 @@ public partial class LegalityReportTab : RefreshAwareComponent
 
         isScanning = true;
         hasRun = false;
-        allEntries = [];
-        filteredEntries = [];
+        legalityReportEntries = [];
         statusFilter = null;
         StateHasChanged();
 
@@ -71,8 +69,7 @@ public partial class LegalityReportTab : RefreshAwareComponent
             await Task.Yield();
         }
 
-        allEntries = entries;
-        ApplyFilter();
+        legalityReportEntries = entries;
         isScanning = false;
         hasRun = true;
         StateHasChanged();
@@ -141,16 +138,7 @@ public partial class LegalityReportTab : RefreshAwareComponent
         return string.Empty;
     }
 
-    private void SetFilter(LegalityStatus? filter)
-    {
-        statusFilter = filter;
-        ApplyFilter();
-    }
-
-    private void ApplyFilter() =>
-        filteredEntries = statusFilter is null
-            ? [.. allEntries]
-            : [.. allEntries.Where(e => e.Status == statusFilter)];
+    private void SetFilter(LegalityStatus? filter) => statusFilter = filter;
 
     private async Task OnRowClickAsync(TableRowClickEventArgs<LegalityReportEntry> args)
     {
@@ -201,4 +189,7 @@ public partial class LegalityReportTab : RefreshAwareComponent
         LegalityStatus.Illegal => "Illegal",
         _ => "Unknown"
     };
+
+    private bool TableFilterFunction(LegalityReportEntry legalityReportEntry) =>
+        statusFilter is null || legalityReportEntry.Status == statusFilter;
 }
