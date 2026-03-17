@@ -36,5 +36,57 @@
                 Clear Pokédex
             </MudButton>
         </MudStack>
+
+        @switch (AppState.SaveFile)
+        {
+            case SAV3 sav3:
+                <MudCheckBox Label="National Dex Unlocked"
+                             T="@bool"
+                             Value="@sav3.NationalDex"
+                             ValueChanged="@(v => sav3.NationalDex = v)"/>
+                break;
+            case SAV5 sav5:
+                <MudCheckBox Label="National Dex Unlocked"
+                             T="@bool"
+                             Value="@sav5.Zukan.IsNationalDexUnlocked"
+                             ValueChanged="@(v => sav5.Zukan.IsNationalDexUnlocked = v)"/>
+                <MudCheckBox Label="National Dex Mode"
+                             T="@bool"
+                             Value="@sav5.Zukan.IsNationalDexMode"
+                             ValueChanged="@(v => sav5.Zukan.IsNationalDexMode = v)"/>
+                break;
+            case SAV6XY sav6xy:
+                <MudCheckBox Label="National Dex Unlocked"
+                             T="@bool"
+                             Value="@sav6xy.Zukan.IsNationalDexUnlocked"
+                             ValueChanged="@(v => sav6xy.Zukan.IsNationalDexUnlocked = v)"/>
+                <MudCheckBox Label="National Dex Mode"
+                             T="@bool"
+                             Value="@sav6xy.Zukan.IsNationalDexMode"
+                             ValueChanged="@(v => sav6xy.Zukan.IsNationalDexMode = v)"/>
+                break;
+            case SAV6AO sav6ao:
+                <MudCheckBox Label="National Dex Unlocked"
+                             T="@bool"
+                             Value="@sav6ao.Zukan.IsNationalDexUnlocked"
+                             ValueChanged="@(v => sav6ao.Zukan.IsNationalDexUnlocked = v)"/>
+                <MudCheckBox Label="National Dex Mode"
+                             T="@bool"
+                             Value="@sav6ao.Zukan.IsNationalDexMode"
+                             ValueChanged="@(v => sav6ao.Zukan.IsNationalDexMode = v)"/>
+                break;
+            case SAV7 sav7:
+                <MudCheckBox Label="National Dex Unlocked"
+                             T="@bool"
+                             Value="@sav7.Zukan.NationalDex"
+                             ValueChanged="@(v => sav7.Zukan.NationalDex = v)"/>
+                break;
+            case SAV8BS sav8bs:
+                <MudCheckBox Label="National Dex Unlocked"
+                             T="@bool"
+                             Value="@sav8bs.Zukan.HasNationalDex"
+                             ValueChanged="@(v => sav8bs.Zukan.HasNationalDex = v)"/>
+                break;
+        }
     </MudStack>
 }
