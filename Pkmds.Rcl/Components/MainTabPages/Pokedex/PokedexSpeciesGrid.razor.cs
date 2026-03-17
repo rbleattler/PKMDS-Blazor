@@ -2,14 +2,16 @@ namespace Pkmds.Rcl.Components.MainTabPages.Pokedex;
 
 public partial class PokedexSpeciesGrid
 {
+    private bool _hasDetailedEditor;
+    private List<PokedexGridRow> _rows = [];
+
+    private string _searchText = string.Empty;
+
     // Incremented by PokedexTab after each bulk operation (Fill / Seen All / Clear).
     // Giving the grid a changing parameter ensures Blazor re-renders the child and
     // calls OnParametersSet, which rebuilds the row list to reflect the new state.
     [Parameter]
     public int RefreshToken { get; set; }
-
-    private string _searchText = string.Empty;
-    private List<PokedexGridRow> _rows = [];
 
     protected override void OnParametersSet()
     {
@@ -47,6 +49,8 @@ public partial class PokedexSpeciesGrid
         }
 
         _rows = rows;
+        _hasDetailedEditor = saveFile is SAV4 or SAV5 or SAV6XY or SAV6AO or SAV7 or SAV7b
+            or SAV8SWSH or SAV8LA or SAV8BS or SAV9SV or SAV9ZA;
     }
 
     // Returns true when the species has a dex entry in the given save file.
@@ -144,8 +148,8 @@ public partial class PokedexSpeciesGrid
             // Workaround: call SetState() directly.
             var entry = sv.Zukan.DexPaldea.Get(row.SpeciesId);
             entry.SetState(value
-                ? 3u  // caught
-                : 2u  // seen but not caught
+                    ? 3u // caught
+                    : 2u // seen but not caught
             );
         }
         else
@@ -162,12 +166,23 @@ public partial class PokedexSpeciesGrid
         var idx = _rows.FindIndex(r => r.SpeciesId == row.SpeciesId);
         if (idx >= 0)
         {
-            _rows[idx] = row with
-            {
-                IsSeen = saveFile.GetSeen(row.SpeciesId),
-                IsCaught = saveFile.GetCaught(row.SpeciesId)
-            };
+            _rows[idx] = row with { IsSeen = saveFile.GetSeen(row.SpeciesId), IsCaught = saveFile.GetCaught(row.SpeciesId) };
         }
     }
 
+    private async Task OpenDetails(PokedexGridRow row)
+    {
+        var result = await DialogService.ShowAsync<PokedexSpeciesDialog>(
+            string.Empty,
+            new DialogParameters<PokedexSpeciesDialog> { { x => x.SpeciesId, row.SpeciesId } },
+            new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true });
+
+        await result.Result;
+
+        // Refresh the row so Seen/Caught columns reflect any changes made in the dialog.
+        if (AppState.SaveFile is { HasPokeDex: true } saveFile)
+        {
+            UpdateRowFromSave(row, saveFile);
+        }
+    }
 }

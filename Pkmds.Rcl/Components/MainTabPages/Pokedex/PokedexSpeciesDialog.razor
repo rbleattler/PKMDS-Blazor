@@ -1,0 +1,55 @@
+@inherits BasePkmdsComponent
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="@Typo.h6">@_speciesName Dex Entry</MudText>
+    </TitleContent>
+    <DialogContent>
+        @switch (AppState.SaveFile)
+        {
+            case SAV4:
+                <PokedexGen4SpeciesPanel SpeciesId="@SpeciesId"/>
+                break;
+            case SAV5:
+                <PokedexGen5SpeciesPanel SpeciesId="@SpeciesId"/>
+                break;
+            case SAV6XY:
+                <PokedexGen6SpeciesPanel SpeciesId="@SpeciesId"/>
+                break;
+            case SAV6AO:
+                <PokedexGen6SpeciesPanel SpeciesId="@SpeciesId"/>
+                break;
+            case SAV7b:
+                <PokedexGen7bSpeciesPanel SpeciesId="@SpeciesId"/>
+                break;
+            case SAV7:
+                <PokedexGen7SpeciesPanel SpeciesId="@SpeciesId"/>
+                break;
+            case SAV8SWSH:
+                <PokedexGen8SwshSpeciesPanel SpeciesId="@SpeciesId"/>
+                break;
+            case SAV8LA:
+                <PokedexGen8LaSpeciesPanel SpeciesId="@SpeciesId"/>
+                break;
+            case SAV8BS:
+                <PokedexGen8BdspSpeciesPanel SpeciesId="@SpeciesId"/>
+                break;
+            case SAV9SV:
+                <PokedexGen9SvSpeciesPanel SpeciesId="@SpeciesId"/>
+                break;
+            case SAV9ZA:
+                <PokedexGen9ZaSpeciesPanel SpeciesId="@SpeciesId"/>
+                break;
+            default:
+                <MudText>No detailed Pokédex editor available for this game.</MudText>
+                break;
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@Close"
+                   Variant="@Variant.Filled"
+                   Color="@Color.Primary">
+            Close
+        </MudButton>
+    </DialogActions>
+</MudDialog>

@@ -10,8 +10,8 @@
 <MudLayout>
     <MudAppBar Dense>
         <MudBadge Color="@Color.Info"
-                  Dot="true"
-                  Overlap="true"
+                  Dot
+                  Overlap
                   Visible="@IsUpdateAvailable"
                   BadgeClass="update-badge">
             <MudIconButton Icon="@Icons.Material.Filled.Menu"
@@ -99,34 +99,34 @@
                        Variant="@Variant.Filled"
                        Color="@Color.Primary"
                        StartIcon="@Icons.Material.Filled.CloudUpload"
-                       FullWidth="true">
+                       FullWidth>
                 Load Save File
             </MudButton>
             <MudButton OnClick="@ExportSaveFile"
                        Variant="@Variant.Filled"
                        StartIcon="@Icons.Material.Filled.Share"
-                       FullWidth="true"
+                       FullWidth
                        Disabled="@(AppState.SaveFile is null)">
                 Export Save File
             </MudButton>
             <MudButton OnClick="@ShowLoadPokemonFileDialog"
                        Variant="@Variant.Filled"
                        StartIcon="@Icons.Material.Filled.CloudUpload"
-                       FullWidth="true"
+                       FullWidth
                        Disabled="@(AppState.SaveFile is null)">
                 Load Pokémon File
             </MudButton>
             <MudButton OnClick="@ShowLoadMysteryGiftFileDialog"
                        Variant="@Variant.Filled"
                        StartIcon="@Icons.Material.Filled.CloudUpload"
-                       FullWidth="true"
+                       FullWidth
                        Disabled="@(AppState.SaveFile is null)">
                 Load Mystery Gift File
             </MudButton>
             <MudButton OnClick="@ExportSelectedPokemon"
                        Variant="@Variant.Filled"
                        StartIcon="@Icons.Material.Filled.Share"
-                       FullWidth="true"
+                       FullWidth
                        Disabled="@(AppService.EditFormPokemon is null)">
                 Export Selected Pokémon
             </MudButton>
@@ -138,7 +138,7 @@
                        StartIcon="@Icons.Material.Filled.Settings"
                        Variant="@Variant.Filled"
                        Color="@Color.Default"
-                       FullWidth="true">
+                       FullWidth>
                 Settings
             </MudButton>
             @if (IsUpdateAvailable)
@@ -147,7 +147,7 @@
                            StartIcon="@Icons.Material.Filled.SystemUpdateAlt"
                            Variant="@Variant.Filled"
                            Color="@Color.Info"
-                           FullWidth="true">
+                           FullWidth>
                     Update available — reload
                 </MudButton>
             }
@@ -162,11 +162,11 @@
                            Variant="@Variant.Filled"
                            Color="@(IsUpToDate ? Color.Success : IsUpdateCheckFailed ? Color.Error : Color.Default)"
                            Disabled="@IsCheckingForUpdates"
-                           FullWidth="true">
+                           FullWidth>
                     @if (IsCheckingForUpdates)
                     {
                         <MudProgressCircular Size="@Size.Small"
-                                             Indeterminate="true"
+                                             Indeterminate
                                              Class="mr-2"/>
                         @:Checking…
                     }
@@ -239,7 +239,7 @@
                        Variant="@Variant.Outlined"
                        Color="@Color.Primary"
                        StartIcon="@Icons.Material.Filled.Coffee"
-                       FullWidth="true"
+                       FullWidth
                        Class="mt-1">
                 Support on Ko-fi
             </MudButton>

@@ -1,0 +1,138 @@
+@inherits BasePkmdsComponent
+
+@if (AppState.SaveFile is SAV8SWSH swsh && swsh.Zukan.GetEntry(SpeciesId, out var entry))
+{
+    var dex = swsh.Zukan;
+    var forms = FormConverter.GetFormList(SpeciesId, GameInfo.Strings.types,
+        GameInfo.Strings.forms, GameInfo.GenderSymbolASCII, EntityContext.Gen8);
+    var formCount = Math.Min(forms.Length, 63); // bits 0-62
+
+    <MudStack Spacing="3">
+
+        @* Caught flags *@
+        <MudStack Row Spacing="4">
+            <MudCheckBox T="bool"
+                         Label="Caught"
+                         Value="@dex.GetCaught(entry)"
+                         ValueChanged="@(v => { dex.SetCaught(entry, v); if (v && !dex.GetSeen(entry)) dex.SetSeenRegion(entry, 0, 0, true); StateHasChanged(); })"/>
+            <MudCheckBox T="bool"
+                         Label="Caught Gigantamax"
+                         Value="@dex.GetCaughtGigantamaxed(entry)"
+                         ValueChanged="@(v => { dex.SetCaughtGigantamax(entry, v); if (v && !dex.GetSeen(entry)) dex.SetSeenRegion(entry, 63, 0, true); StateHasChanged(); })"/>
+        </MudStack>
+
+        @* Per-form seen table *@
+        <MudText Typo="@Typo.subtitle2">Forms Seen</MudText>
+        <MudSimpleTable Dense Style="max-width:460px; max-height:240px; overflow-y:auto;">
+            <thead>
+                <tr>
+                    <th>Form</th>
+                    @foreach (var (label, _) in _seenRegions)
+                    {
+                        <th>@label</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @for (byte j = 0; j < formCount; j++)
+                {
+                    var form = j;
+                    var name = j < forms.Length ? forms[j] : $"Form {j}";
+                    <tr>
+                        <td>@name</td>
+                        @foreach (var (_, region) in _seenRegions)
+                        {
+                            var r = region;
+                            <td>
+                                <MudCheckBox T="bool"
+                                             Value="@dex.GetSeenRegion(entry, form, r)"
+                                             ValueChanged="@(v => { dex.SetSeenRegion(entry, form, r, v); StateHasChanged(); })"/>
+                            </td>
+                        }
+                    </tr>
+                }
+                @* bit 63 = Gigantamax seen *@
+                @foreach (var (label, region) in _seenRegions)
+                {
+                    // Gigantamax is bit 63 in each region
+                }
+                <tr>
+                    <td>Gigantamax</td>
+                    @foreach (var (_, region) in _seenRegions)
+                    {
+                        var r = region;
+                        <td>
+                            <MudCheckBox T="bool"
+                                         Value="@dex.GetSeenRegion(entry, 63, r)"
+                                         ValueChanged="@(v => { dex.SetSeenRegion(entry, 63, r, v); StateHasChanged(); })"/>
+                        </td>
+                    }
+                </tr>
+            </tbody>
+        </MudSimpleTable>
+
+        @* Display options *@
+        <MudText Typo="@Typo.subtitle2">Display Options</MudText>
+        <MudStack Row Wrap="@Wrap.Wrap" Spacing="4" AlignItems="@AlignItems.Center">
+            <MudNumericField T="uint"
+                             Label="Display Form"
+                             Value="@dex.GetFormDisplayed(entry)"
+                             ValueChanged="@(v => { dex.SetFormDisplayed(entry, v); StateHasChanged(); })"
+                             Min="0" Max="@((uint)(formCount - 1))"
+                             Style="max-width:130px;"/>
+            <MudSelect T="uint"
+                       Label="Display Gender"
+                       Value="@dex.GetGenderDisplayed(entry)"
+                       ValueChanged="@(v => { dex.SetGenderDisplayed(entry, v); StateHasChanged(); })"
+                       Dense
+                       Style="max-width:120px;">
+                <MudSelectItem Value="@(0u)">Male/Genderless</MudSelectItem>
+                <MudSelectItem Value="@(1u)">Female</MudSelectItem>
+            </MudSelect>
+            <MudCheckBox T="bool"
+                         Label="Display Shiny"
+                         Value="@dex.GetDisplayShiny(entry)"
+                         ValueChanged="@(v => { dex.SetDisplayShiny(entry, v); StateHasChanged(); })"/>
+            <MudCheckBox T="bool"
+                         Label="Display Dynamax Instead"
+                         Value="@dex.GetDisplayDynamaxInstead(entry)"
+                         ValueChanged="@(v => { dex.SetDisplayDynamaxInstead(entry, v); StateHasChanged(); })"/>
+        </MudStack>
+
+        @* Battled count *@
+        <MudNumericField T="uint"
+                         Label="Battled Count"
+                         Value="@dex.GetBattledCount(entry)"
+                         ValueChanged="@(v => { dex.SetBattledCount(entry, v); StateHasChanged(); })"
+                         Min="0"
+                         Style="max-width:160px;"/>
+
+        @* Language flags *@
+        <MudText Typo="@Typo.subtitle2">Languages Obtained</MudText>
+        <MudStack Row Wrap="@Wrap.Wrap" Spacing="1">
+            @for (var i = 0; i < _languageLabels.Length; i++)
+            {
+                var li = i;
+                <MudCheckBox T="bool"
+                             Label="@_languageLabels[li]"
+                             Value="@dex.GetIsLanguageIndexObtained(entry, li)"
+                             ValueChanged="@(v => { dex.SetIsLanguageIndexObtained(entry, li, v); StateHasChanged(); })"/>
+            }
+        </MudStack>
+
+    </MudStack>
+}
+else if (AppState.SaveFile is SAV8SWSH)
+{
+    <MudText>This species does not have a Galar Pokédex entry.</MudText>
+}
+
+@code {
+    private static readonly (string Label, int Region)[] _seenRegions =
+    [
+        ("Male", 0), ("Female", 1), ("Male ★", 2), ("Female ★", 3),
+    ];
+
+    private static readonly string[] _languageLabels =
+        ["JPN", "ENG", "FRE", "ITA", "GER", "SPA", "KOR", "CHS", "CHT"];
+}

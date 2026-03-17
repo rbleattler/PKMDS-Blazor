@@ -1,0 +1,119 @@
+@inherits BasePkmdsComponent
+
+@if (AppState.SaveFile is SAV5 sav5)
+{
+    var dex = sav5.Zukan;
+
+    <MudStack Spacing="3">
+
+        @* Caught *@
+        <MudCheckBox T="bool"
+                     Label="Caught"
+                     Value="@dex.GetCaught(SpeciesId)"
+                     ValueChanged="@(v => { dex.SetCaught(SpeciesId, v); if (v) dex.SetSeen(SpeciesId, 0, true); StateHasChanged(); })"/>
+
+        @* Seen (4 regions) *@
+        <MudText Typo="@Typo.subtitle2">Seen</MudText>
+        <MudStack Row Wrap="@Wrap.Wrap" Spacing="1">
+            @foreach (var (label, region) in _seenRegions)
+            {
+                var r = region;
+                <MudCheckBox T="bool"
+                             Label="@label"
+                             Value="@dex.GetSeen(SpeciesId, r)"
+                             ValueChanged="@(v => { dex.SetSeen(SpeciesId, r, v); StateHasChanged(); })"/>
+            }
+        </MudStack>
+
+        @* Displayed (radio-group of 4) *@
+        <MudText Typo="@Typo.subtitle2">Displayed Variant</MudText>
+        <MudStack Row Wrap="@Wrap.Wrap" Spacing="1">
+            @foreach (var (label, region) in _seenRegions)
+            {
+                var r = region;
+                <MudCheckBox T="bool"
+                             Label="@label"
+                             Value="@dex.GetDisplayed(SpeciesId, r)"
+                             ValueChanged="@(v => OnDisplayedChanged(dex, r, v))"/>
+            }
+        </MudStack>
+
+        @* Form flags *@
+        @{
+            var (formIndex, formCount) = dex.GetFormIndex(SpeciesId);
+        }
+        @if (formCount > 0)
+        {
+            var formNames = FormConverter.GetFormList(SpeciesId, GameInfo.Strings.types,
+                GameInfo.Strings.forms, GameInfo.GenderSymbolASCII, EntityContext.Gen5);
+            <MudText Typo="@Typo.subtitle2">Forms Seen</MudText>
+            <MudSimpleTable Dense Style="max-width:420px;">
+                <thead><tr><th>Form</th><th>Normal</th><th>Shiny</th></tr></thead>
+                <tbody>
+                    @for (var i = 0; i < formCount; i++)
+                    {
+                        var fi = formIndex + i;
+                        var name = i < formNames.Length ? formNames[i] : $"Form {i}";
+                        <tr>
+                            <td>@name</td>
+                            <td>
+                                <MudCheckBox T="bool"
+                                             Value="@dex.GetFormSeen(fi, false)"
+                                             ValueChanged="@(v => { dex.SetFormSeen(fi, false, v); StateHasChanged(); })"/>
+                            </td>
+                            <td>
+                                <MudCheckBox T="bool"
+                                             Value="@dex.GetFormSeen(fi, true)"
+                                             ValueChanged="@(v => { dex.SetFormSeen(fi, true, v); StateHasChanged(); })"/>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+        }
+
+        @* Spinda EC *@
+        @if (SpeciesId == (ushort)Species.Spinda)
+        {
+            <MudText Typo="@Typo.subtitle2">Spinda PID</MudText>
+            <MudTextField T="string"
+                          Value="@dex.Spinda.ToString("X8")"
+                          ValueChanged="@(v => OnSpindaChanged(dex, v))"
+                          Label="PID (hex)"
+                          Immediate
+                          Style="max-width:180px;"/>
+        }
+
+        @* Language flags *@
+        @if (SpeciesId <= (ushort)Species.Arceus)
+        {
+            <MudText Typo="@Typo.subtitle2">Languages Obtained</MudText>
+            <MudStack Row Wrap="@Wrap.Wrap" Spacing="1">
+                @foreach (var (label, langId) in _languageLabels)
+                {
+                    var lid = langId;
+                    <MudCheckBox T="bool"
+                                 Label="@label"
+                                 Value="@dex.GetLanguageFlag(SpeciesId, lid)"
+                                 ValueChanged="@(v => dex.SetLanguageFlag(SpeciesId, lid, v))"/>
+                }
+            </MudStack>
+        }
+
+    </MudStack>
+}
+
+@code {
+    private static readonly (string Label, int Region)[] _seenRegions =
+    [
+        ("Male", 0), ("Female", 1), ("Male ★", 2), ("Female ★", 3),
+    ];
+
+    // Gen 5 language index: JPN=0, ENG=1, FRE=2, ITA=3, GER=4, SPA=5, KOR=6
+    private static readonly (string Label, LanguageID LangId)[] _languageLabels =
+    [
+        ("JPN", LanguageID.Japanese), ("ENG", LanguageID.English), ("FRE", LanguageID.French),
+        ("ITA", LanguageID.Italian), ("GER", LanguageID.German), ("SPA", LanguageID.Spanish),
+        ("KOR", LanguageID.Korean),
+    ];
+}

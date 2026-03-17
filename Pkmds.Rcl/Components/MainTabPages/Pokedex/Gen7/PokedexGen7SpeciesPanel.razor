@@ -1,0 +1,68 @@
+@inherits BasePkmdsComponent
+
+@if (AppState.SaveFile is SAV7 sav7)
+{
+    var dex = sav7.Zukan;
+    // For base species entry: bit index = species - 1
+    var bit = SpeciesId - 1;
+
+    <MudStack Spacing="3">
+
+        @* Caught *@
+        <MudCheckBox T="bool"
+                     Label="Caught"
+                     Value="@dex.GetCaught(SpeciesId)"
+                     ValueChanged="@(v => { dex.SetCaught(SpeciesId, v); if (v) dex.SetSeen(SpeciesId, 0, true); StateHasChanged(); })"/>
+
+        @* Seen (4 regions) *@
+        <MudText Typo="@Typo.subtitle2">Seen</MudText>
+        <MudStack Row Wrap="@Wrap.Wrap" Spacing="1">
+            @foreach (var (label, region) in _seenRegions)
+            {
+                var r = region;
+                <MudCheckBox T="bool"
+                             Label="@label"
+                             Value="@dex.GetSeen(SpeciesId, r)"
+                             ValueChanged="@(v => { dex.SetSeen(SpeciesId, r, v); StateHasChanged(); })"/>
+            }
+        </MudStack>
+
+        @* Displayed (4 regions; uses bit index) *@
+        <MudText Typo="@Typo.subtitle2">Displayed Variant</MudText>
+        <MudStack Row Wrap="@Wrap.Wrap" Spacing="1">
+            @foreach (var (label, region) in _seenRegions)
+            {
+                var r = region;
+                <MudCheckBox T="bool"
+                             Label="@label"
+                             Value="@dex.GetDisplayed(bit, r)"
+                             ValueChanged="@(v => OnDisplayedChanged(dex, bit, r, v))"/>
+            }
+        </MudStack>
+
+        @* Language flags (9 languages; uses bit index) *@
+        <MudText Typo="@Typo.subtitle2">Languages Obtained</MudText>
+        <MudStack Row Wrap="@Wrap.Wrap" Spacing="1">
+            @for (var i = 0; i < _languageLabels.Length; i++)
+            {
+                var li = i;
+                <MudCheckBox T="bool"
+                             Label="@_languageLabels[li]"
+                             Value="@dex.GetLanguageFlag(bit, li)"
+                             ValueChanged="@(v => { dex.SetLanguageFlag(bit, li, v); StateHasChanged(); })"/>
+            }
+        </MudStack>
+
+    </MudStack>
+}
+
+@code {
+    private static readonly (string Label, int Region)[] _seenRegions =
+    [
+        ("Male", 0), ("Female", 1), ("Male ★", 2), ("Female ★", 3),
+    ];
+
+    // Gen 7: 9 language indices (0=JPN, 1=ENG, 2=FRE, 3=ITA, 4=GER, 5=SPA, 6=KOR, 7=CHS, 8=CHT)
+    private static readonly string[] _languageLabels =
+        ["JPN", "ENG", "FRE", "ITA", "GER", "SPA", "KOR", "CHS", "CHT"];
+}

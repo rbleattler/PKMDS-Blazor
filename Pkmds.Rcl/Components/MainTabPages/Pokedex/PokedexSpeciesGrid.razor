@@ -4,10 +4,10 @@
 {
     <MudTextField @bind-Value="_searchText"
                   Placeholder="Search species…"
-                  Immediate="true"
+                  Immediate
                   Adornment="@Adornment.Start"
                   AdornmentIcon="@Icons.Material.Filled.Search"
-                  Clearable="true"
+                  Clearable
                   Class="mb-2"/>
 
     @* MudDataGrid Virtualize="true" is not used here due to a MudBlazor bug (#454):
@@ -22,7 +22,7 @@
               Hover
               Striped
               Bordered
-              FixedHeader="true"
+              FixedHeader
               Height="calc(100vh - 460px)"
               SortLabel="Sort By"
               RowsPerPage="50">
@@ -40,6 +40,10 @@
             </MudTh>
             <MudTh>Seen</MudTh>
             <MudTh>Caught</MudTh>
+            @if (_hasDetailedEditor)
+            {
+                <MudTh></MudTh>
+            }
         </HeaderContent>
 
         <RowTemplate>
@@ -55,6 +59,14 @@
                              Value="@context.IsCaught"
                              ValueChanged="@(v => OnCaughtChanged(context, v))"/>
             </MudTd>
+            @if (_hasDetailedEditor)
+            {
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                   Size="@Size.Small"
+                                   OnClick="@(() => OpenDetails(context))"/>
+                </MudTd>
+            }
         </RowTemplate>
 
         <NoRecordsContent>
