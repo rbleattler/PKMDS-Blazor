@@ -27,6 +27,7 @@
                 var r = region;
                 <MudCheckBox T="@bool"
                              Label="@label"
+                             Disabled="@(!IsRegionValid(r))"
                              Value="@dex.GetSeen(SpeciesId, r)"
                              ValueChanged="@(v =>
                                            {
@@ -46,6 +47,7 @@
                 var r = region;
                 <MudCheckBox T="@bool"
                              Label="@label"
+                             Disabled="@(!IsRegionValid(r))"
                              Value="@dex.GetDisplayed(SpeciesId, r)"
                              ValueChanged="@(v => OnDisplayedChanged(dex, r, v))"/>
             }

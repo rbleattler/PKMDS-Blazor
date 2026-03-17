@@ -59,6 +59,7 @@
                         var r = region;
                         <td>
                             <MudCheckBox T="@bool"
+                                         Disabled="@(!IsRegionValid(r))"
                                          Value="@dex.GetSeenRegion(entry, form, r)"
                                          ValueChanged="@(v =>
                                                        {
@@ -81,6 +82,7 @@
                     var r = region;
                     <td>
                         <MudCheckBox T="@bool"
+                                     Disabled="@(!IsRegionValid(r))"
                                      Value="@dex.GetSeenRegion(entry, 63, r)"
                                      ValueChanged="@(v =>
                                                    {

@@ -37,18 +37,22 @@
                   Spacing="2">
             <MudCheckBox T="@bool"
                          Label="Male"
+                         Disabled="@(!IsRegionValid(0))"
                          Value="@m"
                          ValueChanged="@(v => OnGenderFlagsChanged(dex, v, f, ms, fs))"/>
             <MudCheckBox T="@bool"
                          Label="Female"
+                         Disabled="@(!IsRegionValid(1))"
                          Value="@f"
                          ValueChanged="@(v => OnGenderFlagsChanged(dex, m, v, ms, fs))"/>
             <MudCheckBox T="@bool"
                          Label="Male (Shiny)"
+                         Disabled="@(!IsRegionValid(2))"
                          Value="@ms"
                          ValueChanged="@(v => OnGenderFlagsChanged(dex, m, f, v, fs))"/>
             <MudCheckBox T="@bool"
                          Label="Female (Shiny)"
+                         Disabled="@(!IsRegionValid(3))"
                          Value="@fs"
                          ValueChanged="@(v => OnGenderFlagsChanged(dex, m, f, ms, v))"/>
         </MudStack>
