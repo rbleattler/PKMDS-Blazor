@@ -29,14 +29,16 @@
                               Style="@(isSelected
                                          ? "border: 2px solid var(--mud-palette-primary); min-width:80px;"
                                          : "border: 2px solid transparent; min-width:80px;")"
-                              Elevation="@(isSelected ? 4 : 1)"
+                              Elevation="@(isSelected
+                                             ? 4
+                                             : 1)"
                               @onclick="@(() => selectedForm = formIdx)">
                         <MudStack AlignItems="@AlignItems.Center"
                                   Spacing="0">
                             <img src="@(_failedFormSprites.Contains(formIdx)
-                                         ? ImageHelper.GetPokemonSpriteFilenameForForm(Pokemon.Species, Pokemon.Context, formIdx)
-                                         : (ImageHelper.GetPokeApiHomeSpriteUrl(Pokemon.Species, formIdx, null, isPreviewShiny, Pokemon.Gender)
-                                            ?? ImageHelper.GetPokemonSpriteFilenameForForm(Pokemon.Species, Pokemon.Context, formIdx)))"
+                                          ? ImageHelper.GetPokemonSpriteFilenameForForm(Pokemon.Species, Pokemon.Context, formIdx)
+                                          : ImageHelper.GetPokeApiHomeSpriteUrl(Pokemon.Species, formIdx, null, isPreviewShiny, Pokemon.Gender)
+                                            ?? ImageHelper.GetPokemonSpriteFilenameForForm(Pokemon.Species, Pokemon.Context, formIdx))"
                                  alt="@forms[formIdx]"
                                  style="width:64px; height:64px; object-fit:contain; display:block;"
                                  @onerror="@(_ => OnFormSpriteError(formIdx))"/>

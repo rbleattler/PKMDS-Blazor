@@ -37,9 +37,9 @@
                                                  : 0)"
                                   @onclick="@(() => selectedForm = formIdx)">
                             <img src="@(_failedFormSprites.Contains(formIdx)
-                                         ? ImageHelper.GetPokemonSpriteFilenameForForm(vivillonSpecies, Pokemon.Context, formIdx)
-                                         : (ImageHelper.GetPokeApiHomeSpriteUrl(vivillonSpecies, formIdx, null, isPreviewShiny, Pokemon.Gender)
-                                            ?? ImageHelper.GetPokemonSpriteFilenameForForm(vivillonSpecies, Pokemon.Context, formIdx)))"
+                                          ? ImageHelper.GetPokemonSpriteFilenameForForm(vivillonSpecies, Pokemon.Context, formIdx)
+                                          : ImageHelper.GetPokeApiHomeSpriteUrl(vivillonSpecies, formIdx, null, isPreviewShiny, Pokemon.Gender)
+                                            ?? ImageHelper.GetPokemonSpriteFilenameForForm(vivillonSpecies, Pokemon.Context, formIdx))"
                                  alt="@forms[formIdx]"
                                  style="width:64px; height:48px; object-fit:contain; display:block;"
                                  @onerror="@(_ => OnFormSpriteError(formIdx))"/>

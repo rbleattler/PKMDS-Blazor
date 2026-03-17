@@ -2,11 +2,11 @@ namespace Pkmds.Rcl.Components.Dialogs;
 
 public partial class FurfrouEditorDialog
 {
+    private readonly HashSet<int> _failedFormSprites = [];
     private uint daysRemaining;
+    private bool isPreviewShiny;
 
     private byte selectedForm;
-    private bool isPreviewShiny;
-    private readonly HashSet<int> _failedFormSprites = [];
 
     [Parameter]
     [EditorRequired]
@@ -48,7 +48,9 @@ public partial class FurfrouEditorDialog
         }
 
         Pokemon.Form = selectedForm;
-        Pokemon.ChangeFormArgument(selectedForm == 0 ? 0 : daysRemaining);
+        Pokemon.ChangeFormArgument(selectedForm == 0
+            ? 0
+            : daysRemaining);
 
         MudDialog?.Close(DialogResult.Ok(true));
     }

@@ -16,12 +16,13 @@ public partial class AlcremieEditorDialog
         "Clover Sweet", "Flower Sweet", "Ribbon Sweet"
     ];
 
-    private byte selectedCream;
-    private uint selectedDeco;
-    private bool isPreviewShiny;
     private readonly HashSet<int> _failedCreamSprites = [];
     private readonly HashSet<int> _failedDecoSprites = [];
     private bool _previewFailed;
+    private bool isPreviewShiny;
+
+    private byte selectedCream;
+    private uint selectedDeco;
 
     [Parameter]
     [EditorRequired]

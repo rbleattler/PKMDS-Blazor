@@ -4,9 +4,9 @@ namespace Pkmds.Rcl.Components.MainTabPages;
 
 public partial class LegalityReportTab : RefreshAwareComponent
 {
-    private List<LegalityReportEntry> legalityReportEntries = [];
     private bool hasRun;
     private bool isScanning;
+    private List<LegalityReportEntry> legalityReportEntries = [];
     private LegalityStatus? statusFilter;
 
     /// <summary>

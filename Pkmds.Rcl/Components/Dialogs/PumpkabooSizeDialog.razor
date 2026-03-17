@@ -36,9 +36,9 @@
                         <MudStack AlignItems="@AlignItems.Center"
                                   Spacing="0">
                             <img src="@(_failedFormSprites.Contains(formIdx)
-                                         ? ImageHelper.GetPokemonSpriteFilenameForForm(Pokemon.Species, Pokemon.Context, formIdx)
-                                         : (ImageHelper.GetPokeApiHomeSpriteUrl(Pokemon.Species, formIdx, null, isPreviewShiny, Pokemon.Gender)
-                                            ?? ImageHelper.GetPokemonSpriteFilenameForForm(Pokemon.Species, Pokemon.Context, formIdx)))"
+                                          ? ImageHelper.GetPokemonSpriteFilenameForForm(Pokemon.Species, Pokemon.Context, formIdx)
+                                          : ImageHelper.GetPokeApiHomeSpriteUrl(Pokemon.Species, formIdx, null, isPreviewShiny, Pokemon.Gender)
+                                            ?? ImageHelper.GetPokemonSpriteFilenameForForm(Pokemon.Species, Pokemon.Context, formIdx))"
                                  alt="@forms[formIdx]"
                                  style="width:64px; height:64px; object-fit:contain; display:block;"
                                  @onerror="@(_ => OnFormSpriteError(formIdx))"/>

@@ -601,7 +601,7 @@ public static partial class ImageHelper
         //   (empty)      — all other generations
         var spritePrefix = isShiny && HasShinyCdnSprite(version) ? "shiny/"
             : HasTransparentCdnSprite(version) ? "transparent/"
-            : "";
+            : string.Empty;
         var canUseFemale = HasFemaleGameSprite(version);
 
         // Alcremie: build named-form URL (same naming convention as HOME sprites)
@@ -622,7 +622,7 @@ public static partial class ImageHelper
         {
             var femaleSuffixPath = canUseFemale && HasFemaleHomeSprite(species, gender)
                 ? "female/"
-                : "";
+                : string.Empty;
             return $"{baseUrl}{spritePrefix}{femaleSuffixPath}{species}-{s}.png";
         }
 
@@ -631,7 +631,7 @@ public static partial class ImageHelper
         {
             var femaleIdPath = canUseFemale && gender == (byte)Gender.Female && FemaleFormIds.Contains(pokeApiId)
                 ? "female/"
-                : "";
+                : string.Empty;
             return $"{baseUrl}{spritePrefix}{femaleIdPath}{pokeApiId}.png";
         }
 
@@ -649,7 +649,7 @@ public static partial class ImageHelper
         {
             var femaleBasePath = canUseFemale && HasFemaleHomeSprite(species, gender)
                 ? "female/"
-                : "";
+                : string.Empty;
             return $"{baseUrl}{spritePrefix}{femaleBasePath}{species}.png";
         }
 
@@ -661,7 +661,7 @@ public static partial class ImageHelper
 
         var femaleIndPath = canUseFemale && HasFemaleHomeSprite(species, gender)
             ? "female/"
-            : "";
+            : string.Empty;
         return $"{baseUrl}{spritePrefix}{femaleIndPath}{species}.png";
 
         // form > 0 not in any mapping: no game sprite — fall back to home sprite or bundled
@@ -683,7 +683,7 @@ public static partial class ImageHelper
 
         var shinyPath = isShiny
             ? "shiny/"
-            : "";
+            : string.Empty;
 
         // Totem forms: map to their base regional/standard form for CDN sprite lookup.
         if (FormInfo.HasTotemForm(species) && FormInfo.IsTotemForm(species, form))
@@ -709,7 +709,7 @@ public static partial class ImageHelper
         {
             var femaleSuffixPath = HasFemaleHomeSprite(species, gender)
                 ? "female/"
-                : "";
+                : string.Empty;
             return $"{PokeApiHomeBaseUrl}{shinyPath}{femaleSuffixPath}{species}-{s}.png";
         }
 
@@ -720,7 +720,7 @@ public static partial class ImageHelper
             // A small number of IDs also have a female/ subdirectory sprite.
             var femaleIdPath = gender == (byte)Gender.Female && FemaleFormIds.Contains(pokeApiId)
                 ? "female/"
-                : "";
+                : string.Empty;
             return $"{PokeApiHomeBaseUrl}{shinyPath}{femaleIdPath}{pokeApiId}.png";
         }
 
@@ -741,7 +741,7 @@ public static partial class ImageHelper
         {
             var femaleBasePath = HasFemaleHomeSprite(species, gender)
                 ? "female/"
-                : "";
+                : string.Empty;
             return $"{PokeApiHomeBaseUrl}{shinyPath}{femaleBasePath}{species}.png";
         }
 
@@ -753,7 +753,7 @@ public static partial class ImageHelper
 
         var femaleIndPath = HasFemaleHomeSprite(species, gender)
             ? "female/"
-            : "";
+            : string.Empty;
         return $"{PokeApiHomeBaseUrl}{shinyPath}{femaleIndPath}{species}.png";
 
         // form > 0 not in any mapping: no PokeAPI home sprite exists (Sinistea-Antique,

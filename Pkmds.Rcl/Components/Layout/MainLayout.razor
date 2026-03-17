@@ -155,17 +155,19 @@
             {
                 <MudButton OnClick="@CheckForUpdates"
                            StartIcon="@(IsUpToDate
-                               ? Icons.Material.Filled.CheckCircle
-                               : IsUpdateCheckFailed
-                                   ? Icons.Material.Filled.ErrorOutline
-                                   : Icons.Material.Filled.Refresh)"
+                                          ? Icons.Material.Filled.CheckCircle
+                                          : IsUpdateCheckFailed
+                                              ? Icons.Material.Filled.ErrorOutline
+                                              : Icons.Material.Filled.Refresh)"
                            Variant="@Variant.Filled"
                            Color="@(IsUpToDate ? Color.Success : IsUpdateCheckFailed ? Color.Error : Color.Default)"
                            Disabled="@IsCheckingForUpdates"
                            FullWidth="true">
                     @if (IsCheckingForUpdates)
                     {
-                        <MudProgressCircular Size="@Size.Small" Indeterminate="true" Class="mr-2"/>
+                        <MudProgressCircular Size="@Size.Small"
+                                             Indeterminate="true"
+                                             Class="mr-2"/>
                         @:Checking…
                     }
                     else if (IsUpToDate)

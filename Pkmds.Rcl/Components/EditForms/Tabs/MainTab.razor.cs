@@ -14,8 +14,10 @@ public partial class MainTab : IDisposable
     private MudSelect<byte>? FormSelect { get; set; }
 
     private bool IsAlcremie => Pokemon?.Species == (ushort)Species.Alcremie;
+
     private bool IsVivillon =>
         Pokemon?.Species is (ushort)Species.Scatterbug or (ushort)Species.Spewpa or (ushort)Species.Vivillon;
+
     private bool IsFurfrou => Pokemon?.Species == (ushort)Species.Furfrou;
 
     private bool IsPumpkabooOrGourgeist =>
@@ -25,6 +27,9 @@ public partial class MainTab : IDisposable
 
     private bool IsFlabebebFamily =>
         Pokemon?.Species is (ushort)Species.Flabébé or (ushort)Species.Floette or (ushort)Species.Florges;
+
+    public void Dispose() =>
+        RefreshService.OnAppStateChanged -= Refresh;
 
     /// <summary>
     /// Returns the sprite filename for the form-dropdown preview image.
@@ -36,9 +41,6 @@ public partial class MainTab : IDisposable
         : IsVivillon
             ? ImageHelper.GetPokemonSpriteFilenameForForm((ushort)Species.Vivillon, Pokemon.Context, Pokemon.Form)
             : ImageHelper.GetPokemonSpriteFilename(Pokemon);
-
-    public void Dispose() =>
-        RefreshService.OnAppStateChanged -= Refresh;
 
     private CheckResult? GetCheckResult(CheckIdentifier identifier)
     {
@@ -306,7 +308,7 @@ public partial class MainTab : IDisposable
         {
             (ushort)Species.Scatterbug => "Scatterbug Pattern",
             (ushort)Species.Spewpa => "Spewpa Pattern",
-            _ => "Vivillon Pattern",
+            _ => "Vivillon Pattern"
         };
         var dialog = await DialogService.ShowAsync<VivillonEditorDialog>(title, parameters, AppearanceDialogOptions);
         var result = await dialog.Result;

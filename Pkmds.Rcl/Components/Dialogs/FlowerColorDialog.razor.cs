@@ -2,9 +2,9 @@ namespace Pkmds.Rcl.Components.Dialogs;
 
 public partial class FlowerColorDialog
 {
-    private byte selectedForm;
-    private bool isPreviewShiny;
     private readonly HashSet<int> _failedFormSprites = [];
+    private bool isPreviewShiny;
+    private byte selectedForm;
 
     [Parameter]
     [EditorRequired]

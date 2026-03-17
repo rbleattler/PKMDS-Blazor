@@ -6,10 +6,10 @@ public partial class MiniorColorDialog
     // Forms 7–13 = Core (same color order)
     internal const byte MiniorMeteorCount = 7;
     internal const byte MiniorCoreCount = 7;
+    private readonly HashSet<int> _failedFormSprites = [];
+    private bool isPreviewShiny;
 
     private byte selectedForm;
-    private bool isPreviewShiny;
-    private readonly HashSet<int> _failedFormSprites = [];
 
     [Parameter]
     [EditorRequired]
