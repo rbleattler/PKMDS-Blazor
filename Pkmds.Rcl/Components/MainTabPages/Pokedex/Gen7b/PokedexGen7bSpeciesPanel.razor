@@ -54,6 +54,59 @@
             }
         </MudStack>
 
+        @* Alternate form displayed variants (e.g. Alolan forms) *@
+        @{
+            var fc7b = (int)sav7b.Personal[SpeciesId].FormCount;
+            var formNames7b = fc7b > 1
+                ? FormConverter.GetFormList(SpeciesId, GameInfo.Strings.types,
+                    GameInfo.Strings.forms, GameInfo.GenderSymbolASCII, EntityContext.Gen7b)
+                : [];
+        }
+        @if (fc7b > 1 && dex.GetEntryIndex(SpeciesId, 1) != bit)
+        {
+            <MudText Typo="@Typo.subtitle2">Alternate Form Displayed</MudText>
+            <MudSimpleTable Dense
+                            Style="max-width:500px; max-height:200px; overflow-y:auto;">
+                <thead>
+                <tr>
+                    <th>Form</th>
+                    @foreach (var (label, _) in SeenRegions)
+                    {
+                        <th>@label</th>
+                    }
+                </tr>
+                </thead>
+                <tbody>
+                @for (byte f7b = 1; f7b < fc7b; f7b++)
+                {
+                    var fi7b = f7b;
+                    var formIdx7b = dex.GetEntryIndex(SpeciesId, fi7b);
+                    @if (formIdx7b == bit)
+                    {
+                        continue;
+                    }
+
+                    var formName7b = fi7b < formNames7b.Length
+                        ? formNames7b[fi7b]
+                        : $"Form {fi7b}";
+                    <tr>
+                        <td>@formName7b</td>
+                        @foreach (var (_, region) in SeenRegions)
+                        {
+                            var r7b = region;
+                            <td>
+                                <MudCheckBox T="@bool"
+                                             Disabled="@(!IsRegionValid(r7b))"
+                                             Value="@dex.GetDisplayed(formIdx7b, r7b)"
+                                             ValueChanged="@(v => OnDisplayedChanged(dex, formIdx7b, r7b, v))"/>
+                            </td>
+                        }
+                    </tr>
+                }
+                </tbody>
+            </MudSimpleTable>
+        }
+
         @* Partner form note for Pikachu/Eevee *@
         @if (SpeciesId is (ushort)Species.Pikachu or (ushort)Species.Eevee)
         {
