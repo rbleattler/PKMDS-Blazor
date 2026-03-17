@@ -42,6 +42,30 @@ public partial class PokedexGen6SpeciesPanel
     }
 
     /// <summary>
+    /// Handles a form-displayed checkbox change, enforcing radio-group behaviour:
+    /// at most one form×shiny combination may be displayed at a time.
+    /// </summary>
+    private void OnFormDisplayedChanged(Zukan6 dex, int formStart, int formCount, int formIndex, int region, bool value)
+    {
+        if (value)
+        {
+            // Clear every region-2 and region-3 flag for all forms of this species first.
+            for (var f = 0; f < formCount; f++)
+            {
+                dex.SetFormFlag(formStart + f, 2, false);
+                dex.SetFormFlag(formStart + f, 3, false);
+            }
+            dex.SetFormFlag(formIndex, region, true);
+        }
+        else
+        {
+            dex.SetFormFlag(formIndex, region, false);
+        }
+
+        StateHasChanged();
+    }
+
+    /// <summary>
     /// Returns true when the gender region is valid for this species.
     /// Region 0/2 = Male / Male Shiny  — invalid for female-only species (Gender == 254).
     /// Region 1/3 = Female / Female Shiny — invalid for male-only (0) or genderless (255) species.

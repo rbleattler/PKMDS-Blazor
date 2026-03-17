@@ -112,6 +112,41 @@
                 }
                 </tbody>
             </MudSimpleTable>
+
+            @* Forms Displayed — one form×shiny combo shown at a time (radio-group) *@
+            <MudText Typo="@Typo.subtitle2">Forms Displayed</MudText>
+            <MudSimpleTable Dense
+                            Style="max-width:420px;">
+                <thead>
+                <tr>
+                    <th>Form</th>
+                    <th>Normal</th>
+                    <th>Shiny</th>
+                </tr>
+                </thead>
+                <tbody>
+                @for (var i = 0; i < formCount; i++)
+                {
+                    var fi = formIndex + i;
+                    var name = i < formNames.Length
+                        ? formNames[i]
+                        : $"Form {i}";
+                    <tr>
+                        <td>@name</td>
+                        <td>
+                            <MudCheckBox T="@bool"
+                                         Value="@dex.GetFormFlag(fi, 2)"
+                                         ValueChanged="@(v => OnFormDisplayedChanged(dex, formIndex, formCount, fi, 2, v))"/>
+                        </td>
+                        <td>
+                            <MudCheckBox T="@bool"
+                                         Value="@dex.GetFormFlag(fi, 3)"
+                                         ValueChanged="@(v => OnFormDisplayedChanged(dex, formIndex, formCount, fi, 3, v))"/>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </MudSimpleTable>
         }
 
         @* XY-only: Foreign flag *@
