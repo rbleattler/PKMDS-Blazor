@@ -44,11 +44,11 @@
                          Value="@f"
                          ValueChanged="@(v => OnGenderFlagsChanged(dex, m, v, ms, fs))"/>
             <MudCheckBox T="@bool"
-                         Label="Male ★"
+                         Label="Male (Shiny)"
                          Value="@ms"
                          ValueChanged="@(v => OnGenderFlagsChanged(dex, m, f, v, fs))"/>
             <MudCheckBox T="@bool"
-                         Label="Female ★"
+                         Label="Female (Shiny)"
                          Value="@fs"
                          ValueChanged="@(v => OnGenderFlagsChanged(dex, m, f, ms, v))"/>
         </MudStack>

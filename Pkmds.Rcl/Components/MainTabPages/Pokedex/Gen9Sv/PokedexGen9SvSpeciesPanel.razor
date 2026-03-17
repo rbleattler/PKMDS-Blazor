@@ -55,7 +55,7 @@
                                            StateHasChanged();
                                        })"/>
             <MudCheckBox T="@bool"
-                         Label="★ Seen"
+                         Label="Shiny Seen"
                          Value="@dex.Get(SpeciesId).GetSeenIsShiny()"
                          ValueChanged="@(v =>
                                        {
@@ -134,7 +134,7 @@
                 <MudSelectItem Value="@(2u)">Genderless</MudSelectItem>
             </MudSelect>
             <MudCheckBox T="@bool"
-                         Label="★ Shiny"
+                         Label="Shiny"
                          Value="@dex.Get(SpeciesId).GetDisplayIsShiny()"
                          ValueChanged="@(v =>
                                        {

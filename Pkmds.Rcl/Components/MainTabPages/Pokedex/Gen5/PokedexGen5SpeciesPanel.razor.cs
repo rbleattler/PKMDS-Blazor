@@ -4,7 +4,7 @@ public partial class PokedexGen5SpeciesPanel
 {
     private static readonly (string Label, int Region)[] SeenRegions =
     [
-        ("Male", 0), ("Female", 1), ("Male ★", 2), ("Female ★", 3)
+        ("Male", 0), ("Female", 1), ("Male (Shiny)", 2), ("Female (Shiny)", 3)
     ];
 
     // Gen 5 language index: JPN=0, ENG=1, FRE=2, ITA=3, GER=4, SPA=5, KOR=6

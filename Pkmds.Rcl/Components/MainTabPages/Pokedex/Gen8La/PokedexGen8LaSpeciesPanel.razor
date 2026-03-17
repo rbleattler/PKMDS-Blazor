@@ -123,7 +123,7 @@
                              ValueChanged="@(v => OnDisplayChanged(dex, (byte)dex.GetSelectedForm(SpeciesId), v, dex.GetSelectedShiny(SpeciesId), dex.GetSelectedAlpha(SpeciesId)))"/>
             }
             <MudCheckBox T="@bool"
-                         Label="★ Shiny"
+                         Label="Shiny"
                          Value="@dex.GetSelectedShiny(SpeciesId)"
                          ValueChanged="@(v => OnDisplayChanged(dex, (byte)dex.GetSelectedForm(SpeciesId), dex.GetSelectedGender1(SpeciesId), v, dex.GetSelectedAlpha(SpeciesId)))"/>
             <MudCheckBox T="@bool"

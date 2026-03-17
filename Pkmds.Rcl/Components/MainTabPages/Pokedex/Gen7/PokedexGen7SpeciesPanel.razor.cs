@@ -4,7 +4,7 @@ public partial class PokedexGen7SpeciesPanel
 {
     private static readonly (string Label, int Region)[] SeenRegions =
     [
-        ("Male", 0), ("Female", 1), ("Male ★", 2), ("Female ★", 3)
+        ("Male", 0), ("Female", 1), ("Male (Shiny)", 2), ("Female (Shiny)", 3)
     ];
 
     // Gen 7: 9 language indices (0=JPN, 1=ENG, 2=FRE, 3=ITA, 4=GER, 5=SPA, 6=KOR, 7=CHS, 8=CHT)

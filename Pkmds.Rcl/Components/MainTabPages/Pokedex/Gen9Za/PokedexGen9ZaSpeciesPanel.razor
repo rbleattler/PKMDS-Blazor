@@ -51,7 +51,7 @@
                     <th>Form</th>
                     <th>Seen</th>
                     <th>Caught</th>
-                    <th>★ Seen</th>
+                    <th>Shiny Seen</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -147,7 +147,7 @@
                                  Style="max-width:80px;"/>
             }
             <MudCheckBox T="@bool"
-                         Label="★ Shiny"
+                         Label="Shiny"
                          Value="@dex.GetEntry(SpeciesId).GetDisplayIsShiny()"
                          ValueChanged="@(v =>
                                        {

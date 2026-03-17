@@ -37,58 +37,78 @@
             </MudButton>
         </MudStack>
 
-        <PokedexSpeciesGrid RefreshToken="@gridRefreshToken"/>
-
+        @* National Dex flags — own row, always visible above the grid so they are not
+           clipped by the tab panel's overflow:hidden on desktop. *@
         @switch (AppState.SaveFile)
         {
             case SAV3 sav3:
-                <MudCheckBox Label="National Mode Unlocked"
-                             T="@bool"
-                             Value="@sav3.NationalDex"
-                             ValueChanged="@(v => sav3.NationalDex = v)"/>
+                <MudStack Row
+                          AlignItems="AlignItems.Center">
+                    <MudCheckBox Label="National Mode Unlocked"
+                                 T="@bool"
+                                 Value="@sav3.NationalDex"
+                                 ValueChanged="@(v => sav3.NationalDex = v)"/>
+                </MudStack>
                 break;
             case SAV5 sav5:
-                <MudCheckBox Label="National Mode Unlocked"
-                             T="@bool"
-                             Value="@sav5.Zukan.IsNationalDexUnlocked"
-                             ValueChanged="@(v => sav5.Zukan.IsNationalDexUnlocked = v)"/>
-                <MudCheckBox Label="National Mode Active"
-                             T="@bool"
-                             Value="@sav5.Zukan.IsNationalDexMode"
-                             ValueChanged="@(v => sav5.Zukan.IsNationalDexMode = v)"/>
+                <MudStack Row
+                          AlignItems="AlignItems.Center">
+                    <MudCheckBox Label="National Mode Unlocked"
+                                 T="@bool"
+                                 Value="@sav5.Zukan.IsNationalDexUnlocked"
+                                 ValueChanged="@(v => sav5.Zukan.IsNationalDexUnlocked = v)"/>
+                    <MudCheckBox Label="National Mode Active"
+                                 T="@bool"
+                                 Value="@sav5.Zukan.IsNationalDexMode"
+                                 ValueChanged="@(v => sav5.Zukan.IsNationalDexMode = v)"/>
+                </MudStack>
                 break;
             case SAV6XY sav6xy:
-                <MudCheckBox Label="National Mode Unlocked"
-                             T="@bool"
-                             Value="@sav6xy.Zukan.IsNationalDexUnlocked"
-                             ValueChanged="@(v => sav6xy.Zukan.IsNationalDexUnlocked = v)"/>
-                <MudCheckBox Label="National Mode Active"
-                             T="@bool"
-                             Value="@sav6xy.Zukan.IsNationalDexMode"
-                             ValueChanged="@(v => sav6xy.Zukan.IsNationalDexMode = v)"/>
+                <MudStack Row
+                          AlignItems="AlignItems.Center">
+                    <MudCheckBox Label="National Mode Unlocked"
+                                 T="@bool"
+                                 Value="@sav6xy.Zukan.IsNationalDexUnlocked"
+                                 ValueChanged="@(v => sav6xy.Zukan.IsNationalDexUnlocked = v)"/>
+                    <MudCheckBox Label="National Mode Active"
+                                 T="@bool"
+                                 Value="@sav6xy.Zukan.IsNationalDexMode"
+                                 ValueChanged="@(v => sav6xy.Zukan.IsNationalDexMode = v)"/>
+                </MudStack>
                 break;
             case SAV6AO sav6ao:
-                <MudCheckBox Label="National Mode Unlocked"
-                             T="@bool"
-                             Value="@sav6ao.Zukan.IsNationalDexUnlocked"
-                             ValueChanged="@(v => sav6ao.Zukan.IsNationalDexUnlocked = v)"/>
-                <MudCheckBox Label="National Mode Active"
-                             T="@bool"
-                             Value="@sav6ao.Zukan.IsNationalDexMode"
-                             ValueChanged="@(v => sav6ao.Zukan.IsNationalDexMode = v)"/>
+                <MudStack Row
+                          AlignItems="AlignItems.Center">
+                    <MudCheckBox Label="National Mode Unlocked"
+                                 T="@bool"
+                                 Value="@sav6ao.Zukan.IsNationalDexUnlocked"
+                                 ValueChanged="@(v => sav6ao.Zukan.IsNationalDexUnlocked = v)"/>
+                    <MudCheckBox Label="National Mode Active"
+                                 T="@bool"
+                                 Value="@sav6ao.Zukan.IsNationalDexMode"
+                                 ValueChanged="@(v => sav6ao.Zukan.IsNationalDexMode = v)"/>
+                </MudStack>
                 break;
             case SAV7 sav7:
-                <MudCheckBox Label="National Mode Unlocked"
-                             T="@bool"
-                             Value="@sav7.Zukan.NationalDex"
-                             ValueChanged="@(v => sav7.Zukan.NationalDex = v)"/>
+                <MudStack Row
+                          AlignItems="AlignItems.Center">
+                    <MudCheckBox Label="National Mode Unlocked"
+                                 T="@bool"
+                                 Value="@sav7.Zukan.NationalDex"
+                                 ValueChanged="@(v => sav7.Zukan.NationalDex = v)"/>
+                </MudStack>
                 break;
             case SAV8BS sav8bs:
-                <MudCheckBox Label="National Mode Unlocked"
-                             T="@bool"
-                             Value="@sav8bs.Zukan.HasNationalDex"
-                             ValueChanged="@(v => sav8bs.Zukan.HasNationalDex = v)"/>
+                <MudStack Row
+                          AlignItems="AlignItems.Center">
+                    <MudCheckBox Label="National Mode Unlocked"
+                                 T="@bool"
+                                 Value="@sav8bs.Zukan.HasNationalDex"
+                                 ValueChanged="@(v => sav8bs.Zukan.HasNationalDex = v)"/>
+                </MudStack>
                 break;
         }
+
+        <PokedexSpeciesGrid RefreshToken="@gridRefreshToken"/>
     </MudStack>
 }
