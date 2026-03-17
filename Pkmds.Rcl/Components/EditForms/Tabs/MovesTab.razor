@@ -30,37 +30,27 @@
                     ? FormatMoveMessage(mr0, i)
                     : string.Empty;
 
-                var moveTextColumns = 6;
-                if (UseTextSearch)
-                    moveTextColumns--;
-                if (showPlusMove)
-                    moveTextColumns--;
-                if (showMasteredMove)
-                    moveTextColumns--;
-
                 <MudGrid Spacing="1">
-                    @if (UseTextSearch)
-                    {
-                        <MudItem xs="1"
-                                 Class="@ColumnClass">
-                            @if (moveId != 0)
-                            {
-                                @MoveTypeAndCategorySummary(
-                                    MoveInfo.GetType(moveId, saveFileEntityContext),
-                                    GetMoveCategory(moveId, saveFileEntityContext))
-                            }
-                            else
-                            {
-                                <span style="width: 60px"></span>
-                            }
-                        </MudItem>
-                    }
-
-                    <MudItem xs="@moveTextColumns"
+                    @* Move name — full width with type icon and checkboxes inline *@
+                    <MudItem xs="12"
                              Class="@ColumnClass">
                         <MudStack Row
                                   AlignItems="@AlignItems.Center"
-                                  Spacing="1">
+                                  Spacing="1"
+                                  Style="width: 100%;">
+                            @if (UseTextSearch)
+                            {
+                                @if (moveId != 0)
+                                {
+                                    @MoveTypeAndCategorySummary(
+                                        MoveInfo.GetType(moveId, saveFileEntityContext),
+                                        GetMoveCategory(moveId, saveFileEntityContext))
+                                }
+                                else
+                                {
+                                    <span style="width: 60px"></span>
+                                }
+                            }
                             <MudStack Style="flex: 1; min-width: 0;">
                                 @if (UseTextSearch)
                                 {
@@ -108,10 +98,32 @@
                                                        Message="@moveMsgText"/>
                                 }
                             </div>
+                            @if (showPlusMove)
+                            {
+                                var localMoveId = Pokemon.GetMove(i);
+                                var plusFlagIndex = PersonalInfo9ZA.PlusMoves.IndexOf(localMoveId);
+                                <MudCheckBox Label="+"
+                                             Dense
+                                             title="Plus Move"
+                                             @bind-Value:get="@GetPokemonMoveIsPlus(plusFlagIndex)"
+                                             @bind-Value:set="@(newValue => SetPokemonMoveIsPlus(plusFlagIndex, newValue))"/>
+                            }
+                            @if (showMasteredMove && Pokemon is IMoveShop8Mastery)
+                            {
+                                var localMoveId = Pokemon.GetMove(i);
+                                var masteredFlagIndex = GetMasteredRecordIndex(localMoveId);
+                                <MudCheckBox Label="+"
+                                             Dense
+                                             title="Mastered Move"
+                                             Disabled="@(masteredFlagIndex < 0)"
+                                             @bind-Value:get="@GetPokemonMoveIsMastered(masteredFlagIndex)"
+                                             @bind-Value:set="@(newValue => SetPokemonMoveIsMastered(masteredFlagIndex, newValue))"/>
+                            }
                         </MudStack>
                     </MudItem>
 
-                    <MudItem xs="2"
+                    @* PP / Ups / Max on their own row *@
+                    <MudItem xs="4"
                              Class="@ColumnClass">
                         <MudNumericField Label="PP"
                                          T="@int"
@@ -120,10 +132,9 @@
                                          Margin="@Margin.Dense"
                                          @bind-Value:get="@GetPokemonPP(i)"
                                          @bind-Value:set="@(newValue => SetPokemonPP(i, newValue))"/>
-
                     </MudItem>
 
-                    <MudItem xs="2"
+                    <MudItem xs="4"
                              Class="@ColumnClass">
                         <MudNumericField Label="Ups"
                                          T="@int"
@@ -135,7 +146,7 @@
                                          @bind-Value:set="@(newValue => SetPokemonPPUps(i, newValue))"/>
                     </MudItem>
 
-                    <MudItem xs="2"
+                    <MudItem xs="4"
                              Class="@ColumnClass">
                         <MudNumericField Label="Max"
                                          T="@int"
@@ -145,35 +156,6 @@
                                          Margin="@Margin.Dense"
                                          HideSpinButtons/>
                     </MudItem>
-
-                    @if (showPlusMove)
-                    {
-                        var localMoveId = Pokemon.GetMove(i);
-                        var plusFlagIndex = PersonalInfo9ZA.PlusMoves.IndexOf(localMoveId);
-                        <MudItem xs="1"
-                                 Class="@ColumnClass">
-                            <MudCheckBox Label="+"
-                                         Dense
-                                         title="Plus Move"
-                                         @bind-Value:get="@GetPokemonMoveIsPlus(plusFlagIndex)"
-                                         @bind-Value:set="@(newValue => SetPokemonMoveIsPlus(plusFlagIndex, newValue))"/>
-                        </MudItem>
-                    }
-
-                    @if (showMasteredMove && Pokemon is IMoveShop8Mastery)
-                    {
-                        var localMoveId = Pokemon.GetMove(i);
-                        var masteredFlagIndex = GetMasteredRecordIndex(localMoveId);
-                        <MudItem xs="1"
-                                 Class="@ColumnClass">
-                            <MudCheckBox Label="+"
-                                         Dense
-                                         title="Mastered Move"
-                                         Disabled="@(masteredFlagIndex < 0)"
-                                         @bind-Value:get="@GetPokemonMoveIsMastered(masteredFlagIndex)"
-                                         @bind-Value:set="@(newValue => SetPokemonMoveIsMastered(masteredFlagIndex, newValue))"/>
-                        </MudItem>
-                    }
                 </MudGrid>
             }
         </MudStack>

@@ -21,7 +21,9 @@
         </MudBadge>
         <MudText Typo="@Typo.h4"
                  Class="d-none d-lg-flex">
-            @Constants.AppTitle
+            @(AppService.IsDrawerOpen
+                ? Constants.AppShortTitle
+                : Constants.AppTitle)
         </MudText>
         <MudText Typo="@Typo.h6"
                  Class="d-none d-md-flex d-lg-none">
@@ -44,7 +46,8 @@
                 PKHaX
             </MudChip>
         }
-        <MudStack Row>
+        <MudStack Row
+                  AlignItems="@AlignItems.Center">
             <MudButtonGroup Variant="@Variant.Outlined"
                             Size="@Size.Small">
                 <MudIconButton Icon="@Icons.Material.Filled.LightMode"
