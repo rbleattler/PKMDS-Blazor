@@ -313,6 +313,19 @@
             </div>
         }
 
+        @if (saveFile is SAV1 sav1HoF)
+        {
+            <div class="form-field">
+                <MudNumericField Label="Hall of Fame Count"
+                                 T="@byte"
+                                 Variant="@Variant.Outlined"
+                                 Min="0"
+                                 Max="@byte.MaxValue"
+                                 @bind-Value="@sav1HoF.HallOfFameCount"
+                                 For="@(() => sav1HoF.HallOfFameCount)"/>
+            </div>
+        }
+
         @if (saveFile is SAV1 sav1Options)
         {
             <div class="form-field">
