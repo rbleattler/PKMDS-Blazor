@@ -2,6 +2,9 @@
 
 public partial class PokedexTab
 {
+    // Incremented after every bulk operation to signal PokedexSpeciesGrid to rebuild.
+    private int _gridRefreshToken;
+
     private double caughtPercent;
 
     // Cached dex stats — computed once per render cycle and after every bulk
@@ -209,6 +212,7 @@ public partial class PokedexTab
         }
 
         RefreshDexStats();
+        _gridRefreshToken++;
     }
 
     private static void FillGen1Pokedex(SAV1 s1)
@@ -436,6 +440,7 @@ public partial class PokedexTab
         }
 
         RefreshDexStats();
+        _gridRefreshToken++;
         await Task.Yield();
     }
 
@@ -535,6 +540,7 @@ public partial class PokedexTab
         }
 
         RefreshDexStats();
+        _gridRefreshToken++;
         await Task.Yield();
     }
 }

@@ -37,6 +37,8 @@
             </MudButton>
         </MudStack>
 
+        <PokedexSpeciesGrid RefreshToken="@_gridRefreshToken"/>
+
         @switch (AppState.SaveFile)
         {
             case SAV3 sav3:
