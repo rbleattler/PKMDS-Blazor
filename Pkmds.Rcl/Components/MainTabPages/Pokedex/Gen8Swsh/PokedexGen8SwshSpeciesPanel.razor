@@ -12,7 +12,7 @@
         @* Caught flags *@
         <MudStack Row
                   Spacing="4">
-            <MudCheckBox T="bool"
+            <MudCheckBox T="@bool"
                          Label="Caught"
                          Value="@dex.GetCaught(entry)"
                          ValueChanged="@(v =>
@@ -21,7 +21,7 @@
                                            if (v && !dex.GetSeen(entry)) dex.SetSeenRegion(entry, 0, 0, true);
                                            StateHasChanged();
                                        })"/>
-            <MudCheckBox T="bool"
+            <MudCheckBox T="@bool"
                          Label="Caught Gigantamax"
                          Value="@dex.GetCaughtGigantamaxed(entry)"
                          ValueChanged="@(v =>
@@ -58,7 +58,7 @@
                     {
                         var r = region;
                         <td>
-                            <MudCheckBox T="bool"
+                            <MudCheckBox T="@bool"
                                          Value="@dex.GetSeenRegion(entry, form, r)"
                                          ValueChanged="@(v =>
                                                        {
@@ -80,7 +80,7 @@
                 {
                     var r = region;
                     <td>
-                        <MudCheckBox T="bool"
+                        <MudCheckBox T="@bool"
                                      Value="@dex.GetSeenRegion(entry, 63, r)"
                                      ValueChanged="@(v =>
                                                    {
@@ -99,7 +99,7 @@
                   Wrap="@Wrap.Wrap"
                   Spacing="4"
                   AlignItems="@AlignItems.Center">
-            <MudNumericField T="uint"
+            <MudNumericField T="@uint"
                              Label="Display Form"
                              Value="@dex.GetFormDisplayed(entry)"
                              ValueChanged="@(v =>
@@ -110,7 +110,7 @@
                              Min="0"
                              Max="@((uint)(formCount - 1))"
                              Style="max-width:130px;"/>
-            <MudSelect T="uint"
+            <MudSelect T="@uint"
                        Label="Display Gender"
                        Value="@dex.GetGenderDisplayed(entry)"
                        ValueChanged="@(v =>
@@ -123,7 +123,7 @@
                 <MudSelectItem Value="@(0u)">Male/Genderless</MudSelectItem>
                 <MudSelectItem Value="@(1u)">Female</MudSelectItem>
             </MudSelect>
-            <MudCheckBox T="bool"
+            <MudCheckBox T="@bool"
                          Label="Display Shiny"
                          Value="@dex.GetDisplayShiny(entry)"
                          ValueChanged="@(v =>
@@ -131,7 +131,7 @@
                                            dex.SetDisplayShiny(entry, v);
                                            StateHasChanged();
                                        })"/>
-            <MudCheckBox T="bool"
+            <MudCheckBox T="@bool"
                          Label="Display Dynamax Instead"
                          Value="@dex.GetDisplayDynamaxInstead(entry)"
                          ValueChanged="@(v =>
@@ -142,7 +142,7 @@
         </MudStack>
 
         @* Battled count *@
-        <MudNumericField T="uint"
+        <MudNumericField T="@uint"
                          Label="Battled Count"
                          Value="@dex.GetBattledCount(entry)"
                          ValueChanged="@(v =>
@@ -161,7 +161,7 @@
             @for (var i = 0; i < LanguageLabels.Length; i++)
             {
                 var li = i;
-                <MudCheckBox T="bool"
+                <MudCheckBox T="@bool"
                              Label="@LanguageLabels[li]"
                              Value="@dex.GetIsLanguageIndexObtained(entry, li)"
                              ValueChanged="@(v =>

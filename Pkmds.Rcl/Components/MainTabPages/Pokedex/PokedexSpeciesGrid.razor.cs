@@ -2,10 +2,10 @@ namespace Pkmds.Rcl.Components.MainTabPages.Pokedex;
 
 public partial class PokedexSpeciesGrid
 {
-    private bool _hasDetailedEditor;
-    private List<PokedexGridRow> _rows = [];
+    private bool hasDetailedEditor;
+    private List<PokedexGridRow> rows = [];
 
-    private string _searchText = string.Empty;
+    private string searchText = string.Empty;
 
     // Incremented by PokedexTab after each bulk operation (Fill / Seen All / Clear).
     // Giving the grid a changing parameter ensures Blazor re-renders the child and
@@ -27,12 +27,12 @@ public partial class PokedexSpeciesGrid
     {
         if (AppState.SaveFile is not { HasPokeDex: true } saveFile)
         {
-            _rows = [];
+            rows = [];
             return;
         }
 
         var speciesNames = GameInfo.Strings.Species;
-        var rows = new List<PokedexGridRow>();
+        var pokedexGridRows = new List<PokedexGridRow>();
 
         for (ushort i = 1; i <= saveFile.MaxSpeciesID; i++)
         {
@@ -45,11 +45,11 @@ public partial class PokedexSpeciesGrid
                 ? speciesNames[i]
                 : i.ToString(CultureInfo.InvariantCulture);
 
-            rows.Add(new PokedexGridRow(i, name, saveFile.GetSeen(i), saveFile.GetCaught(i)));
+            pokedexGridRows.Add(new PokedexGridRow(i, name, saveFile.GetSeen(i), saveFile.GetCaught(i)));
         }
 
-        _rows = rows;
-        _hasDetailedEditor = saveFile is SAV4 or SAV5 or SAV6XY or SAV6AO or SAV7 or SAV7b
+        rows = pokedexGridRows;
+        hasDetailedEditor = saveFile is SAV4 or SAV5 or SAV6XY or SAV6AO or SAV7 or SAV7b
             or SAV8SWSH or SAV8LA or SAV8BS or SAV9SV or SAV9ZA;
     }
 
@@ -82,12 +82,12 @@ public partial class PokedexSpeciesGrid
     // case-insensitive).
     private bool FilterRow(PokedexGridRow row)
     {
-        if (string.IsNullOrWhiteSpace(_searchText))
+        if (string.IsNullOrWhiteSpace(searchText))
         {
             return true;
         }
 
-        var search = _searchText.Trim();
+        var search = searchText.Trim();
 
         if (ushort.TryParse(search, out var id))
         {
@@ -163,10 +163,10 @@ public partial class PokedexSpeciesGrid
 
     private void UpdateRowFromSave(PokedexGridRow row, SaveFile saveFile)
     {
-        var idx = _rows.FindIndex(r => r.SpeciesId == row.SpeciesId);
+        var idx = rows.FindIndex(r => r.SpeciesId == row.SpeciesId);
         if (idx >= 0)
         {
-            _rows[idx] = row with { IsSeen = saveFile.GetSeen(row.SpeciesId), IsCaught = saveFile.GetCaught(row.SpeciesId) };
+            rows[idx] = row with { IsSeen = saveFile.GetSeen(row.SpeciesId), IsCaught = saveFile.GetCaught(row.SpeciesId) };
         }
     }
 

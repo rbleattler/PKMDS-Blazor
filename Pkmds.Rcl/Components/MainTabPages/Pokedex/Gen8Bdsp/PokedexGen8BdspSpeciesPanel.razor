@@ -12,7 +12,7 @@
     <MudStack Spacing="3">
 
         @* State *@
-        <MudSelect T="int"
+        <MudSelect T="@int"
                    Label="State"
                    Value="@((int)dex.GetState(SpeciesId))"
                    ValueChanged="@(v =>
@@ -35,19 +35,19 @@
         }
         <MudStack Row
                   Spacing="2">
-            <MudCheckBox T="bool"
+            <MudCheckBox T="@bool"
                          Label="Male"
                          Value="@m"
                          ValueChanged="@(v => OnGenderFlagsChanged(dex, v, f, ms, fs))"/>
-            <MudCheckBox T="bool"
+            <MudCheckBox T="@bool"
                          Label="Female"
                          Value="@f"
                          ValueChanged="@(v => OnGenderFlagsChanged(dex, m, v, ms, fs))"/>
-            <MudCheckBox T="bool"
+            <MudCheckBox T="@bool"
                          Label="Male ★"
                          Value="@ms"
                          ValueChanged="@(v => OnGenderFlagsChanged(dex, m, f, v, fs))"/>
-            <MudCheckBox T="bool"
+            <MudCheckBox T="@bool"
                          Label="Female ★"
                          Value="@fs"
                          ValueChanged="@(v => OnGenderFlagsChanged(dex, m, f, ms, v))"/>
@@ -76,7 +76,7 @@
                     <tr>
                         <td>@name</td>
                         <td>
-                            <MudCheckBox T="bool"
+                            <MudCheckBox T="@bool"
                                          Value="@dex.GetHasFormFlag(SpeciesId, fi, false)"
                                          ValueChanged="@(v =>
                                                        {
@@ -85,7 +85,7 @@
                                                        })"/>
                         </td>
                         <td>
-                            <MudCheckBox T="bool"
+                            <MudCheckBox T="@bool"
                                          Value="@dex.GetHasFormFlag(SpeciesId, fi, true)"
                                          ValueChanged="@(v =>
                                                        {
@@ -107,7 +107,7 @@
             @foreach (var (label, langId) in LanguageLabels)
             {
                 var lid = (int)langId;
-                <MudCheckBox T="bool"
+                <MudCheckBox T="@bool"
                              Label="@label"
                              Value="@dex.GetLanguageFlag(SpeciesId, lid)"
                              ValueChanged="@(v =>

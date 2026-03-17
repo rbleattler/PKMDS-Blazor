@@ -2,13 +2,13 @@ namespace Pkmds.Rcl.Components.MainTabPages.Pokedex.Gen7;
 
 public partial class PokedexGen7SpeciesPanel
 {
-    private static readonly (string Label, int Region)[] _seenRegions =
+    private static readonly (string Label, int Region)[] SeenRegions =
     [
         ("Male", 0), ("Female", 1), ("Male ★", 2), ("Female ★", 3)
     ];
 
     // Gen 7: 9 language indices (0=JPN, 1=ENG, 2=FRE, 3=ITA, 4=GER, 5=SPA, 6=KOR, 7=CHS, 8=CHT)
-    private static readonly string[] _languageLabels =
+    private static readonly string[] LanguageLabels =
         ["JPN", "ENG", "FRE", "ITA", "GER", "SPA", "KOR", "CHS", "CHT"];
 
     [Parameter]

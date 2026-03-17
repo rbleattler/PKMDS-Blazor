@@ -1,22 +1,22 @@
 @inherits BasePkmdsComponent
 
-@if (_rows.Count > 0)
+@if (rows.Count > 0)
 {
-    <MudTextField @bind-Value="_searchText"
+    <MudTextField @bind-Value="searchText"
                   Placeholder="Search species…"
                   Immediate
-                  Adornment="@Adornment.Start"
+                  AdornmenT="@Adornment.Start"
                   AdornmentIcon="@Icons.Material.Filled.Search"
                   Clearable
                   Class="mb-2"/>
 
     @* MudDataGrid Virtualize="true" is not used here due to a MudBlazor bug (#454):
-       DataGridVirtualizeRow renders SpacerElement="div" inside <tbody>, which CSS
+       DataGridVirtualizeRow renders SpacerElemenT="@div" inside <tbody>, which CSS
        collapses to 0 px, causing rows to jump on scroll.  Tracked upstream at
        MudBlazor/MudBlazor#12799.  Once merged and released, switch to MudDataGrid
        with Virtualize="true" and RowHeight="36". *@
     <MudTable T="@PokedexGridRow"
-              Items="@_rows"
+              Items="@rows"
               Filter="@FilterRow"
               Dense
               Hover
@@ -40,7 +40,7 @@
             </MudTh>
             <MudTh>Seen</MudTh>
             <MudTh>Caught</MudTh>
-            @if (_hasDetailedEditor)
+            @if (hasDetailedEditor)
             {
                 <MudTh></MudTh>
             }
@@ -59,7 +59,7 @@
                              Value="@context.IsCaught"
                              ValueChanged="@(v => OnCaughtChanged(context, v))"/>
             </MudTd>
-            @if (_hasDetailedEditor)
+            @if (hasDetailedEditor)
             {
                 <MudTd>
                     <MudIconButton Icon="@Icons.Material.Filled.Edit"

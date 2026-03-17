@@ -14,7 +14,7 @@
         <MudText Typo="@Typo.subtitle2">Gender Seen</MudText>
         <MudStack Row
                   Spacing="2">
-            <MudCheckBox T="bool"
+            <MudCheckBox T="@bool"
                          Label="Male"
                          Value="@dex.GetEntry(SpeciesId).GetIsGenderSeen(0)"
                          ValueChanged="@(v =>
@@ -22,7 +22,7 @@
                                            dex.GetEntry(SpeciesId).SetIsGenderSeen(0, v);
                                            StateHasChanged();
                                        })"/>
-            <MudCheckBox T="bool"
+            <MudCheckBox T="@bool"
                          Label="Female"
                          Value="@dex.GetEntry(SpeciesId).GetIsGenderSeen(1)"
                          ValueChanged="@(v =>
@@ -30,7 +30,7 @@
                                            dex.GetEntry(SpeciesId).SetIsGenderSeen(1, v);
                                            StateHasChanged();
                                        })"/>
-            <MudCheckBox T="bool"
+            <MudCheckBox T="@bool"
                          Label="Genderless"
                          Value="@dex.GetEntry(SpeciesId).GetIsGenderSeen(2)"
                          ValueChanged="@(v =>
@@ -64,7 +64,7 @@
                     <tr>
                         <td>@name</td>
                         <td>
-                            <MudCheckBox T="bool"
+                            <MudCheckBox T="@bool"
                                          Value="@dex.GetEntry(SpeciesId).GetIsFormSeen(fi)"
                                          ValueChanged="@(v =>
                                                        {
@@ -74,7 +74,7 @@
                                                        })"/>
                         </td>
                         <td>
-                            <MudCheckBox T="bool"
+                            <MudCheckBox T="@bool"
                                          Value="@dex.GetEntry(SpeciesId).GetIsFormCaught(fi)"
                                          ValueChanged="@(v =>
                                                        {
@@ -84,7 +84,7 @@
                                                        })"/>
                         </td>
                         <td>
-                            <MudCheckBox T="bool"
+                            <MudCheckBox T="@bool"
                                          Value="@dex.GetEntry(SpeciesId).GetIsShinySeen(fi)"
                                          ValueChanged="@(v =>
                                                        {
@@ -101,7 +101,7 @@
         @* Extra flags *@
         <MudStack Row
                   Spacing="2">
-            <MudCheckBox T="bool"
+            <MudCheckBox T="@bool"
                          Label="Seen Mega"
                          Value="@dex.GetEntry(SpeciesId).GetIsSeenMega(0)"
                          ValueChanged="@(v =>
@@ -109,7 +109,7 @@
                                            dex.GetEntry(SpeciesId).SetIsSeenMega(0, v);
                                            StateHasChanged();
                                        })"/>
-            <MudCheckBox T="bool"
+            <MudCheckBox T="@bool"
                          Label="Seen Mega 2"
                          Value="@dex.GetEntry(SpeciesId).GetIsSeenMega(1)"
                          ValueChanged="@(v =>
@@ -117,7 +117,7 @@
                                            dex.GetEntry(SpeciesId).SetIsSeenMega(1, v);
                                            StateHasChanged();
                                        })"/>
-            <MudCheckBox T="bool"
+            <MudCheckBox T="@bool"
                          Label="Seen Alpha"
                          Value="@dex.GetEntry(SpeciesId).GetIsSeenAlpha()"
                          ValueChanged="@(v =>
@@ -134,7 +134,7 @@
                   AlignItems="AlignItems.Center">
             @if (formCount > 1)
             {
-                <MudNumericField T="byte"
+                <MudNumericField T="@byte"
                                  Label="Form"
                                  Value="@dex.GetEntry(SpeciesId).DisplayForm"
                                  ValueChanged="@(v =>
@@ -146,7 +146,7 @@
                                  Max="@((byte)(formCount - 1))"
                                  Style="max-width:80px;"/>
             }
-            <MudCheckBox T="bool"
+            <MudCheckBox T="@bool"
                          Label="★ Shiny"
                          Value="@dex.GetEntry(SpeciesId).GetDisplayIsShiny()"
                          ValueChanged="@(v =>
@@ -154,7 +154,7 @@
                                            dex.GetEntry(SpeciesId).SetDisplayIsShiny(v);
                                            StateHasChanged();
                                        })"/>
-            <MudCheckBox T="bool"
+            <MudCheckBox T="@bool"
                          Label="New"
                          Value="@dex.GetEntry(SpeciesId).GetDisplayIsNew()"
                          ValueChanged="@(v =>
@@ -172,7 +172,7 @@
             @foreach (var (label, langId) in LanguageLabels)
             {
                 var lid = langId;
-                <MudCheckBox T="bool"
+                <MudCheckBox T="@bool"
                              Label="@label"
                              Value="@dex.GetEntry(SpeciesId).GetLanguageFlag(lid)"
                              ValueChanged="@(v =>

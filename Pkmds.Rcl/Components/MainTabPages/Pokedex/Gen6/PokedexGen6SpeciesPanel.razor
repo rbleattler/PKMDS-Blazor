@@ -66,9 +66,7 @@
         }
         @if (formCount > 0)
         {
-            var ctx = AppState.SaveFile is SAV6AO
-                ? EntityContext.Gen6
-                : EntityContext.Gen6;
+            const EntityContext ctx = EntityContext.Gen6;
             var formNames = FormConverter.GetFormList(SpeciesId, GameInfo.Strings.types,
                 GameInfo.Strings.forms, GameInfo.GenderSymbolASCII, ctx);
             <MudText Typo="@Typo.subtitle2">Forms Seen</MudText>

@@ -9,7 +9,7 @@
     <MudStack Spacing="3">
 
         @* Caught *@
-        <MudCheckBox T="bool"
+        <MudCheckBox T="@bool"
                      Label="Caught"
                      Value="@dex.GetCaught(SpeciesId)"
                      ValueChanged="@(v =>
@@ -24,10 +24,10 @@
         <MudStack Row
                   Wrap="@Wrap.Wrap"
                   Spacing="1">
-            @foreach (var (label, region) in _seenRegions)
+            @foreach (var (label, region) in SeenRegions)
             {
                 var r = region;
-                <MudCheckBox T="bool"
+                <MudCheckBox T="@bool"
                              Label="@label"
                              Value="@dex.GetSeen(SpeciesId, r)"
                              ValueChanged="@(v =>
@@ -43,10 +43,10 @@
         <MudStack Row
                   Wrap="@Wrap.Wrap"
                   Spacing="1">
-            @foreach (var (label, region) in _seenRegions)
+            @foreach (var (label, region) in SeenRegions)
             {
                 var r = region;
-                <MudCheckBox T="bool"
+                <MudCheckBox T="@bool"
                              Label="@label"
                              Value="@dex.GetDisplayed(bit, r)"
                              ValueChanged="@(v => OnDisplayedChanged(dex, bit, r, v))"/>
@@ -58,11 +58,11 @@
         <MudStack Row
                   Wrap="@Wrap.Wrap"
                   Spacing="1">
-            @for (var i = 0; i < _languageLabels.Length; i++)
+            @for (var i = 0; i < LanguageLabels.Length; i++)
             {
                 var li = i;
-                <MudCheckBox T="bool"
-                             Label="@_languageLabels[li]"
+                <MudCheckBox T="@bool"
+                             Label="@LanguageLabels[li]"
                              Value="@dex.GetLanguageFlag(bit, li)"
                              ValueChanged="@(v =>
                                            {
