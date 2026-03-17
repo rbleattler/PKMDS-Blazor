@@ -15,7 +15,11 @@
         <MudSelect T="int"
                    Label="State"
                    Value="@((int)dex.GetState(SpeciesId))"
-                   ValueChanged="@(v => { dex.SetState(SpeciesId, (ZukanState8b)v); StateHasChanged(); })"
+                   ValueChanged="@(v =>
+                                 {
+                                     dex.SetState(SpeciesId, (ZukanState8b)v);
+                                     StateHasChanged();
+                                 })"
                    Dense
                    Style="max-width:200px;">
             @foreach (var s in Enum.GetValues<ZukanState8b>())
@@ -29,14 +33,23 @@
         @{
             dex.GetGenderFlags(SpeciesId, out var m, out var f, out var ms, out var fs);
         }
-        <MudStack Row Spacing="2">
-            <MudCheckBox T="bool" Label="Male" Value="@m"
+        <MudStack Row
+                  Spacing="2">
+            <MudCheckBox T="bool"
+                         Label="Male"
+                         Value="@m"
                          ValueChanged="@(v => OnGenderFlagsChanged(dex, v, f, ms, fs))"/>
-            <MudCheckBox T="bool" Label="Female" Value="@f"
+            <MudCheckBox T="bool"
+                         Label="Female"
+                         Value="@f"
                          ValueChanged="@(v => OnGenderFlagsChanged(dex, m, v, ms, fs))"/>
-            <MudCheckBox T="bool" Label="Male ★" Value="@ms"
+            <MudCheckBox T="bool"
+                         Label="Male ★"
+                         Value="@ms"
                          ValueChanged="@(v => OnGenderFlagsChanged(dex, m, f, v, fs))"/>
-            <MudCheckBox T="bool" Label="Female ★" Value="@fs"
+            <MudCheckBox T="bool"
+                         Label="Female ★"
+                         Value="@fs"
                          ValueChanged="@(v => OnGenderFlagsChanged(dex, m, f, ms, v))"/>
         </MudStack>
 
@@ -44,52 +57,66 @@
         @if (formCount > 0)
         {
             <MudText Typo="@Typo.subtitle2">Forms Seen</MudText>
-            <MudSimpleTable Dense Style="max-width:360px;">
-                <thead><tr><th>Form</th><th>Normal</th><th>Shiny</th></tr></thead>
+            <MudSimpleTable Dense
+                            Style="max-width:360px;">
+                <thead>
+                <tr>
+                    <th>Form</th>
+                    <th>Normal</th>
+                    <th>Shiny</th>
+                </tr>
+                </thead>
                 <tbody>
-                    @for (byte i = 0; i < formCount; i++)
-                    {
-                        var fi = i;
-                        var name = fi < formNames.Length ? formNames[fi] : $"Form {fi}";
-                        <tr>
-                            <td>@name</td>
-                            <td>
-                                <MudCheckBox T="bool"
-                                             Value="@dex.GetHasFormFlag(SpeciesId, fi, false)"
-                                             ValueChanged="@(v => { dex.SetHasFormFlag(SpeciesId, fi, false, v); StateHasChanged(); })"/>
-                            </td>
-                            <td>
-                                <MudCheckBox T="bool"
-                                             Value="@dex.GetHasFormFlag(SpeciesId, fi, true)"
-                                             ValueChanged="@(v => { dex.SetHasFormFlag(SpeciesId, fi, true, v); StateHasChanged(); })"/>
-                            </td>
-                        </tr>
-                    }
+                @for (byte i = 0; i < formCount; i++)
+                {
+                    var fi = i;
+                    var name = fi < formNames.Length
+                        ? formNames[fi]
+                        : $"Form {fi}";
+                    <tr>
+                        <td>@name</td>
+                        <td>
+                            <MudCheckBox T="bool"
+                                         Value="@dex.GetHasFormFlag(SpeciesId, fi, false)"
+                                         ValueChanged="@(v =>
+                                                       {
+                                                           dex.SetHasFormFlag(SpeciesId, fi, false, v);
+                                                           StateHasChanged();
+                                                       })"/>
+                        </td>
+                        <td>
+                            <MudCheckBox T="bool"
+                                         Value="@dex.GetHasFormFlag(SpeciesId, fi, true)"
+                                         ValueChanged="@(v =>
+                                                       {
+                                                           dex.SetHasFormFlag(SpeciesId, fi, true, v);
+                                                           StateHasChanged();
+                                                       })"/>
+                        </td>
+                    </tr>
+                }
                 </tbody>
             </MudSimpleTable>
         }
 
         @* Language flags *@
         <MudText Typo="@Typo.subtitle2">Languages Obtained</MudText>
-        <MudStack Row Wrap="@Wrap.Wrap" Spacing="1">
-            @foreach (var (label, langId) in _languageLabels)
+        <MudStack Row
+                  Wrap="@Wrap.Wrap"
+                  Spacing="1">
+            @foreach (var (label, langId) in LanguageLabels)
             {
                 var lid = (int)langId;
                 <MudCheckBox T="bool"
                              Label="@label"
                              Value="@dex.GetLanguageFlag(SpeciesId, lid)"
-                             ValueChanged="@(v => { dex.SetLanguageFlag(SpeciesId, lid, v); StateHasChanged(); })"/>
+                             ValueChanged="@(v =>
+                                           {
+                                               dex.SetLanguageFlag(SpeciesId, lid, v);
+                                               StateHasChanged();
+                                           })"/>
             }
         </MudStack>
 
     </MudStack>
-}
-
-@code {
-    private static readonly (string Label, LanguageID LangId)[] _languageLabels =
-    [
-        ("JPN", LanguageID.Japanese), ("ENG", LanguageID.English), ("FRE", LanguageID.French),
-        ("ITA", LanguageID.Italian), ("GER", LanguageID.German), ("SPA", LanguageID.Spanish),
-        ("KOR", LanguageID.Korean), ("CHS", LanguageID.ChineseS), ("CHT", LanguageID.ChineseT),
-    ];
 }

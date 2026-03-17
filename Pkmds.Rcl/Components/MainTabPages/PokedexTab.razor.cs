@@ -2,9 +2,6 @@
 
 public partial class PokedexTab
 {
-    // Incremented after every bulk operation to signal PokedexSpeciesGrid to rebuild.
-    private int _gridRefreshToken;
-
     private double caughtPercent;
 
     // Cached dex stats — computed once per render cycle and after every bulk
@@ -13,7 +10,11 @@ public partial class PokedexTab
     // the UI never shows a fraction exceeding 100 %.
     private int dexTotal;
     private int displayCaughtCount;
+
     private int displaySeenCount;
+
+    // Incremented after every bulk operation to signal PokedexSpeciesGrid to rebuild.
+    private int gridRefreshToken;
     private double seenPercent;
 
     // Gen 8 LA uses PokedexSave8a (no Zukan); SeenAll and Clear are not applicable.
@@ -212,7 +213,7 @@ public partial class PokedexTab
         }
 
         RefreshDexStats();
-        _gridRefreshToken++;
+        gridRefreshToken++;
     }
 
     private static void FillGen1Pokedex(SAV1 s1)
@@ -440,7 +441,7 @@ public partial class PokedexTab
         }
 
         RefreshDexStats();
-        _gridRefreshToken++;
+        gridRefreshToken++;
         await Task.Yield();
     }
 
@@ -540,7 +541,7 @@ public partial class PokedexTab
         }
 
         RefreshDexStats();
-        _gridRefreshToken++;
+        gridRefreshToken++;
         await Task.Yield();
     }
 }

@@ -2,6 +2,13 @@ namespace Pkmds.Rcl.Components.MainTabPages.Pokedex.Gen4;
 
 public partial class PokedexGen4SpeciesPanel
 {
+    // Gen 4 bit order: JPN=0, ENG=1, FRE=2, ITA=3, GER=4, SPA=5
+    // (Zukan4.GetGen4LanguageBitIndex handles the LanguageID → bit index mapping)
+    private static readonly (string Label, int Index)[] LanguageLabels =
+    [
+        ("JPN", 0), ("ENG", 1), ("FRE", 2), ("ITA", 3), ("GER", 4), ("SPA", 5)
+    ];
+
     [Parameter]
     [EditorRequired]
     public ushort SpeciesId { get; set; }
@@ -16,6 +23,7 @@ public partial class PokedexGen4SpeciesPanel
             var gender = (byte)(pi.RandomGender() & 1);
             dex.SetSeenGenderNewFlag(SpeciesId, gender);
         }
+
         StateHasChanged();
     }
 
@@ -32,6 +40,7 @@ public partial class PokedexGen4SpeciesPanel
             var gender = (byte)(pi.RandomGender() & 1);
             dex.SetSeenGenderNewFlag(SpeciesId, gender);
         }
+
         StateHasChanged();
     }
 
@@ -40,16 +49,24 @@ public partial class PokedexGen4SpeciesPanel
         var single = dex.GetSeenSingleGender(SpeciesId);
         dex.SetSeenGenderFirst(SpeciesId, newFirst);
         if (single)
+        {
             dex.SetSeenGenderSecond(SpeciesId, newFirst);
+        }
+
         StateHasChanged();
     }
 
     private void OnBothGendersChanged(Zukan4 dex, int firstGender, bool bothSeen)
     {
         if (bothSeen)
+        {
             dex.SetSeenGenderSecond(SpeciesId, firstGender ^ 1);
+        }
         else
+        {
             dex.SetSeenGenderSecond(SpeciesId, firstGender);
+        }
+
         StateHasChanged();
     }
 
@@ -58,7 +75,9 @@ public partial class PokedexGen4SpeciesPanel
         if (SpeciesId == (ushort)Species.Unown)
         {
             if (value)
+            {
                 dex.AddUnownForm(formIdx);
+            }
             else
             {
                 // Remove by rebuilding forms list without this entry
@@ -86,12 +105,15 @@ public partial class PokedexGen4SpeciesPanel
                 dex.SetForms(SpeciesId, [.. list]);
             }
         }
+
         StateHasChanged();
     }
 
-    private void OnSpindaPidChanged(Zukan4 dex, string hex)
+    private static void OnSpindaPidChanged(Zukan4 dex, string hex)
     {
-        if (uint.TryParse(hex, System.Globalization.NumberStyles.HexNumber, null, out var pid))
+        if (uint.TryParse(hex, NumberStyles.HexNumber, null, out var pid))
+        {
             dex.SpindaPID = pid;
+        }
     }
 }

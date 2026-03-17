@@ -11,25 +11,38 @@
         <MudCheckBox T="bool"
                      Label="Caught"
                      Value="@dex.GetCaught(SpeciesId)"
-                     ValueChanged="@(v => { dex.SetCaught(SpeciesId, v); if (v) dex.SetSeen(SpeciesId, 0, true); StateHasChanged(); })"/>
+                     ValueChanged="@(v =>
+                                   {
+                                       dex.SetCaught(SpeciesId, v);
+                                       if (v) dex.SetSeen(SpeciesId, 0, true);
+                                       StateHasChanged();
+                                   })"/>
 
         @* Seen (4 regions) *@
         <MudText Typo="@Typo.subtitle2">Seen</MudText>
-        <MudStack Row Wrap="@Wrap.Wrap" Spacing="1">
-            @foreach (var (label, region) in _seenRegions)
+        <MudStack Row
+                  Wrap="@Wrap.Wrap"
+                  Spacing="1">
+            @foreach (var (label, region) in SeenRegions)
             {
                 var r = region;
                 <MudCheckBox T="bool"
                              Label="@label"
                              Value="@dex.GetSeen(SpeciesId, r)"
-                             ValueChanged="@(v => { dex.SetSeen(SpeciesId, r, v); StateHasChanged(); })"/>
+                             ValueChanged="@(v =>
+                                           {
+                                               dex.SetSeen(SpeciesId, r, v);
+                                               StateHasChanged();
+                                           })"/>
             }
         </MudStack>
 
         @* Displayed *@
         <MudText Typo="@Typo.subtitle2">Displayed Variant</MudText>
-        <MudStack Row Wrap="@Wrap.Wrap" Spacing="1">
-            @foreach (var (label, region) in _seenRegions)
+        <MudStack Row
+                  Wrap="@Wrap.Wrap"
+                  Spacing="1">
+            @foreach (var (label, region) in SeenRegions)
             {
                 var r = region;
                 <MudCheckBox T="bool"
@@ -42,8 +55,11 @@
         @* Partner form note for Pikachu/Eevee *@
         @if (SpeciesId == (ushort)Species.Pikachu || SpeciesId == (ushort)Species.Eevee)
         {
-            <MudAlert Severity="@Severity.Info" Dense>
-                Partner @(SpeciesId == (ushort)Species.Pikachu ? "Pikachu" : "Eevee") form is stored separately and not shown in the Pokédex.
+            <MudAlert Severity="@Severity.Info"
+                      Dense>
+                Partner @(SpeciesId == (ushort)Species.Pikachu
+                                ? "Pikachu"
+                                : "Eevee") form is stored separately and not shown in the Pokédex.
             </MudAlert>
         }
 
@@ -51,57 +67,64 @@
         @if (Zukan7b.TryGetSizeEntryIndex(SpeciesId, 0, out _))
         {
             <MudText Typo="@Typo.subtitle2">Size Records (form 0)</MudText>
-            <MudSimpleTable Dense Style="max-width:380px;">
+            <MudSimpleTable Dense
+                            Style="max-width:380px;">
                 <thead>
-                    <tr><th>Record</th><th>Height</th><th>Weight</th><th>Flagged</th></tr>
+                <tr>
+                    <th>Record</th>
+                    <th>Height</th>
+                    <th>Weight</th>
+                    <th>Flagged</th>
+                </tr>
                 </thead>
                 <tbody>
-                    @foreach (var (label, group) in _sizeGroups)
-                    {
-                        var hasData = dex.GetSizeData(group, SpeciesId, 0,
-                            out var h, out var w, out var flagged);
-                        <tr>
-                            <td>@label</td>
-                            <td>@(hasData ? h.ToString() : "—")</td>
-                            <td>@(hasData ? w.ToString() : "—")</td>
-                            <td>@(hasData ? (flagged ? "✓" : "") : "—")</td>
-                        </tr>
-                    }
+                @foreach (var (label, group) in SizeGroups)
+                {
+                    var hasData = dex.GetSizeData(group, SpeciesId, 0,
+                        out var h, out var w, out var flagged);
+                    <tr>
+                        <td>@label</td>
+                        <td>@(hasData
+                                ? h.ToString()
+                                : "—")</td>
+                        <td>@(hasData
+                                ? w.ToString()
+                                : "—")</td>
+                        <td>
+                            @(hasData
+                                ? flagged
+                                    ? "✓"
+                                    : ""
+                                : "—")
+                        </td>
+                    </tr>
+                }
                 </tbody>
             </MudSimpleTable>
-            <MudText Typo="@Typo.caption" Class="mud-text-secondary">
+            <MudText Typo="@Typo.caption"
+                     Class="mud-text-secondary">
                 Size records are set automatically when you obtain a Pokémon.
             </MudText>
         }
 
         @* Language flags *@
         <MudText Typo="@Typo.subtitle2">Languages Obtained</MudText>
-        <MudStack Row Wrap="@Wrap.Wrap" Spacing="1">
-            @for (var i = 0; i < _languageLabels.Length; i++)
+        <MudStack Row
+                  Wrap="@Wrap.Wrap"
+                  Spacing="1">
+            @for (var i = 0; i < LanguageLabels.Length; i++)
             {
                 var li = i;
                 <MudCheckBox T="bool"
-                             Label="@_languageLabels[li]"
+                             Label="@LanguageLabels[li]"
                              Value="@dex.GetLanguageFlag(bit, li)"
-                             ValueChanged="@(v => { dex.SetLanguageFlag(bit, li, v); StateHasChanged(); })"/>
+                             ValueChanged="@(v =>
+                                           {
+                                               dex.SetLanguageFlag(bit, li, v);
+                                               StateHasChanged();
+                                           })"/>
             }
         </MudStack>
 
     </MudStack>
-}
-
-@code {
-    private static readonly (string Label, int Region)[] _seenRegions =
-    [
-        ("Male", 0), ("Female", 1), ("Male ★", 2), ("Female ★", 3),
-    ];
-
-    private static readonly string[] _languageLabels =
-        ["JPN", "ENG", "FRE", "ITA", "GER", "SPA", "KOR", "CHS", "CHT"];
-
-    private static readonly (string Label, DexSizeType Group)[] _sizeGroups =
-    [
-        ("Min Height", DexSizeType.MinHeight), ("Max Height", DexSizeType.MaxHeight),
-        ("Min Weight", DexSizeType.MinWeight), ("Max Weight", DexSizeType.MaxWeight),
-    ];
 }
