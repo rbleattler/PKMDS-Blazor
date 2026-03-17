@@ -38,4 +38,33 @@ public partial class PokedexGen7bSpeciesPanel
 
         StateHasChanged();
     }
+
+    /// <summary>
+    /// Toggles a size record's "used" state. Unchecking resets it to PKHeX defaults
+    /// (0xFE height, 0x7F weight); checking seeds it with a sensible initial scalar
+    /// (0 for min records, 255 for max records) matching PKHeX's GiveAll behaviour.
+    /// </summary>
+    private void OnSizeUsedChanged(Zukan7b dex, DexSizeType group, bool used, int sizeIndex)
+    {
+        if (used)
+        {
+            var seed = group is DexSizeType.MinHeight or DexSizeType.MinWeight
+                ? (byte)0
+                : (byte)255;
+            dex.SetSizeData(group, sizeIndex, seed, seed);
+        }
+        else
+        {
+            dex.SetSizeData(group, sizeIndex, Zukan7b.DefaultEntryValueH, Zukan7b.DefaultEntryValueW);
+        }
+
+        StateHasChanged();
+    }
+
+    /// <summary>Writes an updated height, weight, or flag to an existing size record.</summary>
+    private void OnSizeValueChanged(Zukan7b dex, DexSizeType group, int sizeIndex, byte h, byte w, bool flag)
+    {
+        dex.SetSizeData(group, sizeIndex, h, w, flag);
+        StateHasChanged();
+    }
 }

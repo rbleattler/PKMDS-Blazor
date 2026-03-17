@@ -107,6 +107,32 @@
                                  ValueChanged="@(v => sav8bs.Zukan.HasNationalDex = v)"/>
                 </MudStack>
                 break;
+            case SAV7b sav7b:
+                <MudStack Row
+                          Wrap="@Wrap.Wrap"
+                          AlignItems="AlignItems.Center"
+                          Spacing="3">
+                    <MudNumericField T="@uint"
+                                     Label="Total Captured"
+                                     Value="@sav7b.Captured.TotalCaptured"
+                                     ValueChanged="@(v => sav7b.Captured.TotalCaptured = v)"
+                                     Min="0"
+                                     Max="999999999"
+                                     Style="max-width:160px;"/>
+                    <MudNumericField T="@uint"
+                                     Label="Total Transferred"
+                                     Value="@sav7b.Captured.TotalTransferred"
+                                     ValueChanged="@(v => sav7b.Captured.TotalTransferred = v)"
+                                     Min="0"
+                                     Max="999999999"
+                                     Style="max-width:160px;"/>
+                    <MudTooltip Text="Recalculate totals from per-species counts">
+                        <MudIconButton Icon="@Icons.Material.Filled.Calculate"
+                                       OnClick="@(() => OnRecalculate(sav7b))"
+                                       Color="@Color.Primary"/>
+                    </MudTooltip>
+                </MudStack>
+                break;
         }
 
         <PokedexSpeciesGrid RefreshToken="@gridRefreshToken"/>

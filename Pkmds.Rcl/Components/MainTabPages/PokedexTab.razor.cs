@@ -544,4 +544,11 @@ public partial class PokedexTab
         gridRefreshToken++;
         await Task.Yield();
     }
+
+    private void OnRecalculate(SAV7b sav7B)
+    {
+        sav7B.Captured.TotalCaptured = sav7B.Captured.CalculateTotalCaptured();
+        sav7B.Captured.TotalTransferred = sav7B.Captured.CalculateTotalTransferred();
+        StateHasChanged();
+    }
 }

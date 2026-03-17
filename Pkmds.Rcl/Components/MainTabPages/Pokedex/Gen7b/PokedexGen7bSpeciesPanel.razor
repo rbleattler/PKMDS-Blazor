@@ -63,15 +63,30 @@
             </MudAlert>
         }
 
-        @* Size Records *@
-        @if (Zukan7b.TryGetSizeEntryIndex(SpeciesId, 0, out _))
+        @* Size Records — one table per form that has size data (Normal, Mega, Alolan, etc.) *@
+        @{
+            var szPi = sav7b.Personal.GetFormEntry(SpeciesId, 0);
+            var szFormCount = szPi.FormCount;
+            var szFormNames = FormConverter.GetFormList(SpeciesId, GameInfo.Strings.types,
+                GameInfo.Strings.forms, GameInfo.GenderSymbolASCII, EntityContext.Gen7b);
+        }
+        @for (byte szForm = 0; szForm < szFormCount; szForm++)
         {
-            <MudText Typo="@Typo.subtitle2">Size Records (form 0)</MudText>
+            @if (!Zukan7b.TryGetSizeEntryIndex(SpeciesId, szForm, out var sizeFormIdx))
+            {
+                continue;
+            }
+
+            var sfLabel = szForm < szFormNames.Length
+                ? szFormNames[szForm]
+                : $"Form {szForm}";
+            <MudText Typo="@Typo.subtitle2">Size Records (@sfLabel)</MudText>
             <MudSimpleTable Dense
-                            Style="max-width:380px;">
+                            Style="max-width:480px;">
                 <thead>
                 <tr>
                     <th>Record</th>
+                    <th>Used</th>
                     <th>Height</th>
                     <th>Weight</th>
                     <th>Flagged</th>
@@ -80,31 +95,85 @@
                 <tbody>
                 @foreach (var (label, group) in SizeGroups)
                 {
-                    var hasData = dex.GetSizeData(group, SpeciesId, 0,
-                        out var h, out var w, out var flagged);
+                    var grp = group;
+                    var idx = sizeFormIdx;
+                    var hasData = dex.GetSizeData(grp, idx, out var h, out var w, out var flagged);
                     <tr>
                         <td>@label</td>
-                        <td>@(hasData
-                                ? h.ToString()
-                                : "—")</td>
-                        <td>@(hasData
-                                ? w.ToString()
-                                : "—")</td>
                         <td>
-                            @(hasData
-                                ? flagged
-                                    ? "✓"
-                                    : ""
-                                : "—")
+                            <MudCheckBox T="@bool"
+                                         Value="@hasData"
+                                         ValueChanged="@(v => OnSizeUsedChanged(dex, grp, v, idx))"/>
+                        </td>
+                        <td>
+                            <MudNumericField T="@byte"
+                                             Value="@h"
+                                             ValueChanged="@(v => OnSizeValueChanged(dex, grp, idx, v, w, flagged))"
+                                             Disabled="@(!hasData)"
+                                             Min="0"
+                                             Max="255"
+                                             Style="max-width:70px;"/>
+                        </td>
+                        <td>
+                            <MudNumericField T="@byte"
+                                             Value="@w"
+                                             ValueChanged="@(v => OnSizeValueChanged(dex, grp, idx, h, v, flagged))"
+                                             Disabled="@(!hasData)"
+                                             Min="0"
+                                             Max="255"
+                                             Style="max-width:70px;"/>
+                        </td>
+                        <td>
+                            <MudCheckBox T="@bool"
+                                         Value="@flagged"
+                                         ValueChanged="@(v => OnSizeValueChanged(dex, grp, idx, h, w, v))"
+                                         Disabled="@(!hasData)"/>
                         </td>
                     </tr>
                 }
                 </tbody>
             </MudSimpleTable>
+        }
+        @if (szFormCount > 0 && Zukan7b.TryGetSizeEntryIndex(SpeciesId, 0, out _))
+        {
             <MudText Typo="@Typo.caption"
                      Class="mud-text-secondary">
                 Size records are set automatically when you obtain a Pokémon.
+                Check "Used" to seed a record manually; uncheck to reset it to defaults.
             </MudText>
+        }
+
+        @* Capture Records (Kanto + Meltan/Melmetal species only) *@
+        @if (CaptureRecords.GetSpeciesIndex(SpeciesId) != ushort.MaxValue)
+        {
+            var capture = sav7b.Captured;
+            <MudText Typo="@Typo.subtitle2">Capture Records</MudText>
+            <MudStack Row
+                      Spacing="3"
+                      AlignItems="AlignItems.Center">
+                <MudNumericField T="@uint"
+                                 Label="Captured"
+                                 Value="@capture.GetCapturedCount(SpeciesId)"
+                                 ValueChanged="@(v =>
+                                               {
+                                                   capture.SetCapturedCount(SpeciesId, v);
+                                                   StateHasChanged();
+                                               })"
+                                 Min="0"
+                                 Max="9999"
+                                 Style="max-width:110px;"/>
+                <MudNumericField T="@uint"
+                                 Label="Transferred"
+                                 Value="@capture.GetTransferredCount(SpeciesId)"
+                                 ValueChanged="@(v =>
+                                               {
+                                                   capture.SetTransferredCount(SpeciesId, v);
+                                                   StateHasChanged();
+                                               })"
+                                 Min="0"
+                                 Max="999999999"
+                                 Style="max-width:160px;"/>
+            </MudStack>
         }
 
         @* Language flags *@
