@@ -271,5 +271,10 @@ dotnet_style_qualification_for_event = false:suggestion
 dotnet_style_qualification_for_method = false:suggestion
 dotnet_style_prefer_collection_expression = when_types_exactly_match:suggestion
 
+# Razor code-behind files require 'partial' because the Razor compiler generates the other half.
+# Rider's cleanup incorrectly removes it when it can't see the generated .razor.g.cs counterpart.
+[*.razor.cs]
+resharper_partial_type_with_single_part_highlighting = none
+
 [*.{razor,js,css,html}]
 insert_final_newline = true

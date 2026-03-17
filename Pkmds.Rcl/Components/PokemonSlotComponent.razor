@@ -3,7 +3,9 @@
 <MudPaper Elevation="3"
           @onclick="@HandleClick"
           Class="@($"square-slot {GetClass()} {GetDragClass()} {ImageHelper.GetSpriteCssClass(Pokemon)}")">
-    <div draggable="@(IsDraggable() ? "true" : "false")"
+    <div draggable="@(IsDraggable()
+                        ? "true"
+                        : "false")"
          @ondragstart="@HandleDragStart"
          @ondragend="@HandleDragEnd"
          @ondragenter="@HandleDragEnter"
@@ -25,7 +27,7 @@
             <object class="pkm-sprite w-full h-auto object-contain block"
                     style="@(highResLoaded
                                ? "display:none"
-                               : "")"
+                               : string.Empty)"
                     type="image/png"
                     data="@ImageHelper.GetPokemonSpriteFilename(Pokemon)"
                     title="@title">
@@ -37,7 +39,7 @@
             @if (highResUrl is not null)
             {
                 <img @key="@((Pokemon.Species, Pokemon.Form, Pokemon.GetFormArgument(0), isShiny, lastLoadedIsFemale, AppState.SpriteStyle))"
-                     class="@($"pkm-sprite-hires {GetHiResSizeClass()} {(highResLoaded ? "pkm-sprite-hires--loaded" : "")}")"
+                     class="@($"pkm-sprite-hires {GetHiResSizeClass()} {(highResLoaded ? "pkm-sprite-hires--loaded" : string.Empty)}")"
                      src="@highResUrl"
                      title="@title"
                      alt="@title"

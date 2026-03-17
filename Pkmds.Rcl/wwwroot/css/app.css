@@ -403,8 +403,12 @@ body, html {
 }
 
 @keyframes update-pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.7); }
-    50%       { box-shadow: 0 0 0 6px rgba(33, 150, 243, 0); }
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.7);
+    }
+    50% {
+        box-shadow: 0 0 0 6px rgba(33, 150, 243, 0);
+    }
 }
 
 #blazor-error-ui {

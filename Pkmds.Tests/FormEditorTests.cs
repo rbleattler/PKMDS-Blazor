@@ -85,12 +85,12 @@ public class FormEditorTests
     }
 
     [Theory]
-    [InlineData((ushort)Species.Flabébé, 0)]  // Red
-    [InlineData((ushort)Species.Flabébé, 4)]  // White
-    [InlineData((ushort)Species.Floette, 0)]  // Red
-    [InlineData((ushort)Species.Floette, 4)]  // White
-    [InlineData((ushort)Species.Florges, 0)]  // Red
-    [InlineData((ushort)Species.Florges, 4)]  // White
+    [InlineData((ushort)Species.Flabébé, 0)] // Red
+    [InlineData((ushort)Species.Flabébé, 4)] // White
+    [InlineData((ushort)Species.Floette, 0)] // Red
+    [InlineData((ushort)Species.Floette, 4)] // White
+    [InlineData((ushort)Species.Florges, 0)] // Red
+    [InlineData((ushort)Species.Florges, 4)] // White
     public void FlowerColorDialog_FlowerFormIndex_CanBeSetOnPKM(ushort species, byte form)
     {
         var pk = new PK6 { Species = species, Form = form };

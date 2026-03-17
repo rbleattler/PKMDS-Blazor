@@ -226,17 +226,19 @@
                                  Variant="@Variant.Outlined"
                                  Size="@Size.Small">
                             @ResultCount encounter@(ResultCount == 1
-                                                          ? ""
+                                                          ? string.Empty
                                                           : "s") found
                         </MudChip>
                     }
 
-                    <div style="overflow-y: auto; max-height: calc(100vh - 280px);">
+                    <div style="overflow-x: auto;">
                         <MudTable T="@EncounterSearchResult"
                                   Items="@results"
                                   Dense
                                   Hover
                                   Bordered
+                                  FixedHeader
+                                  Height="calc(100vh - 280px)"
                                   @bind-SelectedItem="@selectedResult"
                                   SortLabel="Sort By"
                                   OnRowClick="@OnRowClickAsync"

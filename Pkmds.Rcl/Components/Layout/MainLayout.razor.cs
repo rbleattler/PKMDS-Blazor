@@ -67,6 +67,7 @@ public partial class MainLayout : IDisposable
                 break;
             // "found": JS already dispatched 'updateAvailable' → ShowUpdateMessage() sets IsUpdateAvailable = true
         }
+
         StateHasChanged();
     }
 

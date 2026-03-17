@@ -16,135 +16,135 @@
 {
     <div class="edit-form-outer">
 
-    <div class="flex flex-wrap gap-2 mt-2">
+        <div class="flex flex-wrap gap-2 mt-2">
 
-        <MudButton OnClick="@DeletePokemon"
-                   ButtonType="@ButtonType.Button"
-                   Color="@Color.Error"
-                   Size="@Size.Small"
-                   Variant="@Variant.Filled"
-                   Class="my-2"
-                   StartIcon="@Icons.Material.Filled.Delete"
-                   title="Delete Pokémon"
-                   Disabled="@(Pokemon.Species.IsInvalidSpecies())">
-            Delete
-        </MudButton>
+            <MudButton OnClick="@DeletePokemon"
+                       ButtonType="@ButtonType.Button"
+                       Color="@Color.Error"
+                       Size="@Size.Small"
+                       Variant="@Variant.Filled"
+                       Class="my-2"
+                       StartIcon="@Icons.Material.Filled.Delete"
+                       title="Delete Pokémon"
+                       Disabled="@(Pokemon.Species.IsInvalidSpecies())">
+                Delete
+            </MudButton>
 
-        <MudButton OnClick="@SaveAndClose"
-                   ButtonType="@ButtonType.Button"
-                   Variant="@Variant.Filled"
-                   StartIcon="@Icons.Material.Filled.Save"
-                   Class="my-2"
-                   Color="@Color.Primary"
-                   Size="@Size.Small"
-                   title="Save Pokémon"
-                   Disabled="@(Pokemon.Species.IsInvalidSpecies())">
-            Save
-        </MudButton>
+            <MudButton OnClick="@SaveAndClose"
+                       ButtonType="@ButtonType.Button"
+                       Variant="@Variant.Filled"
+                       StartIcon="@Icons.Material.Filled.Save"
+                       Class="my-2"
+                       Color="@Color.Primary"
+                       Size="@Size.Small"
+                       title="Save Pokémon"
+                       Disabled="@(Pokemon.Species.IsInvalidSpecies())">
+                Save
+            </MudButton>
 
-        <MudButton OnClick="@OnClickCopy"
-                   ButtonType="@ButtonType.Button"
-                   Variant="@Variant.Filled"
-                   StartIcon="@Icons.Material.Filled.ContentCopy"
-                   Class="my-2"
-                   Color="@Color.Default"
-                   Size="@Size.Small"
-                   title="Copy Pokémon"
-                   Disabled="@(Pokemon.Species.IsInvalidSpecies())">
-            Copy
-        </MudButton>
+            <MudButton OnClick="@OnClickCopy"
+                       ButtonType="@ButtonType.Button"
+                       Variant="@Variant.Filled"
+                       StartIcon="@Icons.Material.Filled.ContentCopy"
+                       Class="my-2"
+                       Color="@Color.Default"
+                       Size="@Size.Small"
+                       title="Copy Pokémon"
+                       Disabled="@(Pokemon.Species.IsInvalidSpecies())">
+                Copy
+            </MudButton>
 
-        <MudButton OnClick="@OnClickPaste"
-                   ButtonType="@ButtonType.Button"
-                   Variant="@Variant.Filled"
-                   StartIcon="@Icons.Material.Filled.ContentPaste"
-                   Class="my-2"
-                   Color="@Color.Default"
-                   Size="@Size.Small"
-                   title="Paste Pokémon"
-                   Disabled="@(AppState.CopiedPokemon is null)">
-            Paste
-        </MudButton>
+            <MudButton OnClick="@OnClickPaste"
+                       ButtonType="@ButtonType.Button"
+                       Variant="@Variant.Filled"
+                       StartIcon="@Icons.Material.Filled.ContentPaste"
+                       Class="my-2"
+                       Color="@Color.Default"
+                       Size="@Size.Small"
+                       title="Paste Pokémon"
+                       Disabled="@(AppState.CopiedPokemon is null)">
+                Paste
+            </MudButton>
 
-        <MudButton OnClick="@ExportAsShowdown"
-                   ButtonType="@ButtonType.Button"
-                   Variant="@Variant.Filled"
-                   StartIcon="@Icons.Material.Filled.Share"
-                   Class="my-2"
-                   Color="@Color.Default"
-                   Size="@Size.Small"
-                   title="Export Pokémon as Showdown"
-                   Disabled="@(Pokemon.Species.IsInvalidSpecies())">
-            Showdown
-        </MudButton>
+            <MudButton OnClick="@ExportAsShowdown"
+                       ButtonType="@ButtonType.Button"
+                       Variant="@Variant.Filled"
+                       StartIcon="@Icons.Material.Filled.Share"
+                       Class="my-2"
+                       Color="@Color.Default"
+                       Size="@Size.Small"
+                       title="Export Pokémon as Showdown"
+                       Disabled="@(Pokemon.Species.IsInvalidSpecies())">
+                Showdown
+            </MudButton>
 
-    </div>
+        </div>
 
-    <div class="edit-form-tabs-container">
+        <div class="edit-form-tabs-container">
 
-        <MudTabs Outlined
-                 Rounded
-                 Border
-                 Class="edit-form-tabs">
+            <MudTabs Outlined
+                     Rounded
+                     Border
+                     Class="edit-form-tabs">
 
-            <MudTabPanel Text="Main">
-                <MainTab Pokemon="@Pokemon"
-                         Analysis="@Analysis"/>
-            </MudTabPanel>
-
-            @if (saveGeneration >= 2)
-            {
-                <MudTabPanel Text="Met">
-                    <MetTab Pokemon="@Pokemon"
-                            Analysis="@Analysis"/>
-                </MudTabPanel>
-            }
-
-            <MudTabPanel Text="Stats">
-                <StatsTab Pokemon="@Pokemon"
-                          Analysis="@Analysis"/>
-            </MudTabPanel>
-
-            <MudTabPanel Text="Moves">
-                <MovesTab Pokemon="@Pokemon"
-                          Analysis="@Analysis"/>
-            </MudTabPanel>
-
-            @if (saveGeneration >= 3)
-            {
-                <MudTabPanel Text="Cosmetic">
-                    <CosmeticTab Pokemon="@Pokemon"/>
-                </MudTabPanel>
-            }
-
-            @if (Pokemon is IContestStats)
-            {
-                <MudTabPanel Text="Contest">
-                    <ContestStatsTab Pokemon="@Pokemon"/>
-                </MudTabPanel>
-            }
-
-            @if (saveGeneration >= 3)
-            {
-                <MudTabPanel Text="Ribbons">
-                    <RibbonsTab Pokemon="@Pokemon"
-                                Analysis="@Analysis"/>
-                </MudTabPanel>
-            }
-
-            <MudTabPanel Text="OT/Misc">
-                <OtMiscTab Pokemon="@Pokemon"
-                           Analysis="@Analysis"/>
-            </MudTabPanel>
-
-            <MudTabPanel Text="Legality">
-                <LegalityTab Pokemon="@Pokemon"
+                <MudTabPanel Text="Main">
+                    <MainTab Pokemon="@Pokemon"
                              Analysis="@Analysis"/>
-            </MudTabPanel>
+                </MudTabPanel>
 
-        </MudTabs>
+                @if (saveGeneration >= 2)
+                {
+                    <MudTabPanel Text="Met">
+                        <MetTab Pokemon="@Pokemon"
+                                Analysis="@Analysis"/>
+                    </MudTabPanel>
+                }
 
-    </div>
+                <MudTabPanel Text="Stats">
+                    <StatsTab Pokemon="@Pokemon"
+                              Analysis="@Analysis"/>
+                </MudTabPanel>
+
+                <MudTabPanel Text="Moves">
+                    <MovesTab Pokemon="@Pokemon"
+                              Analysis="@Analysis"/>
+                </MudTabPanel>
+
+                @if (saveGeneration >= 3)
+                {
+                    <MudTabPanel Text="Cosmetic">
+                        <CosmeticTab Pokemon="@Pokemon"/>
+                    </MudTabPanel>
+                }
+
+                @if (Pokemon is IContestStats)
+                {
+                    <MudTabPanel Text="Contest">
+                        <ContestStatsTab Pokemon="@Pokemon"/>
+                    </MudTabPanel>
+                }
+
+                @if (saveGeneration >= 3)
+                {
+                    <MudTabPanel Text="Ribbons">
+                        <RibbonsTab Pokemon="@Pokemon"
+                                    Analysis="@Analysis"/>
+                    </MudTabPanel>
+                }
+
+                <MudTabPanel Text="OT/Misc">
+                    <OtMiscTab Pokemon="@Pokemon"
+                               Analysis="@Analysis"/>
+                </MudTabPanel>
+
+                <MudTabPanel Text="Legality">
+                    <LegalityTab Pokemon="@Pokemon"
+                                 Analysis="@Analysis"/>
+                </MudTabPanel>
+
+            </MudTabs>
+
+        </div>
 
     </div>
 }
