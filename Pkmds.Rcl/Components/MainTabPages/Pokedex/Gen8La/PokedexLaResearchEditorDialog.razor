@@ -1,0 +1,132 @@
+@inherits BasePkmdsComponent
+
+@if (AppState.SaveFile is SAV8LA sav8La)
+{
+    var dex = sav8La.Blocks.PokedexSave;
+
+    <MudDialog>
+        <TitleContent>
+            <MudText Typo="@Typo.h6">Pokédex Research Editor — @speciesName</MudText>
+        </TitleContent>
+        <DialogContent>
+            <MudTabs Elevation="0"
+                     Rounded
+                     ApplyEffectsToContainer>
+                @* Catch tab *@
+                <MudTabPanel Text="Catch">
+                    <MudStack Spacing="1"
+                              Class="pa-2">
+                        @foreach (var (label, taskType, idx) in catchTasks)
+                        {
+                            var lt = label;
+                            var tt = taskType;
+                            var ti = idx;
+                            dex.GetResearchTaskProgressByForce(SpeciesId, tt, ti, out var curVal);
+                            <MudStack Row
+                                      Justify="Justify.SpaceBetween"
+                                      AlignItems="AlignItems.Center"
+                                      Spacing="2">
+                                <MudText Style="flex:1;">@lt</MudText>
+                                <MudNumericField T="int"
+                                                Value="@curVal"
+                                                ValueChanged="@(v => OnValueChanged(dex, tt, ti, v))"
+                                                Min="0"
+                                                Max="60000"
+                                                Style="max-width:100px;"
+                                                Margin="@Margin.Dense"/>
+                            </MudStack>
+                        }
+                    </MudStack>
+                </MudTabPanel>
+
+                @* Battle tab *@
+                <MudTabPanel Text="Battle">
+                    <MudStack Spacing="1"
+                              Class="pa-2">
+                        @foreach (var (label, taskType, idx) in battleTasks)
+                        {
+                            var lt = label;
+                            var tt = taskType;
+                            var ti = idx;
+                            dex.GetResearchTaskProgressByForce(SpeciesId, tt, ti, out var curVal);
+                            <MudStack Row
+                                      Justify="Justify.SpaceBetween"
+                                      AlignItems="AlignItems.Center"
+                                      Spacing="2">
+                                <MudText Style="flex:1;">@lt</MudText>
+                                <MudNumericField T="int"
+                                                Value="@curVal"
+                                                ValueChanged="@(v => OnValueChanged(dex, tt, ti, v))"
+                                                Min="0"
+                                                Max="60000"
+                                                Style="max-width:100px;"
+                                                Margin="@Margin.Dense"/>
+                            </MudStack>
+                        }
+                    </MudStack>
+                </MudTabPanel>
+
+                @* Interact tab *@
+                <MudTabPanel Text="Interact">
+                    <MudStack Spacing="1"
+                              Class="pa-2">
+                        @foreach (var (label, taskType, idx) in interactTasks)
+                        {
+                            var lt = label;
+                            var tt = taskType;
+                            var ti = idx;
+                            dex.GetResearchTaskProgressByForce(SpeciesId, tt, ti, out var curVal);
+                            <MudStack Row
+                                      Justify="Justify.SpaceBetween"
+                                      AlignItems="AlignItems.Center"
+                                      Spacing="2">
+                                <MudText Style="flex:1;">@lt</MudText>
+                                <MudNumericField T="int"
+                                                Value="@curVal"
+                                                ValueChanged="@(v => OnValueChanged(dex, tt, ti, v))"
+                                                Min="0"
+                                                Max="60000"
+                                                Style="max-width:100px;"
+                                                Margin="@Margin.Dense"/>
+                            </MudStack>
+                        }
+                    </MudStack>
+                </MudTabPanel>
+
+                @* Observe tab *@
+                <MudTabPanel Text="Observe">
+                    <MudStack Spacing="1"
+                              Class="pa-2">
+                        @foreach (var (label, taskType, idx) in observeTasks)
+                        {
+                            var lt = label;
+                            var tt = taskType;
+                            var ti = idx;
+                            dex.GetResearchTaskProgressByForce(SpeciesId, tt, ti, out var curVal);
+                            <MudStack Row
+                                      Justify="Justify.SpaceBetween"
+                                      AlignItems="AlignItems.Center"
+                                      Spacing="2">
+                                <MudText Style="flex:1;">@lt</MudText>
+                                <MudNumericField T="int"
+                                                Value="@curVal"
+                                                ValueChanged="@(v => OnValueChanged(dex, tt, ti, v))"
+                                                Min="0"
+                                                Max="60000"
+                                                Style="max-width:100px;"
+                                                Margin="@Margin.Dense"/>
+                            </MudStack>
+                        }
+                    </MudStack>
+                </MudTabPanel>
+            </MudTabs>
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="@(() => Close(dex))"
+                       Variant="@Variant.Filled"
+                       Color="@Color.Primary">
+                Close
+            </MudButton>
+        </DialogActions>
+    </MudDialog>
+}

@@ -1,0 +1,77 @@
+name: UAT — Close Preview Environments
+
+on:
+  # Always runs when a PR targeting main is closed, regardless of which files changed.
+  # Intentionally has no paths-ignore — environment cleanup must happen unconditionally.
+  pull_request:
+    branches: [main]
+    types: [closed]
+
+  # Weekly sweep: catches any environments that slipped through (e.g. workflow failures,
+  # PRs closed while only ignored-path files changed before the split-workflow fix).
+  schedule:
+    - cron: '0 3 * * 0'   # 03:00 UTC every Sunday
+
+  # Manual trigger for on-demand cleanup (e.g. when the staging-environment limit is hit).
+  workflow_dispatch:
+
+jobs:
+  # ── Close the environment for the PR that just closed ────────────────────────
+  close_pr_staging:
+    name: Close UAT for PR ${{ github.event.pull_request.number }}
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Close staging environment
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          action: close
+
+  # ── Sweep stale environments (schedule / manual dispatch) ────────────────────
+  find_stale:
+    name: Find recently-closed PRs
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    outputs:
+      pr-numbers: ${{ steps.find.outputs.pr-numbers }}
+    steps:
+      - name: List closed PRs
+        id: find
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'closed',
+              base: 'main',
+              per_page: 100,
+            });
+            // Target PRs closed within the last 60 days.
+            const cutoff = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
+            const recent = prs
+              .filter(pr => new Date(pr.closed_at) > cutoff)
+              .map(pr => pr.number);
+            console.log(`Targeting ${recent.length} closed PR(s): ${recent.join(', ')}`);
+            core.setOutput('pr-numbers', JSON.stringify(recent.length ? recent : []));
+
+  close_stale:
+    name: Close stale env — PR ${{ matrix.pr }}
+    needs: find_stale
+    runs-on: ubuntu-latest
+    if: needs.find_stale.outputs.pr-numbers != '[]'
+    strategy:
+      fail-fast: false   # attempt all PRs even if some environments are already gone
+      matrix:
+        pr: ${{ fromJson(needs.find_stale.outputs.pr-numbers) }}
+    steps:
+      - name: Close preview environment
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          action: close
+          # Azure SWA names PR preview environments "pr-{number}".
+          # If environments show differently in the Azure Portal, adjust this value.
+          deployment_environment: pr-${{ matrix.pr }}
+        continue-on-error: true   # environment may already be closed; treat as success

@@ -2,6 +2,7 @@
 
 @if (AppState.SaveFile is { HasPokeDex: true })
 {
+    <div class="pokedex-tab-content">
     <MudStack>
         <MudText Typo="@Typo.body2">Seen: @displaySeenCount / @dexTotal</MudText>
         <MudProgressLinear Color="@Color.Info"
@@ -20,21 +21,36 @@
                 Fill Pokédex
             </MudButton>
 
-            <MudButton OnClick="@SeenAllPokedex"
-                       Variant="@Variant.Filled"
-                       Color="@Color.Secondary"
-                       StartIcon=""
-                       Disabled="@IsLegendArceus">
-                Seen All
-            </MudButton>
-
-            <MudButton OnClick="@ClearPokedex"
-                       Variant="@Variant.Filled"
-                       Color="@Color.Error"
-                       StartIcon=""
-                       Disabled="@IsLegendArceus">
-                Clear Pokédex
-            </MudButton>
+            @if (IsLegendArceus)
+            {
+                <MudButton OnClick="@(async () => { await FillPokedex(); gridRefreshToken++; })"
+                           Variant="@Variant.Filled"
+                           Color="@Color.Secondary"
+                           StartIcon="@Icons.Material.Filled.AutoAwesome">
+                    Complete All Research
+                </MudButton>
+                <MudButton OnClick="@(async () => { if (AppState.SaveFile is SAV8LA la) { await ClearAllLaResearch(la); RefreshDexStats(); gridRefreshToken++; } })"
+                           Variant="@Variant.Outlined"
+                           Color="@Color.Error"
+                           StartIcon="@Icons.Material.Filled.DeleteSweep">
+                    Clear All Research
+                </MudButton>
+            }
+            else
+            {
+                <MudButton OnClick="@SeenAllPokedex"
+                           Variant="@Variant.Filled"
+                           Color="@Color.Secondary"
+                           StartIcon="">
+                    Seen All
+                </MudButton>
+                <MudButton OnClick="@ClearPokedex"
+                           Variant="@Variant.Filled"
+                           Color="@Color.Error"
+                           StartIcon="">
+                    Clear Pokédex
+                </MudButton>
+            }
         </MudStack>
 
         @* National Dex flags — own row, always visible above the grid so they are not
@@ -160,4 +176,5 @@
                                 OnSpeciesChanged="@OnSpeciesChangedInGrid"/>
         }
     </MudStack>
+    </div>
 }
