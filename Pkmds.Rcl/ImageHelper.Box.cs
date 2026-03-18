@@ -23,9 +23,13 @@ public static partial class ImageHelper
         if (string.IsNullOrEmpty(abbreviation))
             return string.Empty;
 
-        // SV wallpaper 20 (ID 19) ships as two named variants; use the normal one.
+        // SV wallpaper 20 (ID 19) ships as two game-specific variants:
+        // Naranja Academy (Scarlet) and Uva Academy (Violet).
         if (abbreviation == "sv" && wallpaperId == 19)
-            return $"{SpritesRoot}box/sv/box_wp20sv_n.png";
+        {
+            var variant = gameVersion == GameVersion.SL ? "n" : "u";
+            return $"{SpritesRoot}box/sv/box_wp20sv_{variant}.png";
+        }
 
         // Sprite files use 1-based numbering: wallpaper ID 0 → box_wp01, etc.
         var fileIndex = wallpaperId + 1;
