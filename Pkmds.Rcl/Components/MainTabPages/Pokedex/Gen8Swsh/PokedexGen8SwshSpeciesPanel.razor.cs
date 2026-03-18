@@ -29,4 +29,15 @@ public partial class PokedexGen8SwshSpeciesPanel
             _ => true,
         };
     }
+
+    /// <summary>
+    /// Returns the first valid seen region (0 = male/genderless, 1 = female) for this species.
+    /// Used when seeding a seen region for a previously-unseen species on caught/G-Max caught.
+    /// </summary>
+    private int FirstValidRegion()
+    {
+        var gender = AppState.SaveFile?.Personal[SpeciesId].Gender ?? 255;
+        // Female-only (254) → region 1; all other gender ratios → region 0.
+        return gender == 254 ? 1 : 0;
+    }
 }

@@ -18,7 +18,7 @@
                          ValueChanged="@(v =>
                                        {
                                            dex.SetCaught(entry, v);
-                                           if (v && !dex.GetSeen(entry)) dex.SetSeenRegion(entry, 0, 0, true);
+                                           if (v && !dex.GetSeen(entry)) dex.SetSeenRegion(entry, 0, FirstValidRegion(), true);
                                            StateHasChanged();
                                        })"/>
             <MudCheckBox T="@bool"
@@ -27,7 +27,7 @@
                          ValueChanged="@(v =>
                                        {
                                            dex.SetCaughtGigantamax(entry, v);
-                                           if (v && !dex.GetSeen(entry)) dex.SetSeenRegion(entry, 63, 0, true);
+                                           if (v && !dex.GetSeen(entry)) dex.SetSeenRegion(entry, 63, FirstValidRegion(), true);
                                            StateHasChanged();
                                        })"/>
         </MudStack>

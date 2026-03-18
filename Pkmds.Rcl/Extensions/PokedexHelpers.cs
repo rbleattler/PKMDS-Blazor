@@ -41,4 +41,30 @@ internal static class PokedexHelpers
 
         return false;
     }
+
+    /// <summary>
+    /// Returns true when <paramref name="species"/> has a dex entry in the given save file.
+    /// Mirrors the per-game enumeration logic used by both PokedexTab and PokedexSpeciesGrid
+    /// so seen/caught counts and the species grid always represent the same set.
+    /// </summary>
+    internal static bool IsSpeciesInDex(SaveFile saveFile, ushort species) => saveFile switch
+    {
+        // LGPE: national dex limited to original 151 + Meltan (808) + Melmetal (809).
+        SAV7b => species is >= 1 and <= 151 or 808 or 809,
+
+        // SWSH: species must have a Galar / Armor / Crown regional dex index.
+        SAV8SWSH swsh => swsh.Zukan.GetEntry(species, out _),
+
+        // LA: only Hisui-native species are tracked.
+        SAV8LA => PokedexSave8a.GetDexIndex(PokedexType8a.Hisui, species) != 0,
+
+        // SV: only count dexes available in the save's revision.
+        SAV9SV sv => IsSpeciesInSvDex(sv, species),
+
+        // ZA: filters by the game's personal table (MaxSpeciesID varies by DLC revision).
+        SAV9ZA za => za.Personal.IsSpeciesInGame(species),
+
+        // All other games (Gen 1–7, BDSP): every national species up to MaxSpeciesID.
+        _ => true
+    };
 }

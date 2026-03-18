@@ -13,6 +13,11 @@ public partial class PokedexSpeciesGrid
     [Parameter]
     public int RefreshToken { get; set; }
 
+    // Invoked after any per-species Seen/Caught toggle so the parent (PokedexTab)
+    // can refresh its summary counts and progress bars without a full grid rebuild.
+    [Parameter]
+    public EventCallback OnSpeciesChanged { get; set; }
+
     protected override void OnParametersSet()
     {
         base.OnParametersSet();
@@ -53,33 +58,10 @@ public partial class PokedexSpeciesGrid
             or SAV8SWSH or SAV8LA or SAV8BS or SAV9SV or SAV9ZA;
     }
 
-    // Returns true when the species has a dex entry in the given save file.
-    // Mirrors the enumeration logic used by PokedexTab.GetDexTotalCount and the
-    // corresponding PKHeX WinForms SAV_Pokedex* editors.
-    private static bool IsSpeciesInDex(SaveFile saveFile, ushort species) => saveFile switch
-    {
-        // LGPE: national dex limited to original 151 + Meltan (808) + Melmetal (809).
-        SAV7b => species is >= 1 and <= 151 or 808 or 809,
-
-        // SWSH: species must have a Galar / Armor / Crown regional dex index.
-        SAV8SWSH swsh => swsh.Zukan.GetEntry(species, out _),
-
-        // LA: only Hisui-native species are tracked.
-        SAV8LA => PokedexSave8a.GetDexIndex(PokedexType8a.Hisui, species) != 0,
-
-        // SV: only count dexes available in the save's revision.
-        // Rev 0 = Paldea only; Rev 1 = + Kitakami; Rev 2+ = + Blueberry.
-        // GetDexIndex checks all three dexes unconditionally, so we must
-        // filter against the personal table directly to avoid showing
-        // DLC-exclusive species (e.g. Bulbasaur's DexBlueberry) on a base-game save.
-        SAV9SV sv => IsSpeciesInSvDex(sv, species),
-
-        // ZA: filters by the game's personal table (MaxSpeciesID varies by DLC revision).
-        SAV9ZA za => za.Personal.IsSpeciesInGame(species),
-
-        // All other games (Gen 1–7, BDSP): every national species up to MaxSpeciesID.
-        _ => true
-    };
+    // Delegates to the shared PokedexHelpers.IsSpeciesInDex so the grid and the
+    // PokedexTab header counts always filter against the same species set.
+    private static bool IsSpeciesInDex(SaveFile saveFile, ushort species) =>
+        PokedexHelpers.IsSpeciesInDex(saveFile, species);
 
     // Returns true when the row should be visible given the current search text.
     // Matches against the numeric species ID (exact) or the species name (contains,
@@ -101,7 +83,7 @@ public partial class PokedexSpeciesGrid
         return row.Name.Contains(search, StringComparison.OrdinalIgnoreCase);
     }
 
-    private void OnSeenChanged(PokedexGridRow row, bool value)
+    private async Task OnSeenChanged(PokedexGridRow row, bool value)
     {
         if (AppState.SaveFile is not { HasPokeDex: true } saveFile)
         {
@@ -136,9 +118,12 @@ public partial class PokedexSpeciesGrid
 
         // Re-read the actual stored state to keep the row in sync with the save file.
         UpdateRowFromSave(row, saveFile);
+
+        // Notify the parent so it can refresh its summary counts and progress bars.
+        await OnSpeciesChanged.InvokeAsync();
     }
 
-    private void OnCaughtChanged(PokedexGridRow row, bool value)
+    private async Task OnCaughtChanged(PokedexGridRow row, bool value)
     {
         if (AppState.SaveFile is not { HasPokeDex: true } saveFile)
         {
@@ -163,6 +148,9 @@ public partial class PokedexSpeciesGrid
 
         // Re-read the actual stored state to keep the row in sync with the save file.
         UpdateRowFromSave(row, saveFile);
+
+        // Notify the parent so it can refresh its summary counts and progress bars.
+        await OnSpeciesChanged.InvokeAsync();
     }
 
     private void UpdateRowFromSave(PokedexGridRow row, SaveFile saveFile)
@@ -176,9 +164,6 @@ public partial class PokedexSpeciesGrid
             };
         }
     }
-
-    private static bool IsSpeciesInSvDex(SAV9SV sv, ushort species) =>
-        PokedexHelpers.IsSpeciesInSvDex(sv, species);
 
     private async Task OpenDetails(PokedexGridRow row)
     {

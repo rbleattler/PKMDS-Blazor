@@ -43,8 +43,17 @@ public partial class PokedexTab
         var seen = 0;
         var caught = 0;
 
+        // Apply the same per-game filter used by GetDexTotalCount so the numerator
+        // (seen/caught species) and denominator (dex total) always represent the same
+        // species set.  Without this, HOME-transferred out-of-dex species can inflate
+        // the counts and cause percentages to show 100% when in-dex completion is lower.
         for (ushort i = 1; i <= saveFile.MaxSpeciesID; i++)
         {
+            if (!PokedexHelpers.IsSpeciesInDex(saveFile, i))
+            {
+                continue;
+            }
+
             if (saveFile.GetSeen(i))
             {
                 seen++;
@@ -56,11 +65,8 @@ public partial class PokedexTab
             }
         }
 
-        // Clamp raw counts to the formal dex total: saves with HOME-transferred
-        // Pokémon can flag species as seen/caught outside the game's formal dex,
-        // which would make the raw totals exceed 100 %.
-        displaySeenCount = Math.Min(seen, dexTotal);
-        displayCaughtCount = Math.Min(caught, dexTotal);
+        displaySeenCount = seen;
+        displayCaughtCount = caught;
         seenPercent = dexTotal == 0
             ? 0
             : Math.Min(100.0, (double)seen / dexTotal * 100);
@@ -121,7 +127,7 @@ public partial class PokedexTab
                     var count = 0;
                     for (ushort i = 1; i <= sv.MaxSpeciesID; i++)
                     {
-                        if (IsSpeciesInSvDex(sv, i))
+                        if (PokedexHelpers.IsSpeciesInSvDex(sv, i))
                         {
                             count++;
                         }
@@ -412,7 +418,7 @@ public partial class PokedexTab
             case SAV9SV sv when sv.Zukan.GetRevision() == 0:
                 for (ushort i = 1; i <= sv.MaxSpeciesID; i++)
                 {
-                    if (!IsSpeciesInSvDex(sv, i))
+                    if (!PokedexHelpers.IsSpeciesInSvDex(sv, i))
                     {
                         continue;
                     }
@@ -545,8 +551,14 @@ public partial class PokedexTab
         await Task.Yield();
     }
 
-    private static bool IsSpeciesInSvDex(SAV9SV sv, ushort species) =>
-        PokedexHelpers.IsSpeciesInSvDex(sv, species);
+
+    // Called by PokedexSpeciesGrid after any per-species Seen/Caught toggle so the
+    // header counts and progress bars stay in sync without a full grid rebuild.
+    private void OnSpeciesChangedInGrid()
+    {
+        RefreshDexStats();
+        StateHasChanged();
+    }
 
     private void OnRecalculate(SAV7b sav7B)
     {

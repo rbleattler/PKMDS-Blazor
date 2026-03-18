@@ -156,7 +156,8 @@
         }
         else
         {
-            <PokedexSpeciesGrid RefreshToken="@gridRefreshToken"/>
+            <PokedexSpeciesGrid RefreshToken="@gridRefreshToken"
+                                OnSpeciesChanged="@OnSpeciesChangedInGrid"/>
         }
     </MudStack>
 }
