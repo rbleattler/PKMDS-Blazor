@@ -87,6 +87,8 @@ public static partial class ImageHelper
         // Gen 7: Sun/Moon, Ultra Sun/Ultra Moon — no wallpaper sprites available
         GameVersion.SN or GameVersion.MN => string.Empty,
         GameVersion.US or GameVersion.UM => string.Empty,
+        // Legends: Arceus, Legends: Z-A — supports IBoxDetailWallpaper but no sprite assets exist
+        GameVersion.PLA or GameVersion.ZA => string.Empty,
         // Gen 8: Sword, Shield
         GameVersion.SW or GameVersion.SH => "swsh",
         // Gen 8: Brilliant Diamond, Shining Pearl
