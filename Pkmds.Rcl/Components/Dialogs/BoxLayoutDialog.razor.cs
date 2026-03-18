@@ -57,15 +57,28 @@ public partial class BoxLayoutDialog : BasePkmdsComponent
         UpdateWallpaperPreview();
     }
 
+    // Gen 3 wallpaper names differ from Gen 4+ for indices 12-15.
+    // PKHeX's wallpapernames text file uses Gen 4 names (POKÉ CENTER, MACHINE, CHECKS,
+    // SIMPLE) for those slots, but Gen 3 has Polka-Dot, PokéCenter, Machine, Simple.
+    private static readonly string[] Gen3WallpaperNames =
+    [
+        "Forest", "City", "Desert", "Savanna",
+        "Crag", "Volcano", "Snow", "Cave",
+        "Beach", "Seafloor", "River", "Sky",
+        "Polka-Dot", "PokéCenter", "Machine", "Simple",
+    ];
+
     private static string[] BuildWallpaperNames(SaveFile sav)
     {
         if (sav is not IBoxDetailWallpaper)
             return [];
 
+        if (sav.Generation == 3)
+            return Gen3WallpaperNames;
+
         var names = GameInfo.Strings.wallpapernames;
         var namedCount = sav.Generation switch
         {
-            3 => 16,
             4 or 5 or 6 => 24,
             7 => 16,
             8 when sav is SAV8BS => 32,
