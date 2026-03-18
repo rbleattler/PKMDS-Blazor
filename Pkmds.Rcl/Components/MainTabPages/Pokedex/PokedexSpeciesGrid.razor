@@ -2,13 +2,41 @@
 
 @if (rows.Count > 0)
 {
-    <MudTextField @bind-Value="searchText"
-                  Placeholder="Search species…"
-                  Immediate
-                  AdornmenT="@Adornment.Start"
-                  AdornmentIcon="@Icons.Material.Filled.Search"
-                  Clearable
-                  Class="mb-2"/>
+    <MudStack Row
+              AlignItems="@AlignItems.Center"
+              Wrap="@Wrap.Wrap"
+              Spacing="2"
+              Class="mb-2">
+        <MudTextField @bind-Value="searchText"
+                      Placeholder="Search species…"
+                      Immediate
+                      AdornmenT="@Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      Clearable />
+        <MudButtonGroup Variant="@Variant.Outlined"
+                        Size="@Size.Small">
+            <MudButton Color="@(selectedStatusFilter == DexStatusFilter.All ? Color.Primary : Color.Default)"
+                       OnClick="@(() => selectedStatusFilter = DexStatusFilter.All)">
+                All
+            </MudButton>
+            <MudButton Color="@(selectedStatusFilter == DexStatusFilter.Seen ? Color.Primary : Color.Default)"
+                       OnClick="@(() => selectedStatusFilter = DexStatusFilter.Seen)">
+                Seen
+            </MudButton>
+            <MudButton Color="@(selectedStatusFilter == DexStatusFilter.Caught ? Color.Success : Color.Default)"
+                       OnClick="@(() => selectedStatusFilter = DexStatusFilter.Caught)">
+                Caught
+            </MudButton>
+            <MudButton Color="@(selectedStatusFilter == DexStatusFilter.Unseen ? Color.Warning : Color.Default)"
+                       OnClick="@(() => selectedStatusFilter = DexStatusFilter.Unseen)">
+                Unseen
+            </MudButton>
+            <MudButton Color="@(selectedStatusFilter == DexStatusFilter.SeenNotCaught ? Color.Info : Color.Default)"
+                       OnClick="@(() => selectedStatusFilter = DexStatusFilter.SeenNotCaught)">
+                Seen / Not Caught
+            </MudButton>
+        </MudButtonGroup>
+    </MudStack>
 
     <MudDataGrid T="@PokedexGridRow"
                  Items="@rows"
@@ -19,19 +47,19 @@
                  FixedHeader
                  Virtualize="true"
                  RowClassFunc="@((_, i) => i % 2 != 0 ? "row-alt" : string.Empty)"
-                 Height="calc(100vh - 460px)">
+                 Height="calc(100vh - 510px)">
 
         <Columns>
             <PropertyColumn Property="@(r => r.SpeciesId)" Title="#"/>
             <PropertyColumn Property="@(r => r.Name)" Title="Species"/>
-            <TemplateColumn Title="Seen" Sortable="false">
+            <TemplateColumn Title="Seen" SortBy="@(r => r.IsSeen)">
                 <CellTemplate>
                     <MudCheckBox T="@bool"
                                  Value="@context.Item.IsSeen"
                                  ValueChanged="@(v => OnSeenChanged(context.Item, v))"/>
                 </CellTemplate>
             </TemplateColumn>
-            <TemplateColumn Title="Caught" Sortable="false">
+            <TemplateColumn Title="Caught" SortBy="@(r => r.IsCaught)">
                 <CellTemplate>
                     <MudCheckBox T="@bool"
                                  Value="@context.Item.IsCaught"

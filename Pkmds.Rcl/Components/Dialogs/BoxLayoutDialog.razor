@@ -1,0 +1,116 @@
+@inherits BasePkmdsComponent
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="@Typo.h6">Box Layout</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (AppState.SaveFile is { } saveFile)
+        {
+            <MudGrid>
+                <MudItem xs="5">
+                    <div class="d-flex gap-1 mb-1">
+                        <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward"
+                                       Size="@Size.Small"
+                                       Variant="@Variant.Outlined"
+                                       Disabled="@(_selectedBoxIndex == 0)"
+                                       OnClick="@MoveBoxUp"
+                                       title="Move box up" />
+                        <MudIconButton Icon="@Icons.Material.Filled.ArrowDownward"
+                                       Size="@Size.Small"
+                                       Variant="@Variant.Outlined"
+                                       Disabled="@(_selectedBoxIndex >= _boxNames.Length - 1)"
+                                       OnClick="@MoveBoxDown"
+                                       title="Move box down" />
+                    </div>
+                    <MudPaper Outlined
+                              Class="overflow-y-auto"
+                              Style="max-height: 380px;">
+                        @for (var i = 0; i < _boxNames.Length; i++)
+                        {
+                            var boxIndex = i;
+                            var isSelected = boxIndex == _selectedBoxIndex;
+                            <div class="px-2 py-1 cursor-pointer @(isSelected ? "mud-theme-primary" : "")"
+                                 @onclick="@(() => SelectBox(boxIndex))">
+                                <MudText Typo="@Typo.body2">
+                                    @($"Box {boxIndex + 1}: {_boxNames[boxIndex]}")
+                                </MudText>
+                            </div>
+                        }
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="7">
+                    @if (_supportsNameRead)
+                    {
+                        <MudTextField Value="@_boxNames[_selectedBoxIndex]"
+                                      ValueChanged="@((string v) => OnBoxNameChanged(v))"
+                                      Label="Box Name"
+                                      Immediate
+                                      MaxLength="@GetBoxNameMaxLength()"
+                                      ReadOnly="@(!_supportsNameWrite)"
+                                      Class="mb-3" />
+                    }
+
+                    @if (_supportsWallpaper && _wallpaperNameList.Length > 0)
+                    {
+                        <MudSelect Value="@_wallpaperIds[_selectedBoxIndex]"
+                                   ValueChanged="@((int id) => OnWallpaperChanged(id))"
+                                   Label="Wallpaper"
+                                   Class="mb-3">
+                            @for (var i = 0; i < _wallpaperNameList.Length; i++)
+                            {
+                                var localId = i;
+                                <MudSelectItem Value="@localId">@_wallpaperNameList[localId]</MudSelectItem>
+                            }
+                        </MudSelect>
+
+                        @if (!string.IsNullOrEmpty(_wallpaperSpriteUrl))
+                        {
+                            <img src="@_wallpaperSpriteUrl"
+                                 alt="Wallpaper preview"
+                                 class="w-full rounded mb-3"
+                                 style="max-height: 150px; object-fit: cover;" />
+                        }
+                    }
+
+                    @if (_showUnlocked)
+                    {
+                        <MudSelect Value="@_boxesUnlocked"
+                                   ValueChanged="@((int v) => OnBoxesUnlockedChanged(v))"
+                                   Label="Unlocked"
+                                   Class="mb-3">
+                            @for (var i = 0; i <= saveFile.BoxCount; i++)
+                            {
+                                var localI = i;
+                                <MudSelectItem Value="@localI">@localI</MudSelectItem>
+                            }
+                        </MudSelect>
+                    }
+
+                    @if (_boxFlags.Length > 0)
+                    {
+                        <MudText Typo="@Typo.caption" Class="mb-1">Flags</MudText>
+                        @for (var i = 0; i < _boxFlags.Length; i++)
+                        {
+                            var idx = i;
+                            <MudNumericField T="byte"
+                                            Value="@_boxFlags[idx]"
+                                            ValueChanged="@(v => OnFlagChanged(idx, v))"
+                                            Label="@($"Flag {idx}")"
+                                            Min="0"
+                                            Max="255"
+                                            Class="mb-2" />
+                        }
+                    }
+                </MudItem>
+            </MudGrid>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@Close"
+                   Variant="@Variant.Outlined">
+            Close
+        </MudButton>
+    </DialogActions>
+</MudDialog>
