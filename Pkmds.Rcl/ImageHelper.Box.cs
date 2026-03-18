@@ -59,7 +59,7 @@ public static partial class ImageHelper
 
     /// <summary>
     /// Converts a GameVersion enum to its box wallpaper folder abbreviation.
-    /// Returns an empty string for games with no wallpaper sprites (Gen 7).
+    /// Returns an empty string for games with no wallpaper sprites (Gen 7: SM/USUM, Legends: Arceus/Z-A).
     /// </summary>
     private static string GetGameVersionAbbreviation(GameVersion version) => version switch
     {
