@@ -68,10 +68,15 @@
                                          Dense
                                          Hover
                                          FixedHeader
+                                         RowsPerPage="50"
                                          RowClassFunc="@((_, i) => i % 2 != 0 ? "row-alt" : string.Empty)"
                                          EditTrigger="@DataGridEditTrigger.OnRowClick"
                                          Height="calc(100vh - 300px)"
                                          Class="bag-data-grid">
+                                <PagerContent>
+                                    <MudDataGridPager T="@InventoryItem"
+                                                      PageSizeOptions="@(new[] { 25, 50, 100, int.MaxValue })"/>
+                                </PagerContent>
                                 <Columns>
                                     <PropertyColumn Property="@(item => item.Index)"
                                                     Title="Item">
