@@ -5,9 +5,8 @@
     <MudTabs Outlined
              Rounded
              Border
-             ActivePanelIndexChanged="@OnActivePanelChanged"
              @ref="@PouchTabs">
-        @foreach (var (pouch, pouchIndex) in Inventory.Pouches.Select((p, i) => (p, i)))
+        @foreach (var pouch in Inventory.Pouches)
         {
             <MudTabPanel ID="@pouch.Type.ToString()">
                 <TabContent>
@@ -25,11 +24,9 @@
                     </MudStack>
                 </TabContent>
                 <ChildContent>
-                    @if (RenderedPouches.Contains(pouchIndex))
-                    {
-                        <MudStack>
-                            <MudStack Row
-                                      Wrap="@Wrap.Wrap">
+                    <MudStack>
+                        <MudStack Row
+                                  Wrap="@Wrap.Wrap">
                                 <MudButton OnClick="@SaveChanges"
                                            Color="@Color.Primary"
                                            Variant="@Variant.Filled"
@@ -71,7 +68,6 @@
                                          RowsPerPage="50"
                                          RowClassFunc="@((_, i) => i % 2 != 0 ? "row-alt" : string.Empty)"
                                          EditTrigger="@DataGridEditTrigger.OnRowClick"
-                                         Height="calc(100vh - 300px)"
                                          Class="bag-data-grid">
                                 <PagerContent>
                                     <MudDataGridPager T="@InventoryItem"
@@ -207,12 +203,7 @@
                                     </TemplateColumn>
                                 </Columns>
                             </MudDataGrid>
-                        </MudStack>
-                    }
-                    else
-                    {
-                        <MudProgressLinear Indeterminate/>
-                    }
+                    </MudStack>
                 </ChildContent>
             </MudTabPanel>
         }
