@@ -49,4 +49,26 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
 
         RefreshService.RefreshBoxState();
     }
+
+    private int GetBoxPokemonCount(int boxId)
+    {
+        if (AppState.SaveFile is not { } saveFile)
+            return 0;
+
+        var count = 0;
+        for (var slot = 0; slot < saveFile.BoxSlotCount; slot++)
+        {
+            if (saveFile.GetBoxSlotAtIndex(boxId, slot).Species != 0)
+                count++;
+        }
+        return count;
+    }
+
+    private async Task OpenBoxLayoutDialog()
+    {
+        await DialogService.ShowAsync<BoxLayoutDialog>(
+            "Box Layout",
+            new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true });
+        RefreshService.RefreshBoxState();
+    }
 }

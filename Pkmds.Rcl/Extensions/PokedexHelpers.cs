@@ -43,6 +43,99 @@ internal static class PokedexHelpers
     }
 
     /// <summary>
+    /// Returns the ordered list of regional dex definitions (names) that apply to
+    /// <paramref name="saveFile"/>.  The order matches the values returned by
+    /// <see cref="GetRegionalIds"/> so callers can zip them together.
+    /// </summary>
+    internal static IReadOnlyList<RegionalDexDefinition> GetRegionalDexDefinitions(SaveFile saveFile) =>
+        saveFile switch
+        {
+            SAV8BS => [new("Sinnoh")],
+            SAV8SWSH swsh => swsh.SaveRevision switch
+            {
+                >= 2 => [new("Galar"), new("Isle of Armor"), new("Crown Tundra")],
+                >= 1 => [new("Galar"), new("Isle of Armor")],
+                _ => [new("Galar")],
+            },
+            SAV8LA => [new("Hisui")],
+            SAV9SV sv => sv.SaveRevision switch
+            {
+                >= 2 => [new("Paldea"), new("Kitakami"), new("Blueberry")],
+                >= 1 => [new("Paldea"), new("Kitakami")],
+                _ => [new("Paldea")],
+            },
+            // ZA: Lumiose (DexIndex 1–232) and Hyperspace (DexIndex 233+).
+            SAV9ZA => [new("Lumiose"), new("Hyperspace")],
+            _ => [],
+        };
+
+    /// <summary>
+    /// Returns one regional dex number per entry in
+    /// <see cref="GetRegionalDexDefinitions"/>, in the same order.
+    /// A value of 0 means the species is not in that sub-dex.
+    /// </summary>
+    internal static IReadOnlyList<ushort> GetRegionalIds(SaveFile saveFile, ushort species) =>
+        saveFile switch
+        {
+            SAV8BS bdsp => [GetBdspRegionalId(bdsp, species)],
+            SAV8SWSH swsh => GetSwshRegionalIds(swsh, species),
+            SAV8LA => [PokedexSave8a.GetDexIndex(PokedexType8a.Hisui, species)],
+            SAV9SV sv => GetSvRegionalIds(sv, species),
+            SAV9ZA za => GetZaRegionalIds(za, species),
+            _ => [],
+        };
+
+    private static ushort GetBdspRegionalId(SAV8BS bdsp, ushort species) =>
+        bdsp.Personal.GetFormEntry(species, 0) is PersonalInfo8BDSP pi ? pi.PokeDexIndex : (ushort)0;
+
+    private static IReadOnlyList<ushort> GetSwshRegionalIds(SAV8SWSH swsh, ushort species)
+    {
+        var pi = swsh.Personal.GetFormEntry(species, 0) as PersonalInfo8SWSH;
+        ushort galar = pi?.PokeDexIndex ?? 0;
+        ushort armor = pi?.ArmorDexIndex ?? 0;
+        ushort crown = pi?.CrownDexIndex ?? 0;
+        return swsh.SaveRevision switch
+        {
+            >= 2 => [galar, armor, crown],
+            >= 1 => [galar, armor],
+            _ => [galar],
+        };
+    }
+
+    private static IReadOnlyList<ushort> GetSvRegionalIds(SAV9SV sv, ushort species)
+    {
+        ushort paldea = 0, kitakami = 0, blueberry = 0;
+        var fc = sv.Personal.GetFormEntry(species, 0).FormCount;
+        for (byte f = 0; f < fc; f++)
+        {
+            if (sv.Personal.GetFormEntry(species, f) is not PersonalInfo9SV pi)
+                continue;
+            if (paldea == 0 && pi.DexPaldea != 0) paldea = pi.DexPaldea;
+            if (kitakami == 0 && pi.DexKitakami != 0) kitakami = pi.DexKitakami;
+            if (blueberry == 0 && pi.DexBlueberry != 0) blueberry = (ushort)pi.DexBlueberry;
+        }
+
+        return sv.SaveRevision switch
+        {
+            >= 2 => [paldea, kitakami, blueberry],
+            >= 1 => [paldea, kitakami],
+            _ => [paldea],
+        };
+    }
+
+    private static IReadOnlyList<ushort> GetZaRegionalIds(SAV9ZA za, ushort species)
+    {
+        if (za.Personal.GetFormEntry(species, 0) is not PersonalInfo9ZA pi)
+            return [(ushort)0, (ushort)0];
+
+        // DexIndex 1–232 = Lumiose dex; 233+ = Hyperspace dex.
+        // Show each as 1-based within its own section.
+        ushort lumiose = pi.IsLumioseNative ? pi.DexIndex : (ushort)0;
+        ushort hyperspace = pi.IsHyperspaceNative ? (ushort)(pi.DexIndex - 232) : (ushort)0;
+        return [lumiose, hyperspace];
+    }
+
+    /// <summary>
     /// Returns true when <paramref name="species"/> has a dex entry in the given save file.
     /// Mirrors the per-game enumeration logic used by both PokedexTab and PokedexSpeciesGrid
     /// so seen/caught counts and the species grid always represent the same set.

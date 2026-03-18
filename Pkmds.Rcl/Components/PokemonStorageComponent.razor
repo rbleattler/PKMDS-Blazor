@@ -36,7 +36,7 @@
 
                         <MudSelectItem Value="@localBoxId"
                                        @key="@localBoxId">
-                            @boxName
+                            @($"Box {localBoxId + 1}: {boxName} ({GetBoxPokemonCount(localBoxId)}/{saveFile.BoxSlotCount})")
                         </MudSelectItem>
                     }
                 </MudSelect>
@@ -46,6 +46,14 @@
                            title="Next Box"
                            ButtonType="@ButtonType.Button"
                            Icon="@Icons.Material.Filled.ArrowRight"
+                           Variant="@Variant.Filled"
+                           Class="m-1.5 p-1.5">
+            </MudIconButton>
+
+            <MudIconButton OnClick="@OpenBoxLayoutDialog"
+                           title="Edit box layout"
+                           ButtonType="@ButtonType.Button"
+                           Icon="@Icons.Material.Filled.GridView"
                            Variant="@Variant.Filled"
                            Class="m-1.5 p-1.5">
             </MudIconButton>

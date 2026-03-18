@@ -3,9 +3,12 @@ namespace Pkmds.Rcl.Components.MainTabPages.Pokedex;
 public partial class PokedexSpeciesGrid
 {
     private bool hasDetailedEditor;
+    private IReadOnlyList<RegionalDexDefinition> _regionalDexDefinitions = [];
+    private int _selectedRegionalDexFilter = -1; // -1 = All
     private List<PokedexGridRow> rows = [];
 
     private string searchText = string.Empty;
+    private DexStatusFilter selectedStatusFilter = DexStatusFilter.All;
 
     // Tracks the last seen values to avoid a full BuildRows() call on every re-render.
     private SaveFile? _lastSaveFile;
@@ -64,37 +67,60 @@ public partial class PokedexSpeciesGrid
                 ? speciesNames[i]
                 : i.ToString(CultureInfo.InvariantCulture);
 
-            pokedexGridRows.Add(new PokedexGridRow(i, name, saveFile.GetSeen(i), saveFile.GetCaught(i)));
+            var regionalIds = PokedexHelpers.GetRegionalIds(saveFile, i);
+            pokedexGridRows.Add(new PokedexGridRow(i, name, regionalIds, saveFile.GetSeen(i), saveFile.GetCaught(i)));
         }
 
         rows = pokedexGridRows;
+        _regionalDexDefinitions = PokedexHelpers.GetRegionalDexDefinitions(saveFile);
+        _selectedRegionalDexFilter = -1;
         hasDetailedEditor = saveFile is SAV4 or SAV5 or SAV6XY or SAV6AO or SAV7 or SAV7b
             or SAV8SWSH or SAV8LA or SAV8BS or SAV9SV or SAV9ZA;
+        selectedStatusFilter = DexStatusFilter.All;
     }
 
     // Delegates to the shared PokedexHelpers.IsSpeciesInDex so the grid and the
     // PokedexTab header counts always filter against the same species set.
+    private static int RegionalIdForSort(PokedexGridRow row, int colIdx)
+    {
+        if (colIdx >= row.RegionalIds.Count) return int.MaxValue;
+        var id = row.RegionalIds[colIdx];
+        return id == 0 ? int.MaxValue : id;
+    }
+
     private static bool IsSpeciesInDex(SaveFile saveFile, ushort species) =>
         PokedexHelpers.IsSpeciesInDex(saveFile, species);
 
-    // Returns true when the row should be visible given the current search text.
-    // Matches against the numeric species ID (exact) or the species name (contains,
-    // case-insensitive).
+    // Returns true when the row should be visible given the current search text and
+    // status filter.  Name/ID matching runs first; status filter is applied after.
     private bool FilterRow(PokedexGridRow row)
     {
-        if (string.IsNullOrWhiteSpace(searchText))
+        if (!string.IsNullOrWhiteSpace(searchText))
         {
-            return true;
+            var search = searchText.Trim();
+            if (ushort.TryParse(search, out var id))
+            {
+                if (row.SpeciesId != id)
+                    return false;
+            }
+            else if (!row.Name.Contains(search, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
         }
 
-        var search = searchText.Trim();
+        if (_selectedRegionalDexFilter >= 0 && _selectedRegionalDexFilter < row.RegionalIds.Count
+            && row.RegionalIds[_selectedRegionalDexFilter] == 0)
+            return false;
 
-        if (ushort.TryParse(search, out var id))
+        return selectedStatusFilter switch
         {
-            return row.SpeciesId == id;
-        }
-
-        return row.Name.Contains(search, StringComparison.OrdinalIgnoreCase);
+            DexStatusFilter.Seen          => row.IsSeen,
+            DexStatusFilter.Caught        => row.IsCaught,
+            DexStatusFilter.Unseen        => !row.IsSeen,
+            DexStatusFilter.SeenNotCaught => row.IsSeen && !row.IsCaught,
+            _                             => true,
+        };
     }
 
     private async Task OnSeenChanged(PokedexGridRow row, bool value)
