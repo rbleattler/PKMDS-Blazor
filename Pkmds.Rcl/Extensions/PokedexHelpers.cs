@@ -64,6 +64,8 @@ internal static class PokedexHelpers
                 >= 1 => [new("Paldea"), new("Kitakami")],
                 _ => [new("Paldea")],
             },
+            // ZA: Lumiose (DexIndex 1–232) and Hyperspace (DexIndex 233+).
+            SAV9ZA => [new("Lumiose"), new("Hyperspace")],
             _ => [],
         };
 
@@ -79,6 +81,7 @@ internal static class PokedexHelpers
             SAV8SWSH swsh => GetSwshRegionalIds(swsh, species),
             SAV8LA => [PokedexSave8a.GetDexIndex(PokedexType8a.Hisui, species)],
             SAV9SV sv => GetSvRegionalIds(sv, species),
+            SAV9ZA za => GetZaRegionalIds(za, species),
             _ => [],
         };
 
@@ -118,6 +121,18 @@ internal static class PokedexHelpers
             >= 1 => [paldea, kitakami],
             _ => [paldea],
         };
+    }
+
+    private static IReadOnlyList<ushort> GetZaRegionalIds(SAV9ZA za, ushort species)
+    {
+        if (za.Personal.GetFormEntry(species, 0) is not PersonalInfo9ZA pi)
+            return [(ushort)0, (ushort)0];
+
+        // DexIndex 1–232 = Lumiose dex; 233+ = Hyperspace dex.
+        // Show each as 1-based within its own section.
+        ushort lumiose = pi.IsLumioseNative ? pi.DexIndex : (ushort)0;
+        ushort hyperspace = pi.IsHyperspaceNative ? (ushort)(pi.DexIndex - 232) : (ushort)0;
+        return [lumiose, hyperspace];
     }
 
     /// <summary>
