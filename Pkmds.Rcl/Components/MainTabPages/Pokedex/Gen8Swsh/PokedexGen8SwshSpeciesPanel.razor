@@ -49,9 +49,9 @@
             @for (byte j = 0; j < formCount; j++)
             {
                 var form = j;
-                var name = j < forms.Length
+                var name = j < forms.Length && forms[j].Length > 0
                     ? forms[j]
-                    : $"Form {j}";
+                    : GameInfo.Strings.Types[0];
                 <tr>
                     <td>@name</td>
                     @foreach (var (_, region) in SeenRegions)
@@ -97,17 +97,25 @@
                   Wrap="@Wrap.Wrap"
                   Spacing="4"
                   AlignItems="@AlignItems.Center">
-            <MudNumericField T="@uint"
-                             Label="Display Form"
-                             Value="@dex.GetFormDisplayed(entry)"
-                             ValueChanged="@(v =>
-                                           {
-                                               dex.SetFormDisplayed(entry, v);
-                                               StateHasChanged();
-                                           })"
-                             Min="0"
-                             Max="@((uint)(formCount - 1))"
-                             Style="max-width:130px;"/>
+            <MudSelect T="@uint"
+                       Label="Display Form"
+                       Value="@dex.GetFormDisplayed(entry)"
+                       ValueChanged="@(v =>
+                                     {
+                                         dex.SetFormDisplayed(entry, v);
+                                         StateHasChanged();
+                                     })"
+                       Dense
+                       Style="max-width:140px;">
+                @for (uint fi = 0; fi < (uint)formCount; fi++)
+                {
+                    var fiv = fi;
+                    var fn = fiv < (uint)forms.Length && forms[fiv].Length > 0
+                        ? forms[fiv]
+                        : GameInfo.Strings.Types[0];
+                    <MudSelectItem Value="@fiv">@fn</MudSelectItem>
+                }
+            </MudSelect>
             <MudSelect T="@uint"
                        Label="Display Gender"
                        Value="@dex.GetGenderDisplayed(entry)"
