@@ -7,8 +7,7 @@ public static partial class ImageHelper
 {
     /// <summary>
     /// Gets the sprite filename for a box wallpaper based on wallpaper ID and game version.
-    /// The wallpaper ID is typically retrieved from the save file's box data (0-based).
-    /// Sprite files are named with 1-based indices (e.g. box_wp01dp.png for wallpaper 0).
+    /// The wallpaper ID is 0-based (as stored in the save file); sprite files are 1-based.
     /// </summary>
     /// <param name="wallpaperId">The wallpaper ID (0-based, as stored in the save file).</param>
     /// <param name="gameVersion">The game version enum.</param>
@@ -18,15 +17,41 @@ public static partial class ImageHelper
         if (string.IsNullOrEmpty(abbreviation))
             return string.Empty;
 
-        // ORAS (ao) only ships wallpapers 17-24 (0-based IDs 16-23); wallpapers 0-15
-        // share the XY sprite sheet.
-        if (abbreviation == "ao" && wallpaperId < 16)
-            abbreviation = "xy";
+        // Some game folders only ship their unique wallpapers; base wallpapers
+        // (shared with an earlier game in the same generation) live in a fallback folder.
+        abbreviation = GetFolderWithFallback(abbreviation, wallpaperId);
+        if (string.IsNullOrEmpty(abbreviation))
+            return string.Empty;
+
+        // SV wallpaper 20 (ID 19) ships as two named variants; use the normal one.
+        if (abbreviation == "sv" && wallpaperId == 19)
+            return $"{SpritesRoot}box/sv/box_wp20sv_n.png";
 
         // Sprite files use 1-based numbering: wallpaper ID 0 → box_wp01, etc.
         var fileIndex = wallpaperId + 1;
         return $"{SpritesRoot}box/{abbreviation}/box_wp{fileIndex:00}{abbreviation}.png";
     }
+
+    /// <summary>
+    /// Resolves the actual sprite folder for a given game abbreviation and wallpaper ID.
+    /// Games that share base wallpapers with a predecessor only store their unique sprites
+    /// in their own folder; earlier IDs fall back to the base game's folder.
+    /// </summary>
+    private static string GetFolderWithFallback(string abbreviation, int wallpaperId) =>
+        abbreviation switch
+        {
+            // FRLG: IDs 0–11 share RS sprites; IDs 12–15 are unique to FRLG.
+            "frlg" when wallpaperId < 12 => "rs",
+            // Platinum: IDs 0–15 share DP sprites; IDs 16–23 are unique to Pt.
+            "pt" when wallpaperId < 16 => "dp",
+            // HGSS: IDs 0–15 share DP sprites; IDs 16–23 are unique to HGSS.
+            "hgss" when wallpaperId < 16 => "dp",
+            // B2W2: IDs 0–15 share BW sprites; IDs 16–23 are unique to B2W2.
+            "b2w2" when wallpaperId < 16 => "bw",
+            // ORAS: IDs 0–15 share XY sprites; IDs 16–23 are unique to ORAS.
+            "ao" when wallpaperId < 16 => "xy",
+            _ => abbreviation,
+        };
 
     /// <summary>
     /// Converts a GameVersion enum to its box wallpaper folder abbreviation.
@@ -64,7 +89,7 @@ public static partial class ImageHelper
         GameVersion.BD or GameVersion.SP => "bdsp",
         // Gen 9: Scarlet, Violet
         GameVersion.SL or GameVersion.VL => "sv",
-        // Fallback — try to use the version string; will result in a 404 if no folder exists
+        // Fallback — try to use the version string; will 404 if no folder exists
         _ => version.ToString().ToLowerInvariant()
     };
 }
