@@ -1,0 +1,243 @@
+@inherits BasePkmdsComponent
+
+@if (AppState.SaveFile is SAV8LA sav8La)
+{
+    var dex = sav8La.Blocks.PokedexSave;
+    var speciesNames = GameInfo.Strings.Species;
+
+    @* Top bar: species selector + filter *@
+    <MudStack Spacing="3">
+        <MudStack Row
+                  AlignItems="AlignItems.Center"
+                  Spacing="2"
+                  Wrap="@Wrap.Wrap">
+            <MudSelect T="ushort"
+                       Label="Species"
+                       Value="@selectedSpecies"
+                       ValueChanged="@(v => OnSpeciesSelected(v))"
+                       Dense
+                       Style="max-width:260px;">
+                @foreach (var (hisuiIdx, species) in GetFilteredSpeciesList(dex))
+                {
+                    var s = species;
+                    var h = hisuiIdx;
+                    var sn = s < speciesNames.Count ? speciesNames[s] : s.ToString(CultureInfo.InvariantCulture);
+                    <MudSelectItem Value="@s">@($"{h:000} — {sn}")</MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudButtonGroup Variant="@Variant.Outlined"
+                            Size="@Size.Small">
+                <MudButton Color="@(filter == DexFilter.All ? Color.Primary : Color.Default)"
+                           OnClick="@(() => SetFilter(DexFilter.All, dex))">
+                    All
+                </MudButton>
+                <MudButton Color="@(filter == DexFilter.Incomplete ? Color.Warning : Color.Default)"
+                           OnClick="@(() => SetFilter(DexFilter.Incomplete, dex))">
+                    Incomplete
+                </MudButton>
+                <MudButton Color="@(filter == DexFilter.Complete ? Color.Success : Color.Default)"
+                           OnClick="@(() => SetFilter(DexFilter.Complete, dex))">
+                    Complete
+                </MudButton>
+            </MudButtonGroup>
+        </MudStack>
+
+        @* Per-species research panel *@
+        @{
+            var hisuiDexIndex = selectedSpecies > 0
+                ? PokedexSave8a.GetDexIndex(PokedexType8a.Hisui, selectedSpecies)
+                : (ushort)0;
+        }
+        @if (selectedSpecies > 0 && hisuiDexIndex > 0)
+        {
+            var tasks = PokedexConstants8a.ResearchTasks[hisuiDexIndex - 1];
+            var speciesName = selectedSpecies < speciesNames.Count
+                ? speciesNames[selectedSpecies]
+                : selectedSpecies.ToString(CultureInfo.InvariantCulture);
+            var researchRate = dex.GetPokeResearchRate(selectedSpecies);
+
+            <MudPaper Class="pa-3"
+                      Elevation="1">
+                @* Header *@
+                <MudStack Row
+                          Justify="Justify.SpaceBetween"
+                          AlignItems="AlignItems.Center"
+                          Class="mb-1">
+                    <MudText Typo="@Typo.h6">@speciesName (Hisui #@hisuiDexIndex)</MudText>
+                    <MudText Typo="@Typo.body2">Research rate: @researchRate%</MudText>
+                </MudStack>
+                <MudProgressLinear Color="@(researchRate >= 100 ? Color.Success : Color.Info)"
+                                   Value="@researchRate"
+                                   Class="mb-3"/>
+
+                @* Status flags *@
+                <MudStack Row
+                          Spacing="2"
+                          Class="mb-2">
+                    <MudCheckBox T="bool"
+                                 Label="Seen"
+                                 Value="@dex.HasPokeEverBeenUpdated(selectedSpecies)"
+                                 ValueChanged="@(v => {
+                                                   if (!v)
+                                                   {
+                                                       return;
+                                                   }
+
+                                                   dex.SetPokeHasBeenUpdated(selectedSpecies); StateHasChanged();
+                                               })"
+                                 ReadOnly="@dex.HasPokeEverBeenUpdated(selectedSpecies)"/>
+                    <MudCheckBox T="bool"
+                                 Label="Complete"
+                                 Value="@dex.IsComplete(selectedSpecies)"
+                                 ReadOnly/>
+                    <MudCheckBox T="bool"
+                                 Label="Perfect"
+                                 Value="@dex.IsPerfect(selectedSpecies)"
+                                 ReadOnly/>
+                    <MudCheckBox T="bool"
+                                 Label="Solitude"
+                                 Value="@dex.GetSolitudeComplete(selectedSpecies)"
+                                 ValueChanged="@(v => { dex.SetSolitudeComplete(selectedSpecies, v); StateHasChanged(); })"/>
+                </MudStack>
+
+                @* Research task table *@
+                <MudSimpleTable Dense
+                                Bordered
+                                Class="mb-2">
+                    <thead>
+                    <tr>
+                        <th style="min-width:220px;">Task</th>
+                        <th style="text-align:center;min-width:44px;">Lv 1</th>
+                        <th style="text-align:center;min-width:44px;">Lv 2</th>
+                        <th style="text-align:center;min-width:44px;">Lv 3</th>
+                        <th style="text-align:center;min-width:44px;">Lv 4</th>
+                        <th style="text-align:center;min-width:44px;">Lv 5</th>
+                        <th style="text-align:center;min-width:80px;">Current</th>
+                        <th style="text-align:center;min-width:48px;">Done?</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @for (var i = 0; i < tasks.Length; i++)
+                    {
+                        var taskIdx = i;
+                        var task = tasks[taskIdx];
+                        dex.GetResearchTaskLevel(selectedSpecies, taskIdx, out _, out var curValue, out _);
+                        var isDone = task.TaskThresholds.Length > 0 && curValue >= task.TaskThresholds[^1];
+                        var canEdit = task.Task.CanSetCurrentValue();
+                        var label = task.GetTaskLabelString(taskDescriptions, timeTaskDescriptions, speciesQuests);
+                        <tr>
+                            <td>
+                                @if (task.RequiredForCompletion)
+                                {
+                                    <MudIcon Icon="@Icons.Material.Filled.Star"
+                                             Color="@Color.Warning"
+                                             Size="@Size.Small"
+                                             Style="vertical-align:middle;margin-right:2px;"
+                                             title="Required for completion"/>
+                                }
+                                @label
+                            </td>
+                            @for (var t = 0; t < 5; t++)
+                            {
+                                var thresh = t;
+                                if (thresh < task.TaskThresholds.Length)
+                                {
+                                    var threshVal = task.TaskThresholds[thresh];
+                                    var met = curValue >= threshVal;
+                                    <td style="text-align:center;background-color:@(met ? "var(--mud-palette-success-lighten)" : "var(--mud-palette-error-lighten)");font-weight:bold;">
+                                        @threshVal
+                                    </td>
+                                }
+                                else
+                                {
+                                    <td></td>
+                                }
+                            }
+                            <td style="text-align:center;">
+                                @if (canEdit)
+                                {
+                                    <MudNumericField T="int"
+                                                     Value="@curValue"
+                                                     ValueChanged="@(v => OnTaskValueChanged(dex, selectedSpecies, task, v))"
+                                                     Min="0"
+                                                     Max="9999"
+                                                     HideSpinButtons
+                                                     Margin="@Margin.Dense"
+                                                     Style="max-width:72px;"/>
+                                }
+                                else
+                                {
+                                    <MudText Typo="@Typo.body2">@curValue</MudText>
+                                }
+                            </td>
+                            <td style="text-align:center;">
+                                @if (isDone)
+                                {
+                                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle"
+                                             Color="@Color.Success"
+                                             Size="@Size.Small"/>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </MudSimpleTable>
+
+                <MudStack Row
+                          Justify="Justify.FlexEnd">
+                    <MudButton Variant="@Variant.Filled"
+                               Color="@Color.Primary"
+                               Size="@Size.Small"
+                               StartIcon="@Icons.Material.Filled.DoneAll"
+                               OnClick="@(() => CompleteThisSpecies(dex, selectedSpecies))">
+                        Complete This Species
+                    </MudButton>
+                    <MudButton Variant="@Variant.Outlined"
+                               Color="@Color.Default"
+                               Size="@Size.Small"
+                               StartIcon="@Icons.Material.Filled.Edit"
+                               OnClick="@(() => OpenFlagsDialog(selectedSpecies))">
+                        Flags &amp; Stats…
+                    </MudButton>
+                </MudStack>
+            </MudPaper>
+        }
+
+        @* Local dex completion *@
+        <MudStack Row
+                  AlignItems="AlignItems.Center"
+                  Spacing="2"
+                  Wrap="@Wrap.Wrap">
+            <MudText Typo="@Typo.body2">Local dex completion:</MudText>
+            @foreach (var (dexType, label) in LocalDexTypes)
+            {
+                var completed = dex.IsPokedexCompleted(dexType);
+                <MudChip T="string"
+                         Color="@(completed ? Color.Success : Color.Default)"
+                         Size="@Size.Small"
+                         title="@(completed ? $"{label}: Complete" : $"{label}: Incomplete")">
+                    @label
+                </MudChip>
+            }
+        </MudStack>
+
+        @* Global actions *@
+        <MudStack Row
+                  Spacing="2"
+                  Wrap="@Wrap.Wrap">
+            <MudButton Variant="@Variant.Filled"
+                       Color="@Color.Primary"
+                       StartIcon="@Icons.Material.Filled.AutoAwesome"
+                       OnClick="@(() => CompleteAllResearch(sav8La))">
+                Complete All Research
+            </MudButton>
+            <MudButton Variant="@Variant.Outlined"
+                       Color="@Color.Error"
+                       StartIcon="@Icons.Material.Filled.DeleteSweep"
+                       OnClick="@(() => ClearAllResearch(sav8La))">
+                Clear All Research
+            </MudButton>
+        </MudStack>
+    </MudStack>
+}

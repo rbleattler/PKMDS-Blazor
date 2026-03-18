@@ -1,9 +1,9 @@
 @inherits BasePkmdsComponent
 
-@if (AppState.SaveFile is SAV8LA sav8la)
+@if (AppState.SaveFile is SAV8LA sav8La)
 {
-    var dex = sav8la.Blocks.PokedexSave;
-    var pi = sav8la.Personal.GetFormEntry(SpeciesId, 0);
+    var dex = sav8La.Blocks.PokedexSave;
+    var pi = sav8La.Personal.GetFormEntry(SpeciesId, 0);
     var formCount = pi.FormCount;
     var formNames = FormConverter.GetFormList(SpeciesId, GameInfo.Strings.types, GameInfo.Strings.forms,
         GameInfo.GenderSymbolASCII, EntityContext.Gen8a);
@@ -188,11 +188,6 @@
                                  Style="max-width:120px;"/>
             </MudStack>
         }
-
-        <MudAlert Severity="Severity.Info"
-                  Dense>
-            Research task editing is available in the dedicated Legends Arceus Pokédex editor (issue #439).
-        </MudAlert>
 
     </MudStack>
 }
