@@ -28,7 +28,8 @@
                     @if (RenderedPouches.Contains(pouchIndex))
                     {
                         <MudStack>
-                            <MudStack Row>
+                            <MudStack Row
+                                      Wrap="@Wrap.Wrap">
                                 <MudButton OnClick="@SaveChanges"
                                            Color="@Color.Primary"
                                            Variant="@Variant.Filled"
@@ -66,11 +67,16 @@
                                          SortMode="@SortMode.None"
                                          Dense
                                          Hover
-                                         Striped
                                          FixedHeader
+                                         RowsPerPage="50"
+                                         RowClassFunc="@((_, i) => i % 2 != 0 ? "row-alt" : string.Empty)"
                                          EditTrigger="@DataGridEditTrigger.OnRowClick"
                                          Height="calc(100vh - 300px)"
                                          Class="bag-data-grid">
+                                <PagerContent>
+                                    <MudDataGridPager T="@InventoryItem"
+                                                      PageSizeOptions="@(new[] { 25, 50, 100, int.MaxValue })"/>
+                                </PagerContent>
                                 <Columns>
                                     <PropertyColumn Property="@(item => item.Index)"
                                                     Title="Item">
