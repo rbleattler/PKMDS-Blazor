@@ -180,20 +180,22 @@ public partial class EncounterDatabaseTab : RefreshAwareComponent
         {
             for (var slot = 0; slot < sav.BoxSlotCount; slot++)
             {
-                if (sav.GetBoxSlotAtIndex(box, slot).Species == 0)
+                if (sav.GetBoxSlotAtIndex(box, slot).Species != 0)
                 {
-                    if (sav is SAV7b)
-                    {
-                        // Let's Go uses a flat index across unified storage.
-                        AppService.SetSelectedLetsGoPokemon(sav.BlankPKM, box * sav.BoxSlotCount + slot);
-                    }
-                    else
-                    {
-                        AppService.SetSelectedBoxPokemon(sav.BlankPKM, box, slot);
-                    }
-
-                    return true;
+                    continue;
                 }
+
+                if (sav is SAV7b)
+                {
+                    // Let's Go uses a flat index across unified storage.
+                    AppService.SetSelectedLetsGoPokemon(sav.BlankPKM, box * sav.BoxSlotCount + slot);
+                }
+                else
+                {
+                    AppService.SetSelectedBoxPokemon(sav.BlankPKM, box, slot);
+                }
+
+                return true;
             }
         }
 

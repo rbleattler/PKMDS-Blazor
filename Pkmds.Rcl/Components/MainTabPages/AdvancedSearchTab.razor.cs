@@ -335,12 +335,11 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
     private async Task DeleteSavedFilterAsync()
     {
         var name = selectedSavedFilter;
-        if (name is null || !savedFilters.ContainsKey(name))
+        if (name is null || !savedFilters.Remove(name))
         {
             return;
         }
 
-        savedFilters.Remove(name);
         selectedSavedFilter = null;
         await PersistFiltersAsync();
         Snackbar.Add($"Filter \"{name}\" deleted.", Severity.Success);
@@ -365,16 +364,10 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
         isShiny = f.IsShiny;
         isEgg = f.IsEgg;
         gender = f.Gender;
-        nature = f.Nature.HasValue
-            ? f.Nature.Value
-            : null;
+        nature = f.Nature;
         isLegal = f.IsLegal;
-        levelMin = f.LevelMin.HasValue
-            ? f.LevelMin.Value
-            : null;
-        levelMax = f.LevelMax.HasValue
-            ? f.LevelMax.Value
-            : null;
+        levelMin = f.LevelMin;
+        levelMax = f.LevelMax;
         hpIvMin = f.HpIvMin;
         atkIvMin = f.AtkIvMin;
         defIvMin = f.DefIvMin;

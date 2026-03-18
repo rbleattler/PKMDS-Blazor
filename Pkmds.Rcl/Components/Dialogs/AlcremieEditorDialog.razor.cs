@@ -87,11 +87,13 @@ public partial class AlcremieEditorDialog
 
     private void OnPreviewSpriteError()
     {
-        if (!_previewFailed)
+        if (_previewFailed)
         {
-            _previewFailed = true;
-            StateHasChanged();
+            return;
         }
+
+        _previewFailed = true;
+        StateHasChanged();
     }
 
     private void Cancel() => MudDialog?.Close(DialogResult.Cancel());

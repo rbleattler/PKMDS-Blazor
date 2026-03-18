@@ -181,7 +181,7 @@ public partial class OtMiscTab : IDisposable
         {
             var argMatch = AppService.GetMemoryArgumentComboItems(argType, MemoryGen)
                 .FirstOrDefault(i => i.Value == variable);
-            variableText = argMatch?.Text ?? variable.ToString() ?? string.Empty;
+            variableText = argMatch?.Text ?? variable.ToString();
         }
         else
         {

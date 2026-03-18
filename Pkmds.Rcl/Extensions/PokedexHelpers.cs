@@ -86,16 +86,16 @@ internal static class PokedexHelpers
         };
 
     private static ushort GetBdspRegionalId(SAV8BS bdsp, ushort species) =>
-        bdsp.Personal.GetFormEntry(species, 0) is PersonalInfo8BDSP pi
+        bdsp.Personal.GetFormEntry(species, 0) is { } pi
             ? pi.PokeDexIndex
             : (ushort)0;
 
     private static IReadOnlyList<ushort> GetSwshRegionalIds(SAV8SWSH swsh, ushort species)
     {
         var pi = swsh.Personal.GetFormEntry(species, 0);
-        var galar = pi?.PokeDexIndex ?? 0;
-        var armor = pi?.ArmorDexIndex ?? 0;
-        var crown = pi?.CrownDexIndex ?? 0;
+        var galar = pi.PokeDexIndex;
+        var armor = pi.ArmorDexIndex;
+        var crown = pi.CrownDexIndex;
         return swsh.SaveRevision switch
         {
             >= 2 => [galar, armor, crown],
@@ -110,7 +110,7 @@ internal static class PokedexHelpers
         var fc = sv.Personal.GetFormEntry(species, 0).FormCount;
         for (byte f = 0; f < fc; f++)
         {
-            if (sv.Personal.GetFormEntry(species, f) is not PersonalInfo9SV pi)
+            if (sv.Personal.GetFormEntry(species, f) is not { } pi)
             {
                 continue;
             }
@@ -141,7 +141,7 @@ internal static class PokedexHelpers
 
     private static IReadOnlyList<ushort> GetZaRegionalIds(SAV9ZA za, ushort species)
     {
-        if (za.Personal.GetFormEntry(species, 0) is not PersonalInfo9ZA pi)
+        if (za.Personal.GetFormEntry(species, 0) is not { } pi)
         {
             return [0, 0];
         }

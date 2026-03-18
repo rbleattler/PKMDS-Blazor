@@ -5,7 +5,7 @@
         <MudText Typo="@Typo.h6">TR Relearn Editor</MudText>
     </TitleContent>
     <DialogContent>
-        @if (Pokemon is ITechRecord techRecord)
+        @if (Pokemon is ITechRecord)
         {
             <MudDataGrid T="@TrMoveInfo"
                          Items="@TrMoves"
