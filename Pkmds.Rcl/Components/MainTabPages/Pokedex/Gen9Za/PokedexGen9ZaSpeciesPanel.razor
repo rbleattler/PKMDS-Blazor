@@ -1,0 +1,198 @@
+@inherits BasePkmdsComponent
+
+@if (AppState.SaveFile is SAV9ZA sav9za)
+{
+    var dex = sav9za.Zukan;
+    var pi = sav9za.Personal.GetFormEntry(SpeciesId, 0);
+    var formCount = pi.FormCount;
+    var formNames = FormConverter.GetFormList(SpeciesId, GameInfo.Strings.types, GameInfo.Strings.forms,
+        GameInfo.GenderSymbolASCII, EntityContext.Gen9);
+
+    <MudStack Spacing="3">
+
+        @* Gender / shiny seen *@
+        <MudText Typo="@Typo.subtitle2">Gender Seen</MudText>
+        <MudStack Row
+                  Spacing="2">
+            <MudCheckBox T="@bool"
+                         Label="Male"
+                         Disabled="@(!IsGenderAvailable(0))"
+                         Value="@dex.GetEntry(SpeciesId).GetIsGenderSeen(0)"
+                         ValueChanged="@(v =>
+                                       {
+                                           dex.GetEntry(SpeciesId).SetIsGenderSeen(0, v);
+                                           StateHasChanged();
+                                       })"/>
+            <MudCheckBox T="@bool"
+                         Label="Female"
+                         Disabled="@(!IsGenderAvailable(1))"
+                         Value="@dex.GetEntry(SpeciesId).GetIsGenderSeen(1)"
+                         ValueChanged="@(v =>
+                                       {
+                                           dex.GetEntry(SpeciesId).SetIsGenderSeen(1, v);
+                                           StateHasChanged();
+                                       })"/>
+            <MudCheckBox T="@bool"
+                         Label="Genderless"
+                         Disabled="@(!IsGenderAvailable(2))"
+                         Value="@dex.GetEntry(SpeciesId).GetIsGenderSeen(2)"
+                         ValueChanged="@(v =>
+                                       {
+                                           dex.GetEntry(SpeciesId).SetIsGenderSeen(2, v);
+                                           StateHasChanged();
+                                       })"/>
+        </MudStack>
+
+        @* Forms seen / caught / shiny *@
+        @if (formCount > 0)
+        {
+            <MudText Typo="@Typo.subtitle2">Forms</MudText>
+            <MudSimpleTable Dense
+                            Style="max-width:400px;">
+                <thead>
+                <tr>
+                    <th>Form</th>
+                    <th>Seen</th>
+                    <th>Caught</th>
+                    <th>Shiny Seen</th>
+                </tr>
+                </thead>
+                <tbody>
+                @for (byte i = 0; i < formNames.Length; i++)
+                {
+                    var fi = i;
+                    var name = formNames[fi].Length > 0
+                        ? formNames[fi]
+                        : GameInfo.Strings.Types[0];
+                    <tr>
+                        <td>@name</td>
+                        <td>
+                            <MudCheckBox T="@bool"
+                                         Value="@dex.GetEntry(SpeciesId).GetIsFormSeen(fi)"
+                                         ValueChanged="@(v =>
+                                                       {
+                                                           dex.GetEntry(SpeciesId).SetIsFormSeen(fi, v);
+                                                           if (!v) dex.GetEntry(SpeciesId).SetIsFormCaught(fi, false);
+                                                           StateHasChanged();
+                                                       })"/>
+                        </td>
+                        <td>
+                            <MudCheckBox T="@bool"
+                                         Value="@dex.GetEntry(SpeciesId).GetIsFormCaught(fi)"
+                                         ValueChanged="@(v =>
+                                                       {
+                                                           dex.GetEntry(SpeciesId).SetIsFormCaught(fi, v);
+                                                           if (v) dex.GetEntry(SpeciesId).SetIsFormSeen(fi, true);
+                                                           StateHasChanged();
+                                                       })"/>
+                        </td>
+                        <td>
+                            <MudCheckBox T="@bool"
+                                         Value="@dex.GetEntry(SpeciesId).GetIsShinySeen(fi)"
+                                         ValueChanged="@(v =>
+                                                       {
+                                                           dex.GetEntry(SpeciesId).SetIsShinySeen(fi, v);
+                                                           StateHasChanged();
+                                                       })"/>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </MudSimpleTable>
+        }
+
+        @* Extra flags *@
+        <MudStack Row
+                  Spacing="2">
+            <MudCheckBox T="@bool"
+                         Label="Seen Mega"
+                         Value="@dex.GetEntry(SpeciesId).GetIsSeenMega(0)"
+                         ValueChanged="@(v =>
+                                       {
+                                           dex.GetEntry(SpeciesId).SetIsSeenMega(0, v);
+                                           StateHasChanged();
+                                       })"/>
+            <MudCheckBox T="@bool"
+                         Label="Seen Mega 2"
+                         Value="@dex.GetEntry(SpeciesId).GetIsSeenMega(1)"
+                         ValueChanged="@(v =>
+                                       {
+                                           dex.GetEntry(SpeciesId).SetIsSeenMega(1, v);
+                                           StateHasChanged();
+                                       })"/>
+            <MudCheckBox T="@bool"
+                         Label="Seen Alpha"
+                         Value="@dex.GetEntry(SpeciesId).GetIsSeenAlpha()"
+                         ValueChanged="@(v =>
+                                       {
+                                           dex.GetEntry(SpeciesId).SetIsSeenAlpha(v);
+                                           StateHasChanged();
+                                       })"/>
+        </MudStack>
+
+        @* Display *@
+        <MudText Typo="@Typo.subtitle2">Display</MudText>
+        <MudStack Row
+                  Spacing="2"
+                  AlignItems="AlignItems.Center">
+            @if (formCount > 1)
+            {
+                <MudSelect T="@byte"
+                           Label="Form"
+                           Value="@dex.GetEntry(SpeciesId).DisplayForm"
+                           ValueChanged="@(v =>
+                                         {
+                                             dex.GetEntry(SpeciesId).DisplayForm = v;
+                                             StateHasChanged();
+                                         })"
+                           Dense
+                           Style="max-width:140px;">
+                    @for (byte fi = 0; fi < formNames.Length; fi++)
+                    {
+                        var fiv = fi;
+                        var fn = formNames[fiv].Length > 0
+                            ? formNames[fiv]
+                            : GameInfo.Strings.Types[0];
+                        <MudSelectItem Value="@fiv">@fn</MudSelectItem>
+                    }
+                </MudSelect>
+            }
+            <MudCheckBox T="@bool"
+                         Label="Shiny"
+                         Value="@dex.GetEntry(SpeciesId).GetDisplayIsShiny()"
+                         ValueChanged="@(v =>
+                                       {
+                                           dex.GetEntry(SpeciesId).SetDisplayIsShiny(v);
+                                           StateHasChanged();
+                                       })"/>
+            <MudCheckBox T="@bool"
+                         Label="New"
+                         Value="@dex.GetEntry(SpeciesId).GetDisplayIsNew()"
+                         ValueChanged="@(v =>
+                                       {
+                                           dex.GetEntry(SpeciesId).SetDisplayIsNew(v);
+                                           StateHasChanged();
+                                       })"/>
+        </MudStack>
+
+        @* Language flags *@
+        <MudText Typo="@Typo.subtitle2">Languages Obtained</MudText>
+        <MudStack Row
+                  Wrap="@Wrap.Wrap"
+                  Spacing="1">
+            @foreach (var (label, langId) in LanguageLabels)
+            {
+                var lid = langId;
+                <MudCheckBox T="@bool"
+                             Label="@label"
+                             Value="@dex.GetEntry(SpeciesId).GetLanguageFlag(lid)"
+                             ValueChanged="@(v =>
+                                           {
+                                               dex.GetEntry(SpeciesId).SetLanguageFlag(lid, v);
+                                               StateHasChanged();
+                                           })"/>
+            }
+        </MudStack>
+
+    </MudStack>
+}

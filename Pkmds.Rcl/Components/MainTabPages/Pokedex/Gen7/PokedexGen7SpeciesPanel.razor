@@ -1,0 +1,131 @@
+@inherits BasePkmdsComponent
+
+@if (AppState.SaveFile is SAV7 sav7)
+{
+    var dex = sav7.Zukan;
+    // For base species entry: bit index = species - 1
+    var bit = SpeciesId - 1;
+
+    <MudStack Spacing="3">
+
+        @* Caught *@
+        <MudCheckBox T="@bool"
+                     Label="Caught"
+                     Value="@dex.GetCaught(SpeciesId)"
+                     ValueChanged="@(v =>
+                                   {
+                                       dex.SetCaught(SpeciesId, v);
+                                       if (v) dex.SetSeen(SpeciesId, 0, true);
+                                       StateHasChanged();
+                                   })"/>
+
+        @* Seen (4 regions) *@
+        <MudText Typo="@Typo.subtitle2">Seen</MudText>
+        <MudStack Row
+                  Wrap="@Wrap.Wrap"
+                  Spacing="1">
+            @foreach (var (label, region) in SeenRegions)
+            {
+                var r = region;
+                <MudCheckBox T="@bool"
+                             Label="@label"
+                             Disabled="@(!IsRegionValid(r))"
+                             Value="@dex.GetSeen(SpeciesId, r)"
+                             ValueChanged="@(v =>
+                                           {
+                                               dex.SetSeen(SpeciesId, r, v);
+                                               StateHasChanged();
+                                           })"/>
+            }
+        </MudStack>
+
+        @* Displayed (4 regions; uses bit index) *@
+        <MudText Typo="@Typo.subtitle2">Displayed Variant</MudText>
+        <MudStack Row
+                  Wrap="@Wrap.Wrap"
+                  Spacing="1">
+            @foreach (var (label, region) in SeenRegions)
+            {
+                var r = region;
+                <MudCheckBox T="@bool"
+                             Label="@label"
+                             Disabled="@(!IsRegionValid(r))"
+                             Value="@dex.GetDisplayed(bit, r)"
+                             ValueChanged="@(v => OnDisplayedChanged(dex, bit, r, v))"/>
+            }
+        </MudStack>
+
+        @* Alternate form displayed variants — each form has its own dex entry index *@
+        @{
+            var fc7 = (int)sav7.Personal[SpeciesId].FormCount;
+            var formNames7 = fc7 > 1
+                ? FormConverter.GetFormList(SpeciesId, GameInfo.Strings.types,
+                    GameInfo.Strings.forms, GameInfo.GenderSymbolASCII, EntityContext.Gen7)
+                : [];
+        }
+        @if (fc7 > 1 && dex.GetEntryIndex(SpeciesId, 1) != bit)
+        {
+            <MudText Typo="@Typo.subtitle2">Alternate Form Displayed</MudText>
+            <MudSimpleTable Dense
+                            Style="max-width:500px; max-height:240px; overflow-y:auto;">
+                <thead>
+                <tr>
+                    <th>Form</th>
+                    @foreach (var (label, _) in SeenRegions)
+                    {
+                        <th>@label</th>
+                    }
+                </tr>
+                </thead>
+                <tbody>
+                @for (byte f7 = 1; f7 < fc7; f7++)
+                {
+                    var fi7 = f7;
+                    var formIdx7 = dex.GetEntryIndex(SpeciesId, fi7);
+                    @if (formIdx7 == bit)
+                    {
+                        continue;
+                    }
+
+                    var formName7 = fi7 < formNames7.Length
+                        ? formNames7[fi7]
+                        : $"Form {fi7}";
+                    <tr>
+                        <td>@formName7</td>
+                        @foreach (var (_, region) in SeenRegions)
+                        {
+                            var r = region;
+                            <td>
+                                <MudCheckBox T="@bool"
+                                             Disabled="@(!IsRegionValid(r))"
+                                             Value="@dex.GetDisplayed(formIdx7, r)"
+                                             ValueChanged="@(v => OnDisplayedChanged(dex, formIdx7, r, v))"/>
+                            </td>
+                        }
+                    </tr>
+                }
+                </tbody>
+            </MudSimpleTable>
+        }
+
+        @* Language flags (9 languages; uses bit index) *@
+        <MudText Typo="@Typo.subtitle2">Languages Obtained</MudText>
+        <MudStack Row
+                  Wrap="@Wrap.Wrap"
+                  Spacing="1">
+            @for (var i = 0; i < LanguageLabels.Length; i++)
+            {
+                var li = i;
+                <MudCheckBox T="@bool"
+                             Label="@LanguageLabels[li]"
+                             Value="@dex.GetLanguageFlag(bit, li)"
+                             ValueChanged="@(v =>
+                                           {
+                                               dex.SetLanguageFlag(bit, li, v);
+                                               StateHasChanged();
+                                           })"/>
+            }
+        </MudStack>
+
+    </MudStack>
+}

@@ -1,0 +1,81 @@
+@inherits BasePkmdsComponent
+
+@if (rows.Count > 0)
+{
+    <MudTextField @bind-Value="searchText"
+                  Placeholder="Search species…"
+                  Immediate
+                  AdornmenT="@Adornment.Start"
+                  AdornmentIcon="@Icons.Material.Filled.Search"
+                  Clearable
+                  Class="mb-2"/>
+
+    @* MudDataGrid Virtualize="true" is not used here due to a MudBlazor bug (#454):
+       DataGridVirtualizeRow renders SpacerElemenT="@div" inside <tbody>, which CSS
+       collapses to 0 px, causing rows to jump on scroll.  Tracked upstream at
+       MudBlazor/MudBlazor#12799.  Once merged and released, switch to MudDataGrid
+       with Virtualize="true" and RowHeight="36". *@
+    <MudTable T="@PokedexGridRow"
+              Items="@rows"
+              Filter="@FilterRow"
+              Dense
+              Hover
+              Striped
+              Bordered
+              FixedHeader
+              Height="calc(100vh - 460px)"
+              SortLabel="Sort By"
+              RowsPerPage="50">
+
+        <HeaderContent>
+            <MudTh>
+                <MudTableSortLabel SortBy="@(new Func<PokedexGridRow, object>(r => r.SpeciesId))">
+                    #
+                </MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel SortBy="@(new Func<PokedexGridRow, object>(r => r.Name))">
+                    Species
+                </MudTableSortLabel>
+            </MudTh>
+            <MudTh>Seen</MudTh>
+            <MudTh>Caught</MudTh>
+            @if (hasDetailedEditor)
+            {
+                <MudTh></MudTh>
+            }
+        </HeaderContent>
+
+        <RowTemplate>
+            <MudTd DataLabel="#">@context.SpeciesId</MudTd>
+            <MudTd DataLabel="Species">@context.Name</MudTd>
+            <MudTd DataLabel="Seen">
+                <MudCheckBox T="@bool"
+                             Value="@context.IsSeen"
+                             ValueChanged="@(v => OnSeenChanged(context, v))"/>
+            </MudTd>
+            <MudTd DataLabel="Caught">
+                <MudCheckBox T="@bool"
+                             Value="@context.IsCaught"
+                             ValueChanged="@(v => OnCaughtChanged(context, v))"/>
+            </MudTd>
+            @if (hasDetailedEditor)
+            {
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                   Size="@Size.Small"
+                                   OnClick="@(() => OpenDetails(context))"/>
+                </MudTd>
+            }
+        </RowTemplate>
+
+        <NoRecordsContent>
+            <MudText>No species match the search.</MudText>
+        </NoRecordsContent>
+
+        <PagerContent>
+            <MudTablePager/>
+        </PagerContent>
+
+    </MudTable>
+}

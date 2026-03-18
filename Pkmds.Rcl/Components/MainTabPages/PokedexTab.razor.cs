@@ -10,7 +10,11 @@ public partial class PokedexTab
     // the UI never shows a fraction exceeding 100 %.
     private int dexTotal;
     private int displayCaughtCount;
+
     private int displaySeenCount;
+
+    // Incremented after every bulk operation to signal PokedexSpeciesGrid to rebuild.
+    private int gridRefreshToken;
     private double seenPercent;
 
     // Gen 8 LA uses PokedexSave8a (no Zukan); SeenAll and Clear are not applicable.
@@ -39,8 +43,17 @@ public partial class PokedexTab
         var seen = 0;
         var caught = 0;
 
+        // Apply the same per-game filter used by GetDexTotalCount so the numerator
+        // (seen/caught species) and denominator (dex total) always represent the same
+        // species set.  Without this, HOME-transferred out-of-dex species can inflate
+        // the counts and cause percentages to show 100% when in-dex completion is lower.
         for (ushort i = 1; i <= saveFile.MaxSpeciesID; i++)
         {
+            if (!PokedexHelpers.IsSpeciesInDex(saveFile, i))
+            {
+                continue;
+            }
+
             if (saveFile.GetSeen(i))
             {
                 seen++;
@@ -52,11 +65,8 @@ public partial class PokedexTab
             }
         }
 
-        // Clamp raw counts to the formal dex total: saves with HOME-transferred
-        // Pokémon can flag species as seen/caught outside the game's formal dex,
-        // which would make the raw totals exceed 100 %.
-        displaySeenCount = Math.Min(seen, dexTotal);
-        displayCaughtCount = Math.Min(caught, dexTotal);
+        displaySeenCount = seen;
+        displayCaughtCount = caught;
         seenPercent = dexTotal == 0
             ? 0
             : Math.Min(100.0, (double)seen / dexTotal * 100);
@@ -110,14 +120,14 @@ public partial class PokedexTab
                     return count;
                 }
 
-            // SAV_PokedexSV: filters by Zukan9.GetDexIndex(species).Index != 0,
-            // which covers all three regional dexes (Paldea / Kitakami / Blueberry).
+            // SAV_PokedexSV: only count dexes available in the save's revision.
+            // Rev 0 = Paldea only; Rev 1 = + Kitakami; Rev 2+ = + Blueberry.
             case SAV9SV sv:
                 {
                     var count = 0;
                     for (ushort i = 1; i <= sv.MaxSpeciesID; i++)
                     {
-                        if (sv.Zukan.GetDexIndex(i).Index != 0)
+                        if (PokedexHelpers.IsSpeciesInSvDex(sv, i))
                         {
                             count++;
                         }
@@ -209,6 +219,7 @@ public partial class PokedexTab
         }
 
         RefreshDexStats();
+        gridRefreshToken++;
     }
 
     private static void FillGen1Pokedex(SAV1 s1)
@@ -407,7 +418,7 @@ public partial class PokedexTab
             case SAV9SV sv when sv.Zukan.GetRevision() == 0:
                 for (ushort i = 1; i <= sv.MaxSpeciesID; i++)
                 {
-                    if (sv.Zukan.GetDexIndex(i).Index == 0)
+                    if (!PokedexHelpers.IsSpeciesInSvDex(sv, i))
                     {
                         continue;
                     }
@@ -436,6 +447,7 @@ public partial class PokedexTab
         }
 
         RefreshDexStats();
+        gridRefreshToken++;
         await Task.Yield();
     }
 
@@ -535,6 +547,23 @@ public partial class PokedexTab
         }
 
         RefreshDexStats();
+        gridRefreshToken++;
         await Task.Yield();
+    }
+
+
+    // Called by PokedexSpeciesGrid after any per-species Seen/Caught toggle so the
+    // header counts and progress bars stay in sync without a full grid rebuild.
+    private void OnSpeciesChangedInGrid()
+    {
+        RefreshDexStats();
+        StateHasChanged();
+    }
+
+    private void OnRecalculate(SAV7b sav7B)
+    {
+        sav7B.Captured.TotalCaptured = sav7B.Captured.CalculateTotalCaptured();
+        sav7B.Captured.TotalTransferred = sav7B.Captured.CalculateTotalTransferred();
+        StateHasChanged();
     }
 }

@@ -12,7 +12,7 @@
     <DialogContent>
         <MudTabs Elevation="0"
                  Rounded="false"
-                 ApplyEffectsToContainer="true">
+                 ApplyEffectsToContainer>
 
             <!-- Tab 1: UI Preferences -->
             <MudTabPanel Text="UI">
@@ -113,7 +113,7 @@
                                   Label="Default OT Name"
                                   MaxLength="12"
                                   Variant="@Variant.Outlined"
-                                  Clearable="true"/>
+                                  Clearable/>
                     <MudNumericField @bind-Value="@_defaultTrainerId"
                                      Label="Default TID"
                                      Variant="@Variant.Outlined"

@@ -1,0 +1,257 @@
+@inherits BasePkmdsComponent
+
+@if (AppState.SaveFile is SAV7b sav7b)
+{
+    var dex = sav7b.Zukan;
+    // GetEntryIndex maps species+form to the correct bit position; for form 0 this is
+    // species-1 for Kanto species (1–151) and also correctly resolves Meltan/Melmetal (808/809),
+    // which live at bit offsets 807/808 in the full-gen7 bit array (MaxSpeciesID_7b = 809).
+    var bit = dex.GetEntryIndex(SpeciesId, 0);
+
+    <MudStack Spacing="3">
+
+        @* Caught *@
+        <MudCheckBox T="@bool"
+                     Label="Caught"
+                     Value="@dex.GetCaught(SpeciesId)"
+                     ValueChanged="@(v =>
+                                   {
+                                       dex.SetCaught(SpeciesId, v);
+                                       if (v) dex.SetSeen(SpeciesId, 0, true);
+                                       StateHasChanged();
+                                   })"/>
+
+        @* Seen (4 regions) *@
+        <MudText Typo="@Typo.subtitle2">Seen</MudText>
+        <MudStack Row
+                  Wrap="@Wrap.Wrap"
+                  Spacing="1">
+            @foreach (var (label, region) in SeenRegions)
+            {
+                var r = region;
+                <MudCheckBox T="@bool"
+                             Label="@label"
+                             Disabled="@(!IsRegionValid(r))"
+                             Value="@dex.GetSeen(SpeciesId, r)"
+                             ValueChanged="@(v =>
+                                           {
+                                               dex.SetSeen(SpeciesId, r, v);
+                                               StateHasChanged();
+                                           })"/>
+            }
+        </MudStack>
+
+        @* Displayed *@
+        <MudText Typo="@Typo.subtitle2">Displayed Variant</MudText>
+        <MudStack Row
+                  Wrap="@Wrap.Wrap"
+                  Spacing="1">
+            @foreach (var (label, region) in SeenRegions)
+            {
+                var r = region;
+                <MudCheckBox T="@bool"
+                             Label="@label"
+                             Disabled="@(!IsRegionValid(r))"
+                             Value="@dex.GetDisplayed(bit, r)"
+                             ValueChanged="@(v => OnDisplayedChanged(dex, bit, r, v))"/>
+            }
+        </MudStack>
+
+        @* Alternate form displayed variants (e.g. Alolan forms) *@
+        @{
+            var fc7b = (int)sav7b.Personal[SpeciesId].FormCount;
+            var formNames7b = fc7b > 1
+                ? FormConverter.GetFormList(SpeciesId, GameInfo.Strings.types,
+                    GameInfo.Strings.forms, GameInfo.GenderSymbolASCII, EntityContext.Gen7b)
+                : [];
+        }
+        @if (fc7b > 1 && dex.GetEntryIndex(SpeciesId, 1) != bit)
+        {
+            <MudText Typo="@Typo.subtitle2">Alternate Form Displayed</MudText>
+            <MudSimpleTable Dense
+                            Style="max-width:500px; max-height:200px; overflow-y:auto;">
+                <thead>
+                <tr>
+                    <th>Form</th>
+                    @foreach (var (label, _) in SeenRegions)
+                    {
+                        <th>@label</th>
+                    }
+                </tr>
+                </thead>
+                <tbody>
+                @for (byte f7b = 1; f7b < fc7b; f7b++)
+                {
+                    var fi7b = f7b;
+                    var formIdx7b = dex.GetEntryIndex(SpeciesId, fi7b);
+                    @if (formIdx7b == bit)
+                    {
+                        continue;
+                    }
+
+                    var formName7b = fi7b < formNames7b.Length
+                        ? formNames7b[fi7b]
+                        : $"Form {fi7b}";
+                    <tr>
+                        <td>@formName7b</td>
+                        @foreach (var (_, region) in SeenRegions)
+                        {
+                            var r7b = region;
+                            <td>
+                                <MudCheckBox T="@bool"
+                                             Disabled="@(!IsRegionValid(r7b))"
+                                             Value="@dex.GetDisplayed(formIdx7b, r7b)"
+                                             ValueChanged="@(v => OnDisplayedChanged(dex, formIdx7b, r7b, v))"/>
+                            </td>
+                        }
+                    </tr>
+                }
+                </tbody>
+            </MudSimpleTable>
+        }
+
+        @* Partner form note for Pikachu/Eevee *@
+        @if (SpeciesId is (ushort)Species.Pikachu or (ushort)Species.Eevee)
+        {
+            <MudAlert Severity="@Severity.Info"
+                      Dense>
+                Partner @(SpeciesId == (ushort)Species.Pikachu
+                                ? "Pikachu"
+                                : "Eevee") form is stored separately and not shown in the Pokédex.
+            </MudAlert>
+        }
+
+        @* Size Records — one table per form that has size data (Normal, Mega, Alolan, etc.) *@
+        @{
+            var szPi = sav7b.Personal.GetFormEntry(SpeciesId, 0);
+            var szFormCount = szPi.FormCount;
+            var szFormNames = FormConverter.GetFormList(SpeciesId, GameInfo.Strings.types,
+                GameInfo.Strings.forms, GameInfo.GenderSymbolASCII, EntityContext.Gen7b);
+        }
+        @for (byte szForm = 0; szForm < szFormCount; szForm++)
+        {
+            @if (!Zukan7b.TryGetSizeEntryIndex(SpeciesId, szForm, out var sizeFormIdx))
+            {
+                continue;
+            }
+
+            var sfLabel = szForm < szFormNames.Length
+                ? szFormNames[szForm]
+                : $"Form {szForm}";
+            <MudText Typo="@Typo.subtitle2">Size Records (@sfLabel)</MudText>
+            <MudSimpleTable Dense
+                            Style="max-width:480px;">
+                <thead>
+                <tr>
+                    <th>Record</th>
+                    <th>Used</th>
+                    <th>Height</th>
+                    <th>Weight</th>
+                    <th>Flagged</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var (label, group) in SizeGroups)
+                {
+                    var grp = group;
+                    var idx = sizeFormIdx;
+                    var hasData = dex.GetSizeData(grp, idx, out var h, out var w, out var flagged);
+                    <tr>
+                        <td>@label</td>
+                        <td>
+                            <MudCheckBox T="@bool"
+                                         Value="@hasData"
+                                         ValueChanged="@(v => OnSizeUsedChanged(dex, grp, v, idx))"/>
+                        </td>
+                        <td>
+                            <MudNumericField T="@byte"
+                                             Value="@h"
+                                             ValueChanged="@(v => OnSizeValueChanged(dex, grp, idx, v, w, flagged))"
+                                             Disabled="@(!hasData)"
+                                             Min="0"
+                                             Max="255"
+                                             Style="max-width:70px;"/>
+                        </td>
+                        <td>
+                            <MudNumericField T="@byte"
+                                             Value="@w"
+                                             ValueChanged="@(v => OnSizeValueChanged(dex, grp, idx, h, v, flagged))"
+                                             Disabled="@(!hasData)"
+                                             Min="0"
+                                             Max="255"
+                                             Style="max-width:70px;"/>
+                        </td>
+                        <td>
+                            <MudCheckBox T="@bool"
+                                         Value="@flagged"
+                                         ValueChanged="@(v => OnSizeValueChanged(dex, grp, idx, h, w, v))"
+                                         Disabled="@(!hasData)"/>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </MudSimpleTable>
+        }
+        @if (szFormCount > 0 && Zukan7b.TryGetSizeEntryIndex(SpeciesId, 0, out _))
+        {
+            <MudText Typo="@Typo.caption"
+                     Class="mud-text-secondary">
+                Size records are set automatically when you obtain a Pokémon.
+                Check "Used" to seed a record manually; uncheck to reset it to defaults.
+            </MudText>
+        }
+
+        @* Capture Records (Kanto + Meltan/Melmetal species only) *@
+        @if (CaptureRecords.GetSpeciesIndex(SpeciesId) != ushort.MaxValue)
+        {
+            var capture = sav7b.Captured;
+            <MudText Typo="@Typo.subtitle2">Capture Records</MudText>
+            <MudStack Row
+                      Spacing="3"
+                      AlignItems="AlignItems.Center">
+                <MudNumericField T="@uint"
+                                 Label="Captured"
+                                 Value="@capture.GetCapturedCount(SpeciesId)"
+                                 ValueChanged="@(v =>
+                                               {
+                                                   capture.SetCapturedCount(SpeciesId, v);
+                                                   StateHasChanged();
+                                               })"
+                                 Min="0"
+                                 Max="9999"
+                                 Style="max-width:110px;"/>
+                <MudNumericField T="@uint"
+                                 Label="Transferred"
+                                 Value="@capture.GetTransferredCount(SpeciesId)"
+                                 ValueChanged="@(v =>
+                                               {
+                                                   capture.SetTransferredCount(SpeciesId, v);
+                                                   StateHasChanged();
+                                               })"
+                                 Min="0"
+                                 Max="999999999"
+                                 Style="max-width:160px;"/>
+            </MudStack>
+        }
+
+        @* Language flags *@
+        <MudText Typo="@Typo.subtitle2">Languages Obtained</MudText>
+        <MudStack Row
+                  Wrap="@Wrap.Wrap"
+                  Spacing="1">
+            @for (var i = 0; i < LanguageLabels.Length; i++)
+            {
+                var li = i;
+                <MudCheckBox T="@bool"
+                             Label="@LanguageLabels[li]"
+                             Value="@dex.GetLanguageFlag(bit, li)"
+                             ValueChanged="@(v =>
+                                           {
+                                               dex.SetLanguageFlag(bit, li, v);
+                                               StateHasChanged();
+                                           })"/>
+            }
+        </MudStack>
+
+    </MudStack>
+}
