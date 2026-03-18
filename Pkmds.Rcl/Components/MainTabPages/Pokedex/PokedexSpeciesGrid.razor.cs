@@ -104,25 +104,44 @@ public partial class PokedexSpeciesGrid
             return;
         }
 
-        if (saveFile is SAV9SV sv && sv.Zukan.GetRevision() == 0)
+        if (saveFile is SAV9SV sv)
         {
-            // PKHeX bug: PokeDexEntry9Paldea.SetSeen(true) is a no-op when state == 0
-            // because it uses Math.Min(state, 2) instead of Math.Max.  SetSeen(false)
-            // calls SetState(2) ("seen") instead of 0 ("unknown").
-            // Workaround: call SetState() directly.
-            var entry = sv.Zukan.DexPaldea.Get(row.SpeciesId);
-            if (value)
+            // PKHeX bug: SaveFile.SetSeen is a virtual no-op; SAV9SV never overrides it.
+            // Must write through the Zukan API directly for both dex block modes.
+            if (sv.Zukan.GetRevision() == 0)
             {
-                // Raise to "seen" (state 2) only if not already seen or caught.
-                if (entry.GetState() < 2)
+                // Paldea block (pre-DLC saves).
+                // PKHeX bug: PokeDexEntry9Paldea.SetSeen(true) is a no-op when state == 0
+                // because it uses Math.Min(state, 2) instead of Math.Max.  SetSeen(false)
+                // calls SetState(2) ("seen") instead of 0 ("unknown").
+                // Workaround: call SetState() directly.
+                var entry = sv.Zukan.DexPaldea.Get(row.SpeciesId);
+                if (value)
                 {
-                    entry.SetState(2u);
+                    // Raise to "seen" (state 2) only if not already seen or caught.
+                    if (entry.GetState() < 2)
+                    {
+                        entry.SetState(2u);
+                    }
+                }
+                else
+                {
+                    // Clear everything — "unknown" (state 0).
+                    entry.SetState(0u);
                 }
             }
             else
             {
-                // Clear everything — "unknown" (state 0).
-                entry.SetState(0u);
+                // Kitakami block (post-2.0.1 saves with DLC; stores all species).
+                var entry = sv.Zukan.DexKitakami.Get(row.SpeciesId);
+                if (value)
+                {
+                    entry.SetSeenForm(0, true);
+                }
+                else
+                {
+                    entry.ClearSeen(0);
+                }
             }
         }
         else
@@ -144,16 +163,38 @@ public partial class PokedexSpeciesGrid
             return;
         }
 
-        if (saveFile is SAV9SV sv && sv.Zukan.GetRevision() == 0)
+        if (saveFile is SAV9SV sv)
         {
-            // PKHeX bug: PokeDexEntry9Paldea.SetCaught(false) calls SetState(2) ("seen")
-            // instead of leaving caught unset.
-            // Workaround: call SetState() directly.
-            var entry = sv.Zukan.DexPaldea.Get(row.SpeciesId);
-            entry.SetState(value
-                    ? 3u // caught
-                    : 2u // seen but not caught
-            );
+            // PKHeX bug: SaveFile.SetCaught is a virtual no-op; SAV9SV never overrides it.
+            // Must write through the Zukan API directly for both dex block modes.
+            if (sv.Zukan.GetRevision() == 0)
+            {
+                // Paldea block (pre-DLC saves).
+                // PKHeX bug: PokeDexEntry9Paldea.SetCaught(false) calls SetState(2) ("seen")
+                // instead of leaving caught unset.
+                // Workaround: call SetState() directly.
+                var entry = sv.Zukan.DexPaldea.Get(row.SpeciesId);
+                entry.SetState(value
+                        ? 3u // caught
+                        : 2u // seen but not caught
+                );
+            }
+            else
+            {
+                // Kitakami block (post-2.0.1 saves with DLC; stores all species).
+                var entry = sv.Zukan.DexKitakami.Get(row.SpeciesId);
+                if (value)
+                {
+                    // A caught species must also be seen.
+                    entry.SetSeenForm(0, true);
+                    entry.SetObtainedForm(0, true);
+                }
+                else
+                {
+                    // Clear caught but keep seen.
+                    entry.SetObtainedForm(0, false);
+                }
+            }
         }
         else
         {
