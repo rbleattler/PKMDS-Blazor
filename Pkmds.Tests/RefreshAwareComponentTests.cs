@@ -154,13 +154,10 @@ public class RefreshAwareComponentTests
         public void RefreshTheme(bool isDarkMode) => OnThemeChanged?.Invoke(isDarkMode);
         public void ShowUpdateMessage() => OnUpdateAvailable?.Invoke();
 
-        // ReSharper disable once InconsistentNaming
         private event Action? _onAppStateChanged;
 
-        // ReSharper disable once InconsistentNaming
         private event Action? _onBoxStateChanged;
 
-        // ReSharper disable once InconsistentNaming
         private event Action? _onPartyStateChanged;
     }
 }

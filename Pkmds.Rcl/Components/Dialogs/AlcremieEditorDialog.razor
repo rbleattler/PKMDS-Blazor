@@ -7,7 +7,7 @@
     <DialogContent>
         @if (Pokemon is not null)
         {
-            <MudSwitch T="bool"
+            <MudSwitch T="@bool"
                        @bind-Value="isPreviewShiny"
                        Color="@Color.Warning"
                        Label="Shiny Preview"

@@ -72,7 +72,7 @@ public partial class EncounterDatabaseTab : RefreshAwareComponent
             Species = speciesItem is { Value: > 0 }
                 ? (ushort)speciesItem.Value
                 : null,
-            Version = gameVersionValue.HasValue && gameVersionValue.Value > 0
+            Version = gameVersionValue is > 0
                 ? (GameVersion)gameVersionValue.Value
                 : null,
             LevelMin = levelMin.HasValue

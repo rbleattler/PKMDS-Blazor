@@ -45,7 +45,7 @@
             <MudStack Style="flex: 1; min-width: 0;">
                 <MudSelect Label="Battle Version"
                            Variant="@Variant.Outlined"
-                           T="GameVersion"
+                           T="@GameVersion"
                            Value="@BattleVersionValue"
                            ValueChanged="@(v => BattleVersionValue = v)"
                            ToStringFunc="@(version => version == GameVersion.Any

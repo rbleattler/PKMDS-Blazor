@@ -21,22 +21,30 @@
                 {
                     var s = species;
                     var h = hisuiIdx;
-                    var sn = s < speciesNames.Count ? speciesNames[s] : s.ToString(CultureInfo.InvariantCulture);
+                    var sn = s < speciesNames.Count
+                        ? speciesNames[s]
+                        : s.ToString(CultureInfo.InvariantCulture);
                     <MudSelectItem Value="@s">@($"{h:000} — {sn}")</MudSelectItem>
                 }
             </MudSelect>
 
             <MudButtonGroup Variant="@Variant.Outlined"
                             Size="@Size.Small">
-                <MudButton Color="@(filter == DexFilter.All ? Color.Primary : Color.Default)"
+                <MudButton Color="@(filter == DexFilter.All
+                                      ? Color.Primary
+                                      : Color.Default)"
                            OnClick="@(() => SetFilter(DexFilter.All, dex))">
                     All
                 </MudButton>
-                <MudButton Color="@(filter == DexFilter.Incomplete ? Color.Warning : Color.Default)"
+                <MudButton Color="@(filter == DexFilter.Incomplete
+                                      ? Color.Warning
+                                      : Color.Default)"
                            OnClick="@(() => SetFilter(DexFilter.Incomplete, dex))">
                     Incomplete
                 </MudButton>
-                <MudButton Color="@(filter == DexFilter.Complete ? Color.Success : Color.Default)"
+                <MudButton Color="@(filter == DexFilter.Complete
+                                      ? Color.Success
+                                      : Color.Default)"
                            OnClick="@(() => SetFilter(DexFilter.Complete, dex))">
                     Complete
                 </MudButton>
@@ -68,9 +76,13 @@
                           AlignItems="AlignItems.Center"
                           Class="mb-1">
                     <MudText Typo="@Typo.h6">@speciesName (Hisui #@hisuiDexIndex)</MudText>
-                    <MudText Typo="@Typo.body2">Research points: @researchRate@(isComplete ? " (Complete!)" : "")</MudText>
+                    <MudText Typo="@Typo.body2">Research points: @researchRate@(isComplete
+                                                                                      ? " (Complete!)"
+                                                                                      : "")</MudText>
                 </MudStack>
-                <MudProgressLinear Color="@(isComplete ? Color.Success : Color.Info)"
+                <MudProgressLinear Color="@(isComplete
+                                              ? Color.Success
+                                              : Color.Info)"
                                    Value="@Math.Min(researchRate, 100)"
                                    Class="mb-3"/>
 
@@ -78,11 +90,22 @@
                 <MudStack Row
                           Spacing="2"
                           Class="mb-2">
-                    <MudTooltip Text="@(dex.HasPokeEverBeenUpdated(selectedSpecies) ? "Cannot be unset once seen" : "Mark as seen")">
+                    <MudTooltip Text="@(dex.HasPokeEverBeenUpdated(selectedSpecies)
+                                          ? "Cannot be unset once seen"
+                                          : "Mark as seen")">
                         <MudCheckBox T="bool"
                                      Label="Seen"
                                      Value="@dex.HasPokeEverBeenUpdated(selectedSpecies)"
-                                     ValueChanged="@(v => { if (v) { dex.SetPokeHasBeenUpdated(selectedSpecies); StateHasChanged(); } })"
+                                     ValueChanged="@(v =>
+                                                   {
+                                                       if (!v)
+                                                       {
+                                                           return;
+                                                       }
+
+                                                       dex.SetPokeHasBeenUpdated(selectedSpecies);
+                                                       StateHasChanged();
+                                                   })"
                                      Disabled="@dex.HasPokeEverBeenUpdated(selectedSpecies)"/>
                     </MudTooltip>
                     <MudTooltip Text="Automatically set when research points reach 100">
@@ -100,7 +123,11 @@
                     <MudCheckBox T="bool"
                                  Label="Solitude"
                                  Value="@dex.GetSolitudeComplete(selectedSpecies)"
-                                 ValueChanged="@(v => { dex.SetSolitudeComplete(selectedSpecies, v); StateHasChanged(); })"/>
+                                 ValueChanged="@(v =>
+                                               {
+                                                   dex.SetSolitudeComplete(selectedSpecies, v);
+                                                   StateHasChanged();
+                                               })"/>
                 </MudStack>
 
                 @* Research task table *@
@@ -147,7 +174,9 @@
                                 {
                                     var threshVal = task.TaskThresholds[thresh];
                                     var met = curValue >= threshVal;
-                                    <td style="text-align:center;background-color:@(met ? "var(--mud-palette-success-lighten)" : "var(--mud-palette-error-lighten)");font-weight:bold;">
+                                    <td style="text-align:center;background-color:@(met
+                                                                                      ? "var(--mud-palette-success-lighten)"
+                                                                                      : "var(--mud-palette-error-lighten)");font-weight:bold;">
                                         @threshVal
                                     </td>
                                 }
@@ -223,9 +252,13 @@
             {
                 var completed = dex.IsPokedexCompleted(dexType);
                 <MudChip T="string"
-                         Color="@(completed ? Color.Success : Color.Default)"
+                         Color="@(completed
+                                    ? Color.Success
+                                    : Color.Default)"
                          Size="@Size.Small"
-                         title="@(completed ? $"{label}: Complete" : $"{label}: Incomplete")">
+                         title="@(completed
+                                    ? $"{label}: Complete"
+                                    : $"{label}: Incomplete")">
                     @label
                 </MudChip>
             }

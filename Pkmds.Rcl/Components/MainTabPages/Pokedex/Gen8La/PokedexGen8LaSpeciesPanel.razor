@@ -21,7 +21,9 @@
         <MudText Typo="@Typo.subtitle2">Status</MudText>
         <MudStack Row
                   Spacing="2">
-            <MudTooltip Text="@(dex.HasPokeEverBeenUpdated(SpeciesId) ? "Cannot be unset once seen" : "Mark as seen")">
+            <MudTooltip Text="@(dex.HasPokeEverBeenUpdated(SpeciesId)
+                                  ? "Cannot be unset once seen"
+                                  : "Mark as seen")">
                 <MudCheckBox T="@bool"
                              Label="Seen"
                              Value="@dex.HasPokeEverBeenUpdated(SpeciesId)"
@@ -81,7 +83,9 @@
                         var seenWild = dex.GetPokeSeenInWildFlags(SpeciesId, f);
                         var obtained = dex.GetPokeObtainFlags(SpeciesId, f);
                         var caughtWild = dex.GetPokeCaughtInWildFlags(SpeciesId, f);
-                        var name = f < formNames.Length ? formNames[f] : $"Form {f}";
+                        var name = f < formNames.Length
+                            ? formNames[f]
+                            : $"Form {f}";
                         <tr>
                             <td>@name</td>
                             @for (var b = 0; b < 8; b++)

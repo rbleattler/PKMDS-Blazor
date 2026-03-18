@@ -14,7 +14,7 @@ public partial class PokedexGen9SvSpeciesPanel : BasePkmdsComponent
     public ushort SpeciesId { get; set; }
 
     /// <summary>
-    ///     Returns which regional dexes contain this species (checking all forms).
+    /// Returns which regional dexes contain this species (checking all forms).
     /// </summary>
     private static (bool Paldea, bool Kitakami, bool Blueberry) GetDexMembership(SAV9SV sav, ushort species)
     {
@@ -43,9 +43,9 @@ public partial class PokedexGen9SvSpeciesPanel : BasePkmdsComponent
     }
 
     /// <summary>
-    ///     Returns true when the given gender slot (0=male, 1=female, 2=genderless) is
-    ///     possible for this species, based on the gender ratio in the personal table.
-    ///     Mirrors the guarding logic used in the Gen7b and Gen8SWSH panels.
+    /// Returns true when the given gender slot (0=male, 1=female, 2=genderless) is
+    /// possible for this species, based on the gender ratio in the personal table.
+    /// Mirrors the guarding logic used in the Gen7b and Gen8SWSH panels.
     /// </summary>
     private static bool IsGenderAvailable(SAV9SV sav, ushort species, byte gender)
     {

@@ -10,7 +10,7 @@ public partial class PokedexGen8LaSpeciesPanel : BasePkmdsComponent
     {
         var flags = dex.GetPokeSeenInWildFlags(SpeciesId, form);
         flags = value
-            ? (byte)(flags | (1 << bit))
+            ? (byte)(flags | 1 << bit)
             : (byte)(flags & ~(1 << bit));
         dex.SetPokeSeenInWildFlags(SpeciesId, form, flags);
         StateHasChanged();
@@ -20,7 +20,7 @@ public partial class PokedexGen8LaSpeciesPanel : BasePkmdsComponent
     {
         var flags = dex.GetPokeObtainFlags(SpeciesId, form);
         flags = value
-            ? (byte)(flags | (1 << bit))
+            ? (byte)(flags | 1 << bit)
             : (byte)(flags & ~(1 << bit));
         dex.SetPokeObtainFlags(SpeciesId, form, flags);
         StateHasChanged();
@@ -30,7 +30,7 @@ public partial class PokedexGen8LaSpeciesPanel : BasePkmdsComponent
     {
         var flags = dex.GetPokeCaughtInWildFlags(SpeciesId, form);
         flags = value
-            ? (byte)(flags | (1 << bit))
+            ? (byte)(flags | 1 << bit)
             : (byte)(flags & ~(1 << bit));
         dex.SetPokeCaughtInWildFlags(SpeciesId, form, flags);
         StateHasChanged();

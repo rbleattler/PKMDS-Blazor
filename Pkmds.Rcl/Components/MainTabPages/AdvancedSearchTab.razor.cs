@@ -140,7 +140,7 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
             Ability = abilityId,
             HeldItem = heldItemId,
             Ball = ball,
-            OriginGame = originGame.HasValue && originGame.Value > 0
+            OriginGame = originGame is > 0
                 ? (GameVersion)originGame.Value
                 : null,
             IsLegal = isLegal,

@@ -36,19 +36,19 @@ public partial class PokerusComponent
                 Pokemon.IsPokerusCured = false;
                 return;
             case true:
+            {
+                if (Pokemon.PokerusStrain == 0)
                 {
-                    if (Pokemon.PokerusStrain == 0)
-                    {
-                        Pokemon.PokerusStrain = 1;
-                    }
-
-                    if (Pokemon.PokerusDays == 0)
-                    {
-                        Pokemon.PokerusDays = 1;
-                    }
-
-                    break;
+                    Pokemon.PokerusStrain = 1;
                 }
+
+                if (Pokemon.PokerusDays == 0)
+                {
+                    Pokemon.PokerusDays = 1;
+                }
+
+                break;
+            }
             case false:
                 Pokemon.PokerusStrain = Pokemon.PokerusDays = 0;
                 break;

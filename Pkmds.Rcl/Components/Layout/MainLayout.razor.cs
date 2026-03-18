@@ -593,5 +593,10 @@ public partial class MainLayout : IDisposable
         await element.InvokeVoidAsync("click");
     }
 
-    private enum ThemeMode { Light, System, Dark }
+    private enum ThemeMode
+    {
+        Light,
+        System,
+        Dark
+    }
 }

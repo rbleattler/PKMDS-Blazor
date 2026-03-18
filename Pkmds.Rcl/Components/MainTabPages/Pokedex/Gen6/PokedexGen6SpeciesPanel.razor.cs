@@ -55,6 +55,7 @@ public partial class PokedexGen6SpeciesPanel
                 dex.SetFormFlag(formStart + f, 2, false);
                 dex.SetFormFlag(formStart + f, 3, false);
             }
+
             dex.SetFormFlag(formIndex, region, true);
         }
         else
@@ -77,7 +78,7 @@ public partial class PokedexGen6SpeciesPanel
         {
             0 or 2 => gender != 254,
             1 or 3 => gender is not 0 and not 255,
-            _ => true,
+            _ => true
         };
     }
 }

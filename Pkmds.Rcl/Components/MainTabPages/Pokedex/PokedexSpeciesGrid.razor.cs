@@ -2,17 +2,17 @@ namespace Pkmds.Rcl.Components.MainTabPages.Pokedex;
 
 public partial class PokedexSpeciesGrid
 {
-    private bool hasDetailedEditor;
+    private int _lastRefreshToken = -1;
+
+    // Tracks the last seen values to avoid a full BuildRows() call on every re-render.
+    private SaveFile? _lastSaveFile;
     private IReadOnlyList<RegionalDexDefinition> _regionalDexDefinitions = [];
     private int _selectedRegionalDexFilter = -1; // -1 = All
+    private bool hasDetailedEditor;
     private List<PokedexGridRow> rows = [];
 
     private string searchText = string.Empty;
     private DexStatusFilter selectedStatusFilter = DexStatusFilter.All;
-
-    // Tracks the last seen values to avoid a full BuildRows() call on every re-render.
-    private SaveFile? _lastSaveFile;
-    private int _lastRefreshToken = -1;
 
     // Incremented by PokedexTab after each bulk operation (Fill / Seen All / Clear).
     // Giving the grid a changing parameter ensures Blazor re-renders the child and
@@ -33,12 +33,14 @@ public partial class PokedexSpeciesGrid
         // bulk operation increments RefreshToken.  Individual Seen/Caught toggles are
         // handled in-place by UpdateRowFromSave so the virtualizer's Items reference
         // changes without a full list rebuild.
-        if (!ReferenceEquals(saveFile, _lastSaveFile) || RefreshToken != _lastRefreshToken)
+        if (ReferenceEquals(saveFile, _lastSaveFile) && RefreshToken == _lastRefreshToken)
         {
-            _lastSaveFile = saveFile;
-            _lastRefreshToken = RefreshToken;
-            BuildRows();
+            return;
         }
+
+        _lastSaveFile = saveFile;
+        _lastRefreshToken = RefreshToken;
+        BuildRows();
     }
 
     // Materializes one PokedexGridRow per species that is registered in this game's
@@ -83,9 +85,15 @@ public partial class PokedexSpeciesGrid
     // PokedexTab header counts always filter against the same species set.
     private static int RegionalIdForSort(PokedexGridRow row, int colIdx)
     {
-        if (colIdx >= row.RegionalIds.Count) return int.MaxValue;
+        if (colIdx >= row.RegionalIds.Count)
+        {
+            return int.MaxValue;
+        }
+
         var id = row.RegionalIds[colIdx];
-        return id == 0 ? int.MaxValue : id;
+        return id == 0
+            ? int.MaxValue
+            : id;
     }
 
     private static bool IsSpeciesInDex(SaveFile saveFile, ushort species) =>
@@ -101,7 +109,9 @@ public partial class PokedexSpeciesGrid
             if (ushort.TryParse(search, out var id))
             {
                 if (row.SpeciesId != id)
+                {
                     return false;
+                }
             }
             else if (!row.Name.Contains(search, StringComparison.OrdinalIgnoreCase))
             {
@@ -110,16 +120,18 @@ public partial class PokedexSpeciesGrid
         }
 
         if (_selectedRegionalDexFilter >= 0 && _selectedRegionalDexFilter < row.RegionalIds.Count
-            && row.RegionalIds[_selectedRegionalDexFilter] == 0)
+                                            && row.RegionalIds[_selectedRegionalDexFilter] == 0)
+        {
             return false;
+        }
 
         return selectedStatusFilter switch
         {
-            DexStatusFilter.Seen          => row.IsSeen,
-            DexStatusFilter.Caught        => row.IsCaught,
-            DexStatusFilter.Unseen        => !row.IsSeen,
-            DexStatusFilter.SeenNotCaught => row.IsSeen && !row.IsCaught,
-            _                             => true,
+            DexStatusFilter.Seen => row.IsSeen,
+            DexStatusFilter.Caught => row.IsCaught,
+            DexStatusFilter.Unseen => !row.IsSeen,
+            DexStatusFilter.SeenNotCaught => row is { IsSeen: true, IsCaught: false },
+            _ => true
         };
     }
 
@@ -244,11 +256,13 @@ public partial class PokedexSpeciesGrid
 
         // Build a new list so MudDataGrid's virtualizer detects the Items reference
         // change and re-renders visible rows with the updated Seen/Caught state.
-        var newRows = new List<PokedexGridRow>(rows);
-        newRows[idx] = row with
+        var newRows = new List<PokedexGridRow>(rows)
         {
-            IsSeen = saveFile.GetSeen(row.SpeciesId),
-            IsCaught = saveFile.GetCaught(row.SpeciesId),
+            [idx] = row with
+            {
+                IsSeen = saveFile.GetSeen(row.SpeciesId),
+                IsCaught = saveFile.GetCaught(row.SpeciesId)
+            }
         };
         rows = newRows;
     }

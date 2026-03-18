@@ -243,12 +243,29 @@ public class AdvancedSearchTests
 
     private sealed class TestRefreshService : IRefreshService
     {
-        public void Refresh() { }
-        public void RefreshBoxState() { }
-        public void RefreshPartyState() { }
-        public void RefreshBoxAndPartyState() { }
-        public void RefreshTheme(bool isDarkMode) { }
-        public void ShowUpdateMessage() { }
+        public void Refresh()
+        {
+        }
+
+        public void RefreshBoxState()
+        {
+        }
+
+        public void RefreshPartyState()
+        {
+        }
+
+        public void RefreshBoxAndPartyState()
+        {
+        }
+
+        public void RefreshTheme(bool isDarkMode)
+        {
+        }
+
+        public void ShowUpdateMessage()
+        {
+        }
 
 #pragma warning disable CS0067
         public event Action? OnAppStateChanged;

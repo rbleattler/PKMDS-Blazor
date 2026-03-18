@@ -211,51 +211,51 @@ public partial class StatsTab : IDisposable
         switch (saveGeneration)
         {
             case 1 when Pokemon is PK1 pk1:
+            {
+                switch (stat)
                 {
-                    switch (stat)
-                    {
-                        case Stats.Attack:
-                            pk1.IV_ATK = (byte)newValue;
-                            break;
-                        case Stats.Defense:
-                            pk1.IV_DEF = (byte)newValue;
-                            break;
-                        case Stats.Speed:
-                            pk1.IV_SPE = (byte)newValue;
-                            break;
-                        case Stats.Special:
-                            pk1.IV_SPC = (byte)newValue;
-                            break;
-                    }
-
-                    break;
+                    case Stats.Attack:
+                        pk1.IV_ATK = (byte)newValue;
+                        break;
+                    case Stats.Defense:
+                        pk1.IV_DEF = (byte)newValue;
+                        break;
+                    case Stats.Speed:
+                        pk1.IV_SPE = (byte)newValue;
+                        break;
+                    case Stats.Special:
+                        pk1.IV_SPC = (byte)newValue;
+                        break;
                 }
+
+                break;
+            }
             case 2 when Pokemon is PK2 pk2:
+            {
+                switch (stat)
                 {
-                    switch (stat)
-                    {
-                        case Stats.Hp:
-                            pk2.IV_HP = (byte)newValue;
-                            break;
-                        case Stats.Attack:
-                            pk2.IV_ATK = (byte)newValue;
-                            break;
-                        case Stats.Defense:
-                            pk2.IV_DEF = (byte)newValue;
-                            break;
-                        case Stats.Speed:
-                            pk2.IV_SPE = (byte)newValue;
-                            break;
-                        case Stats.SpecialAttack:
-                            pk2.IV_SPA = (byte)newValue;
-                            break;
-                        case Stats.SpecialDefense:
-                            pk2.IV_SPD = (byte)newValue;
-                            break;
-                    }
-
-                    break;
+                    case Stats.Hp:
+                        pk2.IV_HP = (byte)newValue;
+                        break;
+                    case Stats.Attack:
+                        pk2.IV_ATK = (byte)newValue;
+                        break;
+                    case Stats.Defense:
+                        pk2.IV_DEF = (byte)newValue;
+                        break;
+                    case Stats.Speed:
+                        pk2.IV_SPE = (byte)newValue;
+                        break;
+                    case Stats.SpecialAttack:
+                        pk2.IV_SPA = (byte)newValue;
+                        break;
+                    case Stats.SpecialDefense:
+                        pk2.IV_SPD = (byte)newValue;
+                        break;
                 }
+
+                break;
+            }
         }
 
         if (AppState?.IsHaXEnabled is not true)
