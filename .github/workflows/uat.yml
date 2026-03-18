@@ -39,6 +39,12 @@ jobs:
       - name: Copy index.html to 404.html
         run: cp release/wwwroot/index.html release/wwwroot/404.html
 
+      - name: Update cache version
+        uses: datamonsters/replace-action@v2
+        with:
+          files: 'release/wwwroot/service-worker.published.js'
+          replacements: '%%CACHE_VERSION%%=${{ github.run_id }}'
+
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
         with:
