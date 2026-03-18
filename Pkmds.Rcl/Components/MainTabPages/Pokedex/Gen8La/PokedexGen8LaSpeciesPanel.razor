@@ -3,6 +3,7 @@
 @if (AppState.SaveFile is SAV8LA sav8La)
 {
     var dex = sav8La.Blocks.PokedexSave;
+    var hisuiDexIndex = PokedexSave8a.GetDexIndex(PokedexType8a.Hisui, SpeciesId);
     var pi = sav8La.Personal.GetFormEntry(SpeciesId, 0);
     var formCount = pi.FormCount;
     var formNames = FormConverter.GetFormList(SpeciesId, GameInfo.Strings.types, GameInfo.Strings.forms,
@@ -34,13 +35,13 @@
             <MudTooltip Text="Automatically set when research points reach 100">
                 <MudCheckBox T="@bool"
                              Label="Complete (100%)"
-                             Value="@dex.IsComplete(SpeciesId)"
+                             Value="@(dex.ComputeResearchRateFromTasks(SpeciesId, hisuiDexIndex) >= 100)"
                              Disabled/>
             </MudTooltip>
             <MudTooltip Text="Automatically set when all research tasks reach max level">
                 <MudCheckBox T="@bool"
                              Label="Perfect"
-                             Value="@dex.IsPerfect(SpeciesId)"
+                             Value="@dex.ComputeIsPerfect(SpeciesId, hisuiDexIndex)"
                              Disabled/>
             </MudTooltip>
             <MudCheckBox T="@bool"

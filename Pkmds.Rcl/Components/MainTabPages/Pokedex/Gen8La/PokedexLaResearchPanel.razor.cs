@@ -102,10 +102,14 @@ public partial class PokedexLaResearchPanel : BasePkmdsComponent
 
     private void OnTaskValueChanged(PokedexSave8a dex, ushort species, PokedexResearchTask8a task, int value)
     {
-        // Do NOT call UpdateSpecificReportPoke here — it is additive-only and would
-        // inflate the stored ResearchRate when values are lowered. The razor template
-        // displays a rate computed live from task values instead (ComputeResearchRateFromTasks).
         dex.SetResearchTaskProgressByForce(species, task, value);
+
+        // Reset stored rate/flags to zero then recompute from scratch so that
+        // dex.IsComplete / dex.IsPerfect stay in sync with the edited task values.
+        // ResetResearchEntry zeroes the additive-only report state first, allowing
+        // UpdateSpecificReportPoke to recompute correctly even when values decrease.
+        dex.ResetResearchEntry(species);
+        dex.UpdateSpecificReportPoke(species);
         StateHasChanged();
     }
 
