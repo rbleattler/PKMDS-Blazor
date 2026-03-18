@@ -129,6 +129,9 @@ public partial class PokedexLaResearchEditorDialog : BasePkmdsComponent
 
     private void Close(PokedexSave8a dex)
     {
+        // Reset before reporting so the rate is recomputed from scratch rather than
+        // accumulated on top of a potentially stale stored value.
+        dex.ResetResearchEntry(SpeciesId);
         dex.UpdateSpecificReportPoke(SpeciesId);
         MudDialog?.Close();
     }

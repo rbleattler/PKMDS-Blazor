@@ -343,6 +343,11 @@ public partial class PokedexTab
                 dex.SetResearchTaskProgressByForce(species, task, 0);
             }
 
+            // Reset stored ResearchRate and ReportedResearchProgress so the rate actually
+            // reaches 0. UpdateAllReportPoke is additive-only and would otherwise leave the
+            // old rate unchanged when task values are lowered.
+            dex.ResetResearchEntry(species);
+
             if (species % 50 == 0)
             {
                 await Task.Yield();

@@ -55,7 +55,10 @@
             var speciesName = selectedSpecies < speciesNames.Count
                 ? speciesNames[selectedSpecies]
                 : selectedSpecies.ToString(CultureInfo.InvariantCulture);
-            var researchRate = dex.GetPokeResearchRate(selectedSpecies);
+            // Compute rate live from task values so it stays accurate when values are edited.
+            var researchRate = dex.ComputeResearchRateFromTasks(selectedSpecies, hisuiDexIndex);
+            var isComplete = researchRate >= 100;
+            var isPerfect = dex.ComputeIsPerfect(selectedSpecies, hisuiDexIndex);
 
             <MudPaper Class="pa-3"
                       Elevation="1">
@@ -65,9 +68,9 @@
                           AlignItems="AlignItems.Center"
                           Class="mb-1">
                     <MudText Typo="@Typo.h6">@speciesName (Hisui #@hisuiDexIndex)</MudText>
-                    <MudText Typo="@Typo.body2">Research points: @researchRate@(researchRate >= 100 ? " (Complete!)" : "")</MudText>
+                    <MudText Typo="@Typo.body2">Research points: @researchRate@(isComplete ? " (Complete!)" : "")</MudText>
                 </MudStack>
-                <MudProgressLinear Color="@(researchRate >= 100 ? Color.Success : Color.Info)"
+                <MudProgressLinear Color="@(isComplete ? Color.Success : Color.Info)"
                                    Value="@Math.Min(researchRate, 100)"
                                    Class="mb-3"/>
 
@@ -85,13 +88,13 @@
                     <MudTooltip Text="Automatically set when research points reach 100">
                         <MudCheckBox T="bool"
                                      Label="Complete"
-                                     Value="@dex.IsComplete(selectedSpecies)"
+                                     Value="@isComplete"
                                      Disabled/>
                     </MudTooltip>
                     <MudTooltip Text="Automatically set when all research tasks reach max level">
                         <MudCheckBox T="bool"
                                      Label="Perfect"
-                                     Value="@dex.IsPerfect(selectedSpecies)"
+                                     Value="@isPerfect"
                                      Disabled/>
                     </MudTooltip>
                     <MudCheckBox T="bool"

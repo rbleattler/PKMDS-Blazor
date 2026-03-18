@@ -102,8 +102,10 @@ public partial class PokedexLaResearchPanel : BasePkmdsComponent
 
     private void OnTaskValueChanged(PokedexSave8a dex, ushort species, PokedexResearchTask8a task, int value)
     {
+        // Do NOT call UpdateSpecificReportPoke here — it is additive-only and would
+        // inflate the stored ResearchRate when values are lowered. The razor template
+        // displays a rate computed live from task values instead (ComputeResearchRateFromTasks).
         dex.SetResearchTaskProgressByForce(species, task, value);
-        dex.UpdateSpecificReportPoke(species);
         StateHasChanged();
     }
 
@@ -125,6 +127,9 @@ public partial class PokedexLaResearchPanel : BasePkmdsComponent
             dex.SetResearchTaskProgressByForce(species, task, task.TaskThresholds[^1]);
         }
 
+        // Reset the stored rate before reporting so UpdateSpecificReportPoke recomputes
+        // from scratch (all levels newly unreported) rather than accumulating on old data.
+        dex.ResetResearchEntry(species);
         dex.UpdateSpecificReportPoke(species);
         StateHasChanged();
     }
