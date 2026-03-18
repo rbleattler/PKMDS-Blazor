@@ -20,23 +20,29 @@
         <MudText Typo="@Typo.subtitle2">Status</MudText>
         <MudStack Row
                   Spacing="2">
-            <MudCheckBox T="@bool"
-                         Label="Seen"
-                         Value="@dex.HasPokeEverBeenUpdated(SpeciesId)"
-                         ValueChanged="@(v =>
-                                       {
-                                           if (v) dex.SetPokeHasBeenUpdated(SpeciesId);
-                                           StateHasChanged();
-                                       })"
-                         ReadOnly="@dex.HasPokeEverBeenUpdated(SpeciesId)"/>
-            <MudCheckBox T="@bool"
-                         Label="Complete (100%)"
-                         Value="@dex.IsComplete(SpeciesId)"
-                         ReadOnly/>
-            <MudCheckBox T="@bool"
-                         Label="Perfect"
-                         Value="@dex.IsPerfect(SpeciesId)"
-                         ReadOnly/>
+            <MudTooltip Text="@(dex.HasPokeEverBeenUpdated(SpeciesId) ? "Cannot be unset once seen" : "Mark as seen")">
+                <MudCheckBox T="@bool"
+                             Label="Seen"
+                             Value="@dex.HasPokeEverBeenUpdated(SpeciesId)"
+                             ValueChanged="@(v =>
+                                           {
+                                               if (v) dex.SetPokeHasBeenUpdated(SpeciesId);
+                                               StateHasChanged();
+                                           })"
+                             Disabled="@dex.HasPokeEverBeenUpdated(SpeciesId)"/>
+            </MudTooltip>
+            <MudTooltip Text="Automatically set when research points reach 100">
+                <MudCheckBox T="@bool"
+                             Label="Complete (100%)"
+                             Value="@dex.IsComplete(SpeciesId)"
+                             Disabled/>
+            </MudTooltip>
+            <MudTooltip Text="Automatically set when all research tasks reach max level">
+                <MudCheckBox T="@bool"
+                             Label="Perfect"
+                             Value="@dex.IsPerfect(SpeciesId)"
+                             Disabled/>
+            </MudTooltip>
             <MudCheckBox T="@bool"
                          Label="Solitude"
                          Value="@dex.GetSolitudeComplete(SpeciesId)"
