@@ -26,17 +26,17 @@
                     <MudPaper Outlined
                               Class="overflow-y-auto"
                               Style="max-height: 380px;">
-                        @for (var i = 0; i < _boxNames.Length; i++)
-                        {
-                            var boxIndex = i;
-                            var isSelected = boxIndex == _selectedBoxIndex;
-                            <div class="px-2 py-1 cursor-pointer @(isSelected ? "mud-theme-primary" : "")"
-                                 @onclick="@(() => SelectBox(boxIndex))">
-                                <MudText Typo="@Typo.body2">
+                        <MudList T="int" SelectedValue="@_selectedBoxIndex"
+                                 SelectedValueChanged="@((int idx) => SelectBox(idx))"
+                                 Dense>
+                            @for (var i = 0; i < _boxNames.Length; i++)
+                            {
+                                var boxIndex = i;
+                                <MudListItem T="int" Value="@boxIndex">
                                     @($"Box {boxIndex + 1}: {_boxNames[boxIndex]} ({GetBoxPokemonCount(boxIndex)}/{saveFile.BoxSlotCount})")
-                                </MudText>
-                            </div>
-                        }
+                                </MudListItem>
+                            }
+                        </MudList>
                     </MudPaper>
                 </MudItem>
 
