@@ -3,6 +3,8 @@ namespace Pkmds.Rcl.Components.MainTabPages.Pokedex;
 public partial class PokedexSpeciesGrid
 {
     private bool hasDetailedEditor;
+    private IReadOnlyList<RegionalDexDefinition> _regionalDexDefinitions = [];
+    private int _selectedRegionalDexFilter = -1; // -1 = All
     private List<PokedexGridRow> rows = [];
 
     private string searchText = string.Empty;
@@ -65,10 +67,13 @@ public partial class PokedexSpeciesGrid
                 ? speciesNames[i]
                 : i.ToString(CultureInfo.InvariantCulture);
 
-            pokedexGridRows.Add(new PokedexGridRow(i, name, saveFile.GetSeen(i), saveFile.GetCaught(i)));
+            var regionalIds = PokedexHelpers.GetRegionalIds(saveFile, i);
+            pokedexGridRows.Add(new PokedexGridRow(i, name, regionalIds, saveFile.GetSeen(i), saveFile.GetCaught(i)));
         }
 
         rows = pokedexGridRows;
+        _regionalDexDefinitions = PokedexHelpers.GetRegionalDexDefinitions(saveFile);
+        _selectedRegionalDexFilter = -1;
         hasDetailedEditor = saveFile is SAV4 or SAV5 or SAV6XY or SAV6AO or SAV7 or SAV7b
             or SAV8SWSH or SAV8LA or SAV8BS or SAV9SV or SAV9ZA;
         selectedStatusFilter = DexStatusFilter.All;
@@ -96,6 +101,10 @@ public partial class PokedexSpeciesGrid
                 return false;
             }
         }
+
+        if (_selectedRegionalDexFilter >= 0 && _selectedRegionalDexFilter < row.RegionalIds.Count
+            && row.RegionalIds[_selectedRegionalDexFilter] == 0)
+            return false;
 
         return selectedStatusFilter switch
         {
