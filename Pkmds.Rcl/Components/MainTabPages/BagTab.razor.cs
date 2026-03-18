@@ -32,11 +32,9 @@ public partial class BagTab
 
     private bool IsSortedByIndex { get; set; } = true; // Set as true so first sort is ascending
 
-    private int ActivePouchIndex { get; set; }
-
-    private HashSet<int> RenderedPouches { get; } = [];
-
     private bool ShowEmptySlots { get; set; }
+
+    private PlayerBag? PreviousInventory { get; set; }
 
     protected override void OnParametersSet()
     {
@@ -47,10 +45,12 @@ public partial class BagTab
             return;
         }
 
-        // Reset lazy rendering state for new inventory
-        RenderedPouches.Clear();
-        RenderedPouches.Add(0);
-        ActivePouchIndex = 0;
+        if (ReferenceEquals(Inventory, PreviousInventory))
+        {
+            return;
+        }
+
+        PreviousInventory = Inventory;
 
         ItemList = [.. GameInfo.Strings.GetItemStrings(saveFile.Context, saveFile.Version)];
 
@@ -72,12 +72,6 @@ public partial class BagTab
         // Build caches for improved performance
         BuildItemComboCache();
         BuildPouchValidItemsCache();
-    }
-
-    private void OnActivePanelChanged(int index)
-    {
-        ActivePouchIndex = index;
-        RenderedPouches.Add(index);
     }
 
     private void BuildItemComboCache()
