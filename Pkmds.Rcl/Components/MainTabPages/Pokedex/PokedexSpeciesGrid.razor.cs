@@ -7,6 +7,10 @@ public partial class PokedexSpeciesGrid
 
     private string searchText = string.Empty;
 
+    // Tracks the last seen values to avoid a full BuildRows() call on every re-render.
+    private SaveFile? _lastSaveFile;
+    private int _lastRefreshToken = -1;
+
     // Incremented by PokedexTab after each bulk operation (Fill / Seen All / Clear).
     // Giving the grid a changing parameter ensures Blazor re-renders the child and
     // calls OnParametersSet, which rebuilds the row list to reflect the new state.
@@ -21,7 +25,17 @@ public partial class PokedexSpeciesGrid
     protected override void OnParametersSet()
     {
         base.OnParametersSet();
-        BuildRows();
+        var saveFile = AppState.SaveFile;
+        // Only rebuild from the save file when the save file itself changes or when a
+        // bulk operation increments RefreshToken.  Individual Seen/Caught toggles are
+        // handled in-place by UpdateRowFromSave so the virtualizer's Items reference
+        // changes without a full list rebuild.
+        if (!ReferenceEquals(saveFile, _lastSaveFile) || RefreshToken != _lastRefreshToken)
+        {
+            _lastSaveFile = saveFile;
+            _lastRefreshToken = RefreshToken;
+            BuildRows();
+        }
     }
 
     // Materializes one PokedexGridRow per species that is registered in this game's
@@ -156,13 +170,20 @@ public partial class PokedexSpeciesGrid
     private void UpdateRowFromSave(PokedexGridRow row, SaveFile saveFile)
     {
         var idx = rows.FindIndex(r => r.SpeciesId == row.SpeciesId);
-        if (idx >= 0)
+        if (idx < 0)
         {
-            rows[idx] = row with
-            {
-                IsSeen = saveFile.GetSeen(row.SpeciesId), IsCaught = saveFile.GetCaught(row.SpeciesId)
-            };
+            return;
         }
+
+        // Build a new list so MudDataGrid's virtualizer detects the Items reference
+        // change and re-renders visible rows with the updated Seen/Caught state.
+        var newRows = new List<PokedexGridRow>(rows);
+        newRows[idx] = row with
+        {
+            IsSeen = saveFile.GetSeen(row.SpeciesId),
+            IsCaught = saveFile.GetCaught(row.SpeciesId),
+        };
+        rows = newRows;
     }
 
     private async Task OpenDetails(PokedexGridRow row)
