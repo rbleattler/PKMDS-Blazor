@@ -12,4 +12,20 @@ public partial class PokedexGen9ZaSpeciesPanel : BasePkmdsComponent
     [Parameter]
     [EditorRequired]
     public ushort SpeciesId { get; set; }
+
+    /// <summary>
+    ///     Returns true when the given gender slot (0=male, 1=female, 2=genderless) is
+    ///     possible for this species, based on the gender ratio in the personal table.
+    /// </summary>
+    private bool IsGenderAvailable(byte gender)
+    {
+        var ratio = AppState.SaveFile?.Personal[SpeciesId].Gender ?? PersonalInfo.RatioMagicGenderless;
+        return gender switch
+        {
+            0 => ratio is not PersonalInfo.RatioMagicFemale and not PersonalInfo.RatioMagicGenderless,
+            1 => ratio is not PersonalInfo.RatioMagicMale and not PersonalInfo.RatioMagicGenderless,
+            2 => ratio == PersonalInfo.RatioMagicGenderless,
+            _ => true
+        };
+    }
 }

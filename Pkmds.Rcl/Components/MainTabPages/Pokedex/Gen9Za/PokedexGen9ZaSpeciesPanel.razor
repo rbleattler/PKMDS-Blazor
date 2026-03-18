@@ -16,6 +16,7 @@
                   Spacing="2">
             <MudCheckBox T="@bool"
                          Label="Male"
+                         Disabled="@(!IsGenderAvailable(0))"
                          Value="@dex.GetEntry(SpeciesId).GetIsGenderSeen(0)"
                          ValueChanged="@(v =>
                                        {
@@ -24,6 +25,7 @@
                                        })"/>
             <MudCheckBox T="@bool"
                          Label="Female"
+                         Disabled="@(!IsGenderAvailable(1))"
                          Value="@dex.GetEntry(SpeciesId).GetIsGenderSeen(1)"
                          ValueChanged="@(v =>
                                        {
@@ -32,6 +34,7 @@
                                        })"/>
             <MudCheckBox T="@bool"
                          Label="Genderless"
+                         Disabled="@(!IsGenderAvailable(2))"
                          Value="@dex.GetEntry(SpeciesId).GetIsGenderSeen(2)"
                          ValueChanged="@(v =>
                                        {

@@ -107,6 +107,21 @@
                                  ValueChanged="@(v => sav8bs.Zukan.HasNationalDex = v)"/>
                 </MudStack>
                 break;
+            case SAV9SV sav9sv:
+                <MudStack Row
+                          AlignItems="AlignItems.Center">
+                    <MudText Typo="@Typo.body2">
+                        Save Revision:
+                        @(sav9sv.SaveRevision switch
+                        {
+                            0 => "Base Game (Rev 0 — up to Iron Leaves #1010)",
+                            1 => "Teal Mask DLC (Rev 1 — up to Ogerpon #1017)",
+                            2 => "Indigo Disk DLC (Rev 2 — up to Pecharunt #1025)",
+                            _ => $"Rev {sav9sv.SaveRevision}"
+                        })
+                    </MudText>
+                </MudStack>
+                break;
             case SAV7b sav7b:
                 <MudStack Row
                           Wrap="@Wrap.Wrap"

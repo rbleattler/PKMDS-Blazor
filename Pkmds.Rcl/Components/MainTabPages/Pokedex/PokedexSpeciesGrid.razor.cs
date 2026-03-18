@@ -67,8 +67,12 @@ public partial class PokedexSpeciesGrid
         // LA: only Hisui-native species are tracked.
         SAV8LA => PokedexSave8a.GetDexIndex(PokedexType8a.Hisui, species) != 0,
 
-        // SV: covers all three regional dexes (Paldea / Kitakami / Blueberry).
-        SAV9SV sv => sv.Zukan.GetDexIndex(species).Index != 0,
+        // SV: only count dexes available in the save's revision.
+        // Rev 0 = Paldea only; Rev 1 = + Kitakami; Rev 2+ = + Blueberry.
+        // GetDexIndex checks all three dexes unconditionally, so we must
+        // filter against the personal table directly to avoid showing
+        // DLC-exclusive species (e.g. Bulbasaur's DexBlueberry) on a base-game save.
+        SAV9SV sv => IsSpeciesInSvDex(sv, species),
 
         // ZA: filters by the game's personal table (MaxSpeciesID varies by DLC revision).
         SAV9ZA za => za.Personal.IsSpeciesInGame(species),
@@ -166,8 +170,40 @@ public partial class PokedexSpeciesGrid
         var idx = rows.FindIndex(r => r.SpeciesId == row.SpeciesId);
         if (idx >= 0)
         {
-            rows[idx] = row with { IsSeen = saveFile.GetSeen(row.SpeciesId), IsCaught = saveFile.GetCaught(row.SpeciesId) };
+            rows[idx] = row with
+            {
+                IsSeen = saveFile.GetSeen(row.SpeciesId), IsCaught = saveFile.GetCaught(row.SpeciesId)
+            };
         }
+    }
+
+    // Returns true when species belongs to a regional dex that exists in the save.
+    // Rev 0 (base game)  → Paldea only.
+    // Rev 1 (Teal Mask)  → Paldea + Kitakami.
+    // Rev 2+ (Indigo Disk) → Paldea + Kitakami + Blueberry.
+    private static bool IsSpeciesInSvDex(SAV9SV sv, ushort species)
+    {
+        var fc = sv.Personal.GetFormEntry(species, 0).FormCount;
+        for (byte f = 0; f < fc; f++)
+        {
+            var pi = sv.Personal.GetFormEntry(species, f);
+            if (pi.DexPaldea != 0)
+            {
+                return true;
+            }
+
+            if (sv.SaveRevision >= 1 && pi.DexKitakami != 0)
+            {
+                return true;
+            }
+
+            if (sv.SaveRevision >= 2 && pi.DexBlueberry != 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private async Task OpenDetails(PokedexGridRow row)

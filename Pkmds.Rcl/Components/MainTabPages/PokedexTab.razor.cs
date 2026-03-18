@@ -114,14 +114,14 @@ public partial class PokedexTab
                     return count;
                 }
 
-            // SAV_PokedexSV: filters by Zukan9.GetDexIndex(species).Index != 0,
-            // which covers all three regional dexes (Paldea / Kitakami / Blueberry).
+            // SAV_PokedexSV: only count dexes available in the save's revision.
+            // Rev 0 = Paldea only; Rev 1 = + Kitakami; Rev 2+ = + Blueberry.
             case SAV9SV sv:
                 {
                     var count = 0;
                     for (ushort i = 1; i <= sv.MaxSpeciesID; i++)
                     {
-                        if (sv.Zukan.GetDexIndex(i).Index != 0)
+                        if (IsSpeciesInSvDex(sv, i))
                         {
                             count++;
                         }
@@ -412,7 +412,7 @@ public partial class PokedexTab
             case SAV9SV sv when sv.Zukan.GetRevision() == 0:
                 for (ushort i = 1; i <= sv.MaxSpeciesID; i++)
                 {
-                    if (sv.Zukan.GetDexIndex(i).Index == 0)
+                    if (!IsSpeciesInSvDex(sv, i))
                     {
                         continue;
                     }
@@ -543,6 +543,35 @@ public partial class PokedexTab
         RefreshDexStats();
         gridRefreshToken++;
         await Task.Yield();
+    }
+
+    // Returns true when species belongs to a regional dex that exists in the save.
+    // Rev 0 (base game)    → Paldea only.
+    // Rev 1 (Teal Mask)    → Paldea + Kitakami.
+    // Rev 2+ (Indigo Disk) → Paldea + Kitakami + Blueberry.
+    private static bool IsSpeciesInSvDex(SAV9SV sv, ushort species)
+    {
+        var fc = sv.Personal.GetFormEntry(species, 0).FormCount;
+        for (byte f = 0; f < fc; f++)
+        {
+            var pi = sv.Personal.GetFormEntry(species, f);
+            if (pi.DexPaldea != 0)
+            {
+                return true;
+            }
+
+            if (sv.SaveRevision >= 1 && pi.DexKitakami != 0)
+            {
+                return true;
+            }
+
+            if (sv.SaveRevision >= 2 && pi.DexBlueberry != 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void OnRecalculate(SAV7b sav7B)

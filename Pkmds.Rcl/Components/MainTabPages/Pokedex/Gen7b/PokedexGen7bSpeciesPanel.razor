@@ -3,7 +3,10 @@
 @if (AppState.SaveFile is SAV7b sav7b)
 {
     var dex = sav7b.Zukan;
-    var bit = SpeciesId - 1;
+    // GetEntryIndex maps species+form to the correct bit position; for form 0 this is
+    // species-1 for Kanto species (1–151) and also correctly resolves Meltan/Melmetal (808/809),
+    // which live at bit offsets 807/808 in the full-gen7 bit array (MaxSpeciesID_7b = 809).
+    var bit = dex.GetEntryIndex(SpeciesId, 0);
 
     <MudStack Spacing="3">
 
