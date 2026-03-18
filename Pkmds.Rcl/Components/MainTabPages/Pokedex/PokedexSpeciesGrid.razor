@@ -74,7 +74,7 @@
                 var colIdx = col;
                 <TemplateColumn Title="@_regionalDexDefinitions[colIdx].Name"
                                 Sortable="true"
-                                SortBy="@(r => colIdx < r.RegionalIds.Count ? r.RegionalIds[colIdx] : (ushort)0)">
+                                SortBy="@(r => RegionalIdForSort(r, colIdx))">
                     <CellTemplate>
                         @if (colIdx < context.Item.RegionalIds.Count && context.Item.RegionalIds[colIdx] != 0)
                         {

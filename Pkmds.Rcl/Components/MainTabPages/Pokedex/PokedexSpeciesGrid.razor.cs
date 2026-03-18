@@ -81,6 +81,13 @@ public partial class PokedexSpeciesGrid
 
     // Delegates to the shared PokedexHelpers.IsSpeciesInDex so the grid and the
     // PokedexTab header counts always filter against the same species set.
+    private static int RegionalIdForSort(PokedexGridRow row, int colIdx)
+    {
+        if (colIdx >= row.RegionalIds.Count) return int.MaxValue;
+        var id = row.RegionalIds[colIdx];
+        return id == 0 ? int.MaxValue : id;
+    }
+
     private static bool IsSpeciesInDex(SaveFile saveFile, ushort species) =>
         PokedexHelpers.IsSpeciesInDex(saveFile, species);
 
