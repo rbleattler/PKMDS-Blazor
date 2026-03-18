@@ -43,7 +43,8 @@
                 <MudItem xs="7">
                     @if (_supportsNameRead)
                     {
-                        <MudTextField Value="@_boxNames[_selectedBoxIndex]"
+                        <MudTextField @key="@_selectedBoxIndex"
+                                      Value="@_boxNames[_selectedBoxIndex]"
                                       ValueChanged="@((string v) => OnBoxNameChanged(v))"
                                       Label="Box Name"
                                       Immediate
@@ -54,7 +55,8 @@
 
                     @if (_supportsWallpaper && _wallpaperNameList.Length > 0)
                     {
-                        <MudSelect Value="@_wallpaperIds[_selectedBoxIndex]"
+                        <MudSelect @key="@_selectedBoxIndex"
+                                   Value="@_wallpaperIds[_selectedBoxIndex]"
                                    ValueChanged="@((int id) => OnWallpaperChanged(id))"
                                    Label="Wallpaper"
                                    Class="mb-3">
