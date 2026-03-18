@@ -322,6 +322,36 @@ public partial class PokedexTab
         la.PokedexSave.UpdateAllReportPoke();
     }
 
+    private static async Task ClearAllLaResearch(SAV8LA la)
+    {
+        var dex = la.PokedexSave;
+        for (ushort species = 1; species <= la.MaxSpeciesID; species++)
+        {
+            var dexIndex = PokedexSave8a.GetDexIndex(PokedexType8a.Hisui, species);
+            if (dexIndex == 0)
+            {
+                continue;
+            }
+
+            foreach (var task in PokedexConstants8a.ResearchTasks[dexIndex - 1])
+            {
+                if (task.TaskThresholds.Length == 0)
+                {
+                    continue;
+                }
+
+                dex.SetResearchTaskProgressByForce(species, task, 0);
+            }
+
+            if (species % 50 == 0)
+            {
+                await Task.Yield();
+            }
+        }
+
+        dex.UpdateAllReportPoke();
+    }
+
     private static void FillGen9Rev0Pokedex(SAV9SV sv) => sv.Zukan.CompleteDex();
 
     private static void FillGen9Rev1Pokedex(SAV9SV sv) => sv.Zukan.CompleteDex();

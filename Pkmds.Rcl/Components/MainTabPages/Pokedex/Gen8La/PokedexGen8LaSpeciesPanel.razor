@@ -50,54 +50,62 @@
         @* Per-form flags *@
         @if (storedForms.Count > 0)
         {
-            <MudText Typo="@Typo.subtitle2">Form Flags (Seen Wild / Obtained / Caught Wild)</MudText>
-            <MudSimpleTable Dense>
-                <thead>
-                <tr>
-                    <th>Form</th>
-                    @for (var b = 0; b < 8; b++)
-                    {
-                        <th>S@(b)</th>
-                        <th>O@(b)</th>
-                        <th>C@(b)</th>
-                    }
-                </tr>
-                </thead>
-                <tbody>
-                @foreach (var form in storedForms)
-                {
-                    var f = form;
-                    var seenWild = dex.GetPokeSeenInWildFlags(SpeciesId, f);
-                    var obtained = dex.GetPokeObtainFlags(SpeciesId, f);
-                    var caughtWild = dex.GetPokeCaughtInWildFlags(SpeciesId, f);
-                    var name = f < formNames.Length
-                        ? formNames[f]
-                        : $"Form {f}";
+            @* Bit 0=Male, 1=Female, 2=Alpha Male, 3=Alpha Female,
+               4=Shiny Male, 5=Shiny Female, 6=Shiny Alpha Male, 7=Shiny Alpha Female *@
+            string[] variantLabels = ["Male", "Female", "Alpha Male", "Alpha Female", "Shiny Male", "Shiny Female", "Shiny Alpha Male", "Shiny Alpha Female"];
+
+            @foreach (var (flagLabel, flagIndex) in new[] { ("Seen in the Wild", 0), ("Obtained", 1), ("Caught in the Wild", 2) })
+            {
+                <MudText Typo="@Typo.subtitle2">@flagLabel</MudText>
+                <MudSimpleTable Dense>
+                    <thead>
                     <tr>
-                        <td>@name</td>
-                        @for (var b = 0; b < 8; b++)
+                        <th style="min-width:80px;">Form</th>
+                        @foreach (var vl in variantLabels)
                         {
-                            var bit = b;
-                            <td>
-                                <MudCheckBox T="@bool"
-                                             Value="@((seenWild & 1 << bit) != 0)"
-                                             ValueChanged="@(v => OnSeenFlagChanged(dex, f, bit, v))"/>
-                            </td>
-                            <td>
-                                <MudCheckBox T="@bool"
-                                             Value="@((obtained & 1 << bit) != 0)"
-                                             ValueChanged="@(v => OnObtainFlagChanged(dex, f, bit, v))"/>
-                            </td>
-                            <td>
-                                <MudCheckBox T="@bool"
-                                             Value="@((caughtWild & 1 << bit) != 0)"
-                                             ValueChanged="@(v => OnCaughtFlagChanged(dex, f, bit, v))"/>
-                            </td>
+                            <th style="text-align:center;">@vl</th>
                         }
                     </tr>
-                }
-                </tbody>
-            </MudSimpleTable>
+                    </thead>
+                    <tbody>
+                    @foreach (var form in storedForms)
+                    {
+                        var f = form;
+                        var seenWild = dex.GetPokeSeenInWildFlags(SpeciesId, f);
+                        var obtained = dex.GetPokeObtainFlags(SpeciesId, f);
+                        var caughtWild = dex.GetPokeCaughtInWildFlags(SpeciesId, f);
+                        var name = f < formNames.Length ? formNames[f] : $"Form {f}";
+                        <tr>
+                            <td>@name</td>
+                            @for (var b = 0; b < 8; b++)
+                            {
+                                var bit = b;
+                                <td style="text-align:center;">
+                                    @if (flagIndex == 0)
+                                    {
+                                        <MudCheckBox T="@bool"
+                                                     Value="@((seenWild & 1 << bit) != 0)"
+                                                     ValueChanged="@(v => OnSeenFlagChanged(dex, f, bit, v))"/>
+                                    }
+                                    else if (flagIndex == 1)
+                                    {
+                                        <MudCheckBox T="@bool"
+                                                     Value="@((obtained & 1 << bit) != 0)"
+                                                     ValueChanged="@(v => OnObtainFlagChanged(dex, f, bit, v))"/>
+                                    }
+                                    else
+                                    {
+                                        <MudCheckBox T="@bool"
+                                                     Value="@((caughtWild & 1 << bit) != 0)"
+                                                     ValueChanged="@(v => OnCaughtFlagChanged(dex, f, bit, v))"/>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                    </tbody>
+                </MudSimpleTable>
+            }
         }
 
         @* Display options *@

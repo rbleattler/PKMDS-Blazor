@@ -16,11 +16,11 @@ public partial class PokedexLaResearchPanel : BasePkmdsComponent
     private static readonly (PokedexType8a Type, string Label)[] LocalDexTypes =
     [
         (PokedexType8a.Hisui,  "Hisui"),
-        (PokedexType8a.Local1, "Local 1"),
-        (PokedexType8a.Local2, "Local 2"),
-        (PokedexType8a.Local3, "Local 3"),
-        (PokedexType8a.Local4, "Local 4"),
-        (PokedexType8a.Local5, "Local 5"),
+        (PokedexType8a.Local1, "Fieldlands"),
+        (PokedexType8a.Local2, "Mirelands"),
+        (PokedexType8a.Local3, "Coastlands"),
+        (PokedexType8a.Local4, "Highlands"),
+        (PokedexType8a.Local5, "Icelands"),
     ];
 
     /// <summary>
@@ -129,68 +129,14 @@ public partial class PokedexLaResearchPanel : BasePkmdsComponent
         StateHasChanged();
     }
 
-    private async Task CompleteAllResearch(SAV8LA la)
+    private async Task OpenResearchEditorDialog(ushort species)
     {
-        var dex = la.PokedexSave;
-        dex.SetSolitudeAll();
+        var result = await DialogService.ShowAsync<PokedexLaResearchEditorDialog>(
+            string.Empty,
+            new DialogParameters<PokedexLaResearchEditorDialog> { { x => x.SpeciesId, species } },
+            new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true });
 
-        for (ushort species = 1; species <= la.MaxSpeciesID; species++)
-        {
-            var dexIndex = PokedexSave8a.GetDexIndex(PokedexType8a.Hisui, species);
-            if (dexIndex == 0)
-            {
-                continue;
-            }
-
-            foreach (var task in PokedexConstants8a.ResearchTasks[dexIndex - 1])
-            {
-                if (task.TaskThresholds.Length == 0)
-                {
-                    continue;
-                }
-
-                dex.SetResearchTaskProgressByForce(species, task, task.TaskThresholds[^1]);
-            }
-
-            if (species % 50 == 0)
-            {
-                await Task.Yield();
-            }
-        }
-
-        dex.UpdateAllReportPoke();
-        StateHasChanged();
-    }
-
-    private async Task ClearAllResearch(SAV8LA la)
-    {
-        var dex = la.PokedexSave;
-
-        for (ushort species = 1; species <= la.MaxSpeciesID; species++)
-        {
-            var dexIndex = PokedexSave8a.GetDexIndex(PokedexType8a.Hisui, species);
-            if (dexIndex == 0)
-            {
-                continue;
-            }
-
-            foreach (var task in PokedexConstants8a.ResearchTasks[dexIndex - 1])
-            {
-                if (task.TaskThresholds.Length == 0)
-                {
-                    continue;
-                }
-
-                dex.SetResearchTaskProgressByForce(species, task, 0);
-            }
-
-            if (species % 50 == 0)
-            {
-                await Task.Yield();
-            }
-        }
-
-        dex.UpdateAllReportPoke();
+        await result.Result;
         StateHasChanged();
     }
 

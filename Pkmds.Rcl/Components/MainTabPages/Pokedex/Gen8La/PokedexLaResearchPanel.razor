@@ -65,10 +65,10 @@
                           AlignItems="AlignItems.Center"
                           Class="mb-1">
                     <MudText Typo="@Typo.h6">@speciesName (Hisui #@hisuiDexIndex)</MudText>
-                    <MudText Typo="@Typo.body2">Research rate: @researchRate%</MudText>
+                    <MudText Typo="@Typo.body2">Research points: @researchRate@(researchRate >= 100 ? " (Complete!)" : "")</MudText>
                 </MudStack>
                 <MudProgressLinear Color="@(researchRate >= 100 ? Color.Success : Color.Info)"
-                                   Value="@researchRate"
+                                   Value="@Math.Min(researchRate, 100)"
                                    Class="mb-3"/>
 
                 @* Status flags *@
@@ -196,6 +196,13 @@
                     <MudButton Variant="@Variant.Outlined"
                                Color="@Color.Default"
                                Size="@Size.Small"
+                               StartIcon="@Icons.Material.Filled.TableRows"
+                               OnClick="@(() => OpenResearchEditorDialog(selectedSpecies))">
+                        Edit All Tasks…
+                    </MudButton>
+                    <MudButton Variant="@Variant.Outlined"
+                               Color="@Color.Default"
+                               Size="@Size.Small"
                                StartIcon="@Icons.Material.Filled.Edit"
                                OnClick="@(() => OpenFlagsDialog(selectedSpecies))">
                         Flags &amp; Stats…
@@ -222,22 +229,5 @@
             }
         </MudStack>
 
-        @* Global actions *@
-        <MudStack Row
-                  Spacing="2"
-                  Wrap="@Wrap.Wrap">
-            <MudButton Variant="@Variant.Filled"
-                       Color="@Color.Primary"
-                       StartIcon="@Icons.Material.Filled.AutoAwesome"
-                       OnClick="@(() => CompleteAllResearch(sav8La))">
-                Complete All Research
-            </MudButton>
-            <MudButton Variant="@Variant.Outlined"
-                       Color="@Color.Error"
-                       StartIcon="@Icons.Material.Filled.DeleteSweep"
-                       OnClick="@(() => ClearAllResearch(sav8La))">
-                Clear All Research
-            </MudButton>
-        </MudStack>
     </MudStack>
 }
