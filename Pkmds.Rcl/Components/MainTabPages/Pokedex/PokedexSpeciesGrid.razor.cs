@@ -177,34 +177,8 @@ public partial class PokedexSpeciesGrid
         }
     }
 
-    // Returns true when species belongs to a regional dex that exists in the save.
-    // Rev 0 (base game)  → Paldea only.
-    // Rev 1 (Teal Mask)  → Paldea + Kitakami.
-    // Rev 2+ (Indigo Disk) → Paldea + Kitakami + Blueberry.
-    private static bool IsSpeciesInSvDex(SAV9SV sv, ushort species)
-    {
-        var fc = sv.Personal.GetFormEntry(species, 0).FormCount;
-        for (byte f = 0; f < fc; f++)
-        {
-            var pi = sv.Personal.GetFormEntry(species, f);
-            if (pi.DexPaldea != 0)
-            {
-                return true;
-            }
-
-            if (sv.SaveRevision >= 1 && pi.DexKitakami != 0)
-            {
-                return true;
-            }
-
-            if (sv.SaveRevision >= 2 && pi.DexBlueberry != 0)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
+    private static bool IsSpeciesInSvDex(SAV9SV sv, ushort species) =>
+        PokedexHelpers.IsSpeciesInSvDex(sv, species);
 
     private async Task OpenDetails(PokedexGridRow row)
     {

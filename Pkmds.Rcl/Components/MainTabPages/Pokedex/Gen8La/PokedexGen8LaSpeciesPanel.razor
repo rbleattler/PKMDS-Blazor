@@ -28,7 +28,7 @@
                                            if (v) dex.SetPokeHasBeenUpdated(SpeciesId);
                                            StateHasChanged();
                                        })"
-                         ReadOnly="@(!dex.HasPokeEverBeenUpdated(SpeciesId))"/>
+                         ReadOnly="@dex.HasPokeEverBeenUpdated(SpeciesId)"/>
             <MudCheckBox T="@bool"
                          Label="Complete (100%)"
                          Value="@dex.IsComplete(SpeciesId)"
