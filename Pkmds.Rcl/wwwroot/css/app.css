@@ -125,6 +125,17 @@ body, html {
     overflow-y: auto;
 }
 
+/* Virtualizer-safe alternating row stripe — driven by RowClassFunc on logical data
+   index so the colour is stable during virtual scroll (nth-child is DOM-position-based
+   and gets out of sync as rows are recycled). */
+.mud-table-row.row-alt .mud-table-cell {
+    background-color: rgba(0, 0, 0, 0.04);
+}
+
+.mud-dark .mud-table-row.row-alt .mud-table-cell {
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
 /* Desktop (lg breakpoint): side-by-side layout with independently scrolling edit form */
 @media (min-width: 1280px) {
     html, body {
