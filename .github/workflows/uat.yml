@@ -3,7 +3,9 @@ name: UAT Deploy (Azure Static Web Apps)
 on:
   pull_request:
     branches: [main]
-    types: [opened, synchronize, reopened, closed]
+    # 'closed' is intentionally omitted here — closing is handled by uat-close.yml,
+    # which has no paths-ignore so it always runs regardless of which files changed.
+    types: [opened, synchronize, reopened]
     paths-ignore:
       - "**.md"
       - "**.ps1"
@@ -17,7 +19,6 @@ jobs:
   build_and_deploy:
     name: Build and Deploy UAT
     runs-on: ubuntu-latest
-    if: github.event.action != 'closed'
     steps:
       - name: Checkout code
         uses: actions/checkout@v6.0.2
@@ -54,13 +55,3 @@ jobs:
           app_location: release/wwwroot
           skip_app_build: true
 
-  close_staging:
-    name: Close UAT Staging Environment
-    runs-on: ubuntu-latest
-    if: github.event.action == 'closed'
-    steps:
-      - name: Close staging environment
-        uses: Azure/static-web-apps-deploy@v1
-        with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-          action: close

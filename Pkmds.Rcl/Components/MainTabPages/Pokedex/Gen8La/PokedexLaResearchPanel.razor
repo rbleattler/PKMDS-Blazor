@@ -130,13 +130,13 @@
                         var label = task.GetTaskLabelString(taskDescriptions, timeTaskDescriptions, speciesQuests);
                         <tr>
                             <td>
-                                @if (task.RequiredForCompletion)
+                                @if (task.PointsBonus != 0)
                                 {
-                                    <MudIcon Icon="@Icons.Material.Filled.Star"
-                                             Color="@Color.Warning"
+                                    <MudIcon Icon="@Icons.Material.Filled.DoubleArrow"
+                                             Color="@Color.Error"
                                              Size="@Size.Small"
-                                             Style="vertical-align:middle;margin-right:2px;"
-                                             title="Required for completion"/>
+                                             Style="vertical-align:middle;margin-right:2px;transform:rotate(-90deg);"
+                                             title="@($"Bonus points: +{task.PointsBonus}")"/>
                                 }
                                 @label
                             </td>
