@@ -83,12 +83,12 @@
                     </tr>
                     </thead>
                     <tbody>
-                    @for (byte i = 0; i < formCount; i++)
+                    @for (byte i = 0; i < formNames.Length; i++)
                     {
                         var fi = i;
-                        var name = fi < formNames.Length
+                        var name = formNames[fi].Length > 0
                             ? formNames[fi]
-                            : $"Form {fi}";
+                            : GameInfo.Strings.Types[0];
                         <tr>
                             <td>@name</td>
                             <td>
@@ -113,17 +113,25 @@
                       AlignItems="AlignItems.Center">
                 @if (formCount > 1)
                 {
-                    <MudNumericField T="@uint"
-                                     Label="Form"
-                                     Value="@dex.Get(SpeciesId).GetDisplayForm()"
-                                     ValueChanged="@(v =>
-                                                   {
-                                                       dex.Get(SpeciesId).SetDisplayForm(v);
-                                                       StateHasChanged();
-                                                   })"
-                                     Min="0"
-                                     Max="@((uint)(formCount - 1))"
-                                     Style="max-width:80px;"/>
+                    <MudSelect T="@uint"
+                               Label="Form"
+                               Value="@dex.Get(SpeciesId).GetDisplayForm()"
+                               ValueChanged="@(v =>
+                                             {
+                                                 dex.Get(SpeciesId).SetDisplayForm(v);
+                                                 StateHasChanged();
+                                             })"
+                               Dense
+                               Style="max-width:140px;">
+                        @for (uint fi = 0; fi < (uint)formNames.Length; fi++)
+                        {
+                            var fiv = fi;
+                            var fn = formNames[fiv].Length > 0
+                                ? formNames[fiv]
+                                : GameInfo.Strings.Types[0];
+                            <MudSelectItem Value="@fiv">@fn</MudSelectItem>
+                        }
+                    </MudSelect>
                 }
                 <MudSelect T="@uint"
                            Label="Gender"
@@ -135,18 +143,9 @@
                                          })"
                            Dense
                            Style="max-width:140px;">
-                    @if (IsGenderAvailable(sav9sv, SpeciesId, 0))
-                    {
-                        <MudSelectItem Value="@(0u)">Male</MudSelectItem>
-                    }
-                    @if (IsGenderAvailable(sav9sv, SpeciesId, 1))
-                    {
-                        <MudSelectItem Value="@(1u)">Female</MudSelectItem>
-                    }
-                    @if (IsGenderAvailable(sav9sv, SpeciesId, 2))
-                    {
-                        <MudSelectItem Value="@(2u)">Genderless</MudSelectItem>
-                    }
+                    <MudSelectItem Value="@(0u)">Male</MudSelectItem>
+                    <MudSelectItem Value="@(1u)">Female</MudSelectItem>
+                    <MudSelectItem Value="@(2u)">Genderless</MudSelectItem>
                 </MudSelect>
                 <MudCheckBox T="@bool"
                              Label="Shiny"
@@ -214,12 +213,14 @@
                     </tr>
                     </thead>
                     <tbody>
-                    @for (byte fi = 0; fi < formCount; fi++)
+                    @for (byte fi = 0; fi < sizeof(uint) * 8; fi++)
                     {
                         var f = fi;
                         var name = f < formNames.Length
-                            ? formNames[f]
-                            : $"Form {f}";
+                            ? formNames[f].Length > 0
+                                ? formNames[f]
+                                : GameInfo.Strings.Types[0]
+                            : $"--{f:00}--";
                         <tr>
                             <td>@name</td>
                             <td>
@@ -335,13 +336,21 @@
                           AlignItems="AlignItems.Center">
                     @if (formCount > 1)
                     {
-                        <MudNumericField T="@byte"
-                                         Label="Form"
-                                         Value="@dexKita.Get(SpeciesId).DisplayedPaldeaForm"
-                                         ValueChanged="@(v => SetKitakamiDisplayPaldea(dexKita, SpeciesId, v, dexKita.Get(SpeciesId).DisplayedPaldeaGender, dexKita.Get(SpeciesId).DisplayedPaldeaShiny))"
-                                         Min="0"
-                                         Max="@((byte)(formCount - 1))"
-                                         Style="max-width:80px;"/>
+                        <MudSelect T="@byte"
+                                   Label="Form"
+                                   Value="@dexKita.Get(SpeciesId).DisplayedPaldeaForm"
+                                   ValueChanged="@(v => SetKitakamiDisplayPaldea(dexKita, SpeciesId, v, dexKita.Get(SpeciesId).DisplayedPaldeaGender, dexKita.Get(SpeciesId).DisplayedPaldeaShiny))"
+                                   Dense
+                                   Style="max-width:140px;">
+                            @for (byte fi = 0; fi < formNames.Length; fi++)
+                            {
+                                var fiv = fi;
+                                var fn = formNames[fiv].Length > 0
+                                    ? formNames[fiv]
+                                    : GameInfo.Strings.Types[0];
+                                <MudSelectItem Value="@fiv">@fn</MudSelectItem>
+                            }
+                        </MudSelect>
                     }
                     <MudSelect T="@byte"
                                Label="Gender"
@@ -349,18 +358,9 @@
                                ValueChanged="@(v => SetKitakamiDisplayPaldea(dexKita, SpeciesId, dexKita.Get(SpeciesId).DisplayedPaldeaForm, v, dexKita.Get(SpeciesId).DisplayedPaldeaShiny))"
                                Dense
                                Style="max-width:140px;">
-                        @if (IsGenderAvailable(sav9sv, SpeciesId, 0))
-                        {
-                            <MudSelectItem Value="@((byte)0)">Male</MudSelectItem>
-                        }
-                        @if (IsGenderAvailable(sav9sv, SpeciesId, 1))
-                        {
-                            <MudSelectItem Value="@((byte)1)">Female</MudSelectItem>
-                        }
-                        @if (IsGenderAvailable(sav9sv, SpeciesId, 2))
-                        {
-                            <MudSelectItem Value="@((byte)2)">Genderless</MudSelectItem>
-                        }
+                        <MudSelectItem Value="@((byte)0)">Male</MudSelectItem>
+                        <MudSelectItem Value="@((byte)1)">Female</MudSelectItem>
+                        <MudSelectItem Value="@((byte)2)">Genderless</MudSelectItem>
                     </MudSelect>
                     <MudCheckBox T="@bool"
                                  Label="Shiny"
@@ -379,13 +379,21 @@
                           AlignItems="AlignItems.Center">
                     @if (formCount > 1)
                     {
-                        <MudNumericField T="@byte"
-                                         Label="Form"
-                                         Value="@dexKita.Get(SpeciesId).DisplayedKitakamiForm"
-                                         ValueChanged="@(v => SetKitakamiDisplayKitakami(dexKita, SpeciesId, v, dexKita.Get(SpeciesId).DisplayedKitakamiGender, dexKita.Get(SpeciesId).DisplayedKitakamiShiny))"
-                                         Min="0"
-                                         Max="@((byte)(formCount - 1))"
-                                         Style="max-width:80px;"/>
+                        <MudSelect T="@byte"
+                                   Label="Form"
+                                   Value="@dexKita.Get(SpeciesId).DisplayedKitakamiForm"
+                                   ValueChanged="@(v => SetKitakamiDisplayKitakami(dexKita, SpeciesId, v, dexKita.Get(SpeciesId).DisplayedKitakamiGender, dexKita.Get(SpeciesId).DisplayedKitakamiShiny))"
+                                   Dense
+                                   Style="max-width:140px;">
+                            @for (byte fi = 0; fi < formNames.Length; fi++)
+                            {
+                                var fiv = fi;
+                                var fn = formNames[fiv].Length > 0
+                                    ? formNames[fiv]
+                                    : GameInfo.Strings.Types[0];
+                                <MudSelectItem Value="@fiv">@fn</MudSelectItem>
+                            }
+                        </MudSelect>
                     }
                     <MudSelect T="@byte"
                                Label="Gender"
@@ -393,18 +401,9 @@
                                ValueChanged="@(v => SetKitakamiDisplayKitakami(dexKita, SpeciesId, dexKita.Get(SpeciesId).DisplayedKitakamiForm, v, dexKita.Get(SpeciesId).DisplayedKitakamiShiny))"
                                Dense
                                Style="max-width:140px;">
-                        @if (IsGenderAvailable(sav9sv, SpeciesId, 0))
-                        {
-                            <MudSelectItem Value="@((byte)0)">Male</MudSelectItem>
-                        }
-                        @if (IsGenderAvailable(sav9sv, SpeciesId, 1))
-                        {
-                            <MudSelectItem Value="@((byte)1)">Female</MudSelectItem>
-                        }
-                        @if (IsGenderAvailable(sav9sv, SpeciesId, 2))
-                        {
-                            <MudSelectItem Value="@((byte)2)">Genderless</MudSelectItem>
-                        }
+                        <MudSelectItem Value="@((byte)0)">Male</MudSelectItem>
+                        <MudSelectItem Value="@((byte)1)">Female</MudSelectItem>
+                        <MudSelectItem Value="@((byte)2)">Genderless</MudSelectItem>
                     </MudSelect>
                     <MudCheckBox T="@bool"
                                  Label="Shiny"
@@ -423,13 +422,21 @@
                           AlignItems="AlignItems.Center">
                     @if (formCount > 1)
                     {
-                        <MudNumericField T="@byte"
-                                         Label="Form"
-                                         Value="@dexKita.Get(SpeciesId).DisplayedBlueberryForm"
-                                         ValueChanged="@(v => SetKitakamiDisplayBlueberry(dexKita, SpeciesId, v, dexKita.Get(SpeciesId).DisplayedBlueberryGender, dexKita.Get(SpeciesId).DisplayedBlueberryShiny))"
-                                         Min="0"
-                                         Max="@((byte)(formCount - 1))"
-                                         Style="max-width:80px;"/>
+                        <MudSelect T="@byte"
+                                   Label="Form"
+                                   Value="@dexKita.Get(SpeciesId).DisplayedBlueberryForm"
+                                   ValueChanged="@(v => SetKitakamiDisplayBlueberry(dexKita, SpeciesId, v, dexKita.Get(SpeciesId).DisplayedBlueberryGender, dexKita.Get(SpeciesId).DisplayedBlueberryShiny))"
+                                   Dense
+                                   Style="max-width:140px;">
+                            @for (byte fi = 0; fi < formNames.Length; fi++)
+                            {
+                                var fiv = fi;
+                                var fn = formNames[fiv].Length > 0
+                                    ? formNames[fiv]
+                                    : GameInfo.Strings.Types[0];
+                                <MudSelectItem Value="@fiv">@fn</MudSelectItem>
+                            }
+                        </MudSelect>
                     }
                     <MudSelect T="@byte"
                                Label="Gender"
@@ -437,18 +444,9 @@
                                ValueChanged="@(v => SetKitakamiDisplayBlueberry(dexKita, SpeciesId, dexKita.Get(SpeciesId).DisplayedBlueberryForm, v, dexKita.Get(SpeciesId).DisplayedBlueberryShiny))"
                                Dense
                                Style="max-width:140px;">
-                        @if (IsGenderAvailable(sav9sv, SpeciesId, 0))
-                        {
-                            <MudSelectItem Value="@((byte)0)">Male</MudSelectItem>
-                        }
-                        @if (IsGenderAvailable(sav9sv, SpeciesId, 1))
-                        {
-                            <MudSelectItem Value="@((byte)1)">Female</MudSelectItem>
-                        }
-                        @if (IsGenderAvailable(sav9sv, SpeciesId, 2))
-                        {
-                            <MudSelectItem Value="@((byte)2)">Genderless</MudSelectItem>
-                        }
+                        <MudSelectItem Value="@((byte)0)">Male</MudSelectItem>
+                        <MudSelectItem Value="@((byte)1)">Female</MudSelectItem>
+                        <MudSelectItem Value="@((byte)2)">Genderless</MudSelectItem>
                     </MudSelect>
                     <MudCheckBox T="@bool"
                                  Label="Shiny"
