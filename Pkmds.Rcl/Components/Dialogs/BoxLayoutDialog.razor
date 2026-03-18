@@ -33,7 +33,7 @@
                             <div class="px-2 py-1 cursor-pointer @(isSelected ? "mud-theme-primary" : "")"
                                  @onclick="@(() => SelectBox(boxIndex))">
                                 <MudText Typo="@Typo.body2">
-                                    @($"Box {boxIndex + 1}: {_boxNames[boxIndex]}")
+                                    @($"Box {boxIndex + 1}: {_boxNames[boxIndex]} ({GetBoxPokemonCount(boxIndex)}/{saveFile.BoxSlotCount})")
                                 </MudText>
                             </div>
                         }

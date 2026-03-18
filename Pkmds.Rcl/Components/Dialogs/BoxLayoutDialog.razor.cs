@@ -196,6 +196,19 @@ public partial class BoxLayoutDialog : BasePkmdsComponent
         _ => 8,
     };
 
+    private int GetBoxPokemonCount(int boxId)
+    {
+        if (AppState.SaveFile is not { } sav)
+            return 0;
+        var count = 0;
+        for (var slot = 0; slot < sav.BoxSlotCount; slot++)
+        {
+            if (sav.GetBoxSlotAtIndex(boxId, slot).Species != 0)
+                count++;
+        }
+        return count;
+    }
+
     private void Close()
     {
         RefreshService.RefreshBoxState();
