@@ -70,6 +70,12 @@ jobs:
           files: 'release/wwwroot/service-worker.published.js'
           replacements: '%%CACHE_VERSION%%=${{ github.run_id }}'
 
+      - name: Set Sentry DSN
+        uses: datamonsters/replace-action@v2
+        with:
+          files: 'release/wwwroot/appsettings.json'
+          replacements: '%%SENTRY_DSN%%=${{ secrets.SENTRY_DSN }}'
+
       - name: Commit wwwroot to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4.8.0
         with:

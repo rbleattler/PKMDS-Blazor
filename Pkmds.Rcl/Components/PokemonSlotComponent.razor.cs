@@ -122,6 +122,7 @@ public partial class PokemonSlotComponent : IDisposable
         };
     }
 
+    // ReSharper disable once UnusedMember.Local
     private void OnHighResSpriteLoaded()
     {
         highResLoaded = true;
@@ -134,6 +135,7 @@ public partial class PokemonSlotComponent : IDisposable
         StateHasChanged();
     }
 
+    // ReSharper disable once UnusedMember.Local
     private void OnHighResSpriteError()
     {
         /* keep showing the bundled sprite — _highResLoaded is already false */

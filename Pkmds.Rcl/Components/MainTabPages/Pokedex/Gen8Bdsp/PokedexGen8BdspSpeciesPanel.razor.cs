@@ -20,9 +20,9 @@ public partial class PokedexGen8BdspSpeciesPanel : BasePkmdsComponent
     }
 
     /// <summary>
-    ///     Returns true when the gender region is valid for this species.
-    ///     Region 0/2 = Male / Male Shiny  — invalid for female-only (254) or genderless (255) species.
-    ///     Region 1/3 = Female / Female Shiny — invalid for male-only (0) or genderless (255) species.
+    /// Returns true when the gender region is valid for this species.
+    /// Region 0/2 = Male / Male Shiny  — invalid for female-only (254) or genderless (255) species.
+    /// Region 1/3 = Female / Female Shiny — invalid for male-only (0) or genderless (255) species.
     /// </summary>
     private bool IsRegionValid(int region)
     {

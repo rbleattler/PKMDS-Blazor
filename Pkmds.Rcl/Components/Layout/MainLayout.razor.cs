@@ -188,6 +188,26 @@ public partial class MainLayout : IDisposable
         }
     }
 
+    private async Task ShowBugReportDialog()
+    {
+        var parameters = new DialogParameters
+        {
+            { nameof(BugReportDialog.HasSaveFile), AppState.SaveFile is not null }
+        };
+
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
+
+        var dialog = await DialogService.ShowAsync<BugReportDialog>("Report a Bug", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is { Data: BugReportData report })
+        {
+            await BugReportService.SubmitBugReportAsync(
+                report.Description, report.Email, report.Name, report.AttachSaveFile);
+            Snackbar.Add("Bug report submitted. Thank you!", Severity.Success);
+        }
+    }
+
     private async Task ShowLoadSaveFileDialog()
     {
         const string message = "Choose a save file";
@@ -593,5 +613,10 @@ public partial class MainLayout : IDisposable
         await element.InvokeVoidAsync("click");
     }
 
-    private enum ThemeMode { Light, System, Dark }
+    private enum ThemeMode
+    {
+        Light,
+        System,
+        Dark
+    }
 }

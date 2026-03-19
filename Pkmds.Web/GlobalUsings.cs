@@ -11,5 +11,6 @@ global using Pkmds.Rcl.Extensions;
 global using Pkmds.Rcl.Services;
 global using Pkmds.Web;
 global using Pkmds.Web.Services;
+global using Sentry;
 global using Serilog;
 global using Serilog.Core;

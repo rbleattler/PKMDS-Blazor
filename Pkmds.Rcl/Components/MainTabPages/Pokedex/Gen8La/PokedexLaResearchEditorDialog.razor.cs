@@ -4,23 +4,24 @@ namespace Pkmds.Rcl.Components.MainTabPages.Pokedex.Gen8La;
 
 public partial class PokedexLaResearchEditorDialog : BasePkmdsComponent
 {
+    private List<(string Label, PokedexResearchTaskType8a Task, int Idx)> battleTasks = [];
+
+    // (label, task type, task index)
+    private List<(string Label, PokedexResearchTaskType8a Task, int Idx)> catchTasks = [];
+    private List<(string Label, PokedexResearchTaskType8a Task, int Idx)> interactTasks = [];
+    private List<(string Label, PokedexResearchTaskType8a Task, int Idx)> observeTasks = [];
+
+    private string speciesName = string.Empty;
+
+    private string[] taskDescriptions = [];
+    private string[] timeTaskDescriptions = [];
+
     [CascadingParameter]
     private IMudDialogInstance? MudDialog { get; set; }
 
     [Parameter]
     [EditorRequired]
     public ushort SpeciesId { get; set; }
-
-    private string speciesName = string.Empty;
-
-    // (label, task type, task index)
-    private List<(string Label, PokedexResearchTaskType8a Task, int Idx)> catchTasks = [];
-    private List<(string Label, PokedexResearchTaskType8a Task, int Idx)> battleTasks = [];
-    private List<(string Label, PokedexResearchTaskType8a Task, int Idx)> interactTasks = [];
-    private List<(string Label, PokedexResearchTaskType8a Task, int Idx)> observeTasks = [];
-
-    private string[] taskDescriptions = [];
-    private string[] timeTaskDescriptions = [];
 
     protected override void OnParametersSet()
     {
@@ -32,7 +33,9 @@ public partial class PokedexLaResearchEditorDialog : BasePkmdsComponent
         }
 
         var names = GameInfo.Strings.Species;
-        speciesName = SpeciesId < names.Count ? names[SpeciesId] : SpeciesId.ToString();
+        speciesName = SpeciesId < names.Count
+            ? names[SpeciesId]
+            : SpeciesId.ToString();
 
         taskDescriptions = Util.GetStringList("tasks8a", "en");
         timeTaskDescriptions = Util.GetStringList("time_tasks8a", "en");
@@ -89,13 +92,13 @@ public partial class PokedexLaResearchEditorDialog : BasePkmdsComponent
         // ── Battle ──
         for (var i = 0; i < 4; i++)
         {
-            var param = moveParams.TryGetValue(i, out var mv) ? mv : -1;
+            var param = moveParams.GetValueOrDefault(i, -1);
             battleTasks.Add((GetLabel(UseMove, i, param), UseMove, i));
         }
 
         for (var i = 0; i < 3; i++)
         {
-            var param = typeParams.TryGetValue(i, out var tp) ? tp : -1;
+            var param = typeParams.GetValueOrDefault(i, -1);
             battleTasks.Add((GetLabel(DefeatWithMoveType, i, param), DefeatWithMoveType, i));
         }
 

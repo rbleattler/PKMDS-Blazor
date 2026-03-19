@@ -12,26 +12,36 @@
                       Immediate
                       AdornmenT="@Adornment.Start"
                       AdornmentIcon="@Icons.Material.Filled.Search"
-                      Clearable />
+                      Clearable/>
         <MudButtonGroup Variant="@Variant.Outlined"
                         Size="@Size.Small">
-            <MudButton Color="@(selectedStatusFilter == DexStatusFilter.All ? Color.Primary : Color.Default)"
+            <MudButton Color="@(selectedStatusFilter == DexStatusFilter.All
+                                  ? Color.Primary
+                                  : Color.Default)"
                        OnClick="@(() => selectedStatusFilter = DexStatusFilter.All)">
                 All
             </MudButton>
-            <MudButton Color="@(selectedStatusFilter == DexStatusFilter.Seen ? Color.Primary : Color.Default)"
+            <MudButton Color="@(selectedStatusFilter == DexStatusFilter.Seen
+                                  ? Color.Primary
+                                  : Color.Default)"
                        OnClick="@(() => selectedStatusFilter = DexStatusFilter.Seen)">
                 Seen
             </MudButton>
-            <MudButton Color="@(selectedStatusFilter == DexStatusFilter.Caught ? Color.Success : Color.Default)"
+            <MudButton Color="@(selectedStatusFilter == DexStatusFilter.Caught
+                                  ? Color.Success
+                                  : Color.Default)"
                        OnClick="@(() => selectedStatusFilter = DexStatusFilter.Caught)">
                 Caught
             </MudButton>
-            <MudButton Color="@(selectedStatusFilter == DexStatusFilter.Unseen ? Color.Warning : Color.Default)"
+            <MudButton Color="@(selectedStatusFilter == DexStatusFilter.Unseen
+                                  ? Color.Warning
+                                  : Color.Default)"
                        OnClick="@(() => selectedStatusFilter = DexStatusFilter.Unseen)">
                 Unseen
             </MudButton>
-            <MudButton Color="@(selectedStatusFilter == DexStatusFilter.SeenNotCaught ? Color.Info : Color.Default)"
+            <MudButton Color="@(selectedStatusFilter == DexStatusFilter.SeenNotCaught
+                                  ? Color.Info
+                                  : Color.Default)"
                        OnClick="@(() => selectedStatusFilter = DexStatusFilter.SeenNotCaught)">
                 Seen / Not Caught
             </MudButton>
@@ -40,14 +50,18 @@
         {
             <MudButtonGroup Variant="@Variant.Outlined"
                             Size="@Size.Small">
-                <MudButton Color="@(_selectedRegionalDexFilter == -1 ? Color.Primary : Color.Default)"
+                <MudButton Color="@(_selectedRegionalDexFilter == -1
+                                      ? Color.Primary
+                                      : Color.Default)"
                            OnClick="@(() => _selectedRegionalDexFilter = -1)">
                     All Dexes
                 </MudButton>
                 @for (var i = 0; i < _regionalDexDefinitions.Count; i++)
                 {
                     var idx = i;
-                    <MudButton Color="@(_selectedRegionalDexFilter == idx ? Color.Primary : Color.Default)"
+                    <MudButton Color="@(_selectedRegionalDexFilter == idx
+                                          ? Color.Primary
+                                          : Color.Default)"
                                OnClick="@(() => _selectedRegionalDexFilter = idx)">
                         @_regionalDexDefinitions[idx].Name
                     </MudButton>
@@ -64,11 +78,14 @@
                  Bordered
                  FixedHeader
                  Virtualize="true"
-                 RowClassFunc="@((_, i) => i % 2 != 0 ? "row-alt" : string.Empty)"
+                 RowClassFunc="@((_, i) => i % 2 != 0
+                                   ? "row-alt"
+                                   : string.Empty)"
                  Height="@($"calc(100vh - {(_regionalDexDefinitions.Count > 0 ? 560 : 510)}px)")">
 
         <Columns>
-            <PropertyColumn Property="@(r => r.SpeciesId)" Title="#"/>
+            <PropertyColumn Property="@(r => r.SpeciesId)"
+                            Title="#"/>
             @for (var col = 0; col < _regionalDexDefinitions.Count; col++)
             {
                 var colIdx = col;
@@ -83,15 +100,20 @@
                     </CellTemplate>
                 </TemplateColumn>
             }
-            <PropertyColumn Property="@(r => r.Name)" Title="Species"/>
-            <TemplateColumn Title="Seen" Sortable="true" SortBy="@(r => r.IsSeen)">
+            <PropertyColumn Property="@(r => r.Name)"
+                            Title="Species"/>
+            <TemplateColumn Title="Seen"
+                            Sortable="true"
+                            SortBy="@(r => r.IsSeen)">
                 <CellTemplate>
                     <MudCheckBox T="@bool"
                                  Value="@context.Item.IsSeen"
                                  ValueChanged="@(v => OnSeenChanged(context.Item, v))"/>
                 </CellTemplate>
             </TemplateColumn>
-            <TemplateColumn Title="Caught" Sortable="true" SortBy="@(r => r.IsCaught)">
+            <TemplateColumn Title="Caught"
+                            Sortable="true"
+                            SortBy="@(r => r.IsCaught)">
                 <CellTemplate>
                     <MudCheckBox T="@bool"
                                  Value="@context.Item.IsCaught"
@@ -100,7 +122,8 @@
             </TemplateColumn>
             @if (hasDetailedEditor)
             {
-                <TemplateColumn Title="" Sortable="false">
+                <TemplateColumn Title=""
+                                Sortable="false">
                     <CellTemplate>
                         <MudIconButton Icon="@Icons.Material.Filled.Edit"
                                        Size="@Size.Small"

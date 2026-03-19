@@ -91,67 +91,67 @@ public partial class PokedexTab
             // species' regional dex index (Galar / Armor DLC / Crown DLC).
             // "Dexit" means many national species have no dex index and return false.
             case SAV8SWSH swsh:
+            {
+                var count = 0;
+                for (ushort i = 1; i <= swsh.MaxSpeciesID; i++)
                 {
-                    var count = 0;
-                    for (ushort i = 1; i <= swsh.MaxSpeciesID; i++)
+                    if (swsh.Zukan.GetEntry(i, out _))
                     {
-                        if (swsh.Zukan.GetEntry(i, out _))
-                        {
-                            count++;
-                        }
+                        count++;
                     }
-
-                    return count;
                 }
+
+                return count;
+            }
 
             // SAV_PokedexLA: filters by PokedexSave8a.GetDexIndex(Hisui, species) != 0.
             // No HOME support — only Hisui-native species are tracked.
             case SAV8LA la:
+            {
+                var count = 0;
+                for (ushort i = 1; i <= la.MaxSpeciesID; i++)
                 {
-                    var count = 0;
-                    for (ushort i = 1; i <= la.MaxSpeciesID; i++)
+                    if (PokedexSave8a.GetDexIndex(PokedexType8a.Hisui, i) != 0)
                     {
-                        if (PokedexSave8a.GetDexIndex(PokedexType8a.Hisui, i) != 0)
-                        {
-                            count++;
-                        }
+                        count++;
                     }
-
-                    return count;
                 }
+
+                return count;
+            }
 
             // SAV_PokedexSV: only count dexes available in the save's revision.
             // Rev 0 = Paldea only; Rev 1 = + Kitakami; Rev 2+ = + Blueberry.
             case SAV9SV sv:
+            {
+                var count = 0;
+                for (ushort i = 1; i <= sv.MaxSpeciesID; i++)
                 {
-                    var count = 0;
-                    for (ushort i = 1; i <= sv.MaxSpeciesID; i++)
+                    if (PokedexHelpers.IsSpeciesInSvDex(sv, i))
                     {
-                        if (PokedexHelpers.IsSpeciesInSvDex(sv, i))
-                        {
-                            count++;
-                        }
+                        count++;
                     }
-
-                    return count;
                 }
+
+                return count;
+            }
 
             // SAV9ZA: Zukan9a.CompleteDex() filters by Personal.IsSpeciesInGame,
             // so only species present in the ZA table count toward the dex total.
             // MaxSpeciesID varies by SaveRevision (base = Falinks; DLC = Gholdengo).
             case SAV9ZA za:
+            {
+                var count = 0;
+                for (ushort i = 1; i <= za.MaxSpeciesID; i++)
                 {
-                    var count = 0;
-                    for (ushort i = 1; i <= za.MaxSpeciesID; i++)
+                    if (za.Personal.IsSpeciesInGame(i))
                     {
-                        if (za.Personal.IsSpeciesInGame(i))
-                        {
-                            count++;
-                        }
+                        count++;
                     }
-
-                    return count;
                 }
+
+                return count;
+            }
 
             // All other games (Gen 1–7, BDSP): every national species up to
             // MaxSpeciesID is present in the game, so MaxSpeciesID is exact.

@@ -15,19 +15,25 @@ public static partial class ImageHelper
     {
         var abbreviation = GetGameVersionAbbreviation(gameVersion);
         if (string.IsNullOrEmpty(abbreviation))
+        {
             return string.Empty;
+        }
 
         // Some game folders only ship their unique wallpapers; base wallpapers
         // (shared with an earlier game in the same generation) live in a fallback folder.
         abbreviation = GetFolderWithFallback(abbreviation, wallpaperId);
         if (string.IsNullOrEmpty(abbreviation))
+        {
             return string.Empty;
+        }
 
         // SV wallpaper 20 (ID 19) ships as two game-specific variants:
         // Naranja Academy (Scarlet) and Uva Academy (Violet).
         if (abbreviation == "sv" && wallpaperId == 19)
         {
-            var variant = gameVersion == GameVersion.SL ? "n" : "u";
+            var variant = gameVersion == GameVersion.SL
+                ? "n"
+                : "u";
             return $"{SpritesRoot}box/sv/box_wp20sv_{variant}.png";
         }
 
@@ -54,7 +60,7 @@ public static partial class ImageHelper
             "b2w2" when wallpaperId < 16 => "bw",
             // ORAS: IDs 0–15 share XY sprites; IDs 16–23 are unique to ORAS.
             "ao" when wallpaperId < 16 => "xy",
-            _ => abbreviation,
+            _ => abbreviation
         };
 
     /// <summary>

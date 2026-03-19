@@ -121,5 +121,10 @@ public partial class AppSettingsDialog
         MudDialog.Close(DialogResult.Ok(updated));
     }
 
-    private enum ThemeMode { Light, System, Dark }
+    private enum ThemeMode
+    {
+        Light,
+        System,
+        Dark
+    }
 }

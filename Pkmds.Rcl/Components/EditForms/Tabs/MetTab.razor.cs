@@ -206,23 +206,23 @@ public partial class MetTab : IDisposable
         switch (newValue)
         {
             case false:
+            {
+                if (Pokemon.IsEgg)
                 {
-                    if (Pokemon.IsEgg)
-                    {
-                        Pokemon.IsEgg = false;
-                    }
+                    Pokemon.IsEgg = false;
+                }
 
-                    Pokemon.EggDay = Pokemon.EggMonth = Pokemon.EggYear = 0;
-                    Pokemon.EggLocation = 0;
-                    break;
-                }
+                Pokemon.EggDay = Pokemon.EggMonth = Pokemon.EggYear = 0;
+                Pokemon.EggLocation = 0;
+                break;
+            }
             case true:
-                {
-                    var currentMetDate = Pokemon.MetDate;
-                    Pokemon.SetEggMetData(Pokemon.Version, Pokemon.Version);
-                    Pokemon.EggMetDate = Pokemon.MetDate = currentMetDate;
-                    break;
-                }
+            {
+                var currentMetDate = Pokemon.MetDate;
+                Pokemon.SetEggMetData(Pokemon.Version, Pokemon.Version);
+                Pokemon.EggMetDate = Pokemon.MetDate = currentMetDate;
+                break;
+            }
         }
     }
 

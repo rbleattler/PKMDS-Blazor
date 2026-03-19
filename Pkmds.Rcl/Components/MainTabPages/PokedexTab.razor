@@ -3,178 +3,190 @@
 @if (AppState.SaveFile is { HasPokeDex: true })
 {
     <div class="pokedex-tab-content">
-    <MudStack>
-        <MudText Typo="@Typo.body2">Seen: @displaySeenCount / @dexTotal</MudText>
-        <MudProgressLinear Color="@Color.Info"
-                           Value="@seenPercent"/>
+        <MudStack>
+            <MudText Typo="@Typo.body2">Seen: @displaySeenCount / @dexTotal</MudText>
+            <MudProgressLinear Color="@Color.Info"
+                               Value="@seenPercent"/>
 
-        <MudText Typo="@Typo.body2">Caught: @displayCaughtCount / @dexTotal</MudText>
-        <MudProgressLinear Color="@Color.Success"
-                           Value="@caughtPercent"/>
+            <MudText Typo="@Typo.body2">Caught: @displayCaughtCount / @dexTotal</MudText>
+            <MudProgressLinear Color="@Color.Success"
+                               Value="@caughtPercent"/>
 
-        <MudStack Row
-                  Wrap="@Wrap.Wrap">
-            <MudButton OnClick="@FillPokedex"
-                       Variant="@Variant.Filled"
-                       Color="@Color.Primary"
-                       StartIcon="">
-                Fill Pokédex
-            </MudButton>
-
-            @if (IsLegendArceus)
-            {
-                <MudButton OnClick="@(async () => { await FillPokedex(); gridRefreshToken++; })"
+            <MudStack Row
+                      Wrap="@Wrap.Wrap">
+                <MudButton OnClick="@FillPokedex"
                            Variant="@Variant.Filled"
-                           Color="@Color.Secondary"
-                           StartIcon="@Icons.Material.Filled.AutoAwesome">
-                    Complete All Research
+                           Color="@Color.Primary"
+                           StartIcon="">
+                    Fill Pokédex
                 </MudButton>
-                <MudButton OnClick="@(async () => { if (AppState.SaveFile is SAV8LA la) { await ClearAllLaResearch(la); RefreshDexStats(); gridRefreshToken++; } })"
-                           Variant="@Variant.Outlined"
-                           Color="@Color.Error"
-                           StartIcon="@Icons.Material.Filled.DeleteSweep">
-                    Clear All Research
-                </MudButton>
+
+                @if (IsLegendArceus)
+                {
+                    <MudButton OnClick="@(async () =>
+                                        {
+                                            await FillPokedex();
+                                            gridRefreshToken++;
+                                        })"
+                               Variant="@Variant.Filled"
+                               Color="@Color.Secondary"
+                               StartIcon="@Icons.Material.Filled.AutoAwesome">
+                        Complete All Research
+                    </MudButton>
+                    <MudButton OnClick="@(async () =>
+                                        {
+                                            if (AppState.SaveFile is SAV8LA la)
+                                            {
+                                                await ClearAllLaResearch(la);
+                                                RefreshDexStats();
+                                                gridRefreshToken++;
+                                            }
+                                        })"
+                               Variant="@Variant.Outlined"
+                               Color="@Color.Error"
+                               StartIcon="@Icons.Material.Filled.DeleteSweep">
+                        Clear All Research
+                    </MudButton>
+                }
+                else
+                {
+                    <MudButton OnClick="@SeenAllPokedex"
+                               Variant="@Variant.Filled"
+                               Color="@Color.Secondary"
+                               StartIcon="">
+                        Seen All
+                    </MudButton>
+                    <MudButton OnClick="@ClearPokedex"
+                               Variant="@Variant.Filled"
+                               Color="@Color.Error"
+                               StartIcon="">
+                        Clear Pokédex
+                    </MudButton>
+                }
+            </MudStack>
+
+            @* National Dex flags — own row, always visible above the grid so they are not
+           clipped by the tab panel's overflow:hidden on desktop. *@
+            @switch (AppState.SaveFile)
+            {
+                case SAV3 sav3:
+                    <MudStack Row
+                              AlignItems="AlignItems.Center">
+                        <MudCheckBox Label="National Mode Unlocked"
+                                     T="@bool"
+                                     Value="@sav3.NationalDex"
+                                     ValueChanged="@(v => sav3.NationalDex = v)"/>
+                    </MudStack>
+                    break;
+                case SAV5 sav5:
+                    <MudStack Row
+                              AlignItems="AlignItems.Center">
+                        <MudCheckBox Label="National Mode Unlocked"
+                                     T="@bool"
+                                     Value="@sav5.Zukan.IsNationalDexUnlocked"
+                                     ValueChanged="@(v => sav5.Zukan.IsNationalDexUnlocked = v)"/>
+                        <MudCheckBox Label="National Mode Active"
+                                     T="@bool"
+                                     Value="@sav5.Zukan.IsNationalDexMode"
+                                     ValueChanged="@(v => sav5.Zukan.IsNationalDexMode = v)"/>
+                    </MudStack>
+                    break;
+                case SAV6XY sav6Xy:
+                    <MudStack Row
+                              AlignItems="AlignItems.Center">
+                        <MudCheckBox Label="National Mode Unlocked"
+                                     T="@bool"
+                                     Value="@sav6Xy.Zukan.IsNationalDexUnlocked"
+                                     ValueChanged="@(v => sav6Xy.Zukan.IsNationalDexUnlocked = v)"/>
+                        <MudCheckBox Label="National Mode Active"
+                                     T="@bool"
+                                     Value="@sav6Xy.Zukan.IsNationalDexMode"
+                                     ValueChanged="@(v => sav6Xy.Zukan.IsNationalDexMode = v)"/>
+                    </MudStack>
+                    break;
+                case SAV6AO sav6Ao:
+                    <MudStack Row
+                              AlignItems="AlignItems.Center">
+                        <MudCheckBox Label="National Mode Unlocked"
+                                     T="@bool"
+                                     Value="@sav6Ao.Zukan.IsNationalDexUnlocked"
+                                     ValueChanged="@(v => sav6Ao.Zukan.IsNationalDexUnlocked = v)"/>
+                        <MudCheckBox Label="National Mode Active"
+                                     T="@bool"
+                                     Value="@sav6Ao.Zukan.IsNationalDexMode"
+                                     ValueChanged="@(v => sav6Ao.Zukan.IsNationalDexMode = v)"/>
+                    </MudStack>
+                    break;
+                case SAV7 sav7:
+                    <MudStack Row
+                              AlignItems="AlignItems.Center">
+                        <MudCheckBox Label="National Mode Unlocked"
+                                     T="@bool"
+                                     Value="@sav7.Zukan.NationalDex"
+                                     ValueChanged="@(v => sav7.Zukan.NationalDex = v)"/>
+                    </MudStack>
+                    break;
+                case SAV8BS sav8Bs:
+                    <MudStack Row
+                              AlignItems="AlignItems.Center">
+                        <MudCheckBox Label="National Mode Unlocked"
+                                     T="@bool"
+                                     Value="@sav8Bs.Zukan.HasNationalDex"
+                                     ValueChanged="@(v => sav8Bs.Zukan.HasNationalDex = v)"/>
+                    </MudStack>
+                    break;
+                case SAV9SV sav9Sv:
+                    <MudStack Row
+                              AlignItems="AlignItems.Center">
+                        <MudText Typo="@Typo.body2">
+                            Save Revision:
+                            @(sav9Sv.SaveRevision switch
+                            {
+                                0 => "Base Game (Rev 0 — up to Iron Leaves #1010)",
+                                1 => "Teal Mask DLC (Rev 1 — up to Ogerpon #1017)",
+                                2 => "Indigo Disk DLC (Rev 2 — up to Pecharunt #1025)",
+                                _ => $"Rev {sav9Sv.SaveRevision}"
+                            })
+                        </MudText>
+                    </MudStack>
+                    break;
+                case SAV7b sav7B:
+                    <MudStack Row
+                              Wrap="@Wrap.Wrap"
+                              AlignItems="AlignItems.Center"
+                              Spacing="3">
+                        <MudNumericField T="@uint"
+                                         Label="Total Captured"
+                                         Value="@sav7B.Captured.TotalCaptured"
+                                         ValueChanged="@(v => sav7B.Captured.TotalCaptured = v)"
+                                         Min="0"
+                                         Max="999999999"
+                                         Style="max-width:160px;"/>
+                        <MudNumericField T="@uint"
+                                         Label="Total Transferred"
+                                         Value="@sav7B.Captured.TotalTransferred"
+                                         ValueChanged="@(v => sav7B.Captured.TotalTransferred = v)"
+                                         Min="0"
+                                         Max="999999999"
+                                         Style="max-width:160px;"/>
+                        <MudTooltip Text="Recalculate totals from per-species counts">
+                            <MudIconButton Icon="@Icons.Material.Filled.Calculate"
+                                           OnClick="@(() => OnRecalculate(sav7B))"
+                                           Color="@Color.Primary"/>
+                        </MudTooltip>
+                    </MudStack>
+                    break;
+            }
+
+            @if (AppState.SaveFile is SAV8LA)
+            {
+                <PokedexLaResearchPanel RefreshToken="@gridRefreshToken"/>
             }
             else
             {
-                <MudButton OnClick="@SeenAllPokedex"
-                           Variant="@Variant.Filled"
-                           Color="@Color.Secondary"
-                           StartIcon="">
-                    Seen All
-                </MudButton>
-                <MudButton OnClick="@ClearPokedex"
-                           Variant="@Variant.Filled"
-                           Color="@Color.Error"
-                           StartIcon="">
-                    Clear Pokédex
-                </MudButton>
+                <PokedexSpeciesGrid RefreshToken="@gridRefreshToken"
+                                    OnSpeciesChanged="@OnSpeciesChangedInGrid"/>
             }
         </MudStack>
-
-        @* National Dex flags — own row, always visible above the grid so they are not
-           clipped by the tab panel's overflow:hidden on desktop. *@
-        @switch (AppState.SaveFile)
-        {
-            case SAV3 sav3:
-                <MudStack Row
-                          AlignItems="AlignItems.Center">
-                    <MudCheckBox Label="National Mode Unlocked"
-                                 T="@bool"
-                                 Value="@sav3.NationalDex"
-                                 ValueChanged="@(v => sav3.NationalDex = v)"/>
-                </MudStack>
-                break;
-            case SAV5 sav5:
-                <MudStack Row
-                          AlignItems="AlignItems.Center">
-                    <MudCheckBox Label="National Mode Unlocked"
-                                 T="@bool"
-                                 Value="@sav5.Zukan.IsNationalDexUnlocked"
-                                 ValueChanged="@(v => sav5.Zukan.IsNationalDexUnlocked = v)"/>
-                    <MudCheckBox Label="National Mode Active"
-                                 T="@bool"
-                                 Value="@sav5.Zukan.IsNationalDexMode"
-                                 ValueChanged="@(v => sav5.Zukan.IsNationalDexMode = v)"/>
-                </MudStack>
-                break;
-            case SAV6XY sav6Xy:
-                <MudStack Row
-                          AlignItems="AlignItems.Center">
-                    <MudCheckBox Label="National Mode Unlocked"
-                                 T="@bool"
-                                 Value="@sav6Xy.Zukan.IsNationalDexUnlocked"
-                                 ValueChanged="@(v => sav6Xy.Zukan.IsNationalDexUnlocked = v)"/>
-                    <MudCheckBox Label="National Mode Active"
-                                 T="@bool"
-                                 Value="@sav6Xy.Zukan.IsNationalDexMode"
-                                 ValueChanged="@(v => sav6Xy.Zukan.IsNationalDexMode = v)"/>
-                </MudStack>
-                break;
-            case SAV6AO sav6Ao:
-                <MudStack Row
-                          AlignItems="AlignItems.Center">
-                    <MudCheckBox Label="National Mode Unlocked"
-                                 T="@bool"
-                                 Value="@sav6Ao.Zukan.IsNationalDexUnlocked"
-                                 ValueChanged="@(v => sav6Ao.Zukan.IsNationalDexUnlocked = v)"/>
-                    <MudCheckBox Label="National Mode Active"
-                                 T="@bool"
-                                 Value="@sav6Ao.Zukan.IsNationalDexMode"
-                                 ValueChanged="@(v => sav6Ao.Zukan.IsNationalDexMode = v)"/>
-                </MudStack>
-                break;
-            case SAV7 sav7:
-                <MudStack Row
-                          AlignItems="AlignItems.Center">
-                    <MudCheckBox Label="National Mode Unlocked"
-                                 T="@bool"
-                                 Value="@sav7.Zukan.NationalDex"
-                                 ValueChanged="@(v => sav7.Zukan.NationalDex = v)"/>
-                </MudStack>
-                break;
-            case SAV8BS sav8Bs:
-                <MudStack Row
-                          AlignItems="AlignItems.Center">
-                    <MudCheckBox Label="National Mode Unlocked"
-                                 T="@bool"
-                                 Value="@sav8Bs.Zukan.HasNationalDex"
-                                 ValueChanged="@(v => sav8Bs.Zukan.HasNationalDex = v)"/>
-                </MudStack>
-                break;
-            case SAV9SV sav9Sv:
-                <MudStack Row
-                          AlignItems="AlignItems.Center">
-                    <MudText Typo="@Typo.body2">
-                        Save Revision:
-                        @(sav9Sv.SaveRevision switch
-                        {
-                            0 => "Base Game (Rev 0 — up to Iron Leaves #1010)",
-                            1 => "Teal Mask DLC (Rev 1 — up to Ogerpon #1017)",
-                            2 => "Indigo Disk DLC (Rev 2 — up to Pecharunt #1025)",
-                            _ => $"Rev {sav9Sv.SaveRevision}"
-                        })
-                    </MudText>
-                </MudStack>
-                break;
-            case SAV7b sav7B:
-                <MudStack Row
-                          Wrap="@Wrap.Wrap"
-                          AlignItems="AlignItems.Center"
-                          Spacing="3">
-                    <MudNumericField T="@uint"
-                                     Label="Total Captured"
-                                     Value="@sav7B.Captured.TotalCaptured"
-                                     ValueChanged="@(v => sav7B.Captured.TotalCaptured = v)"
-                                     Min="0"
-                                     Max="999999999"
-                                     Style="max-width:160px;"/>
-                    <MudNumericField T="@uint"
-                                     Label="Total Transferred"
-                                     Value="@sav7B.Captured.TotalTransferred"
-                                     ValueChanged="@(v => sav7B.Captured.TotalTransferred = v)"
-                                     Min="0"
-                                     Max="999999999"
-                                     Style="max-width:160px;"/>
-                    <MudTooltip Text="Recalculate totals from per-species counts">
-                        <MudIconButton Icon="@Icons.Material.Filled.Calculate"
-                                       OnClick="@(() => OnRecalculate(sav7B))"
-                                       Color="@Color.Primary"/>
-                    </MudTooltip>
-                </MudStack>
-                break;
-        }
-
-        @if (AppState.SaveFile is SAV8LA)
-        {
-            <PokedexLaResearchPanel RefreshToken="@gridRefreshToken"/>
-        }
-        else
-        {
-            <PokedexSpeciesGrid RefreshToken="@gridRefreshToken"
-                                OnSpeciesChanged="@OnSpeciesChangedInGrid"/>
-        }
-    </MudStack>
     </div>
 }

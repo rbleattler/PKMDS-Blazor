@@ -54,6 +54,8 @@ public class BlazorAesProvider(JsService jsService) : IAesCryptographyProvider
         /// <summary>
         /// Disposes the AES instance (no-op for JavaScript-based implementation).
         /// </summary>
-        public void Dispose() { }
+        public void Dispose()
+        {
+        }
     }
 }

@@ -2,6 +2,20 @@
 
 public partial class App
 {
+    private ErrorBoundary? errorBoundary;
+    private Exception? lastCapturedException;
+
+    private void CaptureExceptionOnce(Exception exception)
+    {
+        if (ReferenceEquals(exception, lastCapturedException))
+        {
+            return;
+        }
+
+        lastCapturedException = exception;
+        SentrySdk.CaptureException(exception);
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender)
@@ -9,6 +23,6 @@ public partial class App
             return;
         }
 
-        await JSRuntime.InvokeVoidAsync("addUpdateListener");
+        await JsRuntime.InvokeVoidAsync("addUpdateListener");
     }
 }

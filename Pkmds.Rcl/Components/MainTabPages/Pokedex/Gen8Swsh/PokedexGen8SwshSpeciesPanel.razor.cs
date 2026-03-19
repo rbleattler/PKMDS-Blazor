@@ -26,7 +26,7 @@ public partial class PokedexGen8SwshSpeciesPanel
         {
             0 or 2 => gender != 254,
             1 or 3 => gender is not 0 and not 255,
-            _ => true,
+            _ => true
         };
     }
 
@@ -38,6 +38,8 @@ public partial class PokedexGen8SwshSpeciesPanel
     {
         var gender = AppState.SaveFile?.Personal[SpeciesId].Gender ?? 255;
         // Female-only (254) → region 1; all other gender ratios → region 0.
-        return gender == 254 ? 1 : 0;
+        return gender == 254
+            ? 1
+            : 0;
     }
 }

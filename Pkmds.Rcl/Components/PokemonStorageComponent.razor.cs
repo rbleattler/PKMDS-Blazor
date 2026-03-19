@@ -53,14 +53,19 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
     private int GetBoxPokemonCount(int boxId)
     {
         if (AppState.SaveFile is not { } saveFile)
+        {
             return 0;
+        }
 
         var count = 0;
         for (var slot = 0; slot < saveFile.BoxSlotCount; slot++)
         {
             if (saveFile.GetBoxSlotAtIndex(boxId, slot).Species != 0)
+            {
                 count++;
+            }
         }
+
         return count;
     }
 

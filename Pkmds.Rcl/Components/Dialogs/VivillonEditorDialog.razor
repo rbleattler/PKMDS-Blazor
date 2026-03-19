@@ -10,7 +10,7 @@
             var forms = FormConverter.GetFormList(vivillonSpecies, GameInfo.Strings.types, GameInfo.Strings.forms,
                 GameInfo.GenderSymbolUnicode, Pokemon.Context);
 
-            <MudSwitch T="bool"
+            <MudSwitch T="@bool"
                        @bind-Value="isPreviewShiny"
                        Color="@Color.Warning"
                        Label="Shiny Preview"

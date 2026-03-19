@@ -14,8 +14,8 @@ public partial class PokedexGen9ZaSpeciesPanel : BasePkmdsComponent
     public ushort SpeciesId { get; set; }
 
     /// <summary>
-    ///     Returns true when the given gender slot (0=male, 1=female, 2=genderless) is
-    ///     possible for this species, based on the gender ratio in the personal table.
+    /// Returns true when the given gender slot (0=male, 1=female, 2=genderless) is
+    /// possible for this species, based on the gender ratio in the personal table.
     /// </summary>
     private bool IsGenderAvailable(byte gender)
     {

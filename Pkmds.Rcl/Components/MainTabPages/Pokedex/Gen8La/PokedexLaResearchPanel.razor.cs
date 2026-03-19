@@ -2,26 +2,25 @@ namespace Pkmds.Rcl.Components.MainTabPages.Pokedex.Gen8La;
 
 public partial class PokedexLaResearchPanel : BasePkmdsComponent
 {
-    private ushort selectedSpecies;
-    private DexFilter filter = DexFilter.All;
-
-    // Hisui-ordered (dex index, national species ID) list — built once per save load.
-    private List<(ushort HisuiIdx, ushort Species)> allHisuiSpecies = [];
-
-    // Task description strings loaded from PKHeX embedded resources.
-    private string[] taskDescriptions = [];
-    private string[] timeTaskDescriptions = [];
-    private string[] speciesQuests = [];
-
     private static readonly (PokedexType8a Type, string Label)[] LocalDexTypes =
     [
-        (PokedexType8a.Hisui,  "Hisui"),
+        (PokedexType8a.Hisui, "Hisui"),
         (PokedexType8a.Local1, "Fieldlands"),
         (PokedexType8a.Local2, "Mirelands"),
         (PokedexType8a.Local3, "Coastlands"),
         (PokedexType8a.Local4, "Highlands"),
-        (PokedexType8a.Local5, "Icelands"),
+        (PokedexType8a.Local5, "Icelands")
     ];
+
+    // Hisui-ordered (dex index, national species ID) list — built once per save load.
+    private List<(ushort HisuiIdx, ushort Species)> allHisuiSpecies = [];
+    private DexFilter filter = DexFilter.All;
+    private ushort selectedSpecies;
+    private string[] speciesQuests = [];
+
+    // Task description strings loaded from PKHeX embedded resources.
+    private string[] taskDescriptions = [];
+    private string[] timeTaskDescriptions = [];
 
     /// <summary>
     /// Incremented by PokedexTab after each bulk operation so the panel
@@ -77,7 +76,7 @@ public partial class PokedexLaResearchPanel : BasePkmdsComponent
         {
             DexFilter.Complete => allHisuiSpecies.Where(x => dex.IsComplete(x.Species)),
             DexFilter.Incomplete => allHisuiSpecies.Where(x => !dex.IsComplete(x.Species)),
-            _ => allHisuiSpecies,
+            _ => allHisuiSpecies
         };
 
     private void OnSpeciesSelected(ushort species)
@@ -164,6 +163,6 @@ public partial class PokedexLaResearchPanel : BasePkmdsComponent
     {
         All,
         Incomplete,
-        Complete,
+        Complete
     }
 }

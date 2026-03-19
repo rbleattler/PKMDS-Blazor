@@ -72,7 +72,7 @@ public partial class EncounterDatabaseTab : RefreshAwareComponent
             Species = speciesItem is { Value: > 0 }
                 ? (ushort)speciesItem.Value
                 : null,
-            Version = gameVersionValue.HasValue && gameVersionValue.Value > 0
+            Version = gameVersionValue is > 0
                 ? (GameVersion)gameVersionValue.Value
                 : null,
             LevelMin = levelMin.HasValue
@@ -180,20 +180,22 @@ public partial class EncounterDatabaseTab : RefreshAwareComponent
         {
             for (var slot = 0; slot < sav.BoxSlotCount; slot++)
             {
-                if (sav.GetBoxSlotAtIndex(box, slot).Species == 0)
+                if (sav.GetBoxSlotAtIndex(box, slot).Species != 0)
                 {
-                    if (sav is SAV7b)
-                    {
-                        // Let's Go uses a flat index across unified storage.
-                        AppService.SetSelectedLetsGoPokemon(sav.BlankPKM, box * sav.BoxSlotCount + slot);
-                    }
-                    else
-                    {
-                        AppService.SetSelectedBoxPokemon(sav.BlankPKM, box, slot);
-                    }
-
-                    return true;
+                    continue;
                 }
+
+                if (sav is SAV7b)
+                {
+                    // Let's Go uses a flat index across unified storage.
+                    AppService.SetSelectedLetsGoPokemon(sav.BlankPKM, box * sav.BoxSlotCount + slot);
+                }
+                else
+                {
+                    AppService.SetSelectedBoxPokemon(sav.BlankPKM, box, slot);
+                }
+
+                return true;
             }
         }
 

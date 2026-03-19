@@ -6,5 +6,5 @@ public enum DexStatusFilter
     Seen,
     Caught,
     Unseen,
-    SeenNotCaught,
+    SeenNotCaught
 }

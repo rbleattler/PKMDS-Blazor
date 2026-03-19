@@ -282,8 +282,14 @@ public class AppServiceTests
         public void RefreshBoxState() => RefreshBoxStateCount++;
         public void RefreshPartyState() => RefreshPartyStateCount++;
         public void RefreshBoxAndPartyState() => RefreshBoxAndPartyStateCount++;
-        public void RefreshTheme(bool isDarkMode) { }
-        public void ShowUpdateMessage() { }
+
+        public void RefreshTheme(bool isDarkMode)
+        {
+        }
+
+        public void ShowUpdateMessage()
+        {
+        }
 
 #pragma warning disable CS0067 // Event is never used - these are required by interface but not needed in test mock
         public event Action? OnAppStateChanged;

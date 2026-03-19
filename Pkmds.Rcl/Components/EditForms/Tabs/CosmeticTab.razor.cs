@@ -12,7 +12,7 @@ public partial class CosmeticTab : IDisposable
 
     private bool IsFavorite
     {
-        get => Pokemon is IFavorite fav && fav.IsFavorite;
+        get => Pokemon is IFavorite { IsFavorite: true };
         set
         {
             if (Pokemon is IFavorite fav)

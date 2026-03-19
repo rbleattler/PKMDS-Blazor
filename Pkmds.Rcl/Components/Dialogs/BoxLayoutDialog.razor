@@ -15,24 +15,26 @@
                                        Variant="@Variant.Outlined"
                                        Disabled="@(_selectedBoxIndex == 0)"
                                        OnClick="@MoveBoxUp"
-                                       title="Move box up" />
+                                       title="Move box up"/>
                         <MudIconButton Icon="@Icons.Material.Filled.ArrowDownward"
                                        Size="@Size.Small"
                                        Variant="@Variant.Outlined"
                                        Disabled="@(_selectedBoxIndex >= _boxNames.Length - 1)"
                                        OnClick="@MoveBoxDown"
-                                       title="Move box down" />
+                                       title="Move box down"/>
                     </div>
                     <MudPaper Outlined
                               Class="overflow-y-auto"
                               Style="max-height: 380px;">
-                        <MudList T="int" SelectedValue="@_selectedBoxIndex"
+                        <MudList T="@int"
+                                 SelectedValue="@_selectedBoxIndex"
                                  SelectedValueChanged="@((int idx) => SelectBox(idx))"
                                  Dense>
                             @for (var i = 0; i < _boxNames.Length; i++)
                             {
                                 var boxIndex = i;
-                                <MudListItem T="int" Value="@boxIndex">
+                                <MudListItem T="@int"
+                                             Value="@boxIndex">
                                     @($"Box {boxIndex + 1}: {_boxNames[boxIndex]} ({GetBoxPokemonCount(boxIndex)}/{saveFile.BoxSlotCount})")
                                 </MudListItem>
                             }
@@ -50,7 +52,7 @@
                                       Immediate
                                       MaxLength="@GetBoxNameMaxLength()"
                                       ReadOnly="@(!_supportsNameWrite)"
-                                      Class="mb-3" />
+                                      Class="mb-3"/>
                     }
 
                     @if (_supportsWallpaper && _wallpaperNameList.Length > 0)
@@ -72,7 +74,7 @@
                             <img src="@_wallpaperSpriteUrl"
                                  alt="Wallpaper preview"
                                  class="w-full rounded mb-3"
-                                 style="max-height: 150px; object-fit: cover;" />
+                                 style="max-height: 150px; object-fit: cover;"/>
                         }
                     }
 
@@ -92,17 +94,19 @@
 
                     @if (_boxFlags.Length > 0)
                     {
-                        <MudText Typo="@Typo.caption" Class="mb-1">Flags</MudText>
+                        <MudText Typo="@Typo.caption"
+                                 Class="mb-1">Flags
+                        </MudText>
                         @for (var i = 0; i < _boxFlags.Length; i++)
                         {
                             var idx = i;
-                            <MudNumericField T="byte"
-                                            Value="@_boxFlags[idx]"
-                                            ValueChanged="@(v => OnFlagChanged(idx, v))"
-                                            Label="@($"Flag {idx}")"
-                                            Min="0"
-                                            Max="255"
-                                            Class="mb-2" />
+                            <MudNumericField T="@byte"
+                                             Value="@_boxFlags[idx]"
+                                             ValueChanged="@(v => OnFlagChanged(idx, v))"
+                                             Label="@($"Flag {idx}")"
+                                             Min="0"
+                                             Max="255"
+                                             Class="mb-2"/>
                         }
                     }
                 </MudItem>
