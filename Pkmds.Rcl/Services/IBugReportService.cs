@@ -5,8 +5,10 @@ public interface IBugReportService
     Task SubmitBugReportAsync(string description, string? email = null, string? name = null, bool attachSaveFile = false);
 
     /// <summary>
-    /// Attaches raw file bytes to the current Sentry scope so they are included
-    /// with any error events captured during save file loading failures.
+    /// Pushes a new Sentry scope with the raw file bytes attached. The attachment is
+    /// automatically removed when the returned <see cref="IDisposable"/> is disposed,
+    /// preventing it from leaking into unrelated events.
     /// </summary>
-    void AttachRawFileToScope(byte[] data, string fileName);
+    /// <returns>A disposable scope that should wrap the error logging call.</returns>
+    IDisposable AttachRawFileToScope(byte[] data, string fileName);
 }

@@ -1,10 +1,32 @@
 namespace Pkmds.Web.Services;
 
+file sealed class NoOpDisposable : IDisposable
+{
+    public static readonly NoOpDisposable Instance = new();
+    public void Dispose() { }
+}
+
 public class BugReportService(IAppState appState) : IBugReportService
 {
-    public void AttachRawFileToScope(byte[] data, string fileName)
+    private const int MaxAttachmentBytes = 10 * 1024 * 1024; // 10 MiB, matches Program.cs
+
+    public IDisposable AttachRawFileToScope(byte[] data, string fileName)
     {
-        SentrySdk.ConfigureScope(scope => scope.AddAttachment(data, fileName));
+        if (data.Length == 0 || data.Length > MaxAttachmentBytes)
+        {
+            return NoOpDisposable.Instance;
+        }
+
+        // Sanitize filename: keep only the last segment and replace problematic characters.
+        var sanitized = Path.GetFileName(fileName);
+        if (string.IsNullOrWhiteSpace(sanitized))
+        {
+            sanitized = "unknown-save-file";
+        }
+
+        var scope = SentrySdk.PushScope();
+        SentrySdk.ConfigureScope(s => s.AddAttachment(data, sanitized));
+        return scope;
     }
 
     public async Task SubmitBugReportAsync(string description, string? email = null, string? name = null, bool attachSaveFile = false)
