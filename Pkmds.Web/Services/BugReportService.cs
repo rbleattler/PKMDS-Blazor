@@ -35,6 +35,7 @@ public class BugReportService(IAppState appState) : IBugReportService
 
         SentrySdk.ConfigureScope(scope =>
         {
+            scope.SetTag("report_type", "user_bug_report");
             scope.SetTag("app_version", appState.AppVersion ?? "unknown");
             scope.SetTag("pkhex_version", IAppState.PkhexVersion ?? "unknown");
             scope.SetTag("hax_enabled", appState.IsHaXEnabled.ToString());
