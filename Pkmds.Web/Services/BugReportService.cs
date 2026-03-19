@@ -4,6 +4,8 @@ public class BugReportService(IAppState appState) : IBugReportService
 {
     public async Task SubmitBugReportAsync(string description, string? email = null, string? name = null, bool attachSaveFile = false)
     {
+        using var _ = SentrySdk.PushScope();
+
         SentrySdk.ConfigureScope(scope =>
         {
             scope.SetTag("app_version", appState.AppVersion ?? "unknown");
@@ -28,13 +30,10 @@ public class BugReportService(IAppState appState) : IBugReportService
         });
 
         var sentryEvent = new SentryEvent { Message = description };
-        sentryEvent.SetFingerprint(["bug-report", description]);
         var eventId = SentrySdk.CaptureEvent(sentryEvent);
         SentrySdk.CaptureFeedback(description, email, name, associatedEventId: eventId);
 
         // Flush events to ensure they're sent before returning
         await SentrySdk.FlushAsync(TimeSpan.FromSeconds(5));
-
-        SentrySdk.ConfigureScope(scope => scope.ClearAttachments());
     }
 }
