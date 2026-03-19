@@ -17,6 +17,23 @@ Log.Logger = new LoggerConfiguration()
 logging.ClearProviders();
 logging.AddSerilog(Log.Logger, true);
 
+// Configure Sentry for error tracking and user feedback
+var sentryDsn = builder.Configuration["Sentry:Dsn"] ?? string.Empty;
+if (sentryDsn.StartsWith("%%"))
+{
+    sentryDsn = string.Empty; // Ignore unreplaced CI placeholder
+}
+
+builder.UseSentry(options =>
+{
+    options.Dsn = sentryDsn;
+    options.SendDefaultPii = false;
+    options.TracesSampleRate = 0.1;
+    options.MaxAttachmentSize = 10 * 1024 * 1024; // 10 MiB
+});
+
+logging.AddSentry(o => o.InitializeSdk = false);
+
 // Add Blazor root components
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
@@ -42,7 +59,8 @@ services
     .AddSingleton(levelSwitch)
     .AddSingleton<JsService>()
     .AddSingleton<BlazorAesProvider>()
-    .AddSingleton<BlazorMd5Provider>();
+    .AddSingleton<BlazorMd5Provider>()
+    .AddSingleton<IBugReportService, BugReportService>();
 
 var app = builder.Build();
 

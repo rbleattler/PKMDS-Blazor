@@ -1,14 +1,37 @@
-﻿@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Routing
+@using MudBlazor
 @using Pkmds.Rcl.Components.Layout
 @using Pkmds.Rcl.Components.Pages
-@inject IJSRuntime JSRuntime
+@inject IJSRuntime JsRuntime
 
-<Router AppAssembly="@typeof(MainLayout).Assembly"
-        NotFoundPage="@typeof(NotFound)">
-    <Found Context="routeData">
-        <RouteView RouteData="@routeData"
-                   DefaultLayout="@typeof(MainLayout)"/>
-        <FocusOnNavigate RouteData="@routeData"
-                         Selector="h1"/>
-    </Found>
-</Router>
+<ErrorBoundary @ref="errorBoundary">
+    <ChildContent>
+        <Router AppAssembly="@typeof(MainLayout).Assembly"
+                NotFoundPage="@typeof(NotFound)">
+            <Found Context="routeData">
+                <RouteView RouteData="@routeData"
+                           DefaultLayout="@typeof(MainLayout)"/>
+                <FocusOnNavigate RouteData="@routeData"
+                                 Selector="h1"/>
+            </Found>
+        </Router>
+    </ChildContent>
+    <ErrorContent Context="exception">
+        @{
+            SentrySdk.CaptureException(exception);
+        }
+        <MudContainer MaxWidth="MaxWidth.Small"
+                      Class="mt-8">
+            <MudAlert Severity="Severity.Error"
+                      Variant="Variant.Filled">
+                An unexpected error occurred. The error has been reported automatically.
+            </MudAlert>
+            <MudButton OnClick="@(() => errorBoundary?.Recover())"
+                       Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       Class="mt-4">
+                Try Again
+            </MudButton>
+        </MudContainer>
+    </ErrorContent>
+</ErrorBoundary>

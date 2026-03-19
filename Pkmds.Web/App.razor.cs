@@ -2,6 +2,8 @@
 
 public partial class App
 {
+    private ErrorBoundary? errorBoundary;
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender)
@@ -9,6 +11,6 @@ public partial class App
             return;
         }
 
-        await JSRuntime.InvokeVoidAsync("addUpdateListener");
+        await JsRuntime.InvokeVoidAsync("addUpdateListener");
     }
 }
