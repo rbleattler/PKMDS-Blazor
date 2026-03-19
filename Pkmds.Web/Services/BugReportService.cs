@@ -2,6 +2,11 @@ namespace Pkmds.Web.Services;
 
 public class BugReportService(IAppState appState) : IBugReportService
 {
+    public void AttachRawFileToScope(byte[] data, string fileName)
+    {
+        SentrySdk.ConfigureScope(scope => scope.AddAttachment(data, fileName));
+    }
+
     public async Task SubmitBugReportAsync(string description, string? email = null, string? name = null, bool attachSaveFile = false)
     {
         using var _ = SentrySdk.PushScope();

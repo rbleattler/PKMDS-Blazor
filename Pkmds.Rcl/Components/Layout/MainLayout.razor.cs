@@ -241,12 +241,13 @@ public partial class MainLayout : IDisposable
         AppState.SaveFile = null;
         AppState.ShowProgressIndicator = true;
 
+        var data = Array.Empty<byte>();
         try
         {
             await using var fileStream = browserLoadSaveFile.OpenReadStream(Constants.MaxFileSize);
             using var memoryStream = new MemoryStream();
             await fileStream.CopyToAsync(memoryStream);
-            var data = memoryStream.ToArray();
+            data = memoryStream.ToArray();
             Logger.LogDebug("Read {ByteCount} bytes from save file", data.Length);
 
             if (SaveUtil.TryGetSaveFile(data, out var saveFile, selectedFile.Name))
@@ -271,6 +272,7 @@ public partial class MainLayout : IDisposable
             }
             else
             {
+                BugReportService.AttachRawFileToScope(data, selectedFile.Name);
                 Logger.LogError("Failed to load save file: {FileName} - Invalid save file format", selectedFile.Name);
                 const string message =
                     "The selected save file is invalid. If this save file came from a ROM hack, it is not supported. Otherwise, try saving in-game and re-exporting / re-uploading the save file.";
@@ -280,6 +282,11 @@ public partial class MainLayout : IDisposable
         }
         catch (Exception ex)
         {
+            if (data.Length > 0)
+            {
+                BugReportService.AttachRawFileToScope(data, selectedFile.Name);
+            }
+
             Logger.LogError(ex, "Error loading save file: {FileName}", selectedFile.Name);
             await DialogService.ShowMessageBoxAsync("Error", $"{ex.Message}{Environment.NewLine}{ex.StackTrace}");
         }
