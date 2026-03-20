@@ -28,9 +28,9 @@ jobs:
       - name: Azure Login
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_210AF8A453DF47D898FAF006EAA2703A }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_A95E470246E84BF58DD24D31E11E7082 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_F449B22F60F34BB0982680102F695D04 }}
+          client-id: ${{ secrets.UAT_CLEANUP_CLIENT_ID }}
+          tenant-id: ${{ secrets.UAT_CLEANUP_TENANT_ID }}
+          subscription-id: ${{ secrets.UAT_CLEANUP_SUBSCRIPTION_ID }}
 
       - name: Delete staging environment
         run: |
@@ -53,9 +53,9 @@ jobs:
       - name: Azure Login
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_210AF8A453DF47D898FAF006EAA2703A }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_A95E470246E84BF58DD24D31E11E7082 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_F449B22F60F34BB0982680102F695D04 }}
+          client-id: ${{ secrets.UAT_CLEANUP_CLIENT_ID }}
+          tenant-id: ${{ secrets.UAT_CLEANUP_TENANT_ID }}
+          subscription-id: ${{ secrets.UAT_CLEANUP_SUBSCRIPTION_ID }}
 
       - name: Delete stale environments
         env:
