@@ -1,7 +1,7 @@
 namespace Pkmds.Tests;
 
 /// <summary>
-/// Tests for box management features (SwapBoxes, BoxViewerDialog, BoxListDialog).
+/// Tests for box management SwapBoxes behavior.
 /// </summary>
 public class BoxManagementTests
 {
@@ -34,9 +34,14 @@ public class BoxManagementTests
         var refreshService = new TestRefreshService();
         var appService = new AppService(appState, refreshService);
 
-        // Read slot 0 from box 0 and box 1 before swap
-        var box0Slot0Before = saveFile!.GetBoxSlotAtIndex(0, 0).Species;
-        var box1Slot0Before = saveFile.GetBoxSlotAtIndex(1, 0).Species;
+        // Snapshot all slots in box 0 and box 1 before the swap
+        var slotCount = saveFile!.BoxSlotCount;
+        var box0Before = Enumerable.Range(0, slotCount)
+            .Select(s => saveFile.GetBoxSlotAtIndex(0, s).Species)
+            .ToArray();
+        var box1Before = Enumerable.Range(0, slotCount)
+            .Select(s => saveFile.GetBoxSlotAtIndex(1, s).Species)
+            .ToArray();
 
         // Act
         var result = appService.SwapBoxes(0, 1);
@@ -45,15 +50,17 @@ public class BoxManagementTests
         result.Should().BeTrue();
         refreshService.RefreshBoxStateCount.Should().Be(1);
 
-        var box0Slot0After = saveFile.GetBoxSlotAtIndex(0, 0).Species;
-        var box1Slot0After = saveFile.GetBoxSlotAtIndex(1, 0).Species;
-
-        box0Slot0After.Should().Be(box1Slot0Before);
-        box1Slot0After.Should().Be(box0Slot0Before);
+        for (var slot = 0; slot < slotCount; slot++)
+        {
+            saveFile.GetBoxSlotAtIndex(0, slot).Species.Should().Be(box1Before[slot],
+                because: $"box 0 slot {slot} should contain what was in box 1 slot {slot}");
+            saveFile.GetBoxSlotAtIndex(1, slot).Species.Should().Be(box0Before[slot],
+                because: $"box 1 slot {slot} should contain what was in box 0 slot {slot}");
+        }
     }
 
     [Fact]
-    public void SwapBoxes_SameBox_ReturnsTrueWithNoEffectiveChange()
+    public void SwapBoxes_SameBox_LeavesBoxUnchanged()
     {
         // Arrange
         var data = File.ReadAllBytes(Path.Combine(TestFilesPath, "Black - Full Completion.sav"));
@@ -63,18 +70,20 @@ public class BoxManagementTests
         var refreshService = new TestRefreshService();
         var appService = new AppService(appState, refreshService);
 
-        var box0Slot0Before = saveFile!.GetBoxSlotAtIndex(0, 0).Species;
+        var slotCount = saveFile!.BoxSlotCount;
+        var box0Before = Enumerable.Range(0, slotCount)
+            .Select(s => saveFile.GetBoxSlotAtIndex(0, s).Species)
+            .ToArray();
 
         // Act — swapping a box with itself should be a no-op
-        var result = appService.SwapBoxes(0, 0);
+        appService.SwapBoxes(0, 0);
 
-        // Assert
-        var box0Slot0After = saveFile.GetBoxSlotAtIndex(0, 0).Species;
-        box0Slot0After.Should().Be(box0Slot0Before);
-
-        // Whether SwapBox returns true or false for same-box is PKHeX's concern;
-        // we only verify the service propagates the call correctly.
-        _ = result; // result depends on PKHeX internals; not asserted here
+        // Assert — all slots remain unchanged regardless of what PKHeX returns
+        for (var slot = 0; slot < slotCount; slot++)
+        {
+            saveFile.GetBoxSlotAtIndex(0, slot).Species.Should().Be(box0Before[slot],
+                because: $"slot {slot} should be unchanged after swapping a box with itself");
+        }
     }
 
     private class TestAppState : IAppState

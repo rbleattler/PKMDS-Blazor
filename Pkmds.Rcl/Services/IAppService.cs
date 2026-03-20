@@ -313,6 +313,9 @@ public interface IAppService
     /// </summary>
     /// <param name="boxA">The 0-based index of the first box.</param>
     /// <param name="boxB">The 0-based index of the second box.</param>
-    /// <returns><see langword="true" /> if the swap succeeded; <see langword="false" /> if locked slots prevented it.</returns>
+    /// <returns>
+    /// <see langword="true" /> if the swap succeeded;
+    /// <see langword="false" /> if no save file is loaded or if locked slots prevent the swap.
+    /// </returns>
     bool SwapBoxes(int boxA, int boxB);
 }

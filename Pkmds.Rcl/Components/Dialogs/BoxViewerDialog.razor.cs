@@ -5,6 +5,9 @@ public partial class BoxViewerDialog : RefreshAwareComponent
     [CascadingParameter]
     private IMudDialogInstance? MudDialog { get; set; }
 
+    [Inject]
+    private IBrowserViewportService BrowserViewportService { get; set; } = default!;
+
     [Parameter]
     public int InitialBox { get; set; }
 
@@ -41,12 +44,14 @@ public partial class BoxViewerDialog : RefreshAwareComponent
     private async Task OpenBoxList()
     {
         MudDialog?.Close();
+        var isXs = await BrowserViewportService.GetCurrentBreakpointAsync() == Breakpoint.Xs;
         await DialogService.ShowAsync<BoxListDialog>(
             "All Boxes",
             new DialogOptions
             {
                 MaxWidth = MaxWidth.ExtraExtraLarge,
                 FullWidth = true,
+                FullScreen = isXs,
                 CloseButton = true,
                 BackdropClick = true,
                 CloseOnEscapeKey = true,
