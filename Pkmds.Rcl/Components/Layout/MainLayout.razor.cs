@@ -235,6 +235,13 @@ public partial class MainLayout : IDisposable
             return;
         }
 
+        if (selectedFile.Size == 0)
+        {
+            Logger.LogWarning("Attempted to load empty save file: {FileName}", selectedFile.Name);
+            await DialogService.ShowMessageBoxAsync("Error", "The selected file is empty.");
+            return;
+        }
+
         Logger.LogInformation("Loading save file: {FileName}", selectedFile.Name);
         AppService.ClearSelection();
         ParseSettings.ClearActiveTrainer();
@@ -411,6 +418,13 @@ public partial class MainLayout : IDisposable
             return;
         }
 
+        if (browserLoadPokemonFile.Size == 0)
+        {
+            Logger.LogWarning("Attempted to load empty Pokémon file: {FileName}", browserLoadPokemonFile.Name);
+            await DialogService.ShowMessageBoxAsync("Error", "The selected file is empty.");
+            return;
+        }
+
         Logger.LogInformation("Loading Pokémon file: {FileName}", browserLoadPokemonFile.Name);
         AppState.ShowProgressIndicator = true;
 
@@ -487,6 +501,13 @@ public partial class MainLayout : IDisposable
         if (AppState.SaveFile is null)
         {
             Logger.LogWarning("Attempted to load Mystery Gift file but no save file is loaded");
+            return;
+        }
+
+        if (browserLoadMysteryGiftFile.Size == 0)
+        {
+            Logger.LogWarning("Attempted to load empty Mystery Gift file: {FileName}", browserLoadMysteryGiftFile.Name);
+            await DialogService.ShowMessageBoxAsync("Error", "The selected file is empty.");
             return;
         }
 
@@ -593,6 +614,12 @@ public partial class MainLayout : IDisposable
                 fileTypeExtension,
                 fileTypeDescription);
             Logger.LogDebug("File written successfully using File System Access API");
+        }
+        catch (JSException ex) when (ex.Message.Contains("AbortError", StringComparison.OrdinalIgnoreCase) ||
+                                     ex.Message.Contains("aborted a request", StringComparison.OrdinalIgnoreCase))
+        {
+            // User dismissed the file picker — not an error.
+            Logger.LogDebug("File save cancelled by user: {FileName}", fileName);
         }
         catch (JSException ex)
         {

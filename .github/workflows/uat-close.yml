@@ -27,17 +27,24 @@ jobs:
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           action: close
+          deployment_environment: ${{ github.event.pull_request.number }}
 
-  # ── Sweep stale environments (schedule / manual dispatch) ────────────────────
-  find_stale:
-    name: Find recently-closed PRs
+  # ── Sweep: report stale environments (schedule / manual dispatch) ────────────
+  # NOTE: Azure/static-web-apps-deploy action: close requires the GitHub PR event
+  # payload to supply the internal pull_request ID that Azure's API demands.
+  # That payload only exists when the workflow is triggered by a pull_request event
+  # (handled above by close_pr_staging). Running close from schedule/workflow_dispatch
+  # always fails with "Request is missing the pull request id." regardless of whether
+  # deployment_environment or repo_token are provided — it is a known limitation of
+  # the action. Stale environments that accumulate despite close_pr_staging must be
+  # removed manually from the Azure portal:
+  #   Azure Portal → Static Web Apps → <app> → Environments → delete pr-NNN
+  report_stale:
+    name: Report recently-closed PRs (manual cleanup may be needed)
     runs-on: ubuntu-latest
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    outputs:
-      pr-numbers: ${{ steps.find.outputs.pr-numbers }}
     steps:
-      - name: List closed PRs
-        id: find
+      - name: List closed PRs that may have stale environments
         uses: actions/github-script@v8
         with:
           script: |
@@ -48,30 +55,13 @@ jobs:
               base: 'main',
               per_page: 100,
             });
-            // Target PRs closed within the last 60 days.
             const cutoff = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
             const recent = prs
               .filter(pr => new Date(pr.closed_at) > cutoff)
               .map(pr => pr.number);
-            console.log(`Targeting ${recent.length} closed PR(s): ${recent.join(', ')}`);
-            core.setOutput('pr-numbers', JSON.stringify(recent.length ? recent : []));
-
-  close_stale:
-    name: Close stale env — PR ${{ matrix.pr }}
-    needs: find_stale
-    runs-on: ubuntu-latest
-    if: needs.find_stale.outputs.pr-numbers != '[]'
-    strategy:
-      fail-fast: false   # attempt all PRs even if some environments are already gone
-      matrix:
-        pr: ${{ fromJson(needs.find_stale.outputs.pr-numbers) }}
-    steps:
-      - name: Close preview environment
-        uses: Azure/static-web-apps-deploy@v1
-        with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-          action: close
-          # Azure SWA names PR preview environments "pr-{number}".
-          # If environments show differently in the Azure Portal, adjust this value.
-          deployment_environment: pr-${{ matrix.pr }}
-        continue-on-error: true   # environment may already be closed; treat as success
+            if (recent.length === 0) {
+              console.log('No recently-closed PRs found.');
+            } else {
+              console.log(`Recently-closed PRs (check Azure portal for stale environments): ${recent.join(', ')}`);
+              console.log('If the staging-environment limit is hit, delete pr-NNN environments manually in the Azure portal.');
+            }
