@@ -9,7 +9,7 @@
         {
             <div style="max-height: 80vh; overflow-y: auto;">
                 <MudGrid>
-                    @for (var i = 0; i < saveFile.BoxCount; i++)
+                    @for (var i = 0; i < renderedBoxCount; i++)
                     {
                         var boxIndex = i;
                         var boxName = saveFile is IBoxDetailNameRead r
@@ -29,6 +29,12 @@
                                 </div>
                                 <BoxGrid BoxNumber="@boxIndex"/>
                             </MudPaper>
+                        </MudItem>
+                    }
+                    @if (renderedBoxCount < saveFile.BoxCount)
+                    {
+                        <MudItem xs="12" Class="d-flex justify-center pa-4">
+                            <MudProgressCircular Indeterminate Color="@Color.Primary"/>
                         </MudItem>
                     }
                 </MudGrid>
