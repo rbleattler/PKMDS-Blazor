@@ -35,12 +35,12 @@
 
                 <MudList T="@string"
                          Dense>
-                    @foreach (var result in issues)
+                    @foreach (var (result, issueIndex) in issues.Select((r, i) => (r, i)))
                     {
                         <MudListItem T="@string"
                                      Icon="@GetSeverityIcon(result.Judgement)"
                                      IconColor="@GetSeverityColor(result.Judgement)"
-                                     @key="@($"{result.Identifier}:{result.Result}")">
+                                     @key="@($"{issueIndex}:{result.Identifier}:{result.Result}")">
                             <MudStack Row
                                       AlignItems="@AlignItems.Center"
                                       Spacing="1">

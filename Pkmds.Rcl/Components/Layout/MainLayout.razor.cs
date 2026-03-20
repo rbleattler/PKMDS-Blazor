@@ -594,6 +594,11 @@ public partial class MainLayout : IDisposable
                 fileTypeDescription);
             Logger.LogDebug("File written successfully using File System Access API");
         }
+        catch (JSException ex) when (ex.Message.Contains("AbortError") || ex.Message.Contains("user aborted"))
+        {
+            // User dismissed the file picker — not an error.
+            Logger.LogDebug("File save cancelled by user: {FileName}", fileName);
+        }
         catch (JSException ex)
         {
             Logger.LogError(ex, "Error writing file using File System Access API: {FileName}", fileName);
