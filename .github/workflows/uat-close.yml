@@ -62,7 +62,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Get the PR numbers of all currently open PRs targeting main.
-          open_prs=$(gh pr list --state open --base main --json number --jq '.[].number' | tr '\n' ' ')
+          open_prs=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --base main --json number --jq '.[].number' | tr '\n' ' ')
           echo "Open PRs: ${open_prs:-none}"
 
           # List all staging environments (everything except 'default').
