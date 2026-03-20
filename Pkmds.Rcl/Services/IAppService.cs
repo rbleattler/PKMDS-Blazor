@@ -307,4 +307,12 @@ public interface IAppService
     /// <see langword="null" /> if the save file is not loaded.
     /// </returns>
     PKM? GeneratePokemonFromEncounter(IEncounterable encounter);
+
+    /// <summary>
+    /// Swaps all Pokémon slots between two boxes.
+    /// </summary>
+    /// <param name="boxA">The 0-based index of the first box.</param>
+    /// <param name="boxB">The 0-based index of the second box.</param>
+    /// <returns><see langword="true" /> if the swap succeeded; <see langword="false" /> if locked slots prevented it.</returns>
+    bool SwapBoxes(int boxA, int boxB);
 }
