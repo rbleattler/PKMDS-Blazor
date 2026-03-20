@@ -1377,4 +1377,20 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         EncounterTypeGroup.Static => "Static",
         _ => "Unknown"
     };
+
+    public bool SwapBoxes(int boxA, int boxB)
+    {
+        if (AppState.SaveFile is not { } sav)
+        {
+            return false;
+        }
+
+        var success = sav.SwapBox(boxA, boxB);
+        if (success)
+        {
+            RefreshService.RefreshBoxState();
+        }
+
+        return success;
+    }
 }

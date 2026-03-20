@@ -57,6 +57,22 @@
                            Variant="@Variant.Filled"
                            Class="m-1.5 p-1.5">
             </MudIconButton>
+
+            <MudIconButton OnClick="@OpenBoxListDialog"
+                           title="All Boxes"
+                           ButtonType="@ButtonType.Button"
+                           Icon="@Icons.Material.Filled.ViewModule"
+                           Variant="@Variant.Filled"
+                           Class="m-1.5 p-1.5">
+            </MudIconButton>
+
+            <MudIconButton OnClick="@OpenBoxViewerDialog"
+                           title="Pop Out Box"
+                           ButtonType="@ButtonType.Button"
+                           Icon="@Icons.Material.Filled.OpenInNew"
+                           Variant="@Variant.Filled"
+                           Class="m-1.5 p-1.5">
+            </MudIconButton>
         </div>
 
         <BoxComponent BoxNumber="@boxEdit.CurrentBox"/>

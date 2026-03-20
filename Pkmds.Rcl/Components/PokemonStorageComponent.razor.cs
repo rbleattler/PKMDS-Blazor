@@ -76,4 +76,38 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
             new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true });
         RefreshService.RefreshBoxState();
     }
+
+    private async Task OpenBoxListDialog()
+    {
+        await DialogService.ShowAsync<BoxListDialog>(
+            "All Boxes",
+            new DialogOptions
+            {
+                MaxWidth = MaxWidth.ExtraExtraLarge,
+                FullWidth = true,
+                CloseButton = true,
+                BackdropClick = true,
+                CloseOnEscapeKey = true,
+            });
+    }
+
+    private async Task OpenBoxViewerDialog()
+    {
+        var parameters = new DialogParameters<BoxViewerDialog>
+        {
+            { x => x.InitialBox, AppState.BoxEdit?.CurrentBox ?? 0 },
+        };
+
+        await DialogService.ShowAsync<BoxViewerDialog>(
+            "Box Viewer",
+            parameters,
+            new DialogOptions
+            {
+                MaxWidth = MaxWidth.Large,
+                FullWidth = true,
+                CloseButton = true,
+                BackdropClick = true,
+                CloseOnEscapeKey = true,
+            });
+    }
 }
