@@ -29,6 +29,26 @@ jobs:
           action: close
           deployment_environment: ${{ github.event.pull_request.number }}
 
+      - name: Remove Azure SWA bot comments
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+            });
+            for (const comment of comments) {
+              if (comment.user.login === 'github-actions[bot]' &&
+                  comment.body.includes('Azure Static Web Apps')) {
+                await github.rest.issues.deleteComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: comment.id,
+                });
+              }
+            }
+
   # ── Sweep: report stale environments (schedule / manual dispatch) ────────────
   # NOTE: Azure/static-web-apps-deploy action: close requires the GitHub PR event
   # payload to supply the internal pull_request ID that Azure's API demands.
