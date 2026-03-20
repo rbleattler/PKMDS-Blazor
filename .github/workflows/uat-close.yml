@@ -7,8 +7,8 @@ on:
     branches: [main]
     types: [closed]
 
-  # Weekly sweep: catches any environments that slipped through (e.g. workflow failures,
-  # PRs closed while only ignored-path files changed before the split-workflow fix).
+  # Weekly sweep: deletes any environments that slipped through (e.g. the PR close
+  # workflow failed, or the UAT deploy was skipped due to paths-ignore).
   schedule:
     - cron: '0 3 * * 0'   # 03:00 UTC every Sunday
 
@@ -16,52 +16,76 @@ on:
   workflow_dispatch:
 
 jobs:
-  # ── Close the environment for the PR that just closed ────────────────────────
+  # ── Delete the environment for the PR that just closed ───────────────────────
   close_pr_staging:
     name: Close UAT for PR ${{ github.event.pull_request.number }}
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
+    permissions:
+      id-token: write
+      contents: read
     steps:
-      - name: Close staging environment
-        uses: Azure/static-web-apps-deploy@v1
+      - name: Azure Login
+        uses: azure/login@v3
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-          action: close
-          deployment_environment: ${{ github.event.pull_request.number }}
+          client-id: ${{ secrets.UAT_CLEANUP_CLIENT_ID }}
+          tenant-id: ${{ secrets.UAT_CLEANUP_TENANT_ID }}
+          subscription-id: ${{ secrets.UAT_CLEANUP_SUBSCRIPTION_ID }}
 
-  # ── Sweep: report stale environments (schedule / manual dispatch) ────────────
-  # NOTE: Azure/static-web-apps-deploy action: close requires the GitHub PR event
-  # payload to supply the internal pull_request ID that Azure's API demands.
-  # That payload only exists when the workflow is triggered by a pull_request event
-  # (handled above by close_pr_staging). Running close from schedule/workflow_dispatch
-  # always fails with "Request is missing the pull request id." regardless of whether
-  # deployment_environment or repo_token are provided — it is a known limitation of
-  # the action. Stale environments that accumulate despite close_pr_staging must be
-  # removed manually from the Azure portal:
-  #   Azure Portal → Static Web Apps → <app> → Environments → delete pr-NNN
-  report_stale:
-    name: Report recently-closed PRs (manual cleanup may be needed)
+      - name: Delete staging environment
+        run: |
+          az staticwebapp environment delete \
+            --name pkmds-blazor-uat \
+            --resource-group PKMDS-Blazor \
+            --environment-name ${{ github.event.pull_request.number }} \
+            --yes
+        continue-on-error: true   # no-op if the UAT deploy was skipped for this PR
+
+  # ── Sweep: delete any environments not belonging to an open PR ───────────────
+  sweep_stale:
+    name: Delete stale staging environments
     runs-on: ubuntu-latest
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    permissions:
+      id-token: write
+      contents: read
     steps:
-      - name: List closed PRs that may have stale environments
-        uses: actions/github-script@v8
+      - name: Azure Login
+        uses: azure/login@v3
         with:
-          script: |
-            const { data: prs } = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'closed',
-              base: 'main',
-              per_page: 100,
-            });
-            const cutoff = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
-            const recent = prs
-              .filter(pr => new Date(pr.closed_at) > cutoff)
-              .map(pr => pr.number);
-            if (recent.length === 0) {
-              console.log('No recently-closed PRs found.');
-            } else {
-              console.log(`Recently-closed PRs (check Azure portal for stale environments): ${recent.join(', ')}`);
-              console.log('If the staging-environment limit is hit, delete pr-NNN environments manually in the Azure portal.');
-            }
+          client-id: ${{ secrets.UAT_CLEANUP_CLIENT_ID }}
+          tenant-id: ${{ secrets.UAT_CLEANUP_TENANT_ID }}
+          subscription-id: ${{ secrets.UAT_CLEANUP_SUBSCRIPTION_ID }}
+
+      - name: Delete stale environments
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get the PR numbers of all currently open PRs targeting main.
+          open_prs=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --base main --json number --jq '.[].number' | tr '\n' ' ')
+          echo "Open PRs: ${open_prs:-none}"
+
+          # List all staging environments (everything except 'default').
+          environments=$(az staticwebapp environment list \
+            --name pkmds-blazor-uat \
+            --resource-group PKMDS-Blazor \
+            --query "[?name!='default'].name" \
+            --output tsv)
+
+          if [ -z "$environments" ]; then
+            echo "No staging environments found."
+            exit 0
+          fi
+
+          for env in $environments; do
+            if echo "$open_prs" | grep -qw "$env"; then
+              echo "Keeping environment $env — PR #$env is still open."
+            else
+              echo "Deleting stale environment: $env"
+              az staticwebapp environment delete \
+                --name pkmds-blazor-uat \
+                --resource-group PKMDS-Blazor \
+                --environment-name "$env" \
+                --yes
+            fi
+          done
