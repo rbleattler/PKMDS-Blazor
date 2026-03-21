@@ -97,7 +97,7 @@
         @if (Pokemon is G4PKM g4)
         {
             <MudDivider/>
-            <MudText Typo="@Typo.subtitle2">Gen 4 (HG/SS)</MudText>
+            <MudText Typo="@Typo.subtitle2">Gen 4</MudText>
 
             <MudText Typo="@Typo.body2">Shiny Leaves</MudText>
             <MudStack Row
@@ -140,13 +140,13 @@
                          For="@(() => pk5.NSparkle)"/>
 
             <MudNumericField T="@byte"
-                             Label="PokéStar Fame"
+                             Label="PokéStar Fame (B2/W2 only)"
                              Variant="@Variant.Outlined"
                              Min="@byte.MinValue"
                              Max="@byte.MaxValue"
                              Value="@pk5.PokeStarFame"
                              ValueChanged="@(v => pk5.PokeStarFame = v)"
-                             title="PokéStar Studios fame value (>250 = is a PokéStar)"/>
+                             title="PokéStar Studios fame value (Black 2 / White 2 only; >250 = is a PokéStar)"/>
         }
 
         @* Gen 7b (LGPE) — Spirit, Mood, Received Date/Time *@
