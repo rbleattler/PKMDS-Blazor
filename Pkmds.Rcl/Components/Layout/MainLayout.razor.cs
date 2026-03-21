@@ -458,7 +458,7 @@ public partial class MainLayout : IDisposable
         if (browserLoadPokemonFile.Size == 0)
         {
             Logger.LogWarning("Attempted to load empty Pokémon file: {FileName}", browserLoadPokemonFile.Name);
-            await DialogService.ShowMessageBoxAsync("Error", "The selected file is empty.");
+            Snackbar.Add("The selected file is empty.", Severity.Error);
             return;
         }
 
@@ -477,7 +477,7 @@ public partial class MainLayout : IDisposable
             {
                 Logger.LogError("Failed to load Pokémon file: {FileName} - Not a supported format",
                     browserLoadPokemonFile.Name);
-                await DialogService.ShowMessageBoxAsync("Error", "The file is not a supported Pokémon file.");
+                Snackbar.Add("The file is not a supported Pokémon file.", Severity.Error);
                 return;
             }
 
@@ -492,33 +492,41 @@ public partial class MainLayout : IDisposable
                 {
                     Logger.LogError("Failed to convert Pokémon: {ConversionResult}",
                         c.GetDisplayString(pkm, saveFile.PKMType));
-                    await DialogService.ShowMessageBoxAsync("Error", c.GetDisplayString(pkm, saveFile.PKMType));
+                    Snackbar.Add(c.GetDisplayString(pkm, saveFile.PKMType), Severity.Error);
                     return;
                 }
             }
 
             saveFile.AdaptToSaveFile(pokemon);
 
-            var index = saveFile.NextOpenBoxSlot();
-            if (index < 0)
+            var slotType = AppService.GetSelectedPokemonSlot(out _, out _, out _);
+            var isLetsGoWithSlot = saveFile is SAV7b && AppState.SelectedBoxSlotNumber.HasValue;
+            if (slotType == SelectedPokemonType.None && !isLetsGoWithSlot && !AppService.TrySelectFirstEmptyBoxSlot())
             {
                 Logger.LogWarning("No available box slots for importing Pokémon");
+                Snackbar.Add("No empty box slots available. Free up a slot and try again.", Severity.Warning);
                 return;
             }
 
-            saveFile.GetBoxSlotFromIndex(index, out var box, out var slot);
-            saveFile.SetBoxSlotAtIndex(pokemon, index);
-            Logger.LogInformation("Pokémon imported successfully to Box {Box}, Slot {Slot}", box + 1, slot + 1);
+            AppService.EditFormPokemon = pokemon;
+            var editedPkm = AppService.EditFormPokemon ?? pokemon;
+            AppService.SavePokemon(editedPkm);
+            Logger.LogInformation("Pokémon imported successfully via selected slot");
 
-            const string messageStart = "The Pokémon has been imported and stored in";
+            var la = new LegalityAnalysis(editedPkm);
+            if (la.Valid)
+            {
+                Snackbar.Add($"{title}: {GameInfo.Strings.Species[editedPkm.Species]} imported successfully.", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add(
+                    $"{title}: {GameInfo.Strings.Species[editedPkm.Species]} imported, but legality check flagged issues. " +
+                    "Review the Pokémon in the editor.",
+                    Severity.Warning);
+            }
 
-            var message = saveFile is IBoxDetailNameRead boxDetail
-                ? $"{messageStart} '{boxDetail.GetBoxName(box)}' (Box {box + 1}), Slot {slot + 1}."
-                : $"{messageStart} Box {box + 1}, Slot {slot + 1}.";
-
-            await DialogService.ShowMessageBoxAsync(
-                title,
-                message);
+            RefreshService.RequestJumpToPartyBox();
         }
         catch (Exception ex)
         {
@@ -535,7 +543,7 @@ public partial class MainLayout : IDisposable
 
     private async Task LoadMysteryGiftFile(IBrowserFile browserLoadMysteryGiftFile, string title)
     {
-        if (AppState.SaveFile is null)
+        if (AppState.SaveFile is not { } saveFile)
         {
             Logger.LogWarning("Attempted to load Mystery Gift file but no save file is loaded");
             return;
@@ -544,7 +552,7 @@ public partial class MainLayout : IDisposable
         if (browserLoadMysteryGiftFile.Size == 0)
         {
             Logger.LogWarning("Attempted to load empty Mystery Gift file: {FileName}", browserLoadMysteryGiftFile.Name);
-            await DialogService.ShowMessageBoxAsync("Error", "The selected file is empty.");
+            Snackbar.Add("The selected file is empty.", Severity.Error);
             return;
         }
 
@@ -564,30 +572,72 @@ public partial class MainLayout : IDisposable
             {
                 Logger.LogError("Failed to load Mystery Gift file: {FileName} - Not a supported format",
                     browserLoadMysteryGiftFile.Name);
-                await DialogService.ShowMessageBoxAsync("Error", "The file is not a supported Mystery Gift file.");
+                Snackbar.Add("The file is not a supported Mystery Gift file.", Severity.Error);
                 return;
             }
 
-            if (mysteryGift.Species.IsInvalidSpecies())
-            {
-                Logger.LogError("Mystery Gift Pokémon is invalid: Species {Species}", mysteryGift.Species);
-                await DialogService.ShowMessageBoxAsync("Error", "The Mystery Gift Pokémon is invalid.");
-                return;
-            }
-
+            // Import the gift card to the mystery gift album when the save supports it.
             await AppService.ImportMysteryGift(data, Path.GetExtension(browserLoadMysteryGiftFile.Name),
-                out var isSuccessful, out var resultsMessage);
+                out var albumImportSuccessful, out var albumImportMessage);
 
-            if (isSuccessful)
+            if (albumImportSuccessful)
             {
-                Logger.LogInformation("Mystery Gift imported successfully");
+                Logger.LogInformation("Mystery Gift card imported to album successfully");
+                Snackbar.Add("Mystery Gift card added to Wonder Cards album.", Severity.Success);
             }
             else
             {
-                Logger.LogWarning("Mystery Gift import failed: {Message}", resultsMessage);
+                Logger.LogWarning("Mystery Gift album import: {Message}", albumImportMessage);
             }
 
-            await DialogService.ShowMessageBoxAsync(title, resultsMessage);
+            // If the gift contains a Pokémon, generate it and place it in the active slot.
+            if (mysteryGift.IsEntity)
+            {
+                var pkm = mysteryGift.ConvertToPKM(saveFile, EncounterCriteria.Unrestricted);
+                if (pkm.GetType() != saveFile.PKMType)
+                {
+                    pkm = EntityConverter.ConvertToType(pkm, saveFile.PKMType, out var c);
+                    if (!c.IsSuccess || pkm is null)
+                    {
+                        Logger.LogError("Failed to convert Mystery Gift Pokémon: {ConversionResult}",
+                            c.GetDisplayString(mysteryGift.ConvertToPKM(saveFile), saveFile.PKMType));
+                        Snackbar.Add("Could not convert the gift Pokémon to the save file's format.", Severity.Error);
+                        return;
+                    }
+                }
+
+                saveFile.AdaptToSaveFile(pkm);
+
+                var slotType = AppService.GetSelectedPokemonSlot(out _, out _, out _);
+                var isLetsGoWithSlot = saveFile is SAV7b && AppState.SelectedBoxSlotNumber.HasValue;
+                if (slotType == SelectedPokemonType.None && !isLetsGoWithSlot && !AppService.TrySelectFirstEmptyBoxSlot())
+                {
+                    Logger.LogWarning("No available box slots for Mystery Gift Pokémon");
+                    Snackbar.Add("No empty box slots available. Free up a slot and try again.", Severity.Warning);
+                    return;
+                }
+
+                AppService.EditFormPokemon = pkm;
+                var editedPkm = AppService.EditFormPokemon ?? pkm;
+                AppService.SavePokemon(editedPkm);
+                Logger.LogInformation("Mystery Gift Pokémon placed in slot successfully");
+
+                var la = new LegalityAnalysis(editedPkm);
+                var speciesName = GameInfo.Strings.Species[editedPkm.Species];
+                if (la.Valid)
+                {
+                    Snackbar.Add($"{speciesName} received from Mystery Gift.", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add(
+                        $"{speciesName} received from Mystery Gift, but legality check flagged issues. " +
+                        "Review the Pokémon in the editor.",
+                        Severity.Warning);
+                }
+
+                RefreshService.RequestJumpToPartyBox();
+            }
         }
         catch (Exception ex)
         {

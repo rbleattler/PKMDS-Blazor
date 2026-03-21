@@ -292,12 +292,17 @@ public class AppServiceTests
         {
         }
 
+        public void RequestJumpToPartyBox()
+        {
+        }
+
 #pragma warning disable CS0067 // Event is never used - these are required by interface but not needed in test mock
         public event Action? OnAppStateChanged;
         public event Action? OnBoxStateChanged;
         public event Action? OnPartyStateChanged;
         public event Action? OnUpdateAvailable;
         public event Action<bool>? OnThemeChanged;
+        public event Action? OnRequestJumpToPartyBox;
 #pragma warning restore CS0067
     }
 }

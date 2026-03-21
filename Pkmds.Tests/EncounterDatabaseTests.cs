@@ -241,12 +241,17 @@ public class EncounterDatabaseTests
         {
         }
 
+        public void RequestJumpToPartyBox()
+        {
+        }
+
 #pragma warning disable CS0067
         public event Action? OnAppStateChanged;
         public event Action? OnBoxStateChanged;
         public event Action? OnPartyStateChanged;
         public event Action? OnUpdateAvailable;
         public event Action<bool>? OnThemeChanged;
+        public event Action? OnRequestJumpToPartyBox;
 #pragma warning restore CS0067
     }
 }

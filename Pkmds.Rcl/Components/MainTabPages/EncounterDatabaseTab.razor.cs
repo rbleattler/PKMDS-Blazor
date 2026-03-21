@@ -129,7 +129,7 @@ public partial class EncounterDatabaseTab : RefreshAwareComponent
         // is set (box number is null for unified storage). Treat that as a valid selection.
         var slotType = AppService.GetSelectedPokemonSlot(out _, out _, out _);
         var isLetsGoWithSlot = AppState.SaveFile is SAV7b && AppState.SelectedBoxSlotNumber.HasValue;
-        if (slotType == SelectedPokemonType.None && !isLetsGoWithSlot && !TrySelectFirstEmptyBoxSlot())
+        if (slotType == SelectedPokemonType.None && !isLetsGoWithSlot && !AppService.TrySelectFirstEmptyBoxSlot())
         {
             Snackbar.Add(
                 "No empty box slots available. Free up a slot and try again.",
@@ -163,43 +163,6 @@ public partial class EncounterDatabaseTab : RefreshAwareComponent
         await OnJumpToPartyBox.InvokeAsync();
 
         StateHasChanged();
-    }
-
-    /// <summary>
-    /// Finds the first empty box slot in the save file and selects it via <see cref="IAppService" />.
-    /// Returns <see langword="false" /> when no empty slot is found or no save is loaded.
-    /// </summary>
-    private bool TrySelectFirstEmptyBoxSlot()
-    {
-        if (AppState.SaveFile is not { } sav)
-        {
-            return false;
-        }
-
-        for (var box = 0; box < sav.BoxCount; box++)
-        {
-            for (var slot = 0; slot < sav.BoxSlotCount; slot++)
-            {
-                if (sav.GetBoxSlotAtIndex(box, slot).Species != 0)
-                {
-                    continue;
-                }
-
-                if (sav is SAV7b)
-                {
-                    // Let's Go uses a flat index across unified storage.
-                    AppService.SetSelectedLetsGoPokemon(sav.BlankPKM, box * sav.BoxSlotCount + slot);
-                }
-                else
-                {
-                    AppService.SetSelectedBoxPokemon(sav.BlankPKM, box, slot);
-                }
-
-                return true;
-            }
-        }
-
-        return false;
     }
 
     // ── Species autocomplete ──────────────────────────────────────────────
