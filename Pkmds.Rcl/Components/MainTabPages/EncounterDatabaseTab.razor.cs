@@ -129,7 +129,27 @@ public partial class EncounterDatabaseTab : RefreshAwareComponent
         // is set (box number is null for unified storage). Treat that as a valid selection.
         var slotType = AppService.GetSelectedPokemonSlot(out _, out _, out _);
         var isLetsGoWithSlot = AppState.SaveFile is SAV7b && AppState.SelectedBoxSlotNumber.HasValue;
-        if (slotType == SelectedPokemonType.None && !isLetsGoWithSlot && !AppService.TrySelectFirstEmptyBoxSlot())
+        var hasSelectedSlot = slotType != SelectedPokemonType.None || isLetsGoWithSlot;
+
+        if (hasSelectedSlot)
+        {
+            if (AppService.EditFormPokemon?.Species != 0)
+            {
+                var occupantName = GameInfo.Strings.Species[AppService.EditFormPokemon!.Species];
+                var confirmed = await DialogService.ShowMessageBoxAsync(
+                    "Overwrite Pokémon?",
+                    $"The selected slot contains {occupantName}. Overwrite it?",
+                    yesText: "Overwrite",
+                    cancelText: "Cancel");
+                if (confirmed != true)
+                {
+                    isGenerating = false;
+                    StateHasChanged();
+                    return;
+                }
+            }
+        }
+        else if (!AppService.TrySelectFirstEmptyBoxSlot())
         {
             Snackbar.Add(
                 "No empty box slots available. Free up a slot and try again.",
