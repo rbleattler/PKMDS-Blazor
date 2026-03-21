@@ -554,14 +554,14 @@ public partial class MainTab : IDisposable
         }
 
         // For level-up evolutions the legality check requires current level > met level
-        // (specifically: current level ≥ met level + LevelUp, where LevelUp = 1).
-        // Only increment when necessary — i.e. the level bump landed on the met level.
+        // (specifically: current level ≥ met level + 1).
+        // Set directly to MetLevel + 1 so this holds even if CurrentLevel is well below MetLevel.
         // Level 100 Pokémon are exempt — PKHeX allows level-up evolutions at max level.
         if (method.Method.IsLevelUpRequired
             && Pokemon.CurrentLevel <= Pokemon.MetLevel
             && Pokemon.CurrentLevel < Experience.MaxLevel)
         {
-            Pokemon.CurrentLevel++;
+            Pokemon.CurrentLevel = (byte)Math.Min(Experience.MaxLevel, Pokemon.MetLevel + 1);
         }
 
         // Capture before changing species: Gen 3 computes IsNicknamed from Nickname vs. species name,
