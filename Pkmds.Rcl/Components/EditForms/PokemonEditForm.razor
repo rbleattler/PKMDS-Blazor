@@ -137,6 +137,13 @@
                                Analysis="@Analysis"/>
                 </MudTabPanel>
 
+                @if (Pokemon is IShadowCapture or G4PKM or PK5 or PB7)
+                {
+                    <MudTabPanel Text="Gen-Specific">
+                        <GenSpecificTab Pokemon="@Pokemon"/>
+                    </MudTabPanel>
+                }
+
                 <MudTabPanel Text="Legality">
                     <LegalityTab Pokemon="@Pokemon"
                                  Analysis="@Analysis"/>

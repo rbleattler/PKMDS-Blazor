@@ -1,0 +1,154 @@
+@inherits BasePkmdsComponent
+
+@if (Pokemon is not null &&
+     AppState is
+     {
+         SaveFile.Context: not
+         (EntityContext.None or
+         EntityContext.SplitInvalid or
+         EntityContext.MaxInvalid),
+         SelectedSlotsAreValid: true
+     } &&
+     Pokemon is IShadowCapture or G4PKM or PK5 or PB7)
+{
+    <MudStack Class="mt-2"
+              Spacing="2">
+
+        @* Shadow (Colosseum / XD) *@
+        @if (Pokemon is IShadowCapture shadow)
+        {
+            <MudText Typo="@Typo.subtitle2">Shadow Pokémon</MudText>
+
+            <MudCheckBox Label="Is Shadow"
+                         Value="@shadow.IsShadow"
+                         ReadOnly/>
+
+            <MudNumericField T="@ushort"
+                             Label="Shadow ID"
+                             Variant="@Variant.Outlined"
+                             Min="@((ushort)0)"
+                             Max="@ushort.MaxValue"
+                             Value="@shadow.ShadowID"
+                             ValueChanged="@(v => shadow.ShadowID = v)"
+                             title="Shadow Pokémon slot ID"/>
+
+            <MudNumericField T="@int"
+                             Label="Purification"
+                             Variant="@Variant.Outlined"
+                             Min="@int.MinValue"
+                             Max="@int.MaxValue"
+                             Value="@shadow.Purification"
+                             ValueChanged="@(v => shadow.Purification = v)"
+                             title="Purification counter (counts down toward 0 for full purification)"/>
+        }
+
+        @* Gen 4 — ShinyLeaf + WalkingMood *@
+        @if (Pokemon is G4PKM g4)
+        {
+            <MudDivider/>
+            <MudText Typo="@Typo.subtitle2">Gen 4 (HG/SS)</MudText>
+
+            <MudText Typo="@Typo.body2">Shiny Leaves</MudText>
+            <MudStack Row
+                      Wrap="@Wrap.Wrap">
+                @for (var i = 0; i < 5; i++)
+                {
+                    var bit = i;
+                    <MudCheckBox T="@bool"
+                                 Label="@($"Leaf {bit + 1}")"
+                                 Value="@GetShinyLeafBit(g4.ShinyLeaf, bit)"
+                                 ValueChanged="@(v => g4.ShinyLeaf = SetShinyLeafBit(g4.ShinyLeaf, bit, v))"
+                                 title="@($"Shiny Leaf {bit + 1}")"/>
+                }
+                <MudCheckBox T="@bool"
+                             Label="Crown"
+                             Value="@GetShinyLeafBit(g4.ShinyLeaf, 5)"
+                             ValueChanged="@(v => g4.ShinyLeaf = SetShinyLeafBit(g4.ShinyLeaf, 5, v))"
+                             title="Shiny Leaf Crown (requires all 5 leaves)"/>
+            </MudStack>
+
+            <MudNumericField T="@sbyte"
+                             Label="Walking Mood"
+                             Variant="@Variant.Outlined"
+                             Min="@sbyte.MinValue"
+                             Max="@sbyte.MaxValue"
+                             Value="@g4.WalkingMood"
+                             ValueChanged="@(v => g4.WalkingMood = v)"
+                             title="Walking partner mood value (HG/SS)"/>
+        }
+
+        @* Gen 5 — PokéStar Fame *@
+        @if (Pokemon is PK5 pk5)
+        {
+            <MudDivider/>
+            <MudText Typo="@Typo.subtitle2">Gen 5</MudText>
+
+            <MudNumericField T="@byte"
+                             Label="PokéStar Fame"
+                             Variant="@Variant.Outlined"
+                             Min="@byte.MinValue"
+                             Max="@byte.MaxValue"
+                             Value="@pk5.PokeStarFame"
+                             ValueChanged="@(v => pk5.PokeStarFame = v)"
+                             title="PokéStar Studios fame value (>250 = is a PokéStar)"/>
+        }
+
+        @* Gen 7b (LGPE) — Spirit, Mood, Received Date/Time *@
+        @if (Pokemon is PB7 pb7)
+        {
+            <MudDivider/>
+            <MudText Typo="@Typo.subtitle2">Let's Go (LGPE)</MudText>
+
+            <MudNumericField T="@byte"
+                             Label="Spirit"
+                             Variant="@Variant.Outlined"
+                             Min="@byte.MinValue"
+                             Max="@byte.MaxValue"
+                             Value="@pb7.Spirit"
+                             ValueChanged="@(v => pb7.Spirit = v)"
+                             title="GO Park spirit value"/>
+
+            <MudNumericField T="@byte"
+                             Label="Mood"
+                             Variant="@Variant.Outlined"
+                             Min="@byte.MinValue"
+                             Max="@byte.MaxValue"
+                             Value="@pb7.Mood"
+                             ValueChanged="@(v => pb7.Mood = v)"
+                             title="Partner Pokémon mood"/>
+
+            <MudText Typo="@Typo.body2">Received Date (GO Park)</MudText>
+            <label for="pb7-received-date">Received Date</label>
+            <InputDate Type="@InputDateType.Date"
+                       id="pb7-received-date"
+                       @bind-Value="@pb7.ReceivedDate"/>
+
+            <MudText Typo="@Typo.body2">Received Time (GO Park)</MudText>
+            <MudStack Row
+                      Spacing="1">
+                <MudNumericField T="@byte"
+                                 Label="Hour"
+                                 Variant="@Variant.Outlined"
+                                 Min="@((byte)0)"
+                                 Max="@((byte)23)"
+                                 Value="@pb7.ReceivedHour"
+                                 ValueChanged="@(v => pb7.ReceivedHour = v)"/>
+                <MudNumericField T="@byte"
+                                 Label="Minute"
+                                 Variant="@Variant.Outlined"
+                                 Min="@((byte)0)"
+                                 Max="@((byte)59)"
+                                 Value="@pb7.ReceivedMinute"
+                                 ValueChanged="@(v => pb7.ReceivedMinute = v)"/>
+                <MudNumericField T="@byte"
+                                 Label="Second"
+                                 Variant="@Variant.Outlined"
+                                 Min="@((byte)0)"
+                                 Max="@((byte)59)"
+                                 Value="@pb7.ReceivedSecond"
+                                 ValueChanged="@(v => pb7.ReceivedSecond = v)"/>
+            </MudStack>
+        }
+
+    </MudStack>
+}
