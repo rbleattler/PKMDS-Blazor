@@ -30,6 +30,10 @@ public static class ManicEmuSaveHelper
     // 3DS save files are at most a few MB; cap at 8 MB to guard against ZIP bombs.
     private const long MaxUncompressedEntrySize = 8 * 1024 * 1024;
 
+    // A real Manic EMU ZIP contains only a handful of sdmc/ entries; cap at 100
+    // to prevent DoS from a crafted ZIP with many qualifying entries.
+    private const int MaxSdmcEntriesToInspect = 100;
+
     /// <summary>
     /// Metadata required to rebuild a <c>.3ds.sav</c> ZIP after the save has been edited.
     /// </summary>
@@ -79,10 +83,14 @@ public static class ManicEmuSaveHelper
             using var zipStream = new MemoryStream(zipBytes);
             using var archive = new ZipArchive(zipStream, ZipArchiveMode.Read);
 
+            var inspected = 0;
             foreach (var entry in archive.Entries)
             {
                 if (!entry.FullName.StartsWith(SdmcPrefix, StringComparison.OrdinalIgnoreCase))
                     continue;
+
+                if (++inspected > MaxSdmcEntriesToInspect)
+                    break;
 
                 if (entry.Length == 0 || entry.Length > MaxUncompressedEntrySize)
                     continue;
@@ -168,8 +176,20 @@ public static class ManicEmuSaveHelper
                 }
                 else
                 {
+                    // Guarded copy — same limit as TryExtractSaveFromZip to prevent OOM
+                    // from a crafted ZIP whose non-save entries are unexpectedly large.
                     using var src = entry.Open();
-                    src.CopyTo(dest);
+                    var buffer = new byte[81920];
+                    long totalRead = 0;
+                    int read;
+                    while ((read = src.Read(buffer, 0, buffer.Length)) > 0)
+                    {
+                        totalRead += read;
+                        if (totalRead > MaxUncompressedEntrySize)
+                            throw new InvalidDataException(
+                                $"Non-save entry '{entry.FullName}' exceeds the {MaxUncompressedEntrySize / (1024 * 1024)} MB size limit.");
+                        dest.Write(buffer, 0, read);
+                    }
                 }
             }
         }

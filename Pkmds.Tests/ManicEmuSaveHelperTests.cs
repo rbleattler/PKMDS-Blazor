@@ -32,6 +32,22 @@ public class ManicEmuSaveHelperTests
         return ms.ToArray();
     }
 
+    /// <summary>Builds an in-memory ZIP with <paramref name="count"/> entries all under <c>sdmc/</c>.</summary>
+    private static byte[] BuildZipWithManySdmcEntries(int count)
+    {
+        using var ms = new MemoryStream();
+        using (var archive = new ZipArchive(ms, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            for (var i = 0; i < count; i++)
+            {
+                var entry = archive.CreateEntry($"sdmc/dir{i}/file.bin", CompressionLevel.Optimal);
+                using var stream = entry.Open();
+                stream.Write(new byte[] { 0xAA }, 0, 1);
+            }
+        }
+        return ms.ToArray();
+    }
+
     // ── IsZip ─────────────────────────────────────────────────────────────
 
     [Fact]
@@ -105,6 +121,17 @@ public class ManicEmuSaveHelperTests
         ctx!.SaveEntryPath.Should().Be(saveEntryPath);
     }
 
+    [Fact]
+    public void TryExtractSaveFromZip_ZipWithTooManySdmcEntries_ReturnsFalse()
+    {
+        // A ZIP with more than MaxSdmcEntriesToInspect (100) sdmc/ entries — none are valid saves,
+        // but the important thing is the loop is capped and doesn't inspect them all.
+        var zipBytes = BuildZipWithManySdmcEntries(101);
+        ManicEmuSaveHelper.TryExtractSaveFromZip(zipBytes, null, out var saveFile, out var ctx).Should().BeFalse();
+        saveFile.Should().BeNull();
+        ctx.Should().BeNull();
+    }
+
     // ── RebuildZip ────────────────────────────────────────────────────────
 
     [Fact]
@@ -143,6 +170,25 @@ public class ManicEmuSaveHelperTests
         var extraReadBack = new byte[extraBytes.Length];
         extraStream.ReadExactly(extraReadBack);
         extraReadBack.Should().Equal(extraBytes);
+    }
+
+    [Fact]
+    public void RebuildZip_OversizedNonSaveEntry_ThrowsInvalidDataException()
+    {
+        // Arrange — ZIP with a valid save entry plus an extra entry over 8 MB
+        const string saveEntryPath = "sdmc/Nintendo 3DS/save/main";
+        const string extraEntryPath = "sdmc/Nintendo 3DS/extra/large.bin";
+
+        var originalSaveBytes = new byte[] { 0x01, 0x02, 0x03, 0x04 };
+        var oversizedBytes = new byte[8 * 1024 * 1024 + 1];
+        var zipBytes = BuildZip(saveEntryPath, originalSaveBytes, extraEntryPath, oversizedBytes);
+
+        var context = new ManicEmuSaveHelper.ManicEmuSaveContext(zipBytes, saveEntryPath);
+        var newSaveBytes = new byte[] { 0x10, 0x20, 0x30, 0x40 };
+
+        // Act & Assert — the oversized non-save entry should cause an InvalidDataException
+        var act = () => ManicEmuSaveHelper.RebuildZip(context, newSaveBytes);
+        act.Should().Throw<InvalidDataException>();
     }
 
     [Fact]
