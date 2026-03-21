@@ -1418,7 +1418,8 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         var methods = tree.Forward.GetForward(pkm.Species, pkm.Form);
         return [.. methods.Span
             .ToArray()
-            .Where(m => m.Species != 0 && m.Method != EvolutionType.LevelUpShedinja)];
+            .Where(m => m.Species != 0 && m.Method != EvolutionType.LevelUpShedinja)
+            .OrderBy(m => m.Species)];
     }
 
     public bool TryPlacePokemonInFirstAvailableSlot(PKM pkm)
