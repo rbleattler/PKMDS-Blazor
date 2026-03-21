@@ -61,6 +61,17 @@
         @TypeSummary(Pokemon.GetGenerationTypes())
     }
 
+    @if (CanEvolve)
+    {
+        <MudButton OnClick="@EvolveAsync"
+                   Variant="@Variant.Outlined"
+                   StartIcon="@Icons.Material.Filled.Upgrade"
+                   Color="@Color.Primary"
+                   Class="mb-2">
+            Evolve...
+        </MudButton>
+    }
+
     <MudStack Row>
 
         <MudCheckBox Label="Is Nicknamed"

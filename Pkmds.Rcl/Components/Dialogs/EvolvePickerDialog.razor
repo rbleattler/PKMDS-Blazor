@@ -1,0 +1,42 @@
+@inherits BasePkmdsComponent
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="@Typo.h6">Choose Evolution</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudList T="@EvolutionMethod"
+                 SelectionMode="@SelectionMode.SingleSelection"
+                 @bind-SelectedValue="@_selected">
+            @foreach (var method in Choices)
+            {
+                <MudListItem T="@EvolutionMethod"
+                             Value="@method">
+                    <MudStack Row
+                              AlignItems="@AlignItems.Center"
+                              Spacing="2">
+                        <img src="@GetSprite(method)"
+                             alt="@GetSpeciesName(method.Species)"
+                             style="width:40px; height:40px; object-fit:contain; display:block;"
+                             @onerror="@(_ => OnSpriteError(method))"/>
+                        <MudStack Spacing="0">
+                            <MudText Typo="@Typo.body1">@GetSpeciesName(method.Species)</MudText>
+                            <MudText Typo="@Typo.caption"
+                                     Color="@Color.Secondary">@DescribeMethod(method)</MudText>
+                        </MudStack>
+                    </MudStack>
+                </MudListItem>
+            }
+        </MudList>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@Cancel"
+                   Variant="@Variant.Outlined">Cancel
+        </MudButton>
+        <MudButton OnClick="@Confirm"
+                   Variant="@Variant.Filled"
+                   Color="@Color.Primary"
+                   Disabled="@(_selected == default)">Evolve
+        </MudButton>
+    </DialogActions>
+</MudDialog>
