@@ -1411,4 +1411,36 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
 
         return success;
     }
+
+    public bool TryPlacePokemonInFirstAvailableSlot(PKM pkm)
+    {
+        if (AppState.SaveFile is not { } sav)
+        {
+            return false;
+        }
+
+        // Prefer an open party slot over a box slot.
+        if (sav.PartyCount < 6)
+        {
+            sav.SetPartySlotAtIndex(pkm, sav.PartyCount);
+            RefreshService.RefreshPartyState();
+            return true;
+        }
+
+        // Scan boxes in order for the first empty slot (Species == 0).
+        for (var box = 0; box < sav.BoxCount; box++)
+        {
+            for (var slot = 0; slot < sav.BoxSlotCount; slot++)
+            {
+                if (sav.GetBoxSlotAtIndex(box, slot).Species == 0)
+                {
+                    sav.SetBoxSlotAtIndex(pkm, box, slot);
+                    RefreshService.RefreshBoxState();
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
 }

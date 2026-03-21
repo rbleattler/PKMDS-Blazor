@@ -330,4 +330,15 @@ public interface IAppService
     /// <see langword="false" /> if no save file is loaded or if locked slots prevent the swap.
     /// </returns>
     bool SwapBoxes(int boxA, int boxB);
+
+    /// <summary>
+    /// Places a Pokémon in the first available slot: the party (if not full), then the
+    /// first empty box slot scanning boxes in order.
+    /// </summary>
+    /// <param name="pkm">The Pokémon to place.</param>
+    /// <returns>
+    /// <see langword="true" /> if the Pokémon was placed successfully;
+    /// <see langword="false" /> if no save file is loaded or all slots are occupied.
+    /// </returns>
+    bool TryPlacePokemonInFirstAvailableSlot(PKM pkm);
 }

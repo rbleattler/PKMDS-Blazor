@@ -445,12 +445,17 @@ public partial class MainTab : IDisposable
         Pokemon.IsNicknamed = false;
     }
 
-    private void SetSpecies(ushort species)
+    private async Task SetSpeciesAsync(ushort species)
     {
         if (Pokemon is null)
         {
             return;
         }
+
+        // Capture whether this is a Nincada → Ninjask evolution before mutating.
+        var isNincadaEvolution = Pokemon.Species == (ushort)Species.Nincada
+                                 && species == (ushort)Species.Ninjask;
+        var nincadaSnapshot = isNincadaEvolution ? Pokemon.Clone() : null;
 
         Pokemon.Species = species;
 
@@ -481,5 +486,47 @@ public partial class MainTab : IDisposable
 
         AppService.LoadPokemonStats(Pokemon);
         RefreshService.Refresh();
+
+        if (isNincadaEvolution && nincadaSnapshot is not null)
+        {
+            await OfferShedinaAsync(nincadaSnapshot);
+        }
+    }
+
+    /// <summary>
+    /// When Nincada evolves into Ninjask, offers to generate a Shedinja and place it in
+    /// the first available party or box slot, mirroring the in-game mechanic.
+    /// </summary>
+    private async Task OfferShedinaAsync(PKM nincadaSnapshot)
+    {
+        var confirmed = await DialogService.ShowMessageBoxAsync(
+            "Generate Shedinja?",
+            "Nincada has evolved into Ninjask. In the games, a Shedinja also appears in the next available slot. Would you like to generate one?",
+            yesText: "Generate Shedinja",
+            noText: "Skip");
+
+        if (confirmed is not true)
+        {
+            return;
+        }
+
+        var shedinja = nincadaSnapshot;
+        shedinja.Species = (ushort)Species.Shedinja;
+
+        // If the Nincada wasn't nicknamed, update the cached nickname to "Shedinja".
+        if (!shedinja.IsNicknamed)
+        {
+            shedinja.ClearNickname();
+        }
+
+        AppService.LoadPokemonStats(shedinja);
+
+        if (!AppService.TryPlacePokemonInFirstAvailableSlot(shedinja))
+        {
+            Snackbar.Add("No empty slot available for Shedinja.", Severity.Warning);
+            return;
+        }
+
+        Snackbar.Add("Shedinja placed in the first available slot.", Severity.Success);
     }
 }
