@@ -127,44 +127,9 @@ public partial class EncounterDatabaseTab : RefreshAwareComponent
         // If no slot is currently selected, place the Pokémon in the first empty box slot.
         // For SAV7b (Let's Go), GetSelectedPokemonSlot returns None when only SelectedBoxSlotNumber
         // is set (box number is null for unified storage). Treat that as a valid selection.
-        var slotType = AppService.GetSelectedPokemonSlot(out _, out _, out _);
-        var isLetsGoWithSlot = AppState.SaveFile is SAV7b && AppState.SelectedBoxSlotNumber.HasValue;
-        var hasSelectedSlot = slotType != SelectedPokemonType.None || isLetsGoWithSlot;
-
-        if (hasSelectedSlot)
+        if (!await EnsureTargetSlotSelectedAsync())
         {
-            if (AppService.EditFormPokemon?.Species != 0)
-            {
-                var occupantName = GameInfo.Strings.Species[AppService.EditFormPokemon!.Species];
-                var confirmed = await DialogService.ShowMessageBoxAsync(
-                    "Overwrite Pokémon?",
-                    $"The selected slot contains {occupantName}. Overwrite it?",
-                    yesText: "Overwrite",
-                    noText: "Use First Available Slot",
-                    cancelText: "Cancel");
-                if (confirmed is null)
-                {
-                    isGenerating = false;
-                    StateHasChanged();
-                    return;
-                }
-
-                if (confirmed == false && !AppService.TrySelectFirstEmptyBoxSlot())
-                {
-                    Snackbar.Add(
-                        "No empty box slots available. Free up a slot and try again.",
-                        Severity.Warning);
-                    isGenerating = false;
-                    StateHasChanged();
-                    return;
-                }
-            }
-        }
-        else if (!AppService.TrySelectFirstEmptyBoxSlot())
-        {
-            Snackbar.Add(
-                "No empty box slots available. Free up a slot and try again.",
-                Severity.Warning);
+            isGenerating = false;
             StateHasChanged();
             return;
         }
@@ -194,6 +159,57 @@ public partial class EncounterDatabaseTab : RefreshAwareComponent
         await OnJumpToPartyBox.InvokeAsync();
 
         StateHasChanged();
+    }
+
+    // ── Slot selection helper ─────────────────────────────────────────────
+
+    /// <summary>
+    /// Ensures a target box slot is ready for writing. When a slot is already selected and
+    /// occupied, prompts the user to overwrite, use the first available slot, or cancel.
+    /// Falls back to the first empty box slot automatically when no slot is selected.
+    /// </summary>
+    /// <returns><see langword="true"/> if a slot is ready and the caller should proceed;
+    /// <see langword="false"/> if the caller should abort.</returns>
+    private async Task<bool> EnsureTargetSlotSelectedAsync()
+    {
+        var slotType = AppService.GetSelectedPokemonSlot(out _, out _, out _);
+        var isLetsGoWithSlot = AppState.SaveFile is SAV7b && AppState.SelectedBoxSlotNumber.HasValue;
+        var hasSelectedSlot = slotType != SelectedPokemonType.None || isLetsGoWithSlot;
+
+        if (hasSelectedSlot)
+        {
+            if (AppService.EditFormPokemon?.Species != 0)
+            {
+                var occupantName = GameInfo.Strings.Species[AppService.EditFormPokemon!.Species];
+                var confirmed = await DialogService.ShowMessageBoxAsync(
+                    "Overwrite Pokémon?",
+                    $"The selected slot contains {occupantName}. Overwrite it?",
+                    yesText: "Overwrite",
+                    noText: "Use First Available Slot",
+                    cancelText: "Cancel");
+                if (confirmed is null)
+                {
+                    return false;
+                }
+
+                if (confirmed == false && !AppService.TrySelectFirstEmptyBoxSlot())
+                {
+                    Snackbar.Add(
+                        "No empty box slots available. Free up a slot and try again.",
+                        Severity.Warning);
+                    return false;
+                }
+            }
+        }
+        else if (!AppService.TrySelectFirstEmptyBoxSlot())
+        {
+            Snackbar.Add(
+                "No empty box slots available. Free up a slot and try again.",
+                Severity.Warning);
+            return false;
+        }
+
+        return true;
     }
 
     // ── Species autocomplete ──────────────────────────────────────────────

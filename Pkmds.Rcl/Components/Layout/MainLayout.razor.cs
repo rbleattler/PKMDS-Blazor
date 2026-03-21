@@ -494,38 +494,8 @@ public partial class MainLayout : IDisposable
 
             saveFile.AdaptToSaveFile(pokemon);
 
-            var slotType = AppService.GetSelectedPokemonSlot(out _, out _, out _);
-            var isLetsGoWithSlot = saveFile is SAV7b && AppState.SelectedBoxSlotNumber.HasValue;
-            var hasSelectedSlot = slotType != SelectedPokemonType.None || isLetsGoWithSlot;
-
-            if (hasSelectedSlot)
+            if (!await EnsureTargetSlotSelectedAsync(saveFile))
             {
-                if (AppService.EditFormPokemon?.Species != 0)
-                {
-                    var occupantName = GameInfo.Strings.Species[AppService.EditFormPokemon!.Species];
-                    var confirmed = await DialogService.ShowMessageBoxAsync(
-                        "Overwrite Pokémon?",
-                        $"The selected slot contains {occupantName}. Overwrite it?",
-                        yesText: "Overwrite",
-                        noText: "Use First Available Slot",
-                        cancelText: "Cancel");
-                    if (confirmed is null)
-                    {
-                        return;
-                    }
-
-                    if (confirmed == false && !AppService.TrySelectFirstEmptyBoxSlot())
-                    {
-                        Logger.LogWarning("No available box slots for importing Pokémon");
-                        Snackbar.Add("No empty box slots available. Free up a slot and try again.", Severity.Warning);
-                        return;
-                    }
-                }
-            }
-            else if (!AppService.TrySelectFirstEmptyBoxSlot())
-            {
-                Logger.LogWarning("No available box slots for importing Pokémon");
-                Snackbar.Add("No empty box slots available. Free up a slot and try again.", Severity.Warning);
                 return;
             }
 
@@ -631,38 +601,8 @@ public partial class MainLayout : IDisposable
 
                 saveFile.AdaptToSaveFile(pkm);
 
-                var slotType = AppService.GetSelectedPokemonSlot(out _, out _, out _);
-                var isLetsGoWithSlot = saveFile is SAV7b && AppState.SelectedBoxSlotNumber.HasValue;
-                var hasSelectedSlot = slotType != SelectedPokemonType.None || isLetsGoWithSlot;
-
-                if (hasSelectedSlot)
+                if (!await EnsureTargetSlotSelectedAsync(saveFile))
                 {
-                    if (AppService.EditFormPokemon?.Species != 0)
-                    {
-                        var occupantName = GameInfo.Strings.Species[AppService.EditFormPokemon!.Species];
-                        var confirmed = await DialogService.ShowMessageBoxAsync(
-                            "Overwrite Pokémon?",
-                            $"The selected slot contains {occupantName}. Overwrite it?",
-                            yesText: "Overwrite",
-                            noText: "Use First Available Slot",
-                            cancelText: "Cancel");
-                        if (confirmed is null)
-                        {
-                            return;
-                        }
-
-                        if (confirmed == false && !AppService.TrySelectFirstEmptyBoxSlot())
-                        {
-                            Logger.LogWarning("No available box slots for Mystery Gift Pokémon");
-                            Snackbar.Add("No empty box slots available. Free up a slot and try again.", Severity.Warning);
-                            return;
-                        }
-                    }
-                }
-                else if (!AppService.TrySelectFirstEmptyBoxSlot())
-                {
-                    Logger.LogWarning("No available box slots for Mystery Gift Pokémon");
-                    Snackbar.Add("No empty box slots available. Free up a slot and try again.", Severity.Warning);
                     return;
                 }
 
@@ -697,6 +637,53 @@ public partial class MainLayout : IDisposable
         {
             AppState.ShowProgressIndicator = false;
         }
+    }
+
+    /// <summary>
+    /// Ensures a target box slot is ready for writing. When a slot is already selected and
+    /// occupied, prompts the user to overwrite, use the first available slot, or cancel.
+    /// Falls back to the first empty box slot automatically when no slot is selected.
+    /// </summary>
+    /// <returns><see langword="true"/> if a slot is ready and the caller should proceed;
+    /// <see langword="false"/> if the caller should abort.</returns>
+    private async Task<bool> EnsureTargetSlotSelectedAsync(SaveFile saveFile)
+    {
+        var slotType = AppService.GetSelectedPokemonSlot(out _, out _, out _);
+        var isLetsGoWithSlot = saveFile is SAV7b && AppState.SelectedBoxSlotNumber.HasValue;
+        var hasSelectedSlot = slotType != SelectedPokemonType.None || isLetsGoWithSlot;
+
+        if (hasSelectedSlot)
+        {
+            if (AppService.EditFormPokemon?.Species != 0)
+            {
+                var occupantName = GameInfo.Strings.Species[AppService.EditFormPokemon!.Species];
+                var confirmed = await DialogService.ShowMessageBoxAsync(
+                    "Overwrite Pokémon?",
+                    $"The selected slot contains {occupantName}. Overwrite it?",
+                    yesText: "Overwrite",
+                    noText: "Use First Available Slot",
+                    cancelText: "Cancel");
+                if (confirmed is null)
+                {
+                    return false;
+                }
+
+                if (confirmed == false && !AppService.TrySelectFirstEmptyBoxSlot())
+                {
+                    Logger.LogWarning("No available box slots");
+                    Snackbar.Add("No empty box slots available. Free up a slot and try again.", Severity.Warning);
+                    return false;
+                }
+            }
+        }
+        else if (!AppService.TrySelectFirstEmptyBoxSlot())
+        {
+            Logger.LogWarning("No available box slots");
+            Snackbar.Add("No empty box slots available. Free up a slot and try again.", Severity.Warning);
+            return false;
+        }
+
+        return true;
     }
 
     private async Task ExportSelectedPokemon()
