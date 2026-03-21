@@ -176,10 +176,6 @@ public partial class StatsTab : IDisposable
     private string GetNatureTooltip(Stats stat) =>
         GetNatureTooltip(GetNatureModifier(stat));
 
-    private static string GetTeraTypeDisplayName(byte teraTypeId) => teraTypeId == TeraTypeUtil.Stellar
-        ? GameInfo.Strings.Types[TeraTypeUtil.StellarTypeDisplayStringIndex]
-        : GameInfo.Strings.Types[teraTypeId];
-
     private void OnSetDv(Stats stat, int newValue)
     {
         if (Pokemon is not (PK1 or PK2))

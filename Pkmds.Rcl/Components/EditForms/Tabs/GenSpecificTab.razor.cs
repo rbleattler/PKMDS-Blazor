@@ -17,4 +17,8 @@ public partial class GenSpecificTab : IDisposable
 
     private static int SetShinyLeafBit(int shinyLeaf, int bit, bool value) =>
         value ? shinyLeaf | (1 << bit) : shinyLeaf & ~(1 << bit);
+
+    private static string GetTeraTypeDisplayName(byte teraTypeId) => teraTypeId == TeraTypeUtil.Stellar
+        ? GameInfo.Strings.Types[TeraTypeUtil.StellarTypeDisplayStringIndex]
+        : GameInfo.Strings.Types[teraTypeId];
 }
