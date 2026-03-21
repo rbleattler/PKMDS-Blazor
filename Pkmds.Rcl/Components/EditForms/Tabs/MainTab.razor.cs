@@ -493,7 +493,7 @@ public partial class MainTab : IDisposable
 
         if (isNincada && nincadaSnapshot is not null)
         {
-            await OfferShedinaAsync(nincadaSnapshot);
+            await OfferShedinjaAsync(nincadaSnapshot);
         }
     }
 
@@ -547,17 +547,12 @@ public partial class MainTab : IDisposable
         RefreshService.Refresh();
     }
 
-    private async Task SetSpeciesAsync(ushort species)
+    private void SetSpecies(ushort species)
     {
         if (Pokemon is null)
         {
             return;
         }
-
-        // Capture whether this is a Nincada → Ninjask evolution before mutating.
-        var isNincadaEvolution = Pokemon.Species == (ushort)Species.Nincada
-                                 && species == (ushort)Species.Ninjask;
-        var nincadaSnapshot = isNincadaEvolution ? Pokemon.Clone() : null;
 
         Pokemon.Species = species;
 
@@ -588,18 +583,13 @@ public partial class MainTab : IDisposable
 
         AppService.LoadPokemonStats(Pokemon);
         RefreshService.Refresh();
-
-        if (isNincadaEvolution && nincadaSnapshot is not null)
-        {
-            await OfferShedinaAsync(nincadaSnapshot);
-        }
     }
 
     /// <summary>
     /// When Nincada evolves into Ninjask, offers to generate a Shedinja and place it in
     /// the first available party or box slot, mirroring the in-game mechanic.
     /// </summary>
-    private async Task OfferShedinaAsync(PKM nincadaSnapshot)
+    private async Task OfferShedinjaAsync(PKM nincadaSnapshot)
     {
         var confirmed = await DialogService.ShowMessageBoxAsync(
             "Generate Shedinja?",
