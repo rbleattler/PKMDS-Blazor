@@ -63,7 +63,7 @@ public partial class EvolvePickerDialog
 
         return method.Method switch
         {
-            EvolutionType.LevelUp => level == 0 ? GetLevelUpDescription(method) : $"Level {level}",
+            EvolutionType.LevelUp => GetLevelUpDescription(method),
             EvolutionType.LevelUpNinjask => $"Level {level}",
             EvolutionType.LevelUpFriendship => "Level up (high friendship)",
             EvolutionType.LevelUpFriendshipMorning => "Level up (high friendship, morning)",
@@ -121,10 +121,11 @@ public partial class EvolvePickerDialog
 
     private string GetLevelUpDescription(EvolutionMethod method)
     {
-        // Gen 2 stores friendship+time-of-day evolutions (Espeon, Umbreon) as plain LevelUp
-        // with no level or argument, since the Gen 2 binary format doesn't encode these conditions.
-        // Cross-reference with the Gen 4 tree to surface the actual requirement.
-        if (method.Argument == 0 && Pokemon is not null)
+        // Gen 2 stores stat-conditioned and friendship+time-of-day evolutions as plain LevelUp
+        // since the binary format doesn't encode these conditions.
+        // Cross-reference Gen 4 to surface the actual requirement (e.g. Tyrogue's stat branches,
+        // Espeon's morning friendship, Umbreon's night friendship).
+        if (Pokemon is not null)
         {
             var modernTree = EvolutionTree.GetEvolutionTree(EntityContext.Gen4);
             var modernMethods = modernTree.Forward.GetForward(Pokemon.Species, Pokemon.Form);
@@ -137,12 +138,15 @@ public partial class EvolvePickerDialog
                         EvolutionType.LevelUpFriendship => "Level up (high friendship)",
                         EvolutionType.LevelUpFriendshipMorning => "Level up (high friendship, morning)",
                         EvolutionType.LevelUpFriendshipNight => "Level up (high friendship, night)",
-                        _ => "Level up",
+                        EvolutionType.LevelUpATK => $"Level {method.Level} (ATK > DEF)",
+                        EvolutionType.LevelUpAeqD => $"Level {method.Level} (ATK = DEF)",
+                        EvolutionType.LevelUpDEF => $"Level {method.Level} (DEF > ATK)",
+                        _ => method.Level == 0 ? "Level up" : $"Level {method.Level}",
                     };
                 }
             }
         }
-        return "Level up";
+        return method.Level == 0 ? "Level up" : $"Level {method.Level}";
     }
 
     private string GetTradeDescription(EvolutionMethod method)
