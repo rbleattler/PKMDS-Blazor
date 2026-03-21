@@ -553,11 +553,15 @@ public partial class MainTab : IDisposable
             Pokemon.CurrentLevel = method.Level;
         }
 
+        // Capture before changing species: Gen 3 computes IsNicknamed from Nickname vs. species name,
+        // so reading it after the species change gives the wrong answer.
+        var wasNicknamed = Pokemon.IsNicknamed;
+
         Pokemon.Species = method.Species;
         Pokemon.Form = destForm;
         Pokemon.Gender = Pokemon.GetSaneGender();
 
-        if (!Pokemon.IsNicknamed)
+        if (!wasNicknamed)
         {
             Pokemon.ClearNickname();
         }
