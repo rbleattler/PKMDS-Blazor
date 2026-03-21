@@ -209,6 +209,13 @@ public interface IAppService
     SelectedPokemonType GetSelectedPokemonSlot(out int partySlot, out int boxNumber, out int boxSlot);
 
     /// <summary>
+    /// Finds the first empty box slot in the save file and selects it.
+    /// For Let's Go saves (SAV7b), uses flat unified-storage indexing.
+    /// </summary>
+    /// <returns><see langword="true"/> if an empty slot was found and selected; <see langword="false"/> if all slots are full or no save is loaded.</returns>
+    bool TrySelectFirstEmptyBoxSlot();
+
+    /// <summary>
     /// Imports a Mystery Gift into the save file.
     /// </summary>
     /// <param name="gift">The Mystery Gift data to import.</param>

@@ -351,6 +351,39 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         };
     }
 
+    public bool TrySelectFirstEmptyBoxSlot()
+    {
+        if (AppState.SaveFile is not { } sav)
+        {
+            return false;
+        }
+
+        for (var box = 0; box < sav.BoxCount; box++)
+        {
+            for (var slot = 0; slot < sav.BoxSlotCount; slot++)
+            {
+                if (sav.GetBoxSlotAtIndex(box, slot).Species != 0)
+                {
+                    continue;
+                }
+
+                if (sav is SAV7b)
+                {
+                    // Let's Go uses a flat index across unified storage.
+                    SetSelectedLetsGoPokemon(sav.BlankPKM, box * sav.BoxSlotCount + slot);
+                }
+                else
+                {
+                    SetSelectedBoxPokemon(sav.BlankPKM, box, slot);
+                }
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public Task ImportMysteryGift(DataMysteryGift gift, out bool isSuccessful, out string resultsMessage)
     {
         try

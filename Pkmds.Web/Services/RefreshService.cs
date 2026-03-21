@@ -29,6 +29,9 @@ public class RefreshService : IRefreshService
     public event Action? OnUpdateAvailable;
 
     /// <inheritdoc />
+    public event Action? OnRequestJumpToPartyBox;
+
+    /// <inheritdoc />
     public event Action<bool>? OnThemeChanged;
 
     /// <inheritdoc />
@@ -61,6 +64,9 @@ public class RefreshService : IRefreshService
         // Trigger general app state change once for both events
         Refresh();
     }
+
+    /// <inheritdoc />
+    public void RequestJumpToPartyBox() => OnRequestJumpToPartyBox?.Invoke();
 
     /// <inheritdoc />
     public void RefreshTheme(bool isDarkMode) => OnThemeChanged?.Invoke(isDarkMode);

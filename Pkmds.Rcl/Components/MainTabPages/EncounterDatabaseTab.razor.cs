@@ -127,13 +127,9 @@ public partial class EncounterDatabaseTab : RefreshAwareComponent
         // If no slot is currently selected, place the Pokémon in the first empty box slot.
         // For SAV7b (Let's Go), GetSelectedPokemonSlot returns None when only SelectedBoxSlotNumber
         // is set (box number is null for unified storage). Treat that as a valid selection.
-        var slotType = AppService.GetSelectedPokemonSlot(out _, out _, out _);
-        var isLetsGoWithSlot = AppState.SaveFile is SAV7b && AppState.SelectedBoxSlotNumber.HasValue;
-        if (slotType == SelectedPokemonType.None && !isLetsGoWithSlot && !TrySelectFirstEmptyBoxSlot())
+        if (!await EnsureTargetSlotSelectedAsync())
         {
-            Snackbar.Add(
-                "No empty box slots available. Free up a slot and try again.",
-                Severity.Warning);
+            isGenerating = false;
             StateHasChanged();
             return;
         }
@@ -165,41 +161,55 @@ public partial class EncounterDatabaseTab : RefreshAwareComponent
         StateHasChanged();
     }
 
+    // ── Slot selection helper ─────────────────────────────────────────────
+
     /// <summary>
-    /// Finds the first empty box slot in the save file and selects it via <see cref="IAppService" />.
-    /// Returns <see langword="false" /> when no empty slot is found or no save is loaded.
+    /// Ensures a target box slot is ready for writing. When a slot is already selected and
+    /// occupied, prompts the user to overwrite, use the first available slot, or cancel.
+    /// Falls back to the first empty box slot automatically when no slot is selected.
     /// </summary>
-    private bool TrySelectFirstEmptyBoxSlot()
+    /// <returns><see langword="true"/> if a slot is ready and the caller should proceed;
+    /// <see langword="false"/> if the caller should abort.</returns>
+    private async Task<bool> EnsureTargetSlotSelectedAsync()
     {
-        if (AppState.SaveFile is not { } sav)
+        var slotType = AppService.GetSelectedPokemonSlot(out _, out _, out _);
+        var isLetsGoWithSlot = AppState.SaveFile is SAV7b && AppState.SelectedBoxSlotNumber.HasValue;
+        var hasSelectedSlot = slotType != SelectedPokemonType.None || isLetsGoWithSlot;
+
+        if (hasSelectedSlot)
         {
+            if (AppService.EditFormPokemon?.Species != 0)
+            {
+                var occupantName = GameInfo.Strings.Species[AppService.EditFormPokemon!.Species];
+                var confirmed = await DialogService.ShowMessageBoxAsync(
+                    "Overwrite Pokémon?",
+                    $"The selected slot contains {occupantName}. Overwrite it?",
+                    yesText: "Overwrite",
+                    noText: "Use First Available Slot",
+                    cancelText: "Cancel");
+                if (confirmed is null)
+                {
+                    return false;
+                }
+
+                if (confirmed == false && !AppService.TrySelectFirstEmptyBoxSlot())
+                {
+                    Snackbar.Add(
+                        "No empty box slots available. Free up a slot and try again.",
+                        Severity.Warning);
+                    return false;
+                }
+            }
+        }
+        else if (!AppService.TrySelectFirstEmptyBoxSlot())
+        {
+            Snackbar.Add(
+                "No empty box slots available. Free up a slot and try again.",
+                Severity.Warning);
             return false;
         }
 
-        for (var box = 0; box < sav.BoxCount; box++)
-        {
-            for (var slot = 0; slot < sav.BoxSlotCount; slot++)
-            {
-                if (sav.GetBoxSlotAtIndex(box, slot).Species != 0)
-                {
-                    continue;
-                }
-
-                if (sav is SAV7b)
-                {
-                    // Let's Go uses a flat index across unified storage.
-                    AppService.SetSelectedLetsGoPokemon(sav.BlankPKM, box * sav.BoxSlotCount + slot);
-                }
-                else
-                {
-                    AppService.SetSelectedBoxPokemon(sav.BlankPKM, box, slot);
-                }
-
-                return true;
-            }
-        }
-
-        return false;
+        return true;
     }
 
     // ── Species autocomplete ──────────────────────────────────────────────

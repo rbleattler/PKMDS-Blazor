@@ -59,6 +59,16 @@ public interface IRefreshService
     void RefreshTheme(bool isDarkMode);
 
     /// <summary>
+    /// Event triggered when a component should navigate to the Party/Box tab.
+    /// </summary>
+    event Action? OnRequestJumpToPartyBox;
+
+    /// <summary>
+    /// Requests that the UI navigate to the Party/Box tab.
+    /// </summary>
+    void RequestJumpToPartyBox();
+
+    /// <summary>
     /// Displays a message notifying the user that an application update is available.
     /// </summary>
     // ReSharper disable once UnusedMember.Global
