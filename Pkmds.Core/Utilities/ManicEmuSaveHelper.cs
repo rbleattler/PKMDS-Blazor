@@ -47,8 +47,12 @@ public static class ManicEmuSaveHelper
     /// Tries to find a PKHeX-loadable save file inside a Manic EMU <c>.3ds.sav</c> ZIP.
     /// </summary>
     /// <param name="zipBytes">Raw bytes of the <c>.3ds.sav</c> ZIP archive.</param>
-    /// <param name="saveBytes">
-    ///   The extracted raw save bytes, ready to pass to <see cref="SaveUtil.TryGetSaveFile"/>.
+    /// <param name="fileName">
+    ///   Original filename of the ZIP (forwarded to <see cref="SaveUtil.TryGetSaveFile"/> for
+    ///   format detection); may be <see langword="null"/>.
+    /// </param>
+    /// <param name="saveFile">
+    ///   The parsed <see cref="SaveFile"/> instance, ready to use directly.
     /// </param>
     /// <param name="context">
     ///   Metadata needed to rebuild the ZIP on export.  Pass this back to
@@ -60,10 +64,11 @@ public static class ManicEmuSaveHelper
     /// </returns>
     public static bool TryExtractSaveFromZip(
         byte[] zipBytes,
-        [NotNullWhen(true)] out byte[]? saveBytes,
+        string? fileName,
+        [NotNullWhen(true)] out SaveFile? saveFile,
         [NotNullWhen(true)] out ManicEmuSaveContext? context)
     {
-        saveBytes = null;
+        saveFile = null;
         context = null;
 
         if (!IsZip(zipBytes))
@@ -88,17 +93,25 @@ public static class ManicEmuSaveHelper
 
                 var entryBytes = entryStream.ToArray();
 
-                if (!SaveUtil.TryGetSaveFile(entryBytes, out _))
+                if (!SaveUtil.TryGetSaveFile(entryBytes, out var sf, fileName))
                     continue;
 
-                saveBytes = entryBytes;
+                saveFile = sf;
                 context = new ManicEmuSaveContext(zipBytes, entry.FullName);
                 return true;
             }
         }
-        catch
+        catch (InvalidDataException)
         {
-            // Not a valid ZIP or unreadable — fall through.
+            // Malformed ZIP data — fall through.
+        }
+        catch (IOException)
+        {
+            // ZIP read error — fall through.
+        }
+        catch (NotSupportedException)
+        {
+            // Unsupported ZIP feature — fall through.
         }
 
         return false;

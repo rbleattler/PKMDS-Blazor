@@ -278,8 +278,7 @@ public partial class MainLayout : IDisposable
             }
             // If that fails, check whether this is a Manic EMU .3ds.sav ZIP archive.
             // Manic EMU packages 3DS saves as a ZIP containing sdmc/… directory paths.
-            else if (ManicEmuSaveHelper.TryExtractSaveFromZip(data, out var extractedSaveBytes, out var manicContext)
-                && SaveUtil.TryGetSaveFile(extractedSaveBytes, out saveFile, selectedFile.Name))
+            else if (ManicEmuSaveHelper.TryExtractSaveFromZip(data, selectedFile.Name, out saveFile, out var manicContext))
             {
                 manicEmuSaveContext = manicContext;
                 Logger.LogInformation("Loaded save from Manic EMU .3ds.sav archive; entry: {EntryPath}", manicContext.SaveEntryPath);

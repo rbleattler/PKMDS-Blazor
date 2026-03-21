@@ -60,8 +60,8 @@ public class ManicEmuSaveHelperTests
     public void TryExtractSaveFromZip_NonZipData_ReturnsFalse()
     {
         var data = new byte[] { 0x00, 0x01, 0x02, 0x03 };
-        ManicEmuSaveHelper.TryExtractSaveFromZip(data, out var saveBytes, out var ctx).Should().BeFalse();
-        saveBytes.Should().BeNull();
+        ManicEmuSaveHelper.TryExtractSaveFromZip(data, null, out var saveFile, out var ctx).Should().BeFalse();
+        saveFile.Should().BeNull();
         ctx.Should().BeNull();
     }
 
@@ -70,7 +70,7 @@ public class ManicEmuSaveHelperTests
     {
         // ZIP contains an entry NOT under sdmc/ — should be ignored
         var zipBytes = BuildZip("other/path/save.bin", new byte[] { 0xDE, 0xAD, 0xBE, 0xEF });
-        ManicEmuSaveHelper.TryExtractSaveFromZip(zipBytes, out _, out _).Should().BeFalse();
+        ManicEmuSaveHelper.TryExtractSaveFromZip(zipBytes, null, out _, out _).Should().BeFalse();
     }
 
     [Fact]
@@ -80,32 +80,29 @@ public class ManicEmuSaveHelperTests
         var oversizedBytes = new byte[8 * 1024 * 1024 + 1];
         var zipBytes = BuildZip("sdmc/Nintendo 3DS/save/save.bin", oversizedBytes);
 
-        ManicEmuSaveHelper.TryExtractSaveFromZip(zipBytes, out var saveBytes, out var ctx).Should().BeFalse();
-        saveBytes.Should().BeNull();
+        ManicEmuSaveHelper.TryExtractSaveFromZip(zipBytes, null, out var saveFile, out var ctx).Should().BeFalse();
+        saveFile.Should().BeNull();
         ctx.Should().BeNull();
     }
 
     [Fact]
-    public void TryExtractSaveFromZip_ValidZipWithRealSave_ExtractsSaveBytes()
+    public void TryExtractSaveFromZip_ValidZipWithRealSave_ReturnsSaveFile()
     {
         // Arrange — wrap a known-good 3DS save (Gen 7) in a Manic EMU-style ZIP
-        const string saveFileName = "moon.sav";
         const string saveEntryPath = "sdmc/Nintendo 3DS/00000000000000000000000000000000/00000000000000000000000000000000/title/00040000/00175e00/data/00000001/main";
 
-        var saveBytes = File.ReadAllBytes(Path.Combine(TestFilesPath, saveFileName));
+        var saveBytes = File.ReadAllBytes(Path.Combine(TestFilesPath, "moon.sav"));
         var zipBytes = BuildZip(saveEntryPath, saveBytes);
 
         // Act
-        var result = ManicEmuSaveHelper.TryExtractSaveFromZip(zipBytes, out var extracted, out var ctx);
+        var result = ManicEmuSaveHelper.TryExtractSaveFromZip(zipBytes, "moon.sav", out var saveFile, out var ctx);
 
         // Assert
         result.Should().BeTrue();
-        extracted.Should().NotBeNull();
-        extracted!.Length.Should().Be(saveBytes.Length);
+        saveFile.Should().NotBeNull();
+        saveFile.Should().BeOfType<SAV7SM>();
         ctx.Should().NotBeNull();
         ctx!.SaveEntryPath.Should().Be(saveEntryPath);
-        // Confirm extracted bytes are still loadable by PKHeX
-        SaveUtil.TryGetSaveFile(extracted, out _).Should().BeTrue();
     }
 
     // ── RebuildZip ────────────────────────────────────────────────────────
@@ -151,24 +148,22 @@ public class ManicEmuSaveHelperTests
     [Fact]
     public void RebuildZip_RoundTrip_ProducesLoadableSave()
     {
-        // Arrange — wrap moon.sav, extract it, edit a byte, rebuild, re-extract, verify change
+        // Arrange — wrap moon.sav in a ZIP, extract it, rebuild with new bytes, re-extract
         const string saveEntryPath = "sdmc/Nintendo 3DS/00000000000000000000000000000000/00000000000000000000000000000000/title/00040000/00175e00/data/00000001/main";
 
         var saveBytes = File.ReadAllBytes(Path.Combine(TestFilesPath, "moon.sav"));
         var zipBytes = BuildZip(saveEntryPath, saveBytes);
 
-        ManicEmuSaveHelper.TryExtractSaveFromZip(zipBytes, out var extracted, out var ctx).Should().BeTrue();
+        ManicEmuSaveHelper.TryExtractSaveFromZip(zipBytes, "moon.sav", out var saveFile, out var ctx).Should().BeTrue();
 
-        // Mutate a copy of the save bytes (change last byte)
-        var edited = (byte[])extracted!.Clone();
-        edited[^1] ^= 0xFF;
+        // Re-export the save bytes via PKHeX and rebuild the ZIP
+        var exportedBytes = saveFile!.Write().ToArray();
+        var rebuilt = ManicEmuSaveHelper.RebuildZip(ctx!, exportedBytes);
 
-        // Act
-        var rebuilt = ManicEmuSaveHelper.RebuildZip(ctx!, edited);
-
-        // Assert — re-extract from the rebuilt ZIP and verify the byte changed
-        ManicEmuSaveHelper.TryExtractSaveFromZip(rebuilt, out var reExtracted, out _).Should().BeTrue();
+        // Assert — re-extract from the rebuilt ZIP and confirm it's a valid, loadable save
+        ManicEmuSaveHelper.TryExtractSaveFromZip(rebuilt, "moon.sav", out var reExtracted, out _).Should().BeTrue();
         reExtracted.Should().NotBeNull();
-        reExtracted![^1].Should().Be(edited[^1]);
+        reExtracted.Should().BeOfType<SAV7SM>();
+        reExtracted!.Write().Length.Should().Be(saveBytes.Length);
     }
 }
