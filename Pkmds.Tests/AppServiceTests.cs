@@ -253,6 +253,123 @@ public class AppServiceTests
         result.Should().Contain(i => i.Value == (int)Region3DSIndex.Europe);
     }
 
+    [Fact]
+    public void TrySelectFirstEmptyBoxSlot_NoSaveFile_ReturnsFalse()
+    {
+        // Arrange
+        var appState = new TestAppState { SaveFile = null };
+        var refreshService = new TestRefreshService();
+        var appService = new AppService(appState, refreshService);
+
+        // Act
+        var result = appService.TrySelectFirstEmptyBoxSlot();
+
+        // Assert
+        result.Should().BeFalse();
+        appState.SelectedBoxNumber.Should().BeNull();
+        appState.SelectedBoxSlotNumber.Should().BeNull();
+    }
+
+    [Fact]
+    public void TrySelectFirstEmptyBoxSlot_AllSlotsFull_ReturnsFalse()
+    {
+        // Arrange
+        var data = File.ReadAllBytes(Path.Combine(TestFilesPath, "Black - Full Completion.sav"));
+        SaveUtil.TryGetSaveFile(data, out var saveFile, "Black - Full Completion.sav").Should().BeTrue();
+
+        // Fill every slot so TrySelectFirstEmptyBoxSlot has nowhere to land
+        for (var box = 0; box < saveFile!.BoxCount; box++)
+        {
+            for (var slot = 0; slot < saveFile.BoxSlotCount; slot++)
+            {
+                var pkm = saveFile.BlankPKM;
+                pkm.Species = 1;
+                saveFile.SetBoxSlotAtIndex(pkm, box, slot);
+            }
+        }
+
+        var appState = new TestAppState { SaveFile = saveFile };
+        var refreshService = new TestRefreshService();
+        var appService = new AppService(appState, refreshService);
+
+        // Act
+        var result = appService.TrySelectFirstEmptyBoxSlot();
+
+        // Assert
+        result.Should().BeFalse();
+        appState.SelectedBoxNumber.Should().BeNull();
+        appState.SelectedBoxSlotNumber.Should().BeNull();
+    }
+
+    [Fact]
+    public void TrySelectFirstEmptyBoxSlot_HasEmptySlot_SelectsFirstEmptyAndReturnsTrue()
+    {
+        // Arrange
+        var data = File.ReadAllBytes(Path.Combine(TestFilesPath, "Black - Full Completion.sav"));
+        SaveUtil.TryGetSaveFile(data, out var saveFile, "Black - Full Completion.sav").Should().BeTrue();
+
+        // Fill all slots, then clear box 0 slot 0 — making it the known first empty slot
+        for (var box = 0; box < saveFile!.BoxCount; box++)
+        {
+            for (var slot = 0; slot < saveFile.BoxSlotCount; slot++)
+            {
+                var pkm = saveFile.BlankPKM;
+                pkm.Species = 1;
+                saveFile.SetBoxSlotAtIndex(pkm, box, slot);
+            }
+        }
+
+        saveFile.SetBoxSlotAtIndex(saveFile.BlankPKM, 0, 0);
+
+        var appState = new TestAppState { SaveFile = saveFile };
+        var refreshService = new TestRefreshService();
+        var appService = new AppService(appState, refreshService);
+
+        // Act
+        var result = appService.TrySelectFirstEmptyBoxSlot();
+
+        // Assert
+        result.Should().BeTrue();
+        appState.SelectedBoxNumber.Should().Be(0);
+        appState.SelectedBoxSlotNumber.Should().Be(0);
+    }
+
+    [Fact]
+    public void TrySelectFirstEmptyBoxSlot_LetsGoSave_UsesFlatIndex()
+    {
+        // Arrange — SAV7b (Let's Go) uses a flat index across unified storage; SelectedBoxNumber
+        // is never set and SelectedBoxSlotNumber is the flat index (box * BoxSlotCount + slot).
+        var data = File.ReadAllBytes(Path.Combine(TestFilesPath, "Lets-Go-Pikachu-All-Pokemon.bin"));
+        SaveUtil.TryGetSaveFile(data, out var saveFile, "Lets-Go-Pikachu-All-Pokemon.bin").Should().BeTrue();
+        saveFile.Should().BeOfType<SAV7b>();
+
+        // Fill all slots, then clear box 0 slot 0 — flat index 0 is the known first empty slot
+        for (var box = 0; box < saveFile!.BoxCount; box++)
+        {
+            for (var slot = 0; slot < saveFile.BoxSlotCount; slot++)
+            {
+                var pkm = saveFile.BlankPKM;
+                pkm.Species = 1;
+                saveFile.SetBoxSlotAtIndex(pkm, box, slot);
+            }
+        }
+
+        saveFile.SetBoxSlotAtIndex(saveFile.BlankPKM, 0, 0);
+
+        var appState = new TestAppState { SaveFile = saveFile };
+        var refreshService = new TestRefreshService();
+        var appService = new AppService(appState, refreshService);
+
+        // Act
+        var result = appService.TrySelectFirstEmptyBoxSlot();
+
+        // Assert
+        result.Should().BeTrue();
+        // SetSelectedLetsGoPokemon uses flat index and does not set SelectedBoxNumber
+        appState.SelectedBoxSlotNumber.Should().Be(0); // box 0 * BoxSlotCount + slot 0
+        appState.SelectedBoxNumber.Should().BeNull();
+    }
+
     private class TestAppState : IAppState
     {
         public string CurrentLanguage { get; set; } = "en";

@@ -602,8 +602,10 @@ public partial class MainLayout : IDisposable
                 Snackbar.Add(albumImportMessage, Severity.Warning);
             }
 
-            // If the gift contains a Pokémon, generate it and place it in the active slot.
-            if (mysteryGift.IsEntity)
+            // If the gift contains a Pokémon and is compatible with this save, generate it and
+            // place it in the active slot. Incompatible cards (wrong generation, etc.) must not
+            // produce a PKM even if their IsEntity flag is set.
+            if (mysteryGift.IsEntity && mysteryGift.IsCardCompatible(saveFile, out _))
             {
                 var originalPkm = mysteryGift.ConvertToPKM(saveFile, EncounterCriteria.Unrestricted);
                 var pkm = originalPkm;
