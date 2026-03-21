@@ -46,7 +46,6 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         AppState.SelectedBoxNumber = null;
         AppState.SelectedBoxSlotNumber = null;
         AppState.SelectedPartySlotNumber = null;
-        AppState.PinnedBoxNumber = null;
         EditFormPokemon = null;
         RefreshService.Refresh();
     }
