@@ -30,6 +30,10 @@ public static class ManicEmuSaveHelper
     // 3DS save files are at most a few MB; cap at 8 MB to guard against ZIP bombs.
     private const long MaxUncompressedEntrySize = 8 * 1024 * 1024;
 
+    // A real Manic EMU ZIP contains only a handful of entries total; cap at 500
+    // to prevent DoS from iterating a crafted archive with many non-sdmc/ entries.
+    private const int MaxTotalEntries = 500;
+
     // A real Manic EMU ZIP contains only a handful of sdmc/ entries; cap at 100
     // to prevent DoS from a crafted ZIP with many qualifying entries.
     private const int MaxSdmcEntriesToInspect = 100;
@@ -82,6 +86,9 @@ public static class ManicEmuSaveHelper
         {
             using var zipStream = new MemoryStream(zipBytes);
             using var archive = new ZipArchive(zipStream, ZipArchiveMode.Read);
+
+            if (archive.Entries.Count > MaxTotalEntries)
+                return false;
 
             var inspected = 0;
             foreach (var entry in archive.Entries)

@@ -32,6 +32,22 @@ public class ManicEmuSaveHelperTests
         return ms.ToArray();
     }
 
+    /// <summary>Builds an in-memory ZIP with <paramref name="count"/> entries all under a non-<c>sdmc/</c> path.</summary>
+    private static byte[] BuildZipWithManyNonSdmcEntries(int count)
+    {
+        using var ms = new MemoryStream();
+        using (var archive = new ZipArchive(ms, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            for (var i = 0; i < count; i++)
+            {
+                var entry = archive.CreateEntry($"other/dir{i}/file.bin", CompressionLevel.Optimal);
+                using var stream = entry.Open();
+                stream.Write(new byte[] { 0xAA }, 0, 1);
+            }
+        }
+        return ms.ToArray();
+    }
+
     /// <summary>Builds an in-memory ZIP with <paramref name="count"/> entries all under <c>sdmc/</c>.</summary>
     private static byte[] BuildZipWithManySdmcEntries(int count)
     {
@@ -119,6 +135,17 @@ public class ManicEmuSaveHelperTests
         saveFile.Should().BeOfType<SAV7SM>();
         ctx.Should().NotBeNull();
         ctx!.SaveEntryPath.Should().Be(saveEntryPath);
+    }
+
+    [Fact]
+    public void TryExtractSaveFromZip_ZipWithTooManyTotalEntries_ReturnsFalse()
+    {
+        // A ZIP with more than MaxTotalEntries (500) non-sdmc/ entries — the total-entry guard
+        // should reject it before the loop even begins, preventing DoS via iteration cost alone.
+        var zipBytes = BuildZipWithManyNonSdmcEntries(501);
+        ManicEmuSaveHelper.TryExtractSaveFromZip(zipBytes, null, out var saveFile, out var ctx).Should().BeFalse();
+        saveFile.Should().BeNull();
+        ctx.Should().BeNull();
     }
 
     [Fact]
