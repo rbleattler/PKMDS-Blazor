@@ -374,7 +374,13 @@ public partial class MainLayout : IDisposable
         // user can import it directly back into Manic EMU without any manual repacking.
         if (manicEmuSaveContext is not null)
         {
-            var exportName = EnsureExtension(originalName ?? "save", ".3ds.sav");
+            // Build the export filename: strip any existing extension (including the
+            // compound .3ds.sav) so we never produce double-extension names like foo.sav.3ds.sav.
+            var stem = originalName is null ? "save"
+                : originalName.EndsWith(".3ds.sav", StringComparison.OrdinalIgnoreCase)
+                    ? originalName[..^".3ds.sav".Length]
+                    : Path.GetFileNameWithoutExtension(originalName);
+            var exportName = stem + ".3ds.sav";
             Logger.LogDebug("Exporting save as Manic EMU .3ds.sav: {FileName}", exportName);
 
             var zipBytes = ManicEmuSaveHelper.RebuildZip(manicEmuSaveContext, rawSaveBytes);
