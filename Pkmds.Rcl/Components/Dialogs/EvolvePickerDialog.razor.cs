@@ -63,7 +63,7 @@ public partial class EvolvePickerDialog
 
         return method.Method switch
         {
-            EvolutionType.LevelUp => level == 0 ? "Level up" : $"Level {level}",
+            EvolutionType.LevelUp => level == 0 ? GetLevelUpDescription(method) : $"Level {level}",
             EvolutionType.LevelUpNinjask => $"Level {level}",
             EvolutionType.LevelUpFriendship => "Level up (high friendship)",
             EvolutionType.LevelUpFriendshipMorning => "Level up (high friendship, morning)",
@@ -117,6 +117,32 @@ public partial class EvolvePickerDialog
             EvolutionType.TowerOfWaters => "Train at Tower of Waters",
             _ => method.Method.ToString()
         };
+    }
+
+    private string GetLevelUpDescription(EvolutionMethod method)
+    {
+        // Gen 2 stores friendship+time-of-day evolutions (Espeon, Umbreon) as plain LevelUp
+        // with no level or argument, since the Gen 2 binary format doesn't encode these conditions.
+        // Cross-reference with the Gen 4 tree to surface the actual requirement.
+        if (method.Argument == 0 && Pokemon is not null)
+        {
+            var modernTree = EvolutionTree.GetEvolutionTree(EntityContext.Gen4);
+            var modernMethods = modernTree.Forward.GetForward(Pokemon.Species, Pokemon.Form);
+            foreach (var m in modernMethods.Span)
+            {
+                if (m.Species == method.Species)
+                {
+                    return m.Method switch
+                    {
+                        EvolutionType.LevelUpFriendship => "Level up (high friendship)",
+                        EvolutionType.LevelUpFriendshipMorning => "Level up (high friendship, morning)",
+                        EvolutionType.LevelUpFriendshipNight => "Level up (high friendship, night)",
+                        _ => "Level up",
+                    };
+                }
+            }
+        }
+        return "Level up";
     }
 
     private string GetTradeDescription(EvolutionMethod method)
