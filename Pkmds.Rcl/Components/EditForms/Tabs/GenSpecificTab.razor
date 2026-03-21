@@ -358,10 +358,10 @@
 
 @code {
 
-    private RenderFragment RenderTeraTypeImage(byte teraTypeid, int width = 30) =>
-        @<MudImage Src="@ImageHelper.GetTypeGemSpriteFileName(teraTypeid)"
-                   Alt="@GetTeraTypeDisplayName(teraTypeid)"
-                   title="@GetTeraTypeDisplayName(teraTypeid)"
+    private RenderFragment RenderTeraTypeImage(byte teraTypeId, int width = 30) =>
+        @<MudImage Src="@ImageHelper.GetTypeGemSpriteFileName(teraTypeId)"
+                   Alt="@GetTeraTypeDisplayName(teraTypeId)"
+                   title="@GetTeraTypeDisplayName(teraTypeId)"
                    ObjectFit="@ObjectFit.Contain"
                    ObjectPosition="@ObjectPosition.Center"
                    Width="@width"/>;

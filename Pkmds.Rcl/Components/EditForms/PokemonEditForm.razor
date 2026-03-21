@@ -137,7 +137,9 @@
                                Analysis="@Analysis"/>
                 </MudTabPanel>
 
-                @if (Pokemon is IShadowCapture or G4PKM or PK5 or PB7 or IDynamaxLevel or IAlphaReadOnly or INoble or ITeraType || saveGeneration <= 2)
+                @if (Pokemon is IShadowCapture or G4PKM or PK5 or PB7 or IAlphaReadOnly or INoble or ITeraType
+                     || saveGeneration <= 2
+                     || (Pokemon is IDynamaxLevel dynLevelVis && dynLevelVis.CanHaveDynamaxLevel(Pokemon)))
                 {
                     <MudTabPanel Text="Gen-Specific">
                         <GenSpecificTab Pokemon="@Pokemon"/>

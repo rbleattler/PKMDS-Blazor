@@ -27,6 +27,9 @@ public static class ManicEmuSaveHelper
 {
     private const string SdmcPrefix = "sdmc/";
 
+    // 3DS save files are at most a few MB; cap at 8 MB to guard against ZIP bombs.
+    private const long MaxUncompressedEntrySize = 8 * 1024 * 1024;
+
     /// <summary>
     /// Metadata required to rebuild a <c>.3ds.sav</c> ZIP after the save has been edited.
     /// </summary>
@@ -76,7 +79,7 @@ public static class ManicEmuSaveHelper
                 if (!entry.FullName.StartsWith(SdmcPrefix, StringComparison.OrdinalIgnoreCase))
                     continue;
 
-                if (entry.Length == 0)
+                if (entry.Length == 0 || entry.Length > MaxUncompressedEntrySize)
                     continue;
 
                 using var entryStream = new MemoryStream((int)entry.Length);
@@ -103,7 +106,9 @@ public static class ManicEmuSaveHelper
 
     /// <summary>
     /// Rebuilds the original <c>.3ds.sav</c> ZIP archive, replacing the save file entry
-    /// with <paramref name="newSaveBytes"/>.  All other entries are preserved verbatim.
+    /// with <paramref name="newSaveBytes"/>.  All other entries are re-compressed at
+    /// <see cref="CompressionLevel.Optimal"/>; timestamps are preserved but other per-entry
+    /// metadata (compression method, extra fields) may differ from the original.
     /// </summary>
     /// <param name="context">The context returned by <see cref="TryExtractSaveFromZip"/>.</param>
     /// <param name="newSaveBytes">The edited save data to embed.</param>
