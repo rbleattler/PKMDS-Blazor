@@ -50,6 +50,22 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         RefreshService.Refresh();
     }
 
+    public void PinBox(int boxNumber)
+    {
+        AppState.PinnedBoxNumber = boxNumber;
+        AppState.SelectedBoxNumber = null;
+        AppState.SelectedBoxSlotNumber = null;
+        AppState.SelectedPartySlotNumber = null;
+        EditFormPokemon = null;
+        RefreshService.Refresh();
+    }
+
+    public void UnpinBox()
+    {
+        AppState.PinnedBoxNumber = null;
+        RefreshService.Refresh();
+    }
+
     public string GetPokemonSpeciesName(ushort speciesId) => GetSpeciesComboItem(speciesId).Text;
 
     public IEnumerable<ComboItem> SearchPokemonNames(string searchString) =>
@@ -194,6 +210,7 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
 
     public void SetSelectedBoxPokemon(PKM? pkm, int boxNumber, int slotNumber)
     {
+        AppState.PinnedBoxNumber = null;
         AppState.SelectedPartySlotNumber = null;
 
         AppState.SelectedBoxNumber = boxNumber;
@@ -212,6 +229,7 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
 
     public void SetSelectedPartyPokemon(PKM? pkm, int slotNumber)
     {
+        AppState.PinnedBoxNumber = null;
         AppState.SelectedBoxNumber = null;
         AppState.SelectedBoxSlotNumber = null;
 
@@ -1377,4 +1395,20 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         EncounterTypeGroup.Static => "Static",
         _ => "Unknown"
     };
+
+    public bool SwapBoxes(int boxA, int boxB)
+    {
+        if (AppState.SaveFile is not { } sav)
+        {
+            return false;
+        }
+
+        var success = sav.SwapBox(boxA, boxB);
+        if (success)
+        {
+            RefreshService.RefreshBoxState();
+        }
+
+        return success;
+    }
 }

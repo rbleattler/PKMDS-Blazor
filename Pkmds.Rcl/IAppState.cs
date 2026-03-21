@@ -91,4 +91,10 @@ public interface IAppState
     /// Persisted across sessions via localStorage.
     /// </summary>
     SpriteStyle SpriteStyle { get; set; }
+
+    /// <summary>
+    /// Gets or sets the box number currently pinned in the secondary panel (0-based index).
+    /// Null when no box is pinned. Pinning a box replaces the Pokémon editor in the right column.
+    /// </summary>
+    int? PinnedBoxNumber { get; set; }
 }

@@ -2,6 +2,9 @@ namespace Pkmds.Rcl.Components;
 
 public partial class PokemonStorageComponent : RefreshAwareComponent
 {
+    [Inject]
+    private IBrowserViewportService BrowserViewportService { get; set; } = default!;
+
     private void GoToNextBox()
     {
         if (AppState.SaveFile is null || AppState.BoxEdit is null)
@@ -75,5 +78,38 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
             "Box Layout",
             new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true });
         RefreshService.RefreshBoxState();
+    }
+
+    private async Task OpenBoxListDialog()
+    {
+        var isXs = await BrowserViewportService.GetCurrentBreakpointAsync() == Breakpoint.Xs;
+        await DialogService.ShowAsync<BoxListDialog>(
+            "All Boxes",
+            new DialogOptions
+            {
+                MaxWidth = MaxWidth.ExtraExtraLarge,
+                FullWidth = true,
+                FullScreen = isXs,
+                CloseButton = true,
+                BackdropClick = true,
+                CloseOnEscapeKey = true,
+            });
+    }
+
+    private void TogglePinCurrentBox()
+    {
+        if (AppState.BoxEdit is not { CurrentBox: var currentBox })
+        {
+            return;
+        }
+
+        if (AppState.PinnedBoxNumber == currentBox)
+        {
+            AppService.UnpinBox();
+        }
+        else
+        {
+            AppService.PinBox(currentBox);
+        }
     }
 }

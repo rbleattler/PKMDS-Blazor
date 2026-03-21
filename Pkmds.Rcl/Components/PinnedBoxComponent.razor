@@ -1,18 +1,8 @@
-﻿@inherits RefreshAwareComponent
+@inherits RefreshAwareComponent
 
-@if (AppState is { SaveFile: { } saveFile, BoxEdit: { } boxEdit })
+@if (AppState is { SaveFile: { } saveFile, PinnedBoxNumber: { } pinnedBox })
 {
-    if (saveFile.Version is not GameVersion.RSBOX)
-    {
-        <PartyGrid/>
-    }
-
-    @if (saveFile.Version is GameVersion.LG or GameVersion.GP or GameVersion.GE)
-    {
-        <LetsGoBoxComponent/>
-    }
-    else
-    {
+    <div>
         <div class="flex m-[5px] p-[5px] items-center h-[50px]">
             <MudIconButton OnClick="@GoToPreviousBox"
                            title="Previous Box"
@@ -23,19 +13,16 @@
             </MudIconButton>
 
             <div class="w-[300px] m-1.5 p-1.5">
-                <MudSelect Value="@boxEdit.CurrentBox"
+                <MudSelect Value="@pinnedBox"
                            ValueChanged="@((int newBox) => OnBoxChanged(newBox))"
                            Class="m-1.5 p-1.5">
                     @for (var boxId = 0; boxId < saveFile.BoxCount; boxId++)
                     {
                         var localBoxId = boxId;
-
                         var boxName = saveFile is IBoxDetailNameRead boxDetailNameRead
                             ? boxDetailNameRead.GetBoxName(localBoxId)
                             : string.Empty;
-
-                        <MudSelectItem Value="@localBoxId"
-                                       @key="@localBoxId">
+                        <MudSelectItem Value="@localBoxId" @key="@localBoxId">
                             @($"Box {localBoxId + 1}: {boxName} ({GetBoxPokemonCount(localBoxId)}/{saveFile.BoxSlotCount})")
                         </MudSelectItem>
                     }
@@ -50,31 +37,17 @@
                            Class="m-1.5 p-1.5">
             </MudIconButton>
 
-            <MudIconButton OnClick="@OpenBoxLayoutDialog"
-                           title="Edit box layout"
+            <MudIconButton OnClick="@AppService.UnpinBox"
+                           title="Unpin Box"
                            ButtonType="@ButtonType.Button"
-                           Icon="@Icons.Material.Filled.GridView"
-                           Variant="@Variant.Filled"
-                           Class="m-1.5 p-1.5">
-            </MudIconButton>
-
-            <MudIconButton OnClick="@OpenBoxListDialog"
-                           title="All Boxes"
-                           ButtonType="@ButtonType.Button"
-                           Icon="@Icons.Material.Filled.ViewModule"
-                           Variant="@Variant.Filled"
-                           Class="m-1.5 p-1.5">
-            </MudIconButton>
-
-            <MudIconButton OnClick="@TogglePinCurrentBox"
-                           title="@(AppState.PinnedBoxNumber == boxEdit.CurrentBox ? "Unpin Box" : "Pin Box")"
-                           ButtonType="@ButtonType.Button"
-                           Icon="@(AppState.PinnedBoxNumber == boxEdit.CurrentBox ? Icons.Material.Filled.PushPin : Icons.Material.Outlined.PushPin)"
+                           Icon="@Icons.Material.Filled.PushPin"
                            Variant="@Variant.Filled"
                            Class="m-1.5 p-1.5">
             </MudIconButton>
         </div>
 
-        <BoxComponent BoxNumber="@boxEdit.CurrentBox"/>
-    }
+        <div class="my-3">
+            <BoxGrid BoxNumber="@pinnedBox"/>
+        </div>
+    </div>
 }

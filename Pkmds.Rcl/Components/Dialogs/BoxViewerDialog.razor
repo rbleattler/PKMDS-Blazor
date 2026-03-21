@@ -1,0 +1,56 @@
+@inherits RefreshAwareComponent
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="@Typo.h6">Box Viewer</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (AppState is { SaveFile: { } saveFile, BoxEdit: not null })
+        {
+            <div class="flex items-center gap-1 mb-3">
+                <MudIconButton OnClick="@GoToPreviousBox"
+                               title="Previous Box"
+                               ButtonType="@ButtonType.Button"
+                               Icon="@Icons.Material.Filled.ArrowLeft"
+                               Variant="@Variant.Filled"
+                               Size="@Size.Small"/>
+
+                <MudSelect Value="@_currentBox"
+                           ValueChanged="@((int newBox) => _currentBox = newBox)"
+                           Dense
+                           Class="flex-1">
+                    @for (var boxId = 0; boxId < saveFile.BoxCount; boxId++)
+                    {
+                        var localBoxId = boxId;
+                        var boxName = saveFile is IBoxDetailNameRead r
+                            ? r.GetBoxName(localBoxId)
+                            : string.Empty;
+                        <MudSelectItem Value="@localBoxId" @key="@localBoxId">
+                            @($"Box {localBoxId + 1}: {boxName}")
+                        </MudSelectItem>
+                    }
+                </MudSelect>
+
+                <MudIconButton OnClick="@GoToNextBox"
+                               title="Next Box"
+                               ButtonType="@ButtonType.Button"
+                               Icon="@Icons.Material.Filled.ArrowRight"
+                               Variant="@Variant.Filled"
+                               Size="@Size.Small"/>
+            </div>
+
+            <BoxGrid BoxNumber="@_currentBox"/>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@OpenBoxList"
+                   StartIcon="@Icons.Material.Filled.ViewModule"
+                   Variant="@Variant.Outlined">
+            View All Boxes
+        </MudButton>
+        <MudButton OnClick="@Close"
+                   Variant="@Variant.Outlined">
+            Close
+        </MudButton>
+    </DialogActions>
+</MudDialog>

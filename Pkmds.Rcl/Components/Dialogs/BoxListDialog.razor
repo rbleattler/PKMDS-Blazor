@@ -1,0 +1,50 @@
+@inherits RefreshAwareComponent
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="@Typo.h6">All Boxes</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (AppState.SaveFile is { } saveFile)
+        {
+            <div style="max-height: 80vh; overflow-y: auto;">
+                <MudGrid>
+                    @for (var i = 0; i < renderedBoxCount; i++)
+                    {
+                        var boxIndex = i;
+                        var boxName = saveFile is IBoxDetailNameRead r
+                            ? r.GetBoxName(boxIndex)
+                            : string.Empty;
+
+                        <MudItem xs="12" sm="6" md="4" lg="3" @key="@boxIndex">
+                            <MudPaper Outlined Class="pa-2">
+                                <div class="d-flex align-center justify-space-between mb-1">
+                                    <MudText Typo="@Typo.subtitle2">
+                                        @($"Box {boxIndex + 1}: {boxName}")
+                                    </MudText>
+                                    <MudIconButton Icon="@Icons.Material.Filled.SwapHoriz"
+                                                   Size="@Size.Small"
+                                                   title="@($"Swap Box {boxIndex + 1} with Box {(boxIndex + 1) % saveFile.BoxCount + 1}")"
+                                                   OnClick="@(() => SwapWithNext(boxIndex, saveFile.BoxCount))"/>
+                                </div>
+                                <BoxGrid BoxNumber="@boxIndex"/>
+                            </MudPaper>
+                        </MudItem>
+                    }
+                    @if (renderedBoxCount < saveFile.BoxCount)
+                    {
+                        <MudItem xs="12" Class="d-flex justify-center pa-4">
+                            <MudProgressCircular Indeterminate Color="@Color.Primary"/>
+                        </MudItem>
+                    }
+                </MudGrid>
+            </div>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@Close"
+                   Variant="@Variant.Outlined">
+            Close
+        </MudButton>
+    </DialogActions>
+</MudDialog>

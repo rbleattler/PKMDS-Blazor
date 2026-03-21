@@ -1,12 +1,12 @@
 ﻿@inherits RefreshAwareComponent
 
-@if (AppState.BoxEdit is not null)
+@if (AppState.SaveFile is { } saveFile)
 {
     <div class="@BoxGridClass">
-        @for (var i = 0; i < (AppState.SaveFile?.BoxSlotCount ?? 0); i++)
+        @for (var i = 0; i < saveFile.BoxSlotCount; i++)
         {
             var slotNum = i;
-            var pkm = AppState.BoxEdit[slotNum];
+            var pkm = saveFile.GetBoxSlotAtIndex(BoxNumber, slotNum);
 
             <BoxSlotComponent BoxNumberParam="@BoxNumber"
                               SlotNumber="@slotNum"

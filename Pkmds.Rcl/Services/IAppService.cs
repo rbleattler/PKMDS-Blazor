@@ -28,6 +28,18 @@ public interface IAppService
     void ClearSelection();
 
     /// <summary>
+    /// Pins a box to the secondary panel, replacing the Pokémon editor.
+    /// Clears the current Pokémon selection.
+    /// </summary>
+    /// <param name="boxNumber">The 0-based box number to pin.</param>
+    void PinBox(int boxNumber);
+
+    /// <summary>
+    /// Unpins the currently pinned box, restoring the Pokémon editor panel.
+    /// </summary>
+    void UnpinBox();
+
+    /// <summary>
     /// Deletes a Pokémon from the party at the specified slot.
     /// Ensures at least one battle-ready Pokémon remains in the party.
     /// </summary>
@@ -307,4 +319,15 @@ public interface IAppService
     /// <see langword="null" /> if the save file is not loaded.
     /// </returns>
     PKM? GeneratePokemonFromEncounter(IEncounterable encounter);
+
+    /// <summary>
+    /// Swaps all Pokémon slots between two boxes.
+    /// </summary>
+    /// <param name="boxA">The 0-based index of the first box.</param>
+    /// <param name="boxB">The 0-based index of the second box.</param>
+    /// <returns>
+    /// <see langword="true" /> if the swap succeeded;
+    /// <see langword="false" /> if no save file is loaded or if locked slots prevent the swap.
+    /// </returns>
+    bool SwapBoxes(int boxA, int boxB);
 }
