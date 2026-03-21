@@ -263,6 +263,18 @@ public partial class MainLayout : IDisposable
             {
                 manicEmuSaveContext = null;
                 FinishLoadingSaveFile(saveFile);
+
+                // Hint Manic EMU users on 3DS games: upload the .3ds.sav ZIP directly so
+                // PKMDS can rebuild it on export and they can import it straight back into
+                // Manic EMU without manual repacking.
+                if (saveFile is SAV6 or SAV7SM or SAV7USUM)
+                {
+                    Snackbar.Add(
+                        "Tip: If you're using Manic EMU, upload the .3ds.sav export directly " +
+                        "for seamless round-trip import support.",
+                        Severity.Info,
+                        options => options.VisibleStateDuration = 8000);
+                }
             }
             // If that fails, check whether this is a Manic EMU .3ds.sav ZIP archive.
             // Manic EMU packages 3DS saves as a ZIP containing sdmc/… directory paths.
