@@ -76,17 +76,13 @@ public class ManicEmuSaveHelperTests
     [Fact]
     public void TryExtractSaveFromZip_ZipWithOversizedEntry_SkipsEntry()
     {
-        // Entry is under sdmc/ but claims to be > 8 MB — should be skipped.
-        // We can't actually create an 8 MB+ uncompressed entry easily in a test, but we can
-        // verify via a ZIP that has a valid sdmc/ path but unrecognisable (non-save) bytes,
-        // and separately confirm the size constant is correct.
-        const long eightMb = 8 * 1024 * 1024;
-        // Reflection-free: just assert the constant via a known entry that is too small to be a save.
-        var tinyBytes = new byte[] { 0x01 };
-        var zipBytes = BuildZip("sdmc/Nintendo 3DS/save/save.bin", tinyBytes);
-        // Not a valid PKHeX save → extraction returns false (size guard not triggered, but not a save)
-        ManicEmuSaveHelper.TryExtractSaveFromZip(zipBytes, out _, out _).Should().BeFalse();
-        eightMb.Should().Be(8 * 1024 * 1024); // guard constant sanity
+        // Entry is under sdmc/ but is larger than the 8 MB uncompressed cap — should be skipped.
+        var oversizedBytes = new byte[8 * 1024 * 1024 + 1];
+        var zipBytes = BuildZip("sdmc/Nintendo 3DS/save/save.bin", oversizedBytes);
+
+        ManicEmuSaveHelper.TryExtractSaveFromZip(zipBytes, out var saveBytes, out var ctx).Should().BeFalse();
+        saveBytes.Should().BeNull();
+        ctx.Should().BeNull();
     }
 
     [Fact]
