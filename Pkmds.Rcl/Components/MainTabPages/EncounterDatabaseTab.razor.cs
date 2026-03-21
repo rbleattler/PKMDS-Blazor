@@ -140,9 +140,20 @@ public partial class EncounterDatabaseTab : RefreshAwareComponent
                     "Overwrite Pokémon?",
                     $"The selected slot contains {occupantName}. Overwrite it?",
                     yesText: "Overwrite",
+                    noText: "Use First Available Slot",
                     cancelText: "Cancel");
-                if (confirmed != true)
+                if (confirmed is null)
                 {
+                    isGenerating = false;
+                    StateHasChanged();
+                    return;
+                }
+
+                if (confirmed == false && !AppService.TrySelectFirstEmptyBoxSlot())
+                {
+                    Snackbar.Add(
+                        "No empty box slots available. Free up a slot and try again.",
+                        Severity.Warning);
                     isGenerating = false;
                     StateHasChanged();
                     return;

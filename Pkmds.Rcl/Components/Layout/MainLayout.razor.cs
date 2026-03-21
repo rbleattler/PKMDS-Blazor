@@ -507,9 +507,17 @@ public partial class MainLayout : IDisposable
                         "Overwrite Pokémon?",
                         $"The selected slot contains {occupantName}. Overwrite it?",
                         yesText: "Overwrite",
+                        noText: "Use First Available Slot",
                         cancelText: "Cancel");
-                    if (confirmed != true)
+                    if (confirmed is null)
                     {
+                        return;
+                    }
+
+                    if (confirmed == false && !AppService.TrySelectFirstEmptyBoxSlot())
+                    {
+                        Logger.LogWarning("No available box slots for importing Pokémon");
+                        Snackbar.Add("No empty box slots available. Free up a slot and try again.", Severity.Warning);
                         return;
                     }
                 }
@@ -636,9 +644,17 @@ public partial class MainLayout : IDisposable
                             "Overwrite Pokémon?",
                             $"The selected slot contains {occupantName}. Overwrite it?",
                             yesText: "Overwrite",
+                            noText: "Use First Available Slot",
                             cancelText: "Cancel");
-                        if (confirmed != true)
+                        if (confirmed is null)
                         {
+                            return;
+                        }
+
+                        if (confirmed == false && !AppService.TrySelectFirstEmptyBoxSlot())
+                        {
+                            Logger.LogWarning("No available box slots for Mystery Gift Pokémon");
+                            Snackbar.Add("No empty box slots available. Free up a slot and try again.", Severity.Warning);
                             return;
                         }
                     }
