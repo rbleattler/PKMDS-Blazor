@@ -1,0 +1,40 @@
+@inherits RefreshAwareComponent
+
+@if (AppState is { SaveFile: { } saveFile, PinnedBoxNumber: { } pinnedBox })
+{
+    <div>
+        <div class="flex m-[5px] p-[5px] items-center h-[50px]">
+            <MudIconButton OnClick="@GoToPreviousBox"
+                           title="Previous Box"
+                           ButtonType="@ButtonType.Button"
+                           Icon="@Icons.Material.Filled.ArrowLeft"
+                           Variant="@Variant.Filled"
+                           Class="m-1.5 p-1.5">
+            </MudIconButton>
+
+            <div class="flex-1 text-center font-medium mx-2">
+                @GetBoxLabel(saveFile, pinnedBox)
+            </div>
+
+            <MudIconButton OnClick="@GoToNextBox"
+                           title="Next Box"
+                           ButtonType="@ButtonType.Button"
+                           Icon="@Icons.Material.Filled.ArrowRight"
+                           Variant="@Variant.Filled"
+                           Class="m-1.5 p-1.5">
+            </MudIconButton>
+
+            <MudIconButton OnClick="@AppService.UnpinBox"
+                           title="Unpin Box"
+                           ButtonType="@ButtonType.Button"
+                           Icon="@Icons.Material.Filled.PushPin"
+                           Variant="@Variant.Filled"
+                           Class="m-1.5 p-1.5">
+            </MudIconButton>
+        </div>
+
+        <div class="my-3">
+            <BoxGrid BoxNumber="@pinnedBox"/>
+        </div>
+    </div>
+}

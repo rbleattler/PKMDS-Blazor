@@ -28,6 +28,18 @@ public interface IAppService
     void ClearSelection();
 
     /// <summary>
+    /// Pins a box to the secondary panel, replacing the Pokémon editor.
+    /// Clears the current Pokémon selection.
+    /// </summary>
+    /// <param name="boxNumber">The 0-based box number to pin.</param>
+    void PinBox(int boxNumber);
+
+    /// <summary>
+    /// Unpins the currently pinned box, restoring the Pokémon editor panel.
+    /// </summary>
+    void UnpinBox();
+
+    /// <summary>
     /// Deletes a Pokémon from the party at the specified slot.
     /// Ensures at least one battle-ready Pokémon remains in the party.
     /// </summary>

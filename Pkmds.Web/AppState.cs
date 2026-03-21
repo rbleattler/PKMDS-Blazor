@@ -36,6 +36,8 @@ public record AppState : IAppState
             BoxEdit = SaveFile is not null
                 ? new(SaveFile)
                 : null;
+
+            PinnedBoxNumber = null;
         }
     }
 
@@ -76,4 +78,7 @@ public record AppState : IAppState
 
     /// <inheritdoc />
     public SpriteStyle SpriteStyle { get; set; }
+
+    /// <inheritdoc />
+    public int? PinnedBoxNumber { get; set; }
 }

@@ -96,25 +96,20 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
             });
     }
 
-    private async Task OpenBoxViewerDialog()
+    private void TogglePinCurrentBox()
     {
-        var parameters = new DialogParameters<BoxViewerDialog>
+        if (AppState.BoxEdit is not { CurrentBox: var currentBox })
         {
-            { x => x.InitialBox, AppState.BoxEdit?.CurrentBox ?? 0 },
-        };
+            return;
+        }
 
-        var isXs = await BrowserViewportService.GetCurrentBreakpointAsync() == Breakpoint.Xs;
-        await DialogService.ShowAsync<BoxViewerDialog>(
-            "Box Viewer",
-            parameters,
-            new DialogOptions
-            {
-                MaxWidth = MaxWidth.Large,
-                FullWidth = true,
-                FullScreen = isXs,
-                CloseButton = true,
-                BackdropClick = true,
-                CloseOnEscapeKey = true,
-            });
+        if (AppState.PinnedBoxNumber == currentBox)
+        {
+            AppService.UnpinBox();
+        }
+        else
+        {
+            AppService.PinBox(currentBox);
+        }
     }
 }

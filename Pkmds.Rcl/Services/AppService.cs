@@ -46,7 +46,24 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         AppState.SelectedBoxNumber = null;
         AppState.SelectedBoxSlotNumber = null;
         AppState.SelectedPartySlotNumber = null;
+        AppState.PinnedBoxNumber = null;
         EditFormPokemon = null;
+        RefreshService.Refresh();
+    }
+
+    public void PinBox(int boxNumber)
+    {
+        AppState.PinnedBoxNumber = boxNumber;
+        AppState.SelectedBoxNumber = null;
+        AppState.SelectedBoxSlotNumber = null;
+        AppState.SelectedPartySlotNumber = null;
+        EditFormPokemon = null;
+        RefreshService.Refresh();
+    }
+
+    public void UnpinBox()
+    {
+        AppState.PinnedBoxNumber = null;
         RefreshService.Refresh();
     }
 
@@ -194,6 +211,7 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
 
     public void SetSelectedBoxPokemon(PKM? pkm, int boxNumber, int slotNumber)
     {
+        AppState.PinnedBoxNumber = null;
         AppState.SelectedPartySlotNumber = null;
 
         AppState.SelectedBoxNumber = boxNumber;
@@ -212,6 +230,7 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
 
     public void SetSelectedPartyPokemon(PKM? pkm, int slotNumber)
     {
+        AppState.PinnedBoxNumber = null;
         AppState.SelectedBoxNumber = null;
         AppState.SelectedBoxSlotNumber = null;
 

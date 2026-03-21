@@ -66,10 +66,10 @@
                            Class="m-1.5 p-1.5">
             </MudIconButton>
 
-            <MudIconButton OnClick="@OpenBoxViewerDialog"
-                           title="Pop Out Box"
+            <MudIconButton OnClick="@TogglePinCurrentBox"
+                           title="@(AppState.PinnedBoxNumber == boxEdit.CurrentBox ? "Unpin Box" : "Pin Box")"
                            ButtonType="@ButtonType.Button"
-                           Icon="@Icons.Material.Filled.OpenInNew"
+                           Icon="@(AppState.PinnedBoxNumber == boxEdit.CurrentBox ? Icons.Material.Filled.PushPin : Icons.Material.Outlined.PushPin)"
                            Variant="@Variant.Filled"
                            Class="m-1.5 p-1.5">
             </MudIconButton>

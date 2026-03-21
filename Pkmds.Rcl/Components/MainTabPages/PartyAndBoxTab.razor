@@ -14,7 +14,14 @@
              lg="6"
              Class="edit-form-column">
         <MudPaper Elevation="0">
-            <PokemonEditForm Pokemon="@AppService.EditFormPokemon"/>
+            @if (AppState.PinnedBoxNumber is not null)
+            {
+                <PinnedBoxComponent/>
+            }
+            else
+            {
+                <PokemonEditForm Pokemon="@AppService.EditFormPokemon"/>
+            }
         </MudPaper>
     </MudItem>
 </MudGrid>
