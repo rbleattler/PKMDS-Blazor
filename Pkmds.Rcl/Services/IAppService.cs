@@ -341,4 +341,14 @@ public interface IAppService
     /// <see langword="false" /> if no save file is loaded or all slots are occupied.
     /// </returns>
     bool TryPlacePokemonInFirstAvailableSlot(PKM pkm);
+
+    /// <summary>
+    /// Returns the immediate forward evolutions for a Pokémon — the direct children in the
+    /// evolution tree, one entry per branch.
+    /// <see cref="EvolutionType.LevelUpShedinja" /> entries are excluded because Shedinja is
+    /// generated as a side-effect of the Nincada → Ninjask evolution, not as a direct choice.
+    /// </summary>
+    /// <param name="pkm">The Pokémon to query.</param>
+    /// <returns>A list of <see cref="EvolutionMethod" /> values (may be empty for final evolutions).</returns>
+    IReadOnlyList<EvolutionMethod> GetDirectEvolutions(PKM pkm);
 }

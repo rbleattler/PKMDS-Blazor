@@ -1412,6 +1412,15 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         return success;
     }
 
+    public IReadOnlyList<EvolutionMethod> GetDirectEvolutions(PKM pkm)
+    {
+        var tree = EvolutionTree.GetEvolutionTree(pkm.Context);
+        var methods = tree.Forward.GetForward(pkm.Species, pkm.Form);
+        return [.. methods.Span
+            .ToArray()
+            .Where(m => m.Species != 0 && m.Method != EvolutionType.LevelUpShedinja)];
+    }
+
     public bool TryPlacePokemonInFirstAvailableSlot(PKM pkm)
     {
         if (AppState.SaveFile is not { } sav)

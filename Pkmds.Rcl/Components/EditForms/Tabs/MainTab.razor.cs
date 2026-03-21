@@ -445,6 +445,108 @@ public partial class MainTab : IDisposable
         Pokemon.IsNicknamed = false;
     }
 
+    private bool CanEvolve =>
+        Pokemon is { IsEgg: false } &&
+        AppService.GetDirectEvolutions(Pokemon).Count > 0;
+
+    private async Task EvolveAsync()
+    {
+        if (Pokemon is null)
+        {
+            return;
+        }
+
+        var choices = AppService.GetDirectEvolutions(Pokemon);
+        if (choices.Count == 0)
+        {
+            return;
+        }
+
+        EvolutionMethod chosen;
+        if (choices.Count == 1)
+        {
+            chosen = choices[0];
+        }
+        else
+        {
+            var parameters = new DialogParameters<EvolvePickerDialog>
+            {
+                { x => x.Choices, choices },
+                { x => x.Pokemon, Pokemon },
+            };
+            var dialog = await DialogService.ShowAsync<EvolvePickerDialog>("Choose Evolution", parameters,
+                new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true });
+            var result = await dialog.Result;
+            if (result is null or { Canceled: true })
+            {
+                return;
+            }
+
+            chosen = (EvolutionMethod)result.Data!;
+        }
+
+        // Capture Nincada snapshot before applying (Shedinja side-effect).
+        var isNincada = Pokemon.Species == (ushort)Species.Nincada && chosen.Species == (ushort)Species.Ninjask;
+        var nincadaSnapshot = isNincada ? Pokemon.Clone() : null;
+
+        ApplyEvolution(chosen);
+
+        if (isNincada && nincadaSnapshot is not null)
+        {
+            await OfferShedinaAsync(nincadaSnapshot);
+        }
+    }
+
+    private void ApplyEvolution(EvolutionMethod method)
+    {
+        if (Pokemon is null)
+        {
+            return;
+        }
+
+        var destForm = method.GetDestinationForm(Pokemon.Form);
+
+        // Wurmple: match EC/PID to the chosen branch so legality is satisfied.
+        if (Pokemon.Species == (ushort)Species.Wurmple)
+        {
+            var evoGroup = WurmpleUtil.GetWurmpleEvoGroup(method.Species);
+            if (Pokemon.Format >= 6)
+            {
+                // Gen 6+: EC is an independent field — set it to match the branch.
+                Pokemon.EncryptionConstant = WurmpleUtil.GetWurmpleEncryptionConstant(evoGroup);
+            }
+            else
+            {
+                // Gen 3–5: EC getter returns PID; the EC setter is a no-op, so we must set PID.
+                // Note: changing PID may introduce legality flags (gender/nature/ability correlation),
+                // which is acceptable in a save editor context.
+                uint pid;
+                var rnd = Util.Rand;
+                do pid = rnd.Rand32();
+                while (evoGroup != WurmpleUtil.GetWurmpleEvoVal(pid));
+                Pokemon.PID = pid;
+            }
+        }
+
+        // Bump level to the minimum required for this evolution.
+        if (method.Level > 0 && Pokemon.CurrentLevel < method.Level)
+        {
+            Pokemon.CurrentLevel = method.Level;
+        }
+
+        Pokemon.Species = method.Species;
+        Pokemon.Form = destForm;
+        Pokemon.Gender = Pokemon.GetSaneGender();
+
+        if (!Pokemon.IsNicknamed)
+        {
+            Pokemon.ClearNickname();
+        }
+
+        AppService.LoadPokemonStats(Pokemon);
+        RefreshService.Refresh();
+    }
+
     private async Task SetSpeciesAsync(ushort species)
     {
         if (Pokemon is null)

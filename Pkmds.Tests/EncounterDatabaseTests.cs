@@ -209,6 +209,7 @@ public class EncounterDatabaseTests
         public bool ShowProgressIndicator { get; set; }
         public string AppVersion => "Test";
         public DateTime? AppBuildDate { get; }
+        public int? PinnedBoxNumber { get; set; }
         public bool SelectedSlotsAreValid => true;
         public bool IsHaXEnabled { get; set; }
         public SpriteStyle SpriteStyle { get; set; }
