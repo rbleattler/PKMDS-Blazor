@@ -15,6 +15,8 @@ public partial class EvolvePickerDialog
 
     private EvolutionMethod _selected;
 
+    private readonly HashSet<ushort> _failedSprites = [];
+
     protected override void OnParametersSet()
     {
         // Pre-select the first choice for convenience.
@@ -36,8 +38,22 @@ public partial class EvolvePickerDialog
             return ImageHelper.PokemonFallbackImageFileName;
         }
 
+        // If the sprite previously failed, fall back to form 0 (base form always exists).
+        if (_failedSprites.Contains(method.Species))
+        {
+            return ImageHelper.GetPokemonSpriteFilenameForForm(method.Species, Pokemon.Context, 0);
+        }
+
         var destForm = method.GetDestinationForm(Pokemon.Form);
         return ImageHelper.GetPokemonSpriteFilenameForForm(method.Species, Pokemon.Context, destForm);
+    }
+
+    private void OnSpriteError(EvolutionMethod method)
+    {
+        if (_failedSprites.Add(method.Species))
+        {
+            StateHasChanged();
+        }
     }
 
     private string DescribeMethod(EvolutionMethod method)

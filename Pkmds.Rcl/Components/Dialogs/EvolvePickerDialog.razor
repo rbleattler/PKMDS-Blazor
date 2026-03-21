@@ -15,10 +15,10 @@
                     <MudStack Row
                               AlignItems="@AlignItems.Center"
                               Spacing="2">
-                        <MudImage Src="@GetSprite(method)"
-                                  Width="40"
-                                  Height="40"
-                                  ObjectFit="@ObjectFit.Contain"/>
+                        <img src="@GetSprite(method)"
+                             alt="@GetSpeciesName(method.Species)"
+                             style="width:40px; height:40px; object-fit:contain; display:block;"
+                             @onerror="@(_ => OnSpriteError(method))"/>
                         <MudStack Spacing="0">
                             <MudText Typo="@Typo.body1">@GetSpeciesName(method.Species)</MudText>
                             <MudText Typo="@Typo.caption"

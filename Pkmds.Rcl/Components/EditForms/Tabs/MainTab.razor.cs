@@ -497,6 +497,13 @@ public partial class MainTab : IDisposable
         }
     }
 
+    private static byte? GetRequiredGender(EvolutionType method) => method switch
+    {
+        EvolutionType.LevelUpMale or EvolutionType.UseItemMale => 0,
+        EvolutionType.LevelUpFemale or EvolutionType.UseItemFemale => 1,
+        _ => null,
+    };
+
     private void ApplyEvolution(EvolutionMethod method)
     {
         if (Pokemon is null)
@@ -526,6 +533,18 @@ public partial class MainTab : IDisposable
                 while (evoGroup != WurmpleUtil.GetWurmpleEvoVal(pid));
                 Pokemon.PID = pid;
             }
+        }
+
+        // Gender-locked evolutions (e.g. Kirlia→Gallade requires male, Combee→Vespiquen requires female).
+        // For Gen 3–5, gender is derived from PID, so we must regenerate a PID that satisfies both
+        // the required gender and preserves the existing nature/ability correlation where possible.
+        var requiredGender = GetRequiredGender(method.Method);
+        if (requiredGender is { } targetGender && Pokemon.Gender != targetGender)
+        {
+            // SetPIDGender re-rolls PID (preserving nature/ability/non-shiny) for Gen ≤ 5,
+            // and also updates EC when the PKM originated in Gen 3–5 but is stored in Gen 6+.
+            Pokemon.SetPIDGender(targetGender);
+            Pokemon.Gender = targetGender;
         }
 
         // Bump level to the minimum required for this evolution.
