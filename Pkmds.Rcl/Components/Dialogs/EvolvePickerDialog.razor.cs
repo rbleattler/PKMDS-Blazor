@@ -119,10 +119,16 @@ public partial class EvolvePickerDialog
         };
     }
 
-    private string GetItemName(ushort itemId) =>
-        itemId < GameInfo.Strings.itemlist.Length
-            ? GameInfo.Strings.itemlist[itemId]
-            : $"item #{itemId}";
+    private string GetItemName(ushort itemId)
+    {
+        // Use the context-specific item list — Gen 1/2/3 have different item ID spaces
+        // from the modern unified list (itemlist). Using the wrong list produces wrong names
+        // (e.g. "Lemonade" instead of "Fire Stone" for a Gen 1 Eevee).
+        var items = Pokemon is not null
+            ? GameInfo.Strings.GetItemStrings(Pokemon.Context)
+            : GameInfo.Strings.itemlist;
+        return itemId < items.Length ? items[itemId] : $"item #{itemId}";
+    }
 
     private string GetMoveName(ushort moveId) =>
         moveId < GameInfo.Strings.movelist.Length
