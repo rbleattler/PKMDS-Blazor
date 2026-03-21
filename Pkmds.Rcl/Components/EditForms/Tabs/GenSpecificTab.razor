@@ -1,0 +1,369 @@
+@inherits BasePkmdsComponent
+
+@if (Pokemon is not null &&
+     AppState is
+     {
+         SaveFile:
+         {
+             Context: not
+             (EntityContext.None or
+             EntityContext.SplitInvalid or
+             EntityContext.MaxInvalid),
+             Generation: var saveGeneration
+         },
+         SelectedSlotsAreValid: true
+     })
+{
+    <MudStack Class="mt-2"
+              Spacing="2">
+
+        @* Gen 1 — Catch Rate *@
+        @if (Pokemon is PK1 pk1)
+        {
+            <MudText Typo="@Typo.subtitle2">Gen 1</MudText>
+
+            <MudNumericField T="@byte"
+                             Label="Catch Rate"
+                             Variant="@Variant.Outlined"
+                             Min="@byte.MinValue"
+                             Max="@byte.MaxValue"
+                             @bind-Value="@pk1.CatchRate"
+                             title="Catch rate. This byte also determines the held item when traded to Gen 2."/>
+        }
+
+        @* Gen 1/2 — Status Condition *@
+        @if (saveGeneration <= 2)
+        {
+            @if (Pokemon is PK1)
+            {
+                @* Gen 1 section above already renders the "Gen 1" heading — no duplicate heading needed here *@
+            }
+            else
+            {
+                <MudText Typo="@Typo.subtitle2">Gen 2</MudText>
+            }
+
+            <MudSelect T="@StatusCondition"
+                       Label="Status Condition"
+                       Variant="@Variant.Outlined"
+                       Value="@((StatusCondition)Pokemon.Status_Condition)"
+                       ValueChanged="@(sc => Pokemon.Status_Condition = (int)sc)">
+                <MudSelectItem Value="@StatusCondition.None">Healthy</MudSelectItem>
+                <MudSelectItem Value="@StatusCondition.Sleep1">Sleeping (1 turn)</MudSelectItem>
+                <MudSelectItem Value="@StatusCondition.Sleep2">Sleeping (2 turns)</MudSelectItem>
+                <MudSelectItem Value="@StatusCondition.Sleep3">Sleeping (3 turns)</MudSelectItem>
+                <MudSelectItem Value="@StatusCondition.Sleep4">Sleeping (4 turns)</MudSelectItem>
+                <MudSelectItem Value="@StatusCondition.Sleep5">Sleeping (5 turns)</MudSelectItem>
+                <MudSelectItem Value="@StatusCondition.Sleep6">Sleeping (6 turns)</MudSelectItem>
+                <MudSelectItem Value="@StatusCondition.Sleep7">Sleeping (7 turns)</MudSelectItem>
+                <MudSelectItem Value="@StatusCondition.Poison">Poisoned</MudSelectItem>
+                <MudSelectItem Value="@StatusCondition.Burn">Burned</MudSelectItem>
+                <MudSelectItem Value="@StatusCondition.Freeze">Frozen</MudSelectItem>
+                <MudSelectItem Value="@StatusCondition.Paralysis">Paralyzed</MudSelectItem>
+                <MudSelectItem Value="@StatusCondition.PoisonBad">Badly Poisoned</MudSelectItem>
+            </MudSelect>
+        }
+
+        @* Gen 3 — Shadow (Colosseum / XD) *@
+        @if (Pokemon is IShadowCapture shadow)
+        {
+            <MudDivider/>
+            <MudText Typo="@Typo.subtitle2">Shadow Pokémon (Colo/XD)</MudText>
+
+            <MudCheckBox Label="Is Shadow"
+                         Value="@shadow.IsShadow"
+                         ReadOnly/>
+
+            <MudNumericField T="@ushort"
+                             Label="Shadow ID"
+                             Variant="@Variant.Outlined"
+                             Min="@((ushort)0)"
+                             Max="@ushort.MaxValue"
+                             Value="@shadow.ShadowID"
+                             ValueChanged="@(v => shadow.ShadowID = v)"
+                             title="Shadow Pokémon slot ID"/>
+
+            <MudNumericField T="@int"
+                             Label="Purification"
+                             Variant="@Variant.Outlined"
+                             Min="@int.MinValue"
+                             Max="@int.MaxValue"
+                             Value="@shadow.Purification"
+                             ValueChanged="@(v => shadow.Purification = v)"
+                             title="Purification counter (counts down toward 0 for full purification)"/>
+        }
+
+        @* Gen 4 — ShinyLeaf + WalkingMood *@
+        @if (Pokemon is G4PKM g4)
+        {
+            <MudDivider/>
+            <MudText Typo="@Typo.subtitle2">Gen 4</MudText>
+
+            <MudText Typo="@Typo.body2">Shiny Leaves</MudText>
+            <MudStack Row
+                      Wrap="@Wrap.Wrap">
+                @for (var i = 0; i < 5; i++)
+                {
+                    var bit = i;
+                    <MudCheckBox T="@bool"
+                                 Label="@($"Leaf {bit + 1}")"
+                                 Value="@GetShinyLeafBit(g4.ShinyLeaf, bit)"
+                                 ValueChanged="@(v => g4.ShinyLeaf = SetShinyLeafBit(g4.ShinyLeaf, bit, v))"
+                                 title="@($"Shiny Leaf {bit + 1}")"/>
+                }
+                <MudCheckBox T="@bool"
+                             Label="Crown"
+                             Value="@GetShinyLeafBit(g4.ShinyLeaf, 5)"
+                             ValueChanged="@(v => g4.ShinyLeaf = SetShinyLeafBit(g4.ShinyLeaf, 5, v))"
+                             title="Shiny Leaf Crown (requires all 5 leaves)"/>
+            </MudStack>
+
+            <MudNumericField T="@sbyte"
+                             Label="Walking Mood"
+                             Variant="@Variant.Outlined"
+                             Min="@sbyte.MinValue"
+                             Max="@sbyte.MaxValue"
+                             Value="@g4.WalkingMood"
+                             ValueChanged="@(v => g4.WalkingMood = v)"
+                             title="Walking partner mood value (HG/SS)"/>
+        }
+
+        @* Gen 5 — N's Sparkle + PokéStar Fame *@
+        @if (Pokemon is PK5 pk5)
+        {
+            <MudDivider/>
+            <MudText Typo="@Typo.subtitle2">Gen 5</MudText>
+
+            <MudCheckBox Label="N's Sparkle"
+                         @bind-Value="@pk5.NSparkle"
+                         @bind-Value:after="@RefreshService.Refresh"
+                         For="@(() => pk5.NSparkle)"/>
+
+            <MudNumericField T="@byte"
+                             Label="PokéStar Fame (B2/W2 only)"
+                             Variant="@Variant.Outlined"
+                             Min="@byte.MinValue"
+                             Max="@byte.MaxValue"
+                             Value="@pk5.PokeStarFame"
+                             ValueChanged="@(v => pk5.PokeStarFame = v)"
+                             title="PokéStar Studios fame value (Black 2 / White 2 only; >250 = is a PokéStar)"/>
+        }
+
+        @* Gen 7b (LGPE) — Spirit, Mood, Received Date/Time *@
+        @if (Pokemon is PB7 pb7)
+        {
+            <MudDivider/>
+            <MudText Typo="@Typo.subtitle2">Let's Go (LGPE)</MudText>
+
+            <MudNumericField T="@byte"
+                             Label="Spirit"
+                             Variant="@Variant.Outlined"
+                             Min="@byte.MinValue"
+                             Max="@byte.MaxValue"
+                             Value="@pb7.Spirit"
+                             ValueChanged="@(v => pb7.Spirit = v)"
+                             title="GO Park spirit value"/>
+
+            <MudNumericField T="@byte"
+                             Label="Mood"
+                             Variant="@Variant.Outlined"
+                             Min="@byte.MinValue"
+                             Max="@byte.MaxValue"
+                             Value="@pb7.Mood"
+                             ValueChanged="@(v => pb7.Mood = v)"
+                             title="Partner Pokémon mood"/>
+
+            <label for="pb7-received-date">Received Date (GO Park)</label>
+            <InputDate Type="@InputDateType.Date"
+                       id="pb7-received-date"
+                       @bind-Value="@pb7.ReceivedDate"/>
+
+            <MudText Typo="@Typo.body2">Received Time (GO Park)</MudText>
+            <MudStack Row
+                      Spacing="1">
+                <MudNumericField T="@byte"
+                                 Label="Hour"
+                                 Variant="@Variant.Outlined"
+                                 Min="@((byte)0)"
+                                 Max="@((byte)23)"
+                                 Value="@pb7.ReceivedHour"
+                                 ValueChanged="@(v => pb7.ReceivedHour = v)"/>
+                <MudNumericField T="@byte"
+                                 Label="Minute"
+                                 Variant="@Variant.Outlined"
+                                 Min="@((byte)0)"
+                                 Max="@((byte)59)"
+                                 Value="@pb7.ReceivedMinute"
+                                 ValueChanged="@(v => pb7.ReceivedMinute = v)"/>
+                <MudNumericField T="@byte"
+                                 Label="Second"
+                                 Variant="@Variant.Outlined"
+                                 Min="@((byte)0)"
+                                 Max="@((byte)59)"
+                                 Value="@pb7.ReceivedSecond"
+                                 ValueChanged="@(v => pb7.ReceivedSecond = v)"/>
+            </MudStack>
+        }
+
+        @* Gen 8 (SwSh) — Dynamax Level + Gigantamax *@
+        @if (Pokemon is IDynamaxLevel dynLevel && dynLevel.CanHaveDynamaxLevel(Pokemon))
+        {
+            <MudDivider/>
+            <MudText Typo="@Typo.subtitle2">Gen 8 (Sword/Shield)</MudText>
+
+            <MudStack Row
+                      Wrap="@Wrap.Wrap"
+                      AlignItems="@AlignItems.Center">
+                <MudNumericField T="@byte"
+                                 Label="Dynamax Level"
+                                 Variant="@Variant.Outlined"
+                                 Min="@byte.MinValue"
+                                 Max="@Constants.MaxDynamaxLevel"
+                                 @bind-Value="@dynLevel.DynamaxLevel"
+                                 Style="max-width: 160px;"/>
+                @if (Pokemon is IGigantamax gigantamax)
+                {
+                    <MudCheckBox Label="Gigantamax"
+                                 @bind-Value="@gigantamax.CanGigantamax"
+                                 For="@(() => gigantamax.CanGigantamax)"/>
+                }
+            </MudStack>
+        }
+
+        @* Gen 8 (PLA) — Noble + Alpha *@
+        @if (Pokemon is INoble or IAlphaReadOnly)
+        {
+            <MudDivider/>
+            <MudText Typo="@Typo.subtitle2">Gen 8 (Legends: Arceus)</MudText>
+
+            <MudStack Row
+                      Wrap="@Wrap.Wrap">
+                @if (Pokemon is INoble noble)
+                {
+                    <MudCheckBox Label="Noble"
+                                 @bind-Value="@noble.IsNoble"
+                                 For="@(() => noble.IsNoble)"/>
+                }
+                @switch (Pokemon)
+                {
+                    case IAlpha alpha:
+                        <MudCheckBox Label="Alpha"
+                                     @bind-Value="@alpha.IsAlpha"
+                                     For="@(() => alpha.IsAlpha)"/>
+                        break;
+                    case IAlphaReadOnly alphaReadOnly:
+                        <MudCheckBox Label="Alpha"
+                                     Value="@alphaReadOnly.IsAlpha"
+                                     ReadOnly/>
+                        break;
+                }
+            </MudStack>
+        }
+
+        @* Gen 9 — Tera Type *@
+        @if (Pokemon is ITeraType tt)
+        {
+            <MudDivider/>
+            <MudText Typo="@Typo.subtitle2">Gen 9 (Scarlet/Violet)</MudText>
+
+            <MudGrid>
+                <MudItem xs="9">
+                    <MudStack>
+                        <MudSelect Label="Original Tera Type"
+                                   Variant="@Variant.Outlined"
+                                   @bind-Value="@tt.TeraTypeOriginal"
+                                   For="@(() => tt.TeraTypeOriginal)">
+                            @foreach (var teraType in Enum.GetValues<MoveType>().Where(m => m != MoveType.Any))
+                            {
+                                var teraTypeId = (byte)teraType;
+                                <MudSelectItem Value="@teraType"
+                                               @key="@teraType">
+                                    <MudStack Row
+                                              Class="my-2"
+                                              AlignItems="@AlignItems.Center">
+                                        @RenderTeraTypeImage(teraTypeId)
+                                        <MudText>
+                                            @GetTeraTypeDisplayName(teraTypeId)
+                                        </MudText>
+                                    </MudStack>
+                                </MudSelectItem>
+                            }
+                            <MudSelectItem Value="@((MoveType)TeraTypeUtil.Stellar)"
+                                           @key="@((MoveType)TeraTypeUtil.Stellar)">
+                                <MudStack Row
+                                          Class="my-2"
+                                          AlignItems="@AlignItems.Center">
+                                    @RenderTeraTypeImage(TeraTypeUtil.Stellar)
+                                    <MudText>
+                                        @GetTeraTypeDisplayName(TeraTypeUtil.Stellar)
+                                    </MudText>
+                                </MudStack>
+                            </MudSelectItem>
+                        </MudSelect>
+                        <MudSelect Label="Override Tera Type"
+                                   Variant="@Variant.Outlined"
+                                   @bind-Value="@tt.TeraTypeOverride"
+                                   For="@(() => tt.TeraTypeOverride)">
+                            <MudSelectItem Value="@((MoveType)TeraTypeUtil.OverrideNone)"
+                                           @key="@TeraTypeUtil.OverrideNone">
+                                <MudText>
+                                    @Constants.EmptyIndex
+                                </MudText>
+                            </MudSelectItem>
+                            @foreach (var teraType in Enum.GetValues<MoveType>().Where(m => m != MoveType.Any))
+                            {
+                                var teraTypeId = (byte)teraType;
+                                <MudSelectItem Value="@teraType"
+                                               @key="@teraType">
+                                    <MudStack Row
+                                              Class="my-2"
+                                              AlignItems="@AlignItems.Center">
+                                        @RenderTeraTypeImage(teraTypeId)
+                                        <MudText>
+                                            @GetTeraTypeDisplayName(teraTypeId)
+                                        </MudText>
+                                    </MudStack>
+                                </MudSelectItem>
+                            }
+                            <MudSelectItem Value="@((MoveType)TeraTypeUtil.Stellar)"
+                                           @key="@((MoveType)TeraTypeUtil.Stellar)">
+                                <MudStack Row
+                                          Class="my-2"
+                                          AlignItems="@AlignItems.Center">
+                                    @RenderTeraTypeImage(TeraTypeUtil.Stellar)
+                                    <MudText>
+                                        @GetTeraTypeDisplayName(TeraTypeUtil.Stellar)
+                                    </MudText>
+                                </MudStack>
+                            </MudSelectItem>
+                        </MudSelect>
+                    </MudStack>
+                </MudItem>
+                <MudItem xs="3"
+                         Style="align-self: center;">
+                    <MudStack>
+                        <MudText Align="@Align.Center">
+                            Current Tera Type: @GetTeraTypeDisplayName((byte)tt.TeraType)
+                        </MudText>
+                        <div class="current-tera-type-image">
+                            @RenderTeraTypeImage((byte)tt.TeraType, 60)
+                        </div>
+                    </MudStack>
+                </MudItem>
+            </MudGrid>
+        }
+
+    </MudStack>
+}
+
+@code {
+
+    private RenderFragment RenderTeraTypeImage(byte teraTypeId, int width = 30) =>
+        @<MudImage Src="@ImageHelper.GetTypeGemSpriteFileName(teraTypeId)"
+                   Alt="@GetTeraTypeDisplayName(teraTypeId)"
+                   title="@GetTeraTypeDisplayName(teraTypeId)"
+                   ObjectFit="@ObjectFit.Contain"
+                   ObjectPosition="@ObjectPosition.Center"
+                   Width="@width"/>;
+
+}

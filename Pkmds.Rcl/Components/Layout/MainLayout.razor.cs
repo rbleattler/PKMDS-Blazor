@@ -8,6 +8,7 @@ public partial class MainLayout : IDisposable
     private const string GitHubTooltip = "Source code on GitHub";
 
     private IBrowserFile? browserLoadSaveFile;
+    private ManicEmuSaveHelper.ManicEmuSaveContext? manicEmuSaveContext;
     private bool isDarkMode;
     private MudThemeProvider? mudThemeProvider;
     private bool systemIsDarkMode;
@@ -257,25 +258,31 @@ public partial class MainLayout : IDisposable
             data = memoryStream.ToArray();
             Logger.LogDebug("Read {ByteCount} bytes from save file", data.Length);
 
+            // Try to load the file directly as a raw save.
             if (SaveUtil.TryGetSaveFile(data, out var saveFile, selectedFile.Name))
             {
-                // Call InitFromSaveFileData to set ParseSettings.ActiveTrainer to the loaded save file.
-                // This enables per-Pokémon handler state validation in HistoryVerifier.VerifyHandlerState,
-                // matching PKHeX WinForms behaviour and preventing false-positive legality errors on
-                // Pokémon whose OT matches the loaded trainer (e.g. BDSP Palkia).
-                //
-                // InitFromSaveFileData also sets AllowGBCartEra based on SAV1/SAV2.IsVirtualConsole,
-                // which gates AllowGBEraEvents (Nintendo Event Mew, GS Ball Celebi, etc.) and
-                // AllowGBStadium2. Physical Gen 1/2 saves correctly get AllowGBCartEra = true;
-                // VC saves (filename "sav*.dat") get false. Renamed VC saves may be misidentified as
-                // physical cartridge saves — that is a PKHeX bug tracked at
-                // https://github.com/kwsch/PKHeX/issues/4734 and is not something we work around here,
-                // as doing so breaks legitimate GB era events on real physical cartridge saves.
-                ParseSettings.InitFromSaveFileData(saveFile);
-                AppState.SaveFile = saveFile;
-                AppState.BoxEdit?.LoadBox(saveFile.CurrentBox);
-                Logger.LogInformation("Successfully loaded save file: {SaveType}, Generation: {Generation}",
-                    saveFile.GetType().Name, saveFile.Generation);
+                manicEmuSaveContext = null;
+                FinishLoadingSaveFile(saveFile);
+
+                // Hint Manic EMU users on 3DS games: upload the .3ds.sav ZIP directly so
+                // PKMDS can rebuild it on export and they can import it straight back into
+                // Manic EMU without manual repacking.
+                if (saveFile is SAV6 or SAV7SM or SAV7USUM)
+                {
+                    Snackbar.Add(
+                        "Tip: If you're using Manic EMU, upload the .3ds.sav export directly " +
+                        "for seamless round-trip import support.",
+                        Severity.Info,
+                        options => options.VisibleStateDuration = 8000);
+                }
+            }
+            // If that fails, check whether this is a Manic EMU .3ds.sav ZIP archive.
+            // Manic EMU packages 3DS saves as a ZIP containing sdmc/… directory paths.
+            else if (ManicEmuSaveHelper.TryExtractSaveFromZip(data, selectedFile.Name, out saveFile, out var manicContext))
+            {
+                manicEmuSaveContext = manicContext;
+                Logger.LogInformation("Loaded save from Manic EMU .3ds.sav archive; entry: {EntryPath}", manicContext.SaveEntryPath);
+                FinishLoadingSaveFile(saveFile);
             }
             else
             {
@@ -312,6 +319,27 @@ public partial class MainLayout : IDisposable
         RefreshService.RefreshBoxAndPartyState();
     }
 
+    private void FinishLoadingSaveFile(SaveFile saveFile)
+    {
+        // Call InitFromSaveFileData to set ParseSettings.ActiveTrainer to the loaded save file.
+        // This enables per-Pokémon handler state validation in HistoryVerifier.VerifyHandlerState,
+        // matching PKHeX WinForms behaviour and preventing false-positive legality errors on
+        // Pokémon whose OT matches the loaded trainer (e.g. BDSP Palkia).
+        //
+        // InitFromSaveFileData also sets AllowGBCartEra based on SAV1/SAV2.IsVirtualConsole,
+        // which gates AllowGBEraEvents (Nintendo Event Mew, GS Ball Celebi, etc.) and
+        // AllowGBStadium2. Physical Gen 1/2 saves correctly get AllowGBCartEra = true;
+        // VC saves (filename "sav*.dat") get false. Renamed VC saves may be misidentified as
+        // physical cartridge saves — that is a PKHeX bug tracked at
+        // https://github.com/kwsch/PKHeX/issues/4734 and is not something we work around here,
+        // as doing so breaks legitimate GB era events on real physical cartridge saves.
+        ParseSettings.InitFromSaveFileData(saveFile);
+        AppState.SaveFile = saveFile;
+        AppState.BoxEdit?.LoadBox(saveFile.CurrentBox);
+        Logger.LogInformation("Successfully loaded save file: {SaveType}, Generation: {Generation}",
+            saveFile.GetType().Name, saveFile.Generation);
+    }
+
     private static string EnsureExtension(string fileName, string extension)
     {
         if (string.IsNullOrWhiteSpace(fileName))
@@ -339,21 +367,34 @@ public partial class MainLayout : IDisposable
         Logger.LogInformation("Exporting save file");
         AppState.ShowProgressIndicator = true;
 
+        var rawSaveBytes = AppState.SaveFile.Write().ToArray();
         var originalName = browserLoadSaveFile?.Name;
 
+        // If the save was loaded from a Manic EMU .3ds.sav ZIP, rebuild the ZIP so the
+        // user can import it directly back into Manic EMU without any manual repacking.
+        if (manicEmuSaveContext is not null)
+        {
+            // Build the export filename: strip any existing extension (including the
+            // compound .3ds.sav) so we never produce double-extension names like foo.sav.3ds.sav.
+            var stem = originalName is null ? "save"
+                : originalName.EndsWith(".3ds.sav", StringComparison.OrdinalIgnoreCase)
+                    ? originalName[..^".3ds.sav".Length]
+                    : Path.GetFileNameWithoutExtension(originalName);
+            var exportName = stem + ".3ds.sav";
+            Logger.LogDebug("Exporting save as Manic EMU .3ds.sav: {FileName}", exportName);
+
+            var zipBytes = ManicEmuSaveHelper.RebuildZip(manicEmuSaveContext, rawSaveBytes);
+            await WriteFile(zipBytes, exportName, ".3ds.sav", "Save File");
+        }
         // Only default to "save.sav" if we have no original filename at all
-        if (string.IsNullOrWhiteSpace(originalName))
+        else if (string.IsNullOrWhiteSpace(originalName))
         {
             originalName = "save";
             const string fileExtensionFromName = ".sav";
             var finalName = EnsureExtension(originalName, fileExtensionFromName);
             Logger.LogDebug("Exporting save file as: {FileName}", finalName);
 
-            await WriteFile(
-                AppState.SaveFile.Write().ToArray(),
-                finalName,
-                fileExtensionFromName,
-                "Save File");
+            await WriteFile(rawSaveBytes, finalName, fileExtensionFromName, "Save File");
         }
         else
         {
@@ -361,11 +402,7 @@ public partial class MainLayout : IDisposable
             var fileExtensionFromName = Path.GetExtension(originalName);
             Logger.LogDebug("Exporting save file as: {FileName}", originalName);
 
-            await WriteFile(
-                AppState.SaveFile.Write().ToArray(),
-                originalName,
-                fileExtensionFromName,
-                "Save File");
+            await WriteFile(rawSaveBytes, originalName, fileExtensionFromName, "Save File");
         }
 
         Logger.LogInformation("Save file exported successfully");
