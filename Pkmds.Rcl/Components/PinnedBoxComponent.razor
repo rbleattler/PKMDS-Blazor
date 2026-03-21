@@ -12,8 +12,21 @@
                            Class="m-1.5 p-1.5">
             </MudIconButton>
 
-            <div class="flex-1 text-center font-medium mx-2">
-                @GetBoxLabel(saveFile, pinnedBox)
+            <div class="w-[300px] m-1.5 p-1.5">
+                <MudSelect Value="@pinnedBox"
+                           ValueChanged="@((int newBox) => OnBoxChanged(newBox))"
+                           Class="m-1.5 p-1.5">
+                    @for (var boxId = 0; boxId < saveFile.BoxCount; boxId++)
+                    {
+                        var localBoxId = boxId;
+                        var boxName = saveFile is IBoxDetailNameRead boxDetailNameRead
+                            ? boxDetailNameRead.GetBoxName(localBoxId)
+                            : string.Empty;
+                        <MudSelectItem Value="@localBoxId" @key="@localBoxId">
+                            @($"Box {localBoxId + 1}: {boxName} ({GetBoxPokemonCount(localBoxId)}/{saveFile.BoxSlotCount})")
+                        </MudSelectItem>
+                    }
+                </MudSelect>
             </div>
 
             <MudIconButton OnClick="@GoToNextBox"

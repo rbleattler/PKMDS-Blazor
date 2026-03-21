@@ -4,12 +4,10 @@ public partial class PinnedBoxComponent : RefreshAwareComponent
 {
     protected override RefreshEvents SubscribeTo => RefreshEvents.AppState | RefreshEvents.BoxState;
 
-    private static string GetBoxLabel(SaveFile saveFile, int boxNumber)
+    private void OnBoxChanged(int newBox)
     {
-        var boxName = saveFile is IBoxDetailNameRead boxDetailNameRead
-            ? boxDetailNameRead.GetBoxName(boxNumber)
-            : string.Empty;
-        return $"Box {boxNumber + 1}: {boxName}";
+        AppState.PinnedBoxNumber = newBox;
+        StateHasChanged();
     }
 
     private void GoToPreviousBox()
@@ -19,8 +17,7 @@ public partial class PinnedBoxComponent : RefreshAwareComponent
             return;
         }
 
-        AppState.PinnedBoxNumber = currentBox == 0 ? saveFile.BoxCount - 1 : currentBox - 1;
-        StateHasChanged();
+        OnBoxChanged(currentBox == 0 ? saveFile.BoxCount - 1 : currentBox - 1);
     }
 
     private void GoToNextBox()
@@ -30,7 +27,25 @@ public partial class PinnedBoxComponent : RefreshAwareComponent
             return;
         }
 
-        AppState.PinnedBoxNumber = currentBox == saveFile.BoxCount - 1 ? 0 : currentBox + 1;
-        StateHasChanged();
+        OnBoxChanged(currentBox == saveFile.BoxCount - 1 ? 0 : currentBox + 1);
+    }
+
+    private int GetBoxPokemonCount(int boxId)
+    {
+        if (AppState.SaveFile is not { } saveFile)
+        {
+            return 0;
+        }
+
+        var count = 0;
+        for (var slot = 0; slot < saveFile.BoxSlotCount; slot++)
+        {
+            if (saveFile.GetBoxSlotAtIndex(boxId, slot).Species != 0)
+            {
+                count++;
+            }
+        }
+
+        return count;
     }
 }
