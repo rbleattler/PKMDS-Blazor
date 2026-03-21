@@ -23,6 +23,6 @@ public partial class SaveFileComponent : RefreshAwareComponent
     private void HandleRequestJumpToPartyBox()
     {
         JumpToPartyBox();
-        InvokeAsync(StateHasChanged);
+        _ = InvokeAsync(StateHasChanged);
     }
 }

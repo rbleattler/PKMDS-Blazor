@@ -550,8 +550,6 @@ public partial class MainLayout : IDisposable
         {
             AppState.ShowProgressIndicator = false;
         }
-
-        RefreshService.RefreshBoxState();
     }
 
     private async Task LoadMysteryGiftFile(IBrowserFile browserLoadMysteryGiftFile, string title)
@@ -601,19 +599,21 @@ public partial class MainLayout : IDisposable
             else
             {
                 Logger.LogWarning("Mystery Gift album import: {Message}", albumImportMessage);
+                Snackbar.Add(albumImportMessage, Severity.Warning);
             }
 
             // If the gift contains a Pokémon, generate it and place it in the active slot.
             if (mysteryGift.IsEntity)
             {
-                var pkm = mysteryGift.ConvertToPKM(saveFile, EncounterCriteria.Unrestricted);
+                var originalPkm = mysteryGift.ConvertToPKM(saveFile, EncounterCriteria.Unrestricted);
+                var pkm = originalPkm;
                 if (pkm.GetType() != saveFile.PKMType)
                 {
                     pkm = EntityConverter.ConvertToType(pkm, saveFile.PKMType, out var c);
                     if (!c.IsSuccess || pkm is null)
                     {
                         Logger.LogError("Failed to convert Mystery Gift Pokémon: {ConversionResult}",
-                            c.GetDisplayString(mysteryGift.ConvertToPKM(saveFile), saveFile.PKMType));
+                            c.GetDisplayString(originalPkm, saveFile.PKMType));
                         Snackbar.Add("Could not convert the gift Pokémon to the save file's format.", Severity.Error);
                         return;
                     }
@@ -679,8 +679,6 @@ public partial class MainLayout : IDisposable
         {
             AppState.ShowProgressIndicator = false;
         }
-
-        RefreshService.RefreshBoxState();
     }
 
     private async Task ExportSelectedPokemon()
