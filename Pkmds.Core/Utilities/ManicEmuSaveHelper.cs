@@ -87,9 +87,29 @@ public static class ManicEmuSaveHelper
                 if (entry.Length == 0 || entry.Length > MaxUncompressedEntrySize)
                     continue;
 
+                // Copy with a hard byte limit to guard against ZIP bombs where
+                // entry.Length metadata is falsified.
                 using var entryStream = new MemoryStream((int)entry.Length);
+                var tooLarge = false;
                 using (var src = entry.Open())
-                    src.CopyTo(entryStream);
+                {
+                    var buffer = new byte[81920];
+                    long totalRead = 0;
+                    int read;
+                    while ((read = src.Read(buffer, 0, buffer.Length)) > 0)
+                    {
+                        totalRead += read;
+                        if (totalRead > MaxUncompressedEntrySize)
+                        {
+                            tooLarge = true;
+                            break;
+                        }
+                        entryStream.Write(buffer, 0, read);
+                    }
+                }
+
+                if (tooLarge)
+                    continue;
 
                 var entryBytes = entryStream.ToArray();
 
