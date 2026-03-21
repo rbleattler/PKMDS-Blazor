@@ -107,7 +107,7 @@ public partial class EvolvePickerDialog
             EvolutionType.UseItemMale => $"Use {GetItemName(arg)} (male)",
             EvolutionType.UseItemFemale => $"Use {GetItemName(arg)} (female)",
             EvolutionType.UseItemWormhole => $"Use {GetItemName(arg)} (wormhole)",
-            EvolutionType.Trade => "Trade",
+            EvolutionType.Trade => GetTradeDescription(method),
             EvolutionType.TradeHeldItem => $"Trade holding {GetItemName(arg)}",
             EvolutionType.TradeShelmetKarrablast => "Trade with Shelmet / Karrablast",
             EvolutionType.CriticalHitsInBattle => "Land 3 critical hits in one battle",
@@ -117,6 +117,28 @@ public partial class EvolvePickerDialog
             EvolutionType.TowerOfWaters => "Train at Tower of Waters",
             _ => method.Method.ToString()
         };
+    }
+
+    private string GetTradeDescription(EvolutionMethod method)
+    {
+        // Gen 2 stores all trade evolutions as plain Trade (type 5) with Argument=0,
+        // because the Gen 2 binary format predates held-item trade tracking.
+        // Cross-reference with the Gen 4 tree to surface the actual held item requirement.
+        if (method.Argument == 0 && Pokemon is not null)
+        {
+            var modernTree = EvolutionTree.GetEvolutionTree(EntityContext.Gen4);
+            var modernMethods = modernTree.Forward.GetForward(Pokemon.Species, Pokemon.Form);
+            foreach (var m in modernMethods.Span)
+            {
+                if (m.Species == method.Species && m.Method == EvolutionType.TradeHeldItem && m.Argument != 0)
+                {
+                    var items = GameInfo.Strings.GetItemStrings(EntityContext.Gen4);
+                    var itemName = m.Argument < items.Length ? items[m.Argument] : $"item #{m.Argument}";
+                    return $"Trade holding {itemName}";
+                }
+            }
+        }
+        return "Trade";
     }
 
     private string GetItemName(ushort itemId)
