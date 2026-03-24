@@ -240,7 +240,10 @@ public partial class PokemonSlotComponent : IDisposable
         Pokemon.RefreshChecksum();
         var filename = AppService.GetCleanFileName(Pokemon);
         var base64 = Convert.ToBase64String(Pokemon.DecryptedPartyData);
-        ((IJSInProcessRuntime)JSRuntime).Invoke<bool>("setDragDownloadData", filename, base64);
+        if (JSRuntime is IJSInProcessRuntime inProcessRuntime)
+        {
+            inProcessRuntime.Invoke<bool>("setDragDownloadData", filename, base64);
+        }
     }
 
     private void HandleDragEnd(DragEventArgs e) => DragDropService.ClearDrag();

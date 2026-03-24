@@ -58,7 +58,8 @@
                     <img
                         src="@ImageHelper.GetShinyIndicatorSpriteFileName(ShinyExtensions.GetType(Pokemon) is Shiny.AlwaysSquare)"
                         alt="Shiny"
-                        class="w-full h-full object-contain">
+                        class="w-full h-full object-contain"
+                        draggable="false">
                 </div>
             }
 
@@ -74,7 +75,8 @@
                          alt="@(isLegal
                                   ? "Legal"
                                   : "Illegal")"
-                         class="w-full h-full object-contain">
+                         class="w-full h-full object-contain"
+                         draggable="false">
                 </div>
             }
 
@@ -84,7 +86,8 @@
                      title="Alpha">
                     <img src="@ImageHelper.GetAlphaIndicatorSpriteFileName()"
                          alt="Alpha"
-                         class="w-full h-full object-contain">
+                         class="w-full h-full object-contain"
+                         draggable="false">
                 </div>
             }
 
@@ -94,7 +97,8 @@
                      title="@($"Party Slot {partySlot}")">
                     <img src="@ImageHelper.GetPartySlotIndicatorSpriteFileName(partySlot)"
                          alt="@($"Party {partySlot}")"
-                         class="w-full h-full object-contain">
+                         class="w-full h-full object-contain"
+                         draggable="false">
                 </div>
             }
 
@@ -104,7 +108,8 @@
                      title="Egg">
                     <img src="@ImageHelper.GetEggOverlaySpriteFileName(Pokemon.Species)"
                          alt="Egg"
-                         class="w-full h-full object-contain">
+                         class="w-full h-full object-contain"
+                         draggable="false">
                 </div>
             }
             else if (Pokemon.HeldItem != 0)
