@@ -4,11 +4,15 @@ window.spindaRenderer = {
     // Base spot centers and semi-axis radii on the 512×512 Home sprite.
     // Each spot moves 0–15 px from its base position (one nibble per axis).
     // The head-mask PNG clips any overflow to the head region.
+    // Base positions calibrated against the pokéos.com reference for pattern
+    // 0x88888888 (all nibbles = 8): measured center − 8 gives the base.
+    // Spinda's HOME sprite is asymmetric: left ear is high-left, right ear is
+    // lower-right, and both eyes sit well below the ears.
     _spots: [
-        { cx: 205, cy: 165, rx: 34, ry: 32 }, // top-left (left ear)
-        { cx: 295, cy: 158, rx: 34, ry: 32 }, // top-right (right ear)
-        { cx: 188, cy: 280, rx: 38, ry: 36 }, // bottom-left (face/eye area)
-        { cx: 315, cy: 275, rx: 38, ry: 36 }, // bottom-right (face/eye area)
+        { cx: 157, cy:  94, rx: 44, ry: 42 }, // spot 0: left ear (high, far left)
+        { cx: 386, cy: 157, rx: 44, ry: 42 }, // spot 1: right ear (lower, far right)
+        { cx: 137, cy: 359, rx: 46, ry: 44 }, // spot 2: left eye
+        { cx: 302, cy: 381, rx: 46, ry: 44 }, // spot 3: right eye
     ],
 
     /** Load an image from a URL; returns Promise<HTMLImageElement>. */
