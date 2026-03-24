@@ -17,6 +17,8 @@
                 <MudStack Spacing="2"
                           Class="search-filter-panel">
 
+                    <div class="search-filter-panel-scroll">
+
                     @* Saved filters *@
                     <MudExpansionPanels Dense>
                         <MudExpansionPanel Text="Saved Filters">
@@ -447,9 +449,12 @@
 
                     </MudExpansionPanels>
 
+                    </div>
+
                     @* Action buttons *@
                     <MudStack Row
-                              Spacing="2">
+                              Spacing="2"
+                              Class="search-filter-panel-actions">
                         <MudButton Variant="@Variant.Filled"
                                    Color="@Color.Primary"
                                    StartIcon="@Icons.Material.Filled.Search"
@@ -512,18 +517,19 @@
                         </MudStack>
                     }
 
-                    <div style="overflow-y: auto; max-height: calc(100vh - 280px); max-height: calc(100dvh - 280px);">
-                        <MudTable T="@AdvancedSearchResult"
-                                  Items="@results"
-                                  Dense
-                                  Hover
-                                  Bordered
-                                  MultiSelection
-                                  @bind-SelectedItems="@selectedRows"
-                                  SortLabel="Sort By"
-                                  OnRowClick="@OnRowClickAsync"
-                                  RowStyleFunc="@RowStyleFunc"
-                                  RowsPerPage="25">
+                    <MudTable T="@AdvancedSearchResult"
+                              Items="@results"
+                              Dense
+                              Hover
+                              Bordered
+                              MultiSelection
+                              FixedHeader
+                              Height="calc(100dvh - 280px)"
+                              @bind-SelectedItems="@selectedRows"
+                              SortLabel="Sort By"
+                              OnRowClick="@OnRowClickAsync"
+                              RowStyleFunc="@RowStyleFunc"
+                              RowsPerPage="25">
 
                             <HeaderContent>
 
@@ -616,8 +622,7 @@
                                 <MudTablePager/>
                             </PagerContent>
 
-                        </MudTable>
-                    </div>
+                    </MudTable>
 
                 </MudStack>
             </MudItem>
