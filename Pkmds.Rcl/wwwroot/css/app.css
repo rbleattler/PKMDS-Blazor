@@ -264,12 +264,52 @@ body, html {
     }
 }
 
-/* Tablet (md–lg): natural-scroll layout, edit form tab panels scroll internally */
-@media (min-width: 768px) and (max-width: 1279px) {
-    .mud-main-content {
-        overflow-y: auto;
+/* Narrow screens (< 1280px): lock the viewport and give each outer tab panel its
+   own independent scroll — mirrors the desktop cascade but without the side-by-side
+   layout rules.  The Pokédex tab is already handled by .pokedex-tab-content
+   (height:100%; overflow:hidden), so its panel shows no extra scrollbar. */
+@media (max-width: 1279px) {
+    html, body {
+        overflow: hidden;
     }
 
+    .mud-main-content {
+        height: 100dvh;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .mud-main-content > .mud-container {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .save-file-outer-tabs {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .save-file-outer-tabs > .mud-tabs-panels {
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    /* Each panel fills the available height; non-Pokédex tabs scroll within
+       the panel rather than scrolling the page. */
+    .save-file-outer-tabs > .mud-tabs-panels > .mud-tab-panel {
+        height: 100%;
+        overflow-y: auto;
+    }
+}
+
+/* Tablet (md–lg): edit form inner tab panels also scroll independently */
+@media (min-width: 768px) and (max-width: 1279px) {
     .edit-form-tabs .mud-tabs-panels {
         overflow-y: auto;
     }
