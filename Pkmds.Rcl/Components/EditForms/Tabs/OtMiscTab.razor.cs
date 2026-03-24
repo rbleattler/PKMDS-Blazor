@@ -442,16 +442,6 @@ public partial class OtMiscTab : IDisposable
         return items;
     }
 
-    private async Task OpenTrashBytesEditor(StringSource field)
-    {
-        var parameters = new DialogParameters<TrashBytesEditorDialog>
-        {
-            { x => x.Pokemon, Pokemon },
-            { x => x.Field, field },
-        };
-
-        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
-
-        await DialogService.ShowAsync<TrashBytesEditorDialog>("Trash Bytes Editor", parameters, options);
-    }
+    private Task OpenTrashBytesEditor(StringSource field) =>
+        OpenTrashBytesEditorAsync(Pokemon, field);
 }

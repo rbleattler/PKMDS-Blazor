@@ -83,7 +83,10 @@ public partial class TrashBytesEditorDialog
         if (index < 0 || index >= _rawBytes.Length)
             return;
         if (byte.TryParse(hexValue, System.Globalization.NumberStyles.HexNumber, null, out var b))
+        {
             _rawBytes[index] = b;
+            UpdateTerminatorOffset();
+        }
     }
 
     private void ApplyUnderlayer()

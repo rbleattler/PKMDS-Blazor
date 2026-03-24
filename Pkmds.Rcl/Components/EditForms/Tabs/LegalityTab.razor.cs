@@ -214,6 +214,15 @@ public partial class LegalityTab : IDisposable
             changed |= EnsureTrashTerminator(Pokemon.NicknameTrash);
             changed |= EnsureTrashTerminator(Pokemon.OriginalTrainerTrash);
             changed |= EnsureTrashTerminator(Pokemon.HandlingTrainerTrash);
+
+            // Clear trash for fields explicitly flagged as needing to be empty (e.g. Gen 8 eggs).
+            // Checked per-field to avoid zeroing HT on traded eggs, which require non-empty trash.
+            if (HasInvalidResult(la, CheckIdentifier.Nickname, LegalityCheckResultCode.TrashBytesShouldBeEmpty))
+                changed |= ClearTrashAfterTerminator(Pokemon, Pokemon.NicknameTrash);
+            if (HasInvalidResult(la, CheckIdentifier.Trainer, LegalityCheckResultCode.TrashBytesShouldBeEmpty))
+                changed |= ClearTrashAfterTerminator(Pokemon, Pokemon.OriginalTrainerTrash);
+            if (HasInvalidResult(la, CheckIdentifier.Handler, LegalityCheckResultCode.TrashBytesShouldBeEmpty))
+                changed |= ClearTrashAfterTerminator(Pokemon, Pokemon.HandlingTrainerTrash);
         }
 
         if (changed)
@@ -238,6 +247,24 @@ public partial class LegalityTab : IDisposable
         trash[^2] = 0;
         return true;
     }
+
+    private static bool ClearTrashAfterTerminator(PKM pk, Span<byte> trash)
+    {
+        var termCharIdx = pk.GetStringTerminatorIndex(trash);
+        if (termCharIdx < 0)
+            return false;
+        var byteOffset = (termCharIdx + 1) * pk.GetBytesPerChar();
+        if (byteOffset >= trash.Length)
+            return false;
+        var trashRegion = trash[byteOffset..];
+        if (!trashRegion.ContainsAnyExcept<byte>(0))
+            return false;
+        trashRegion.Clear();
+        return true;
+    }
+
+    private static bool HasInvalidResult(LegalityAnalysis la, CheckIdentifier identifier, LegalityCheckResultCode code) =>
+        la.Results.Any(r => !r.Valid && r.Identifier == identifier && r.Result == code);
 
     private IReadOnlyList<(MoveResult Result, int SlotNumber)> GetInvalidMoves()
     {
