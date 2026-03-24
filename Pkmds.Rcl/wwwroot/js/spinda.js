@@ -5,10 +5,10 @@ window.spindaRenderer = {
     // Each spot moves 0–15 px from its base position (one nibble per axis).
     // The head-mask PNG clips any overflow to the head region.
     _spots: [
-        { cx: 208, cy: 172, rx: 50, ry: 46 }, // top-left (near left ear)
-        { cx: 298, cy: 162, rx: 50, ry: 46 }, // top-right (near right ear)
-        { cx: 186, cy: 284, rx: 56, ry: 50 }, // bottom-left (body)
-        { cx: 320, cy: 278, rx: 56, ry: 50 }, // bottom-right (body)
+        { cx: 205, cy: 165, rx: 34, ry: 32 }, // top-left (left ear)
+        { cx: 295, cy: 158, rx: 34, ry: 32 }, // top-right (right ear)
+        { cx: 188, cy: 280, rx: 38, ry: 36 }, // bottom-left (face/eye area)
+        { cx: 315, cy: 275, rx: 38, ry: 36 }, // bottom-right (face/eye area)
     ],
 
     /** Load an image from a URL; returns Promise<HTMLImageElement>. */
@@ -57,8 +57,7 @@ window.spindaRenderer = {
         spotsCanvas.height = SIZE;
         const sCtx = spotsCanvas.getContext('2d');
 
-        const outerColor = isShiny ? '#B7C75C' : '#FF3B4F';
-        const innerColor = isShiny ? '#96AA46' : '#DC2840';
+        const spotColor = isShiny ? '#B7C75C' : '#DC2840';
 
         for (let i = 0; i < 4; i++) {
             const base = this._spots[i];
@@ -70,16 +69,9 @@ window.spindaRenderer = {
             const cx = base.cx + nibbleX;
             const cy = base.cy + nibbleY;
 
-            // Outer ellipse.
             sCtx.beginPath();
             sCtx.ellipse(cx, cy, base.rx, base.ry, 0, 0, Math.PI * 2);
-            sCtx.fillStyle = outerColor;
-            sCtx.fill();
-
-            // Inner ellipse — slightly smaller and offset for a shaded look.
-            sCtx.beginPath();
-            sCtx.ellipse(cx - 4, cy - 4, base.rx * 0.60, base.ry * 0.60, 0, 0, Math.PI * 2);
-            sCtx.fillStyle = innerColor;
+            sCtx.fillStyle = spotColor;
             sCtx.fill();
         }
 
