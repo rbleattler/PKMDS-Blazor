@@ -1,0 +1,106 @@
+@inherits BasePkmdsComponent
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="@Typo.h6">Trash Bytes Editor — @FieldLabel</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (Pokemon is not null && _rawBytes.Length > 0)
+        {
+            <MudText Typo="@Typo.body2"
+                     Class="mb-1">
+                Current string: <strong>@CurrentString</strong>
+            </MudText>
+            <MudText Typo="@Typo.caption"
+                     Color="@Color.Secondary"
+                     Class="mb-3">
+                Bytes after the null terminator are "trash" bytes used by legality checks. Yellow cells are trash bytes.
+            </MudText>
+
+            <MudText Typo="@Typo.subtitle2"
+                     Class="mb-1">Raw Buffer</MudText>
+            <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 16px;">
+                @for (var i = 0; i < _rawBytes.Length; i++)
+                {
+                    var index = i;
+                    var isTrash = index >= _terminatorByteOffset;
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 1px;">
+                        <MudText Typo="@Typo.caption"
+                                 Style="@($"font-size: 9px; color: {(isTrash ? "var(--mud-palette-warning-darken)" : "var(--mud-palette-text-secondary)")}")">
+                            @($"0x{index:X2}")
+                        </MudText>
+                        <MudTextField T="string"
+                                      Value="@_rawBytes[index].ToString("X2")"
+                                      ValueChanged="@(v => SetByte(index, v))"
+                                      Style="@($"width: 46px; font-family: monospace; {(isTrash ? "background-color: var(--mud-palette-warning-hover);" : "")}")"
+                                      Variant="@Variant.Outlined"
+                                      Margin="@Margin.Dense"
+                                      MaxLength="2"/>
+                    </div>
+                }
+            </div>
+
+            <MudDivider Class="mb-3"/>
+
+            <MudStack Row
+                      Spacing="1">
+                <MudButton Variant="@Variant.Outlined"
+                           Color="@Color.Warning"
+                           StartIcon="@Icons.Material.Filled.Clear"
+                           Size="@Size.Small"
+                           OnClick="@ClearTrash">
+                    Clear Trash
+                </MudButton>
+            </MudStack>
+
+            <MudDivider Class="my-3"/>
+
+            <MudText Typo="@Typo.subtitle2"
+                     Class="mb-2">Apply Underlayer</MudText>
+            <MudText Typo="@Typo.caption"
+                     Color="@Color.Secondary"
+                     Class="mb-2">
+                Fills bytes after the current string's null terminator with a species name encoding, mirroring the trash bytes set during a typical catch.
+            </MudText>
+            <MudStack Spacing="2">
+                <MudAutocomplete T="@ComboItem"
+                                 Label="Species"
+                                 Variant="@Variant.Outlined"
+                                 Margin="@Margin.Dense"
+                                 Value="@AppService.GetSpeciesComboItem(_underlaySpecies)"
+                                 ValueChanged="@(item => _underlaySpecies = (ushort)(item?.Value ?? 1))"
+                                 SearchFunc="@SearchPokemonNames"
+                                 ToStringFunc="@(s => s?.Text)"/>
+                <MudSelect T="int"
+                           Label="Language"
+                           Variant="@Variant.Outlined"
+                           Margin="@Margin.Dense"
+                           @bind-Value="@_underlayLanguage">
+                    @foreach (var item in AppService.GetLanguageComboItems(Pokemon.Format, Pokemon.Context))
+                    {
+                        <MudSelectItem T="int"
+                                       Value="@item.Value">@item.Text</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudButton Variant="@Variant.Filled"
+                           Color="@Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Layers"
+                           OnClick="@ApplyUnderlayer">
+                    Apply Underlayer
+                </MudButton>
+            </MudStack>
+        }
+        else
+        {
+            <MudText Color="@Color.Secondary">No trash bytes available for this field.</MudText>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@Cancel"
+                   Variant="@Variant.Outlined">Cancel</MudButton>
+        <MudButton OnClick="@Save"
+                   Variant="@Variant.Filled"
+                   Color="@Color.Primary"
+                   Disabled="@(_rawBytes.Length == 0)">Save</MudButton>
+    </DialogActions>
+</MudDialog>

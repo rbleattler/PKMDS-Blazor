@@ -385,6 +385,9 @@ public partial class MainTab : IDisposable
         await DialogService.ShowAsync<PidEcDialog>("PID / EC Generator", parameters, options);
     }
 
+    private Task OpenTrashBytesEditor(StringSource field) =>
+        OpenTrashBytesEditorAsync(Pokemon, field);
+
     private void SetPokemonPid(string newPidHex)
     {
         if (Pokemon is null || !uint.TryParse(newPidHex, NumberStyles.HexNumber, null, out var parsedPid))

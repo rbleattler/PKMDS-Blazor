@@ -441,4 +441,7 @@ public partial class OtMiscTab : IDisposable
 
         return items;
     }
+
+    private Task OpenTrashBytesEditor(StringSource field) =>
+        OpenTrashBytesEditorAsync(Pokemon, field);
 }
