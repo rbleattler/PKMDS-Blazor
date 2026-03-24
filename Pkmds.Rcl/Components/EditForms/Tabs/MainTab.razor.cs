@@ -385,6 +385,19 @@ public partial class MainTab : IDisposable
         await DialogService.ShowAsync<PidEcDialog>("PID / EC Generator", parameters, options);
     }
 
+    private async Task OpenTrashBytesEditor(StringSource field)
+    {
+        var parameters = new DialogParameters<TrashBytesEditorDialog>
+        {
+            { x => x.Pokemon, Pokemon },
+            { x => x.Field, field },
+        };
+
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
+
+        await DialogService.ShowAsync<TrashBytesEditorDialog>("Trash Bytes Editor", parameters, options);
+    }
+
     private void SetPokemonPid(string newPidHex)
     {
         if (Pokemon is null || !uint.TryParse(newPidHex, NumberStyles.HexNumber, null, out var parsedPid))

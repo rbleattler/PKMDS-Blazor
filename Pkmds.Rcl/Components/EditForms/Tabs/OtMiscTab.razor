@@ -83,6 +83,14 @@
                 <LegalityIndicator
                     Severity="@(GetCheckResult(CheckIdentifier.Trainer)?.Judgement ?? PKHeX.Core.Severity.Valid)"
                     Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Trainer))"/>
+                @if (Pokemon.OriginalTrainerTrash.Length > 0)
+                {
+                    <MudTooltip Text="Edit trash bytes...">
+                        <MudIconButton Icon="@Icons.Material.Filled.EditNote"
+                                       Size="@Size.Small"
+                                       OnClick="@(() => OpenTrashBytesEditor(StringSource.OriginalTrainer))"/>
+                    </MudTooltip>
+                }
             </div>
         </MudItem>
 
@@ -196,6 +204,14 @@
                     <LegalityIndicator
                         Severity="@(GetCheckResult(CheckIdentifier.Handler)?.Judgement ?? PKHeX.Core.Severity.Valid)"
                         Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Handler))"/>
+                    @if (Pokemon.HandlingTrainerTrash.Length > 0)
+                    {
+                        <MudTooltip Text="Edit trash bytes...">
+                            <MudIconButton Icon="@Icons.Material.Filled.EditNote"
+                                           Size="@Size.Small"
+                                           OnClick="@(() => OpenTrashBytesEditor(StringSource.HandlingTrainer))"/>
+                        </MudTooltip>
+                    }
                 </div>
             </MudItem>
 

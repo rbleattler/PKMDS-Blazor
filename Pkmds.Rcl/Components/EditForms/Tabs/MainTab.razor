@@ -103,6 +103,14 @@
         <LegalityIndicator
             Severity="@(GetCheckResult(CheckIdentifier.Nickname)?.Judgement ?? PKHeX.Core.Severity.Valid)"
             Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Nickname))"/>
+        @if (Pokemon.NicknameTrash.Length > 0)
+        {
+            <MudTooltip Text="Edit trash bytes...">
+                <MudIconButton Icon="@Icons.Material.Filled.EditNote"
+                               Size="@Size.Small"
+                               OnClick="@(() => OpenTrashBytesEditor(StringSource.Nickname))"/>
+            </MudTooltip>
+        }
     </MudStack>
 
     @if (saveGeneration >= 2)
