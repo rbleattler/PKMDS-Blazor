@@ -54,6 +54,10 @@ public partial class MetTab : IDisposable
         }
     }
 
+    private string? OriginMarkSpriteFileName => Pokemon is { Format: >= 6 }
+        ? ImageHelper.GetOriginMarkSpriteFileName(OriginMarkUtil.GetOriginMark(Pokemon))
+        : null;
+
     private bool ShowGroundTile => Pokemon is IGroundTile && Pokemon.Gen4 && Pokemon.Format < 7;
 
     public void Dispose() =>

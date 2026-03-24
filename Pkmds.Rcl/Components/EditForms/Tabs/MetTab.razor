@@ -32,6 +32,15 @@
                 }
             </MudSelect>
         </MudStack>
+        @if (OriginMarkSpriteFileName is { } originSrc)
+        {
+            <MudImage Src="@originSrc"
+                      Alt="Origin Mark"
+                      title="Origin Mark"
+                      Width="24"
+                      ObjectFit="@ObjectFit.Contain"
+                      ObjectPosition="@ObjectPosition.Center"/>
+        }
         <LegalityIndicator
             Severity="@(GetCheckResult(CheckIdentifier.GameOrigin)?.Judgement ?? PKHeX.Core.Severity.Valid)"
             Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.GameOrigin))"/>
