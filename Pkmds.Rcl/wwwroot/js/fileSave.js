@@ -7,6 +7,9 @@ document.addEventListener('dragover', function (e) {
     e.preventDefault();
 }, false);
 
+// Use capture phase (true) so this fires before element handlers and is unaffected by
+// stopPropagation on slot drop handlers. Storing the FileList here so readDroppedFile
+// can access it after the async yield in the Blazor drop handler.
 document.addEventListener('drop', function (e) {
     // Always prevent default to stop browser from opening files
     e.preventDefault();
@@ -15,12 +18,27 @@ document.addEventListener('drop', function (e) {
     if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
         window.droppedFiles = e.dataTransfer.files;
     }
-}, false);
+}, true);
 
 // Capture dragstart events globally
 document.addEventListener('dragstart', function (e) {
     window.lastDragEvent = e;
 }, true);
+
+// Set drag-out data on the current dragstart event so the PKM file can be dragged to the OS desktop.
+// Uses the DownloadURL convention supported by Chrome/Edge (silently ignored by Firefox/Safari).
+window.setDragDownloadData = function (filename, base64data) {
+    if (!window.lastDragEvent) return false;
+    try {
+        const dataUrl = 'data:application/octet-stream;base64,' + base64data;
+        const downloadUrl = 'application/octet-stream:' + filename + ':' + dataUrl;
+        window.lastDragEvent.dataTransfer.setData('DownloadURL', downloadUrl);
+        return true;
+    } catch (e) {
+        console.warn('[setDragDownloadData] Failed:', e);
+        return false;
+    }
+};
 
 // Function to read a dropped file and return as base64
 window.readDroppedFile = async function (index) {

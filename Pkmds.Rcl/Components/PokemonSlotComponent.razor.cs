@@ -18,7 +18,7 @@ public partial class PokemonSlotComponent : IDisposable
     private SpriteStyle lastLoadedSpriteStyle;
 
     private bool? legalityValid;
-    // Removed isDragOverWithFile field - no longer showing drag indicators
+    private bool isDragOverWithExternalFile;
 
     [Parameter]
     [EditorRequired]
@@ -233,6 +233,17 @@ public partial class PokemonSlotComponent : IDisposable
 
         DragDropService.StartDrag(Pokemon, BoxNumber, SlotNumber, IsPartySlot);
         e.DataTransfer.EffectAllowed = "copyMove";
+
+        // Set drag-out data so the PKM file can be dragged to the OS desktop (Chrome/Edge only).
+        // Uses IJSInProcessRuntime for a synchronous call — required because dataTransfer can only
+        // be modified during the synchronous dragstart event handler.
+        Pokemon.RefreshChecksum();
+        var filename = AppService.GetCleanFileName(Pokemon);
+        var base64 = Convert.ToBase64String(Pokemon.DecryptedPartyData);
+        if (JSRuntime is IJSInProcessRuntime inProcessRuntime)
+        {
+            inProcessRuntime.Invoke<bool>("setDragDownloadData", filename, base64);
+        }
     }
 
     private void HandleDragEnd(DragEventArgs e) => DragDropService.ClearDrag();
@@ -268,16 +279,28 @@ public partial class PokemonSlotComponent : IDisposable
 
     private void HandleDragEnter(DragEventArgs e)
     {
-        // No visual indicators - just allow drop to work
+        // Show visual feedback when an external file is dragged over the slot
+        if (!DragDropService.IsDragging &&
+            e.DataTransfer.Types.Any(t => t.Equals("Files", StringComparison.OrdinalIgnoreCase)))
+        {
+            isDragOverWithExternalFile = true;
+            StateHasChanged();
+        }
     }
 
     private void HandleDragLeave(DragEventArgs e)
     {
-        // No visual indicators to clear
+        if (isDragOverWithExternalFile)
+        {
+            isDragOverWithExternalFile = false;
+            StateHasChanged();
+        }
     }
 
     private async Task HandleDrop(DragEventArgs e)
     {
+        isDragOverWithExternalFile = false;
+
         // Check for internal drag first - this takes priority over file drops
         if (DragDropService.IsDragging)
         {
@@ -374,6 +397,32 @@ public partial class PokemonSlotComponent : IDisposable
             if (pkm.GetType() != saveFile.PKMType)
             {
                 pokemon = EntityConverter.ConvertToType(pkm, saveFile.PKMType, out var c);
+
+                // In HaX mode, retry with AllowIncompatibleAll when the normal route fails.
+                // This mirrors PKHeX WinForms HaX behaviour and handles cases such as a
+                // species that exists only in a DLC region of the target game (e.g. Bibarel
+                // dropping into a Violet save before the Teal Mask DLC is detected).
+                if ((!c.IsSuccess || pokemon is null) && AppState.IsHaXEnabled)
+                {
+                    var previous = EntityConverter.AllowIncompatibleConversion;
+                    EntityConverter.AllowIncompatibleConversion = EntityCompatibilitySetting.AllowIncompatibleAll;
+                    try
+                    {
+                        pokemon = EntityConverter.ConvertToType(pkm, saveFile.PKMType, out c);
+                    }
+                    finally
+                    {
+                        EntityConverter.AllowIncompatibleConversion = previous;
+                    }
+
+                    if (c.IsSuccess && pokemon is not null)
+                    {
+                        Snackbar.Add(
+                            $"Warning: {c.GetDisplayString(pkm, saveFile.PKMType)}",
+                            Severity.Warning);
+                    }
+                }
+
                 if (!c.IsSuccess || pokemon is null)
                 {
                     Snackbar.Add($"Failed to convert Pokémon: {c.GetDisplayString(pkm, saveFile.PKMType)}",
@@ -419,7 +468,10 @@ public partial class PokemonSlotComponent : IDisposable
 
     private string GetDragClass()
     {
-        // No visual indicators - removed to prevent persistent trail issue
+        if (isDragOverWithExternalFile)
+        {
+            return "slot-file-drop";
+        }
 
         if (!DragDropService.IsDragging)
         {
@@ -434,7 +486,6 @@ public partial class PokemonSlotComponent : IDisposable
             return "slot-dragging";
         }
 
-        // No drop indicators
         return string.Empty;
     }
 }

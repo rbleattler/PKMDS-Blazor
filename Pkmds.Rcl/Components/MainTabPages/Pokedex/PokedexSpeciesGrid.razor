@@ -81,7 +81,7 @@
                  RowClassFunc="@((_, i) => i % 2 != 0
                                    ? "row-alt"
                                    : string.Empty)"
-                 Height="@($"calc(100vh - {(_regionalDexDefinitions.Count > 0 ? 560 : 510)}px)")">
+                 Style="@($"height: calc(100vh - {(_regionalDexDefinitions.Count > 0 ? 560 : 510)}px); height: calc(100dvh - {(_regionalDexDefinitions.Count > 0 ? 560 : 510)}px);")">
 
         <Columns>
             <PropertyColumn Property="@(r => r.SpeciesId)"
