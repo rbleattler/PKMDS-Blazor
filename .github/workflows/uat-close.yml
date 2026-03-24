@@ -38,7 +38,8 @@ jobs:
             --name pkmds-blazor-uat \
             --resource-group PKMDS-Blazor \
             --environment-name ${{ github.event.pull_request.number }} \
-            --yes
+            --yes \
+            --no-wait
         continue-on-error: true   # no-op if the UAT deploy was skipped for this PR
 
   # ── Sweep: delete any environments not belonging to an open PR ───────────────
@@ -86,6 +87,7 @@ jobs:
                 --name pkmds-blazor-uat \
                 --resource-group PKMDS-Blazor \
                 --environment-name "$env" \
-                --yes
+                --yes \
+                --no-wait
             fi
           done
