@@ -1,12 +1,12 @@
 namespace Pkmds.Rcl.Components.Dialogs;
 
-public record BugReportData(string Description, string? Email, string? Name, bool AttachSaveFile);
+public record BugReportData(string Description, string Email, string Name, bool AttachSaveFile);
 
 public partial class BugReportDialog
 {
     private string description = string.Empty;
-    private string? email;
-    private string? name;
+    private string email = string.Empty;
+    private string name = string.Empty;
     private bool attachSaveFile;
 
     [CascadingParameter]
@@ -22,4 +22,5 @@ public partial class BugReportDialog
 
     private void Submit() =>
         MudDialog.Close(DialogResult.Ok(new BugReportData(description, email, name, attachSaveFile)));
+
 }

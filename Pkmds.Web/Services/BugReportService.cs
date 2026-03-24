@@ -29,7 +29,7 @@ public class BugReportService(IAppState appState) : IBugReportService
         return scope;
     }
 
-    public async Task SubmitBugReportAsync(string description, string? email = null, string? name = null, bool attachSaveFile = false)
+    public async Task SubmitBugReportAsync(string description, string email, string name, bool attachSaveFile = false)
     {
         using var _ = SentrySdk.PushScope();
 

@@ -2,7 +2,7 @@ namespace Pkmds.Rcl.Services;
 
 public interface IBugReportService
 {
-    Task SubmitBugReportAsync(string description, string? email = null, string? name = null, bool attachSaveFile = false);
+    Task SubmitBugReportAsync(string description, string email, string name, bool attachSaveFile = false);
 
     /// <summary>
     /// Pushes a new Sentry scope with the raw file bytes attached. The attachment is

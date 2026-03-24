@@ -18,11 +18,13 @@
                           Required
                           Variant="@Variant.Outlined"/>
             <MudTextField @bind-Value="@email"
-                          Label="Email (optional, for follow-up)"
+                          Label="Email"
                           InputType="@InputType.Email"
+                          Required
                           Variant="@Variant.Outlined"/>
             <MudTextField @bind-Value="@name"
-                          Label="Name (optional)"
+                          Label="Name"
+                          Required
                           Variant="@Variant.Outlined"/>
             <MudSwitch @bind-Value="@attachSaveFile"
                        Label="Attach current save file"
@@ -46,7 +48,7 @@
         <MudButton OnClick="@Submit"
                    Color="@Color.Primary"
                    Variant="@Variant.Filled"
-                   Disabled="@(string.IsNullOrWhiteSpace(description))">
+                   Disabled="@(string.IsNullOrWhiteSpace(description) || string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(name))">
             Submit Report
         </MudButton>
     </DialogActions>
