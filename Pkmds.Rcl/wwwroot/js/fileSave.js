@@ -22,6 +22,21 @@ document.addEventListener('dragstart', function (e) {
     window.lastDragEvent = e;
 }, true);
 
+// Set drag-out data on the current dragstart event so the PKM file can be dragged to the OS desktop.
+// Uses the DownloadURL convention supported by Chrome/Edge (silently ignored by Firefox/Safari).
+window.setDragDownloadData = function (filename, base64data) {
+    if (!window.lastDragEvent) return false;
+    try {
+        const dataUrl = 'data:application/octet-stream;base64,' + base64data;
+        const downloadUrl = 'application/octet-stream:' + filename + ':' + dataUrl;
+        window.lastDragEvent.dataTransfer.setData('DownloadURL', downloadUrl);
+        return true;
+    } catch (e) {
+        console.warn('[setDragDownloadData] Failed:', e);
+        return false;
+    }
+};
+
 // Function to read a dropped file and return as base64
 window.readDroppedFile = async function (index) {
     if (!window.droppedFiles || index >= window.droppedFiles.length) {

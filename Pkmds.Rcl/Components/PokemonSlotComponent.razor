@@ -30,11 +30,13 @@
                                : string.Empty)"
                     type="image/png"
                     data="@ImageHelper.GetPokemonSpriteFilename(Pokemon)"
-                    title="@title">
+                    title="@title"
+                    draggable="false">
                 <img class="pkm-sprite w-full h-auto object-contain block"
                      src="@ImageHelper.PokemonFallbackImageFileName"
                      title="@title"
-                     alt="@title">
+                     alt="@title"
+                     draggable="false">
             </object>
             @if (highResUrl is not null)
             {
@@ -43,6 +45,7 @@
                      src="@highResUrl"
                      title="@title"
                      alt="@title"
+                     draggable="false"
                      @onload="OnHighResSpriteLoaded"
                      @onerror="OnHighResSpriteError"/>
             }
