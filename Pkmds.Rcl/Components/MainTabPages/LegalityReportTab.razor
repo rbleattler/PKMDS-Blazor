@@ -102,18 +102,19 @@
 
             </MudButtonGroup>
 
-            <div style="overflow-y: auto; max-height: calc(100vh - 340px); max-height: calc(100dvh - 340px);">
-                <MudTable T="@LegalityReportEntry"
-                          Items="@legalityReportEntries"
-                          Filter="@TableFilterFunction"
-                          Dense
-                          Hover
-                          Bordered
-                          Striped
-                          SortLabel="Sort By"
-                          OnRowClick="@OnRowClickAsync"
-                          RowStyleFunc="@((_, _) => "cursor: pointer;")"
-                          RowsPerPage="25">
+            <MudTable T="@LegalityReportEntry"
+                      Items="@legalityReportEntries"
+                      Filter="@TableFilterFunction"
+                      Dense
+                      Hover
+                      Bordered
+                      Striped
+                      FixedHeader
+                      Height="calc(100dvh - 340px)"
+                      SortLabel="Sort By"
+                      OnRowClick="@OnRowClickAsync"
+                      RowStyleFunc="@((_, _) => "cursor: pointer;")"
+                      RowsPerPage="25">
 
                     <HeaderContent>
 
@@ -175,7 +176,6 @@
                     </PagerContent>
 
                 </MudTable>
-            </div>
         }
     }
 

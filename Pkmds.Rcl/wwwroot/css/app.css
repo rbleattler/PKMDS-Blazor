@@ -196,11 +196,28 @@ body, html {
         overflow: hidden;
     }
 
-    /* Search / EncounterDB filter column: independently scrollable so all expansion
-       panels are reachable regardless of how many are open. */
+    /* Search / EncounterDB filter column: flex column so the action buttons are always
+       visible at the bottom and only the expansion panels scroll. Height is sized to
+       fit within the tab panel's overflow:hidden boundary. */
     .search-filter-panel {
+        display: flex;
+        flex-direction: column;
+        height: calc(100dvh - 160px);
+        overflow: hidden;
+    }
+
+    /* Scrollable region that holds the expansion panels. */
+    .search-filter-panel-scroll {
+        flex: 1;
         overflow-y: auto;
-        max-height: calc(100dvh - 120px);
+        min-height: 0;
+    }
+
+    /* Action buttons — always visible at the bottom, never scrolled out of view. */
+    .search-filter-panel-actions {
+        flex-shrink: 0;
+        padding-top: 8px;
+        padding-bottom: 4px;
     }
 
     /* Mystery Gifts grid: increase offset to ensure the container fits within the
