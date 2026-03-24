@@ -95,7 +95,7 @@
                 </MudList>
             }
 
-            @if (HasRibbonIssues || HasMoveIssues || HasRelearnMoveIssues || HasBallIssues || HasMetLocationIssues)
+            @if (HasRibbonIssues || HasMoveIssues || HasRelearnMoveIssues || HasBallIssues || HasMetLocationIssues || CanAutoFixTrashBytes || HasPalParkTrashByteIssues)
             {
                 <MudText Typo="@Typo.subtitle2"
                          Class="mt-2">Quick Fixes
@@ -159,6 +159,28 @@
                                    OnClick="@SuggestRelearnMoves">
                             Suggest Relearn Moves
                         </MudButton>
+                    }
+                    @if (CanAutoFixTrashBytes)
+                    {
+                        <MudButton Variant="@Variant.Outlined"
+                                   Color="@Color.Warning"
+                                   StartIcon="@Icons.Material.Filled.AutoFixHigh"
+                                   Size="@Size.Small"
+                                   OnClick="@FixTrashBytes">
+                            Fix Trash Bytes
+                        </MudButton>
+                    }
+                    @if (HasPalParkTrashByteIssues)
+                    {
+                        <MudTooltip Text="PalPark transfer trash bytes cannot be auto-fixed. The original Gen 3 string encoding bytes are not recoverable post-transfer.">
+                            <MudButton Variant="@Variant.Outlined"
+                                       Color="@Color.Default"
+                                       StartIcon="@Icons.Material.Filled.Info"
+                                       Size="@Size.Small"
+                                       Disabled>
+                                Fix Trash Bytes
+                            </MudButton>
+                        </MudTooltip>
                     }
                 </MudStack>
             }

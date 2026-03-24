@@ -47,6 +47,28 @@ public partial class LegalityTab : IDisposable
                                              Identifier: CheckIdentifier.Level or CheckIdentifier.Encounter
                                          });
 
+    private bool HasTrashByteIssues => Analysis is { } la &&
+                                       la.Results.Any(r => !r.Valid && IsTrashByteResultCode(r.Result));
+
+    // PalPark trash bytes (Gen 3 → Gen 4 transfer) are not deterministically recoverable.
+    private bool HasPalParkTrashByteIssues => HasTrashByteIssues &&
+                                              Pokemon is { Format: 4 } &&
+                                              Analysis is { } la &&
+                                              la.EncounterMatch.Generation == 3;
+
+    private bool CanAutoFixTrashBytes => HasTrashByteIssues &&
+                                         Pokemon is not null &&
+                                         Analysis is { } la &&
+                                         (la.EncounterMatch is PCD ||
+                                          Pokemon.Format >= 8 ||
+                                          Pokemon.Context == EntityContext.Gen7b);
+
+    private static bool IsTrashByteResultCode(LegalityCheckResultCode code) => code is
+        LegalityCheckResultCode.TrashBytesExpected or
+        LegalityCheckResultCode.TrashBytesMismatchInitial or
+        LegalityCheckResultCode.TrashBytesMissingTerminatorFinal or
+        LegalityCheckResultCode.TrashBytesShouldBeEmpty;
+
     public void Dispose() =>
         RefreshService.OnAppStateChanged -= StateHasChanged;
 
@@ -167,6 +189,54 @@ public partial class LegalityTab : IDisposable
 
         RefreshService.Refresh();
         Snackbar.Add("Met location and level updated. Click Save to apply changes.", Severity.Success);
+    }
+
+    private void FixTrashBytes()
+    {
+        if (Pokemon is null || Analysis is not { } la)
+        {
+            return;
+        }
+
+        var enc = la.EncounterMatch;
+        var changed = false;
+
+        if (enc is PCD pcd)
+        {
+            var gift = pcd.Gift.PK;
+            gift.OriginalTrainerTrash.CopyTo(Pokemon.OriginalTrainerTrash);
+            if (pcd.Species == Pokemon.Species) // not evolved — nickname trash still relevant
+                gift.NicknameTrash.CopyTo(Pokemon.NicknameTrash);
+            changed = true;
+        }
+        else if (Pokemon.Format >= 8 || Pokemon.Context == EntityContext.Gen7b)
+        {
+            changed |= EnsureTrashTerminator(Pokemon.NicknameTrash);
+            changed |= EnsureTrashTerminator(Pokemon.OriginalTrainerTrash);
+            changed |= EnsureTrashTerminator(Pokemon.HandlingTrainerTrash);
+        }
+
+        if (changed)
+        {
+            Pokemon.RefreshChecksum();
+            RefreshService.Refresh();
+            Snackbar.Add("Trash bytes fixed. Click Save to apply changes.", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add("No auto-fixable trash byte issues found.", Severity.Warning);
+        }
+    }
+
+    private static bool EnsureTrashTerminator(Span<byte> trash)
+    {
+        if (trash.Length < 2)
+            return false;
+        if (trash[^1] == 0 && trash[^2] == 0)
+            return false;
+        trash[^1] = 0;
+        trash[^2] = 0;
+        return true;
     }
 
     private IReadOnlyList<(MoveResult Result, int SlotNumber)> GetInvalidMoves()
