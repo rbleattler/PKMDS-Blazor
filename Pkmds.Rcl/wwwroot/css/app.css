@@ -189,10 +189,24 @@ body, html {
         overflow: hidden;
     }
 
-    /* Pokédex tab content: scrolls as one unit */
+    /* Pokédex tab content: inner MudDataGrid owns its scroll (FixedHeader + Virtualize),
+       so the outer container must not add a second scrollbar. */
     .pokedex-tab-content {
         height: 100%;
+        overflow: hidden;
+    }
+
+    /* Search / EncounterDB filter column: independently scrollable so all expansion
+       panels are reachable regardless of how many are open. */
+    .search-filter-panel {
         overflow-y: auto;
+        max-height: calc(100dvh - 120px);
+    }
+
+    /* Mystery Gifts grid: increase offset to ensure the container fits within the
+       tab panel's overflow:hidden boundary and buttons are never clipped. */
+    .mystery-gift-grid {
+        max-height: calc(100dvh - 380px);
     }
 
     .party-box-grid.mud-grid {
