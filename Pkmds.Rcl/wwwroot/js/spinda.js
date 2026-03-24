@@ -4,15 +4,18 @@ window.spindaRenderer = {
     // Base spot centers and semi-axis radii on the 512×512 Home sprite.
     // Each spot moves 0–15 px from its base position (one nibble per axis).
     // The head-mask PNG clips any overflow to the head region.
-    // Base positions calibrated against the pokéos.com reference for pattern
-    // 0x88888888 (all nibbles = 8): measured center − 8 gives the base.
-    // Spinda's HOME sprite is asymmetric: left ear is high-left, right ear is
-    // lower-right, and both eyes sit well below the ears.
+    // Base positions derived from actual pixel analysis of 327-head.png.
+    // The mask has 4 opaque blobs; their centroids at nibble=8 give the target
+    // center, so base = centroid − 8. Radii are ~60% of each blob's fill radius.
+    //   top-left  blob centroid (184,148) → base (176,140), bounds x=121-280 y=66-216
+    //   top-right blob centroid (373,176) → base (365,168), bounds x=281-439 y=122-216
+    //   bot-left  blob centroid (214,284) → base (206,276), bounds x=133-280 y=217-366
+    //   bot-right blob centroid (319,275) → base (311,267), bounds x=281-411 y=217-365
     _spots: [
-        { cx: 157, cy:  94, rx: 44, ry: 42 }, // spot 0: left ear (high, far left)
-        { cx: 386, cy: 157, rx: 44, ry: 42 }, // spot 1: right ear (lower, far right)
-        { cx: 137, cy: 359, rx: 46, ry: 44 }, // spot 2: left eye
-        { cx: 302, cy: 381, rx: 46, ry: 44 }, // spot 3: right eye
+        { cx: 176, cy: 140, rx: 44, ry: 42 }, // spot 0: left ear
+        { cx: 365, cy: 168, rx: 40, ry: 38 }, // spot 1: right ear
+        { cx: 206, cy: 276, rx: 52, ry: 50 }, // spot 2: left eye (largest blob)
+        { cx: 311, cy: 267, rx: 40, ry: 38 }, // spot 3: right eye
     ],
 
     /** Load an image from a URL; returns Promise<HTMLImageElement>. */
