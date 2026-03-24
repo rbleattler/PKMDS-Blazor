@@ -7,6 +7,9 @@ document.addEventListener('dragover', function (e) {
     e.preventDefault();
 }, false);
 
+// Use capture phase (true) so this fires before element handlers and is unaffected by
+// stopPropagation on slot drop handlers. Storing the FileList here so readDroppedFile
+// can access it after the async yield in the Blazor drop handler.
 document.addEventListener('drop', function (e) {
     // Always prevent default to stop browser from opening files
     e.preventDefault();
@@ -15,7 +18,7 @@ document.addEventListener('drop', function (e) {
     if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
         window.droppedFiles = e.dataTransfer.files;
     }
-}, false);
+}, true);
 
 // Capture dragstart events globally
 document.addEventListener('dragstart', function (e) {

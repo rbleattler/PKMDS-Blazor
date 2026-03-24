@@ -238,7 +238,7 @@ public partial class PokemonSlotComponent : IDisposable
         // Uses IJSInProcessRuntime for a synchronous call — required because dataTransfer can only
         // be modified during the synchronous dragstart event handler.
         Pokemon.RefreshChecksum();
-        var filename = $"{AppService.GetCleanFileName(Pokemon)}.{Pokemon.Extension}";
+        var filename = AppService.GetCleanFileName(Pokemon);
         var base64 = Convert.ToBase64String(Pokemon.DecryptedPartyData);
         ((IJSInProcessRuntime)JSRuntime).Invoke<bool>("setDragDownloadData", filename, base64);
     }
@@ -394,6 +394,32 @@ public partial class PokemonSlotComponent : IDisposable
             if (pkm.GetType() != saveFile.PKMType)
             {
                 pokemon = EntityConverter.ConvertToType(pkm, saveFile.PKMType, out var c);
+
+                // In HaX mode, retry with AllowIncompatibleAll when the normal route fails.
+                // This mirrors PKHeX WinForms HaX behaviour and handles cases such as a
+                // species that exists only in a DLC region of the target game (e.g. Bibarel
+                // dropping into a Violet save before the Teal Mask DLC is detected).
+                if ((!c.IsSuccess || pokemon is null) && AppState.IsHaXEnabled)
+                {
+                    var previous = EntityConverter.AllowIncompatibleConversion;
+                    EntityConverter.AllowIncompatibleConversion = EntityCompatibilitySetting.AllowIncompatibleAll;
+                    try
+                    {
+                        pokemon = EntityConverter.ConvertToType(pkm, saveFile.PKMType, out c);
+                    }
+                    finally
+                    {
+                        EntityConverter.AllowIncompatibleConversion = previous;
+                    }
+
+                    if (c.IsSuccess && pokemon is not null)
+                    {
+                        Snackbar.Add(
+                            $"Warning: {c.GetDisplayString(pkm, saveFile.PKMType)}",
+                            Severity.Warning);
+                    }
+                }
+
                 if (!c.IsSuccess || pokemon is null)
                 {
                     Snackbar.Add($"Failed to convert Pokémon: {c.GetDisplayString(pkm, saveFile.PKMType)}",
