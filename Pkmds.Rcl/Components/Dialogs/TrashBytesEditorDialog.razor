@@ -32,7 +32,7 @@
                         <MudTextField T="string"
                                       Value="@_rawBytes[index].ToString("X2")"
                                       ValueChanged="@(v => SetByte(index, v))"
-                                      Style="@($"width: 38px; font-family: monospace; {(isTrash ? "background-color: var(--mud-palette-warning-hover);" : "")}")"
+                                      Style="@($"width: 46px; font-family: monospace; {(isTrash ? "background-color: var(--mud-palette-warning-hover);" : "")}")"
                                       Variant="@Variant.Outlined"
                                       Margin="@Margin.Dense"
                                       MaxLength="2"/>
