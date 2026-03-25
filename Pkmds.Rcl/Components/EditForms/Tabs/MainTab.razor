@@ -352,10 +352,11 @@
             <MudAutocomplete T="@ComboItem"
                              Label="Held Item"
                              Variant="@Variant.Outlined"
+                             Clearable
                              @bind-Value:get="@(AppService.GetItemComboItem(Pokemon.HeldItem))"
                              @bind-Value:set="@(item =>
                                               {
-                                                  Pokemon.HeldItem = item.Value;
+                                                  Pokemon.HeldItem = item?.Value ?? 0;
                                                   AppService.LoadPokemonStats(Pokemon);
                                                   RefreshService.Refresh();
                                               })"
