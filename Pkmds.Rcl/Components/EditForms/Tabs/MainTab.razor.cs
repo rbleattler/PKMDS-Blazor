@@ -28,6 +28,8 @@ public partial class MainTab : IDisposable
     private bool IsFlabebebFamily =>
         Pokemon?.Species is (ushort)Species.Flabébé or (ushort)Species.Floette or (ushort)Species.Florges;
 
+    private bool IsSpinda => Pokemon?.Species == (ushort)Species.Spinda;
+
     public void Dispose() =>
         RefreshService.OnAppStateChanged -= Refresh;
 
@@ -383,6 +385,18 @@ public partial class MainTab : IDisposable
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
 
         await DialogService.ShowAsync<PidEcDialog>("PID / EC Generator", parameters, options);
+    }
+
+    private async Task OpenSpindaPatternDialog()
+    {
+        var parameters = new DialogParameters<SpindaPatternDialog> { { x => x.Pokemon, Pokemon } };
+        var dialog = await DialogService.ShowAsync<SpindaPatternDialog>("Spinda Spot Pattern", parameters, AppearanceDialogOptions);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+        {
+            AppService.LoadPokemonStats(Pokemon);
+            RefreshService.Refresh();
+        }
     }
 
     private Task OpenTrashBytesEditor(StringSource field) =>

@@ -1,0 +1,52 @@
+@inherits BasePkmdsComponent
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="@Typo.h6">Spinda Spot Pattern</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (Pokemon is not null)
+        {
+            <MudStack AlignItems="@AlignItems.Center"
+                      Spacing="2">
+                <MudSwitch T="@bool"
+                           @bind-Value="isPreviewShiny"
+                           @bind-Value:after="@RenderAsync"
+                           Color="@Color.Warning"
+                           Label="Shiny Preview"
+                           Class="mb-1"/>
+
+                <canvas @ref="_canvas"
+                        style="width:256px; height:256px; image-rendering:pixelated;"
+                        width="512"
+                        height="512"/>
+
+                <MudTextField T="@string"
+                              Label="Pattern"
+                              @bind-Value="_patternHex"
+                              @bind-Value:after="@OnPatternHexChanged"
+                              Adornment="@Adornment.Start"
+                              AdornmentText="0x"
+                              MaxLength="8"
+                              Variant="@Variant.Outlined"
+                              Class="mud-width-full"/>
+            </MudStack>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@Randomize"
+                   Variant="@Variant.Outlined"
+                   StartIcon="@Icons.Material.Filled.Shuffle">
+            Randomize
+        </MudButton>
+        <MudButton OnClick="@Cancel"
+                   Variant="@Variant.Outlined">
+            Cancel
+        </MudButton>
+        <MudButton OnClick="@Confirm"
+                   Variant="@Variant.Filled"
+                   Color="@Color.Primary">
+            Apply
+        </MudButton>
+    </DialogActions>
+</MudDialog>

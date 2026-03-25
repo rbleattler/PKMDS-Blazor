@@ -45,6 +45,16 @@
                    Class="mb-2">
             Generate PID / EC...
         </MudButton>
+
+        @if (IsSpinda)
+        {
+            <MudButton OnClick="@OpenSpindaPatternDialog"
+                       Variant="@Variant.Outlined"
+                       StartIcon="@Icons.Material.Filled.Pets"
+                       Class="mb-2">
+                View Spot Pattern...
+            </MudButton>
+        }
     }
 
     @* ReSharper disable once CSharpWarnings::CS8603 *@
