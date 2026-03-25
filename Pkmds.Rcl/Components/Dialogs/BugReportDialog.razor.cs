@@ -1,13 +1,19 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Pkmds.Rcl.Components.Dialogs;
 
 public record BugReportData(string Description, string Email, string Name, bool AttachSaveFile);
 
 public partial class BugReportDialog
 {
+    private static readonly EmailAddressAttribute EmailValidator = new();
+
     private string description = string.Empty;
     private string email = string.Empty;
     private string name = string.Empty;
     private bool attachSaveFile;
+
+    private bool IsEmailValid => EmailValidator.IsValid(email);
 
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; } = null!;
