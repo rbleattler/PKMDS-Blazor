@@ -133,6 +133,17 @@ body, html {
     overflow-x: hidden;
 }
 
+.legality-report-table,
+.encounter-db-table {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.legality-report-table .mud-table-container,
+.encounter-db-table .mud-table-container {
+    overflow-x: hidden;
+}
+
 /* Virtualizer-safe alternating row stripe — driven by RowClassFunc on logical data
    index so the colour is stable during virtual scroll (nth-child is DOM-position-based
    and gets out of sync as rows are recycled). */
