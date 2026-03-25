@@ -121,10 +121,16 @@ body, html {
     align-self: center;
 }
 
+.bag-data-grid {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
 .bag-data-grid .mud-table-container {
     max-height: calc(100vh - 380px);
     max-height: calc(100dvh - 380px);
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
 /* Virtualizer-safe alternating row stripe — driven by RowClassFunc on logical data
