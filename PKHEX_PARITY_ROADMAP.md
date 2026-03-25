@@ -2,7 +2,7 @@
 
 This roadmap outlines the path to achieving 100% feature parity with PKHeX. Tasks are broken down into actionable items organized by feature category and priority.
 
-**Last Updated:** 2026-03-03 (Box pop-out dialogs plan corrected to §6.2, now tracks #352; cross-save Pokémon transfer planned — §5.8, tracks #14; Bag performance plan added — §7.2; Damage Calculator planned — §5.7; Feature Documentation planned — §4.5; One-Touch Evolve planned — §1.1, tracks #448; Theme-aware loading screen + three-way toggle implemented — §4.1, tracks #449)
+**Last Updated:** 2026-03-25 (One-Touch Evolve implemented — §1.1, tracks #448; Gen-Specific editor tab implemented — §1.1 #419; Box pop-out dialogs implemented — §6.2, tracks #352; Pokédex per-species grid + LA research editor implemented — §2.5, tracks #414/#437/#438/#439; Fix Load Pokémon/Gift File slot behaviour implemented — §4.1, tracks #445; Trash bytes auto-fixer added to legality tab — tracks #542; Spinda spot preview implemented — tracks #554; Manic EMU `.3ds.sav` ZIP round-trip support added — tracks #537; Bag virtualization enabled via MudBlazor 9.2.0 — §7.2a, tracks #454)
 
 ---
 
@@ -37,6 +37,12 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - **Legality Checker** - Full `LegalityAnalysis` integration: per-check detail view, color-coded results, full verbose report, slot-level valid/warn icon overlays, one-click fix buttons (ball, met location, moves, TechRecord), and a batch "Legality Report" tab that sweeps all party and box Pokémon with a sortable/filterable table, aggregate Legal/Fishy/Illegal counts, and jump-to-slot navigation
 - **Advanced Search** - Multi-criteria search tab sweeping all party and box slots with filters for species, shiny, nature, ability, held item, ball, origin game, gender, level range, IV/EV floors, moves (any/all), Hidden Power type, OT name/TID, language, ribbons/marks, and legal status; saved filters via localStorage; batch Showdown text export
 - **Encounter Database** - Encounter DB tab backed by PKHeX.Core's `EncounterMovesetGenerator`; filter by species, game version, level range, shiny lock, and encounter type (Wild, Static, Mystery Gift, Trade, Egg); sortable results table with type-coloured chips and location display; per-encounter detail panel with "Generate Legal Pokémon" action that places a legal PKM into the selected slot
+- **Gen-Specific Editor Tab** — Generation-specific Pokémon fields consolidated into a dedicated tab that appears only when applicable: Gen 3 Colo/XD Shadow fields (`IsShadow` read-only, `ShadowID`, `Purification`), Gen 4 HGSS ShinyLeaf (5 leaf checkboxes + Crown flag) and `WalkingMood`, Gen 5 `NSparkle` and `PokeStarFame`, LGPE `Spirit`, `Mood`, and full received timestamp; Gen 8 SwSh `DynamaxLevel`/`CanGigantamax`, Gen 8 LA `IsNoble`/`IsAlpha`, and Gen 9 `TeraTypeOriginal`/`TeraTypeOverride` consolidated here from StatsTab
+- **One-Touch Evolve** — Evolve button on Main tab; single-path evolutions apply instantly; branching evolutions (Eevee, Slowpoke, etc.) open a picker dialog with sprite, localized name, and method label; Nincada→Ninjask offers Shedinja placement; Gen 2 trade evolutions show the required held item; nickname sync on evolve
+- **Box Pop-Out Dialogs** — `BoxViewerDialog` (single-box pop-out with independent prev/next navigation, "View All Boxes" button) and `BoxListDialog` (all-boxes responsive grid with per-box ⇄ swap buttons); both subscribe to live box state; triggered from box nav bar; `SwapBoxes` added to `IAppService`
+- **Pokédex Per-Species Grid** — Searchable, paginated per-species Seen/Caught checkbox grid (replacing count-only view) with full per-game dex filtering (LGPE 153-species, SWSH Galar-only, LA Hisui-only, SV regional dexes, ZA personal table); search by name or Pokédex number; Gen 8 LA per-species research task editor dialog (all task types, Clear All Research)
+- **Trash Bytes Auto-Fixer** — One-click trash-bytes cleaner in the legality tab (clears junk bytes in string fields to avoid legality flags)
+- **Manic EMU `.3ds.sav` Round-Trip** — Auto-detects and unpacks Manic EMU's ZIP-based `.3ds.sav` format on load; repacks to the same ZIP structure on export so saves can be re-imported directly
 
 ---
 
@@ -87,10 +93,11 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - [x] Create unit tests for contest stats
 
 #### Form/Appearance Editor
-**Status:** ⚠️ Partial (basic form support exists)  
-**Complexity:** Medium  
+**Status:** ⚠️ Partial (basic form support exists; Spinda spot preview implemented — #554)
+**Complexity:** Medium
 **Tasks:**
 - [ ] Enhance form selection UI with visual previews
+- [x] **Spinda spot pattern preview** — renders Spinda's 4 unique spot positions from its PID using bundled sprite assets; shown inline in the Pokémon editor (closes #554)
 - [ ] Add Alcremie decoration editor (Gen 8)
 - [ ] Add Vivillon pattern editor
 - [ ] Add Furfrou trim editor
@@ -171,20 +178,20 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - [x] **Favorite toggle** (`IFavorite.IsFavorite`) — clickable toggle; shown whenever the entity implements `IFavorite`: `PB7` (LGPE), `G8PKM` base (PK8 SWSH + PB8 BDSP), `PA8` (LA), `PK9`/`PA9` (SV); marks the Pokémon as a favorite in the PC box; in PKHeX, `ClickFavorite` uses `Entity is IFavorite` so it works for all these formats, not just LGPE
 
 #### Generation-Specific Fields Not Yet Implemented
-**Status:** ❌ Not Implemented
+**Status:** ⚠️ Partial (most fields implemented in Gen-Specific tab — #419; `PK4.NSparkle` still missing)
 **Complexity:** Low
 **Tracks:** #419
 **PKHeX Reference:** `PKMEditor.cs` Cosmetic tab + generation-specific controls
 **Note:** Stat Nature, Tera Types, Is Alpha, Is Noble, Can Gigantamax, Dynamax Level, AVs, GVs, CP, and N's Sparkle (PK5) are all ✅ already implemented. The items below are the remaining gaps.
 **Tasks:**
 - [ ] **Gen 4 HGSS National Park Sparkle** (`PK4.NSparkle`) — boolean flag for Bug-Catching Contest winner; HG/SS only *(N's Sparkle for PK5 is already implemented; PK4's distinct use of the same property is not)*
-- [ ] **Gen 4 HGSS Shiny Leaves** (`PK4.ShinyLeaf`) — 6-part panel: 5 leaf type checkboxes + crown flag; HG/SS only
-- [ ] **Gen 4 HGSS Walking Mood** (`G4PKM.WalkingMood`) — walking partner mood value; HG/SS only
-- [ ] **Gen 5 B2W2 PokéStar Fame** (`PK5.PokeStarFame`) — PokéStar Studios fame value; B2W2 only
-- [ ] **Gen 7b LGPE Spirit** (`PB7.Spirit`) — Go Park spirit value; LGPE only
-- [ ] **Gen 7b LGPE Mood** (`PB7.Mood`) — partner Pokémon mood; LGPE only
-- [ ] **Gen 7b LGPE Received Date/Time** (`PB7.ReceivedYear/Month/Day/Hour/Minute/Second`) — full timestamp of when the Pokémon was received from GO Park; LGPE only
-- [ ] **Gen 3 Colosseum/XD Shadow fields** (`IShadowCapture`: `ShadowID`, `Purification`, `IsShadow`) — Shadow Pokémon identification and purification counter; Colo/XD only
+- [x] **Gen 4 HGSS Shiny Leaves** (`PK4.ShinyLeaf`) — 6-part panel: 5 leaf type checkboxes + crown flag; HG/SS only
+- [x] **Gen 4 HGSS Walking Mood** (`G4PKM.WalkingMood`) — walking partner mood value; HG/SS only
+- [x] **Gen 5 B2W2 PokéStar Fame** (`PK5.PokeStarFame`) — PokéStar Studios fame value; B2W2 only
+- [x] **Gen 7b LGPE Spirit** (`PB7.Spirit`) — Go Park spirit value; LGPE only
+- [x] **Gen 7b LGPE Mood** (`PB7.Mood`) — partner Pokémon mood; LGPE only
+- [x] **Gen 7b LGPE Received Date/Time** (`PB7.ReceivedYear/Month/Day/Hour/Minute/Second`) — full timestamp of when the Pokémon was received from GO Park; LGPE only
+- [x] **Gen 3 Colosseum/XD Shadow fields** (`IShadowCapture`: `ShadowID`, `Purification`, `IsShadow`) — Shadow Pokémon identification and purification counter; Colo/XD only
 
 #### Extra Bytes Editor
 **Status:** ❌ Not Implemented
@@ -195,25 +202,27 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - [ ] Add raw byte editor: offset selector (hex) + value field (0–255) for any byte in the Pokémon's data that is not exposed by a named field; useful for accessing undocumented generation-specific bytes
 
 #### One-Touch Evolve
-**Status:** ❌ Not Implemented
+**Status:** ✅ Implemented
 **Complexity:** Medium
 **Priority:** Medium
 **Tracks:** #448
 **PKHeX Reference:** `EvolutionTree.GetEvolutionTree(context)` / `tree.Forward.GetForward(species, form)` — no direct WinForms UI equivalent; this is a PKMDS quality-of-life addition
 **Tasks:**
-- [ ] Add `IAppService.GetDirectEvolutions(PKM)` returning `IReadOnlyList<EvolutionMethod>` — queries `EvolutionTree.GetEvolutionTree(pkm.Context).Forward.GetForward(pkm.Species, pkm.Form)` and filters out zero-species entries
-- [ ] Add **Evolve** button to `MainTab.razor`, visible only when `GetDirectEvolutions` returns at least one result and `!Pokemon.IsEgg`
-- [ ] Single-evolution path (e.g., Caterpie → Metapod): evolve immediately on button click
-- [ ] Branching-evolution path (e.g., Eevee, Slowpoke, Tyrogue, Wurmple): open `EvolvePickerDialog` showing each branch with sprite, localized species name, and method label (e.g., "Level 36", "Use Fire Stone")
-- [ ] `ApplyEvolution(EvolutionMethod)` logic:
+- [x] Add `IAppService.GetDirectEvolutions(PKM)` returning `IReadOnlyList<EvolutionMethod>` — queries `EvolutionTree.GetEvolutionTree(pkm.Context).Forward.GetForward(pkm.Species, pkm.Form)` and filters out zero-species entries
+- [x] Add **Evolve** button to `MainTab.razor`, visible only when `GetDirectEvolutions` returns at least one result and `!Pokemon.IsEgg`
+- [x] Single-evolution path (e.g., Caterpie → Metapod): evolve immediately on button click
+- [x] Branching-evolution path (e.g., Eevee, Slowpoke, Tyrogue, Wurmple): open `EvolvePickerDialog` showing each branch with sprite, localized species name, and method label (e.g., "Level 36", "Use Fire Stone")
+- [x] `ApplyEvolution(EvolutionMethod)` logic:
   - Set `pkm.Species` and `pkm.Form` via `method.GetDestinationForm(pkm.Form)`
   - Bump `pkm.CurrentLevel` to `method.Level` if currently below minimum
   - Adjust `pkm.Gender` via `GetSaneGender()`
   - Sync nickname: call `pkm.ClearNickname()` when `!pkm.IsNicknamed`
   - Wurmple special case: in Gen 6+ set `pkm.EncryptionConstant` via `WurmpleUtil.GetWurmpleEncryptionConstant(evoVal)`; in Gen 3–5 the EC setter is a no-op (`EncryptionConstant { get => PID; set { } }`), so set `pkm.PID` directly to a value satisfying `WurmpleUtil.GetWurmpleEvoVal(pid) == evoVal`
   - Call `AppService.LoadPokemonStats(pkm)` and `RefreshService.Refresh()`
-- [ ] Create `EvolvePickerDialog.razor[.cs]` — MudBlazor dialog listing evolution choices, closes with the selected `EvolutionMethod`
-- [ ] Unit tests: no-evo guard, single-evo direct apply, Eevee multi-branch, Wurmple EC correction, level-bump, nickname sync (nicknamed + un-nicknamed)
+- [x] Create `EvolvePickerDialog.razor[.cs]` — MudBlazor dialog listing evolution choices, closes with the selected `EvolutionMethod`
+- [x] **Shedinja special case** — when evolving Nincada → Ninjask, offer to also place a Shedinja in the next empty box slot
+- [x] **Gen 2 trade evolution** — show required held item in the evolution picker dialog
+- [x] Unit tests: no-evo guard, single-evo direct apply, Eevee multi-branch, Wurmple EC correction, level-bump, nickname sync (nicknamed + un-nicknamed)
 
 ### 1.2 Legality Checker
 **Status:** ⚠️ Partial (core analysis, UI, fix buttons, and batch report implemented; comprehensive unit tests remain)
@@ -393,7 +402,7 @@ Bring the Mystery Gift Database tab to full parity with PKHeX's `SAV_MysteryGift
 
 ### 2.5 Pokédex Editor
 **Tracks:** #414
-**Status:** ⚠️ Partial (Gen 1–9 bulk fill/seen-all/clear implemented via #436; progress bars added; per-generation advanced fields still absent)
+**Status:** ⚠️ Partial (per-species Seen/Caught grid + LA research task editor implemented via #490/#437/#438/#439/#510; bulk operations and progress bars via #436; per-generation advanced fields — gender/shiny tracking, form tracking, language flags — still absent)
 **Complexity:** High
 **PKHeX Reference:** `SAV_SimplePokedex.cs`, `SAV_Pokedex4.cs`, `SAV_Pokedex5.cs`, `SAV_PokedexXY.cs`, `SAV_PokedexORAS.cs`, `SAV_PokedexSM.cs`, `SAV_PokedexGG.cs`, `SAV_PokedexSWSH.cs`, `SAV_PokedexBDSP.cs`, `SAV_PokedexLA.cs`, `SAV_PokedexSV.cs`, `SAV_PokedexSVKitakami.cs`, `SAV_Pokedex9a.cs`
 **Core API:** `ZukanBase` / `Zukan4` / `Zukan5` / `Zukan6` / `Zukan7` / `Zukan7b` / `Zukan8` / `Zukan8b` / `PokedexSave8a` / `Zukan9Paldea` / `Zukan9Kitakami` / `Zukan9a` in `PKHeX.Core/Saves/Substructures/PokeDex/`
@@ -405,27 +414,27 @@ Bring the Mystery Gift Database tab to full parity with PKHeX's `SAV_MysteryGift
 - `SetDex(PKM pk)` — auto-update entry from a Pokémon object
 
 #### Gen 1–3 (SAV1 / SAV2 / SAV3)
-**Status:** ✅ Implemented (simple seen/caught bitflags)
+**Status:** ✅ Implemented (simple seen/caught bitflags + per-species grid)
 - [x] Seen flag per species
 - [x] Caught flag per species
 - [x] Bulk fill / clear
-- [ ] Per-species edit UI (currently only aggregate counts shown)
+- [x] Per-species edit UI (searchable per-species Seen/Caught grid via #490)
 
 #### Gen 4 (Zukan4) — Diamond / Pearl / Platinum / HeartGold / SoulSilver
-**Status:** ⚠️ Partial (bulk fill/seen-all/clear implemented via #436)
+**Status:** ⚠️ Partial (bulk fill/seen-all/clear via #436; per-species grid via #490; advanced fields absent)
 - [x] Bulk fill (CompleteDex) / Seen All / Clear
-- [ ] Per-species seen flag UI
-- [ ] Per-species caught flag UI
+- [x] Per-species seen flag UI (basic Seen/Caught grid via #490)
+- [x] Per-species caught flag UI (basic Seen/Caught grid via #490)
 - [ ] Gender-seen tracking: male-first and female-first regions (2 separate bitfields)
 - [ ] Form tracking (species-specific; varies by game):
   - Unown ×28, Deoxys ×4, Shellos/Gastrodon ×2
   - Rotom ×6, Shaymin ×2, Giratina ×2, Pichu ×3 (HG/SS only)
 - [ ] Spinda: store first-seen Spinda's PID (32-bit, offset `0x0104`)
 - [ ] Language flags (HG/SS only — DP/Pt lack language data)
-- [ ] Per-species edit UI
+- [x] Per-species edit UI (basic Seen/Caught grid via #490)
 
 #### Gen 5 (Zukan5BW / Zukan5B2W2) — Black / White / Black 2 / White 2
-**Status:** ⚠️ Partial (bulk fill/seen-all/clear implemented via #436)
+**Status:** ⚠️ Partial (bulk fill/seen-all/clear via #436; per-species grid via #490; advanced fields absent)
 - [x] Bulk fill (via per-species GiveAll) / Seen All / Clear
 - [ ] 4-region gender×shiny seen tracking (male, female, male-shiny, female-shiny)
 - [ ] Display variant selection per species (which gender/shiny combo shows in Pokédex)
@@ -433,12 +442,12 @@ Bring the Mystery Gift Database tab to full parity with PKHeX's `SAV_MysteryGift
 - [ ] Language flags (7 languages: JPN, ENG, FRE, ITA, GER, SPA, KOR)
 - [ ] Spinda PID storage
 - [ ] National Dex unlock flag and mode tracking
-- [ ] Per-species edit UI
+- [x] Per-species edit UI (basic Seen/Caught grid via #490)
 
 #### Gen 6 XY (Zukan6XY) — X / Y
-**Status:** ⚠️ Partial (bulk fill/seen-all/clear implemented via #436)
+**Status:** ⚠️ Partial (bulk fill/seen-all/clear via #436; per-species grid via #490; advanced fields absent)
 - [x] Bulk fill (via per-species GiveAll) / Seen All / Clear
-- [ ] Per-species seen / caught flags UI
+- [x] Per-species seen / caught flags UI (basic grid via #490)
 - [ ] 4-region gender×shiny seen tracking
 - [ ] Per-form seen flags (form bits alongside species bits)
 - [ ] Display form, display gender, display shiny selection per species
@@ -446,36 +455,37 @@ Bring the Mystery Gift Database tab to full parity with PKHeX's `SAV_MysteryGift
 - [ ] "Foreign" flag per species (tracks Pokémon migrated from Gen 5)
 - [ ] Spinda: store first-seen Spinda's encryption constant
 - [ ] National Dex unlock / mode flags
-- [ ] Per-species edit UI
+- [x] Per-species edit UI (basic Seen/Caught grid via #490)
 
 #### Gen 6 ORAS (Zukan6AO) — Omega Ruby / Alpha Sapphire
-**Status:** ⚠️ Partial (bulk fill/seen-all/clear implemented via #436)
+**Status:** ⚠️ Partial (bulk fill/seen-all/clear via #436; per-species grid via #490; advanced fields absent)
 - [x] Bulk fill (via per-species GiveAll) / Seen All / Clear
-- [ ] All XY features above
+- [ ] All XY features above (per-form, gender, language, foreign flags)
 - [ ] Encounter count per species (`u16`, running total of wild encounters)
 - [ ] Obtained count per species (`u16`, running total of catches)
-- [ ] Per-species edit UI
+- [x] Per-species edit UI (basic Seen/Caught grid via #490)
 
 #### Gen 7 SM/USUM (Zukan7) — Sun / Moon / Ultra Sun / Ultra Moon
-**Status:** ⚠️ Partial (bulk fill/seen-all/clear implemented via #436)
+**Status:** ⚠️ Partial (bulk fill/seen-all/clear via #436; per-species grid via #490; advanced fields absent)
 - [x] Bulk fill (CompleteDex) / Seen All / Clear
-- [ ] Per-species seen / caught flags UI
+- [x] Per-species seen / caught flags UI (basic grid via #490)
 - [ ] 4-region gender×shiny seen tracking
 - [ ] Per-form seen flags
 - [ ] Display form / display gender / display shiny selection per species
 - [ ] Language flags (9 languages: adds Simplified Chinese and Traditional Chinese)
 - [ ] Spinda ×4 storage (separate first-seen per gender×shiny combination)
 - [ ] Current-viewed-dex tracking (Alola regional vs National)
-- [ ] Per-species edit UI
+- [x] Per-species edit UI (basic Seen/Caught grid via #490)
 
 #### Gen 7b LGPE (Zukan7b) — Let's Go Pikachu / Eevee
-**Status:** ⚠️ Partial (bulk fill/seen-all/clear implemented via #436)
+**Status:** ⚠️ Partial (bulk fill/seen-all/clear via #436; per-species grid via #490 limited to 153-species)
 - [x] Bulk fill (CompleteDex) / Seen All / Clear
-- [ ] Per-species seen / caught flags UI for the limited (153-species) Let's Go Pokédex
+- [x] Per-species seen / caught flags UI for the limited (153-species) Let's Go Pokédex (via #490)
 
 #### Gen 8 SWSH (Zukan8) — Sword / Shield
-**Status:** ⚠️ Partial (bulk fill/seen-all/clear implemented via #436)
+**Status:** ⚠️ Partial (bulk fill/seen-all/clear via #436; per-species grid with Galar-only filtering via #490; advanced fields absent)
 - [x] Bulk fill (CompleteDex) / Seen All / Clear
+- [x] Per-species seen / caught flags UI (Galar-filtered grid via #490)
 - [ ] **3 independent regional dex blocks** (each a separate `Zukan8` instance):
   - Galar (400 species)
   - Isle of Armor DLC (211 species)
@@ -485,41 +495,35 @@ Bring the Mystery Gift Database tab to full parity with PKHeX's `SAV_MysteryGift
 - [ ] Display options per species: form ID, gender, shiny, Gigantamax/Dynamax preference
 - [ ] Language flags (9 languages)
 - [ ] Battled count per species (`u32`)
-- [ ] Per-species edit UI
 
 #### Gen 8 BDSP (Zukan8b) — Brilliant Diamond / Shining Pearl
-**Status:** ⚠️ Partial (bulk fill/seen-all/clear implemented via #436)
+**Status:** ⚠️ Partial (bulk fill/seen-all/clear via #436; per-species grid via #490; advanced fields absent)
 - [x] Bulk fill (CompleteDex) / Seen All / Clear
+- [x] Per-species seen / caught flags UI (basic grid via #490)
 - [ ] `ZukanState8b` state per species: `None` → `HeardOf` → `Seen` → `Captured`
 - [ ] Gender × shiny seen flags (4 separate `u32` arrays: male, female, male-shiny, female-shiny)
 - [ ] Form tracking per species (Unown ×28, Castform ×4, Deoxys ×4, Rotom ×6, Giratina ×2, Shaymin ×2, Arceus ×18)
 - [ ] Regional (Sinnoh) dex obtained flag vs National Dex obtained flag
 - [ ] Language flags (9 languages)
-- [ ] Per-species edit UI
 
 #### Gen 8 LA (PokedexSave8a) — Legends: Arceus
-**Status:** ⚠️ Partial (bulk research-task fill implemented via #436; no Zukan so SeenAll/Clear not applicable)
+**Status:** ⚠️ Partial (bulk fill via #436; per-species research task editor + Clear All Research via #510/#439; display sub-editor via #438; advanced task types and 5-area flags remain)
 **Note:** Completely different architecture — no simple seen/caught flags; tracked via per-task research counters. See also §3.3.
 - [x] Bulk fill all research tasks at max threshold (via `SetResearchTaskProgressByForce` loop + `UpdateAllReportPoke`)
 - [x] `SetSolitudeAll()` called as part of fill
-- [ ] Per-species research task progress edit UI
-- [ ] Research task progress (22+ task types per species):
-  - Catch, Defeat, Evolve, Use Move (×4 move slots), Defeat With Move Type
-  - Catch Alpha, Catch Large, Catch Small, Catch Heavy, Catch Light
-  - Catch At Time Of Day, Catch Sleeping, Catch In Air, Catch Not Spotted
-  - Give Food, Stun With Items, Scare With Scatter Bang, Lure With Pokéshi Doll
-  - Use Strong Style Move, Use Agile Style Move
-  - Leap From Trees, Leap From Leaves, Leap From Snow, Leap From Ore, Leap From Tussocks
-- [ ] Research rate % (0–100) per species
-- [ ] Perfect research (100%) completion flag per species
+- [x] Per-species research task progress edit UI — `PokedexLaResearchEditorDialog` opens on row click; shows task counters in tabbed layout; "Edit All Tasks…" button
+- [x] Research rate % display and progress bar (capped at 100%) per species
+- [x] "Complete All Research" and "Clear All Research" bulk buttons
+- [x] 5 local-area dex labels (Fieldlands, Mirelands, Coastlands, Highlands, Icelands) shown in research panel
+- [ ] Perfect research (100%) completion flag per species (individual toggle)
+- [ ] Full 22+ research task types editing (all counters fully editable per task)
 - [ ] Display selection: form, gender, shiny, alpha per species
-- [ ] 5 local-area dex completion flags (Hisui + Local 1–5)
-- [ ] Per-species research edit UI (see `SAV_PokedexResearchEditorLA` for PKHeX reference)
 
 #### Gen 9 SV (Zukan9Paldea / Zukan9Kitakami) — Scarlet / Violet
-**Status:** ⚠️ Partial (bulk fill/seen-all/clear implemented via #436)
+**Status:** ⚠️ Partial (bulk fill/seen-all/clear via #436; per-species grid via #490 with SV regional dex filtering; advanced fields absent)
 **Note:** Simple stubs existed in roadmap as "Advanced Pokédex (Kitakami, etc.)"; consolidated here.
 - [x] Bulk fill (CompleteDex — covers Paldea + Kitakami internally) / Seen All / Clear
+- [x] Per-species seen / caught flags UI (SV regional dex filtering via #490)
 - [ ] 3-tier DLC dex system (separate `Zukan9` instances per save revision):
   - Paldea (base game)
   - Kitakami (DLC 1 — The Teal Mask)
@@ -529,15 +533,14 @@ Bring the Mystery Gift Database tab to full parity with PKHeX's `SAV_MysteryGift
 - [ ] Gender seen flags, shiny seen flags, shiny caught flags
 - [ ] Display options: form, gender, shiny, "New" flag
 - [ ] Language flags (9 languages)
-- [ ] Per-species edit UI
 
 #### Gen 9 ZA (Zukan9a) — Legends: Z-A
-**Status:** ❌ Not Implemented
-- [ ] Per-species state tracking
+**Status:** ⚠️ Partial (personal table filtering implemented in #490; advanced fields absent)
+- [x] Per-species Seen/Caught grid (filtered to ZA personal table via #490)
+- [ ] Per-species state tracking (ZA-specific state system)
 - [ ] Mega / Mega X / Mega Y form seen flags
 - [ ] Alpha form tracking
 - [ ] Language flags (9 languages)
-- [ ] Per-species edit UI
 
 #### Cross-generation bulk operations
 - [x] Fill all seen — Gen 1–3
@@ -759,7 +762,7 @@ Bring the Mystery Gift Database tab to full parity with PKHeX's `SAV_MysteryGift
 
 ### 4.1 UI/UX Improvements
 **Tasks:**
-- [ ] **Fix "Load Pokémon File" and "Load Mystery Gift File" slot behaviour (#445)** — use currently selected slot (or first empty box slot as fallback), write via `AppService.EditFormPokemon`/`SavePokemon`, show snackbars instead of blocking dialogs, and navigate to Party/Box tab after placement. Requires adding `RequestJumpToPartyBox` event to `IRefreshService`; extract `TrySelectFirstEmptyBoxSlot` into `IAppService`.
+- [x] **Fix "Load Pokémon File" and "Load Mystery Gift File" slot behaviour (#445)** — use currently selected slot (or first empty box slot as fallback), write via `AppService.EditFormPokemon`/`SavePokemon`, show snackbars instead of blocking dialogs, and navigate to Party/Box tab after placement.
 - [ ] Add keyboard shortcuts for common operations
 - [ ] Implement undo/redo functionality
 - [x] **Theme-aware startup / loading screen + three-way theme toggle (#449)** — inline script in `index.html` stamps `data-theme` on `<html>` before WASM boots (no white flash); `app.css` adds `@media (prefers-color-scheme: dark)` + `[data-theme]` CSS rules for the loading screen; `MainLayout.razor` AppBar toggle redesigned from `MudSwitch` to a `MudButtonGroup` with Light / System / Dark icon buttons; `MainLayout.razor.cs` gains `ThemeMode` enum, persists choice to `pkmds_theme` in `localStorage`, and only follows live OS changes in System mode.
@@ -779,6 +782,7 @@ Bring the Mystery Gift Database tab to full parity with PKHeX's `SAV_MysteryGift
 ### 4.2 Import/Export Enhancements
 **Tracks:** #61, #166
 **Tasks:**
+- [x] **Manic EMU `.3ds.sav` round-trip** — auto-detects the ZIP-based format on load, extracts the PKHeX-compatible save bytes, and repacks to the same ZIP structure on export so saves re-import directly into Manic EMU (closes #537)
 - [ ] Add bulk Pokemon import from files
 - [ ] Support .pk* file drag-and-drop
 - [ ] Add team import/export (multiple Pokemon at once)
@@ -1056,27 +1060,27 @@ Three parallel tracks — wiki content authoring, in-app help links (code), and 
 - [ ] Add trainer memo/notes
 
 ### 6.2 Box Viewer Enhancements
-**Status:** ❌ Not Implemented
+**Status:** ✅ Implemented (pop-out dialogs and swap — #352; follow-up items remain)
 **Complexity:** Medium
 **Tracks:** #352
 **PKHeX Reference:** `SAVEditor.cs:503–528,1579–1594`, `SAV_BoxViewer.Designer.cs`, `SAV_BoxList.cs`
 **Tasks:**
-- [ ] **`SwapBoxes(int boxA, int boxB)`** — add to `IAppService` / `AppService`; swaps all Pokémon between two boxes, triggers `RefreshAppState`
-- [ ] **`BoxViewerDialog`** (`Pkmds.Rcl/Components/Dialogs/BoxViewerDialog.razor[.cs]`) — single-box pop-out dialog (`SAV_BoxViewer` equivalent):
+- [x] **`SwapBoxes(int boxA, int boxB)`** — add to `IAppService` / `AppService`; swaps all Pokémon between two boxes, triggers `RefreshAppState`
+- [x] **`BoxViewerDialog`** (`Pkmds.Rcl/Components/Dialogs/BoxViewerDialog.razor[.cs]`) — single-box pop-out dialog (`SAV_BoxViewer` equivalent):
   - `[Parameter] int InitialBox` — box to show on open
   - Local `CurrentBox` for independent dialog navigation (prev/next + dropdown)
   - Renders existing `BoxGrid` component; slot clicks select Pokémon for editing in main form
   - "View All Boxes" button transitions to `BoxListDialog`
   - Responsive: `MaxWidth.Large` on `sm+`; full-screen on `xs`
   - Subscribes to `OnBoxStateChanged` to keep slots current
-- [ ] **`BoxListDialog`** (`Pkmds.Rcl/Components/Dialogs/BoxListDialog.razor[.cs]`) — all-boxes grid dialog (`SAV_BoxList` equivalent):
+- [x] **`BoxListDialog`** (`Pkmds.Rcl/Components/Dialogs/BoxListDialog.razor[.cs]`) — all-boxes grid dialog (`SAV_BoxList` equivalent):
   - Renders all `SaveFile.BoxCount` boxes in `MudGrid`: `xs=12 sm=6 md=4 lg=3`
   - Each cell: box name header + `BoxGrid` + optional adjacent-box swap button (⇄)
   - Swap button calls `AppService.SwapBoxes(i, i+1)`
   - Full-screen on mobile; `MaxWidth.ExtraExtraLarge` + `FullWidth` + scrollable on desktop
   - Subscribes to both `OnAppStateChanged` and `OnBoxStateChanged`
-- [ ] **Add trigger buttons to `PokemonStorageComponent`** — "Pop Out Box" (`OpenInNew` icon) and "All Boxes" (`GridView` icon) buttons in the box nav bar; both open their respective dialogs via `IDialogService`
-- [ ] **Unit tests** — `SwapBoxes` correctness; bUnit render tests for both dialogs
+- [x] **Add trigger buttons to `PokemonStorageComponent`** — "Pop Out Box" (`OpenInNew` icon) and "All Boxes" (`GridView` icon) buttons in the box nav bar; both open their respective dialogs via `IDialogService`
+- [x] **Unit tests** — `SwapBoxes` correctness; bUnit render tests for both dialogs
 - [ ] Implement box group viewer (SAV_GroupViewer) — follow-up (was #362, closed as duplicate; break out a new issue when ready)
 - [ ] Add box preview on hover — follow-up
 - [ ] Implement box quick-peek — follow-up
@@ -1157,7 +1161,7 @@ Three parallel tracks — wiki content authoring, in-app help links (code), and 
 - [ ] Add performance monitoring
 
 #### 7.2a Bag/Inventory Performance (#299)
-**Status:** 🔲 Planned
+**Status:** ⚠️ Partial (virtualization enabled via MudBlazor 9.2.0 — #454; lazy-render attempted then removed — #511)
 **Complexity:** Medium
 **Priority:** High
 **Tracks:** #299
@@ -1171,9 +1175,9 @@ The Bag tab is slow to load on large saves (SV, SwSh) because all pouches render
 - No `CellTemplate` on the Item column — display mode falls back to raw integer rendering
 
 **Tasks:**
-- [ ] **Lazy-render inactive pouches** — track `ActivePouchIndex` + `RenderedPouches: HashSet<int>` in `BagTab.razor.cs`; only render a pouch's `MudDataGrid` once its tab has been activated; show `MudProgressLinear` placeholder until then
+- [x] **Fix virtualization and enable by default** — MudBlazor 9.2.0 resolved the underlying scroll issue; `Virtualize="true"` is now enabled for the bag `MudDataGrid` (closes #454 via PR #500)
+- [ ] **Lazy-render inactive pouches** — attempted in PR #511 then removed due to layout issues; revisit when a stable approach is found
 - [ ] **Filter empty slots by default** — bind `MudDataGrid.Items` to `pouch.Items.Where(i => i.Index != 0)` when `ShowEmptySlots == false`; add a per-tab "Show empty slots" toggle (default off)
-- [ ] **Fix virtualization and enable by default** — resolve the scroll issue caused by `Height="calc(100vh - 300px)"` inside nested scroll containers (fix grid wrapper CSS in `app.css`); set `Virtualize="true"` by default; remove the "may cause scrolling issues" toggle once stable
 - [ ] **Add `CellTemplate` to Item column** — render `@ItemList[context.Item.Index]` as `MudText` in display mode so the grid has a lightweight non-edit render path
 - [ ] *(stretch)* **Evaluate replacing `MudDataGrid` with `<Virtualize>` + lightweight row component** — only if profiling after the above steps shows `MudDataGrid` itself as the remaining bottleneck
 

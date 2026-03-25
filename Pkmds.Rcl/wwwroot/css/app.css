@@ -121,10 +121,27 @@ body, html {
     align-self: center;
 }
 
+.bag-data-grid {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
 .bag-data-grid .mud-table-container {
     max-height: calc(100vh - 380px);
     max-height: calc(100dvh - 380px);
     overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.legality-report-table,
+.encounter-db-table {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.legality-report-table .mud-table-container,
+.encounter-db-table .mud-table-container {
+    overflow-x: hidden;
 }
 
 /* Virtualizer-safe alternating row stripe — driven by RowClassFunc on logical data
@@ -304,6 +321,7 @@ body, html {
         overflow: hidden;
         display: flex;
         flex-direction: column;
+        max-width: 100%;
     }
 
     .save-file-outer-tabs {
@@ -318,10 +336,11 @@ body, html {
     }
 
     /* Each panel fills the available height; non-Pokédex tabs scroll within
-       the panel rather than scrolling the page. */
+       the panel rather than scrolling the page. No horizontal scroll. */
     .save-file-outer-tabs > .mud-tabs-panels > .mud-tab-panel {
         height: 100%;
         overflow-y: auto;
+        overflow-x: hidden;
     }
 }
 
