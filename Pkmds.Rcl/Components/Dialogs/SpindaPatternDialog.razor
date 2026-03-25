@@ -21,9 +21,15 @@
                         width="512"
                         height="512"/>
 
-                <MudText Typo="@Typo.caption">
-                    Pattern: 0x@_pattern.ToString("X8")
-                </MudText>
+                <MudTextField T="@string"
+                              Label="Pattern"
+                              @bind-Value="_patternHex"
+                              @bind-Value:after="@OnPatternHexChanged"
+                              Adornment="@Adornment.Start"
+                              AdornmentText="0x"
+                              MaxLength="8"
+                              Variant="@Variant.Outlined"
+                              Class="mud-width-full"/>
             </MudStack>
         }
     </DialogContent>

@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Globalization;
 
 namespace Pkmds.Rcl.Components.Dialogs;
 
@@ -12,6 +13,7 @@ public partial class SpindaPatternDialog
 
     private ElementReference _canvas;
     private uint _pattern;
+    private string _patternHex = string.Empty;
     private bool isPreviewShiny;
 
     [Parameter]
@@ -30,6 +32,7 @@ public partial class SpindaPatternDialog
 
         isPreviewShiny = Pokemon.IsShiny;
         _pattern = GetPatternValue(Pokemon);
+        _patternHex = _pattern.ToString("X8");
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -51,8 +54,17 @@ public partial class SpindaPatternDialog
     private async Task Randomize()
     {
         _pattern = Util.Rand.Rand32();
-        StateHasChanged();
+        _patternHex = _pattern.ToString("X8");
         await RenderAsync();
+    }
+
+    private async Task OnPatternHexChanged()
+    {
+        if (uint.TryParse(_patternHex, NumberStyles.HexNumber, null, out var parsed))
+        {
+            _pattern = parsed;
+            await RenderAsync();
+        }
     }
 
     private void Confirm()
