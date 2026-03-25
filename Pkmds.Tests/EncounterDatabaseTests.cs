@@ -16,6 +16,7 @@ public class EncounterDatabaseTests
         var filePath = Path.Combine(TestFilesPath, fileName);
         var data = File.ReadAllBytes(filePath);
         SaveUtil.TryGetSaveFile(data, out var saveFile, fileName).Should().BeTrue();
+        LocalizeUtil.InitializeStrings(GameLanguage.DefaultLanguage, saveFile);
         var appState = new TestAppState { SaveFile = saveFile };
         var service = new AppService(appState, new TestRefreshService());
         return (service, saveFile!);

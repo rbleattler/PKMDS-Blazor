@@ -60,7 +60,7 @@ public partial class StatsTab : IDisposable
             return;
         }
 
-        if (!nature.IsFixed())
+        if (!nature.IsFixed)
         {
             nature = 0; // default valid
         }

@@ -247,10 +247,12 @@ public class AppServiceTests
         // Assert
         result.Should().NotBeEmpty();
         result.Should().AllSatisfy(item => item.Text.Should().NotBeNullOrEmpty());
-        // Verify the expected 3DS hardware regions are present
-        result.Should().Contain(i => i.Value == (int)Region3DSIndex.Japan);
-        result.Should().Contain(i => i.Value == (int)Region3DSIndex.NorthAmerica);
-        result.Should().Contain(i => i.Value == (int)Region3DSIndex.Europe);
+        // Verify the expected 3DS hardware regions are present by name
+        // Note: combo item Values are raw byte values (0=Japan, 1=NA, 2=EU, 4=China, 5=Korea, 6=Taiwan),
+        // which do not correspond to Region3DSIndex enum values (which include a None=0 entry).
+        result.Should().Contain(i => i.Text.Contains("Japan"));
+        result.Should().Contain(i => i.Text.Contains("America") || i.Text.Contains("NA"));
+        result.Should().Contain(i => i.Text.Contains("Europe") || i.Text.Contains("EU"));
     }
 
     [Fact]

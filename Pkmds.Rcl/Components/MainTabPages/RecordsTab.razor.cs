@@ -10,8 +10,6 @@ public partial class RecordsTab
 
     private uint? CurrentRecordValue { get; set; }
 
-    private Record3? Records { get; set; }
-
     private IList<ComboItem> RecordComboItems { get; set; } = [];
 
     private uint HallOfFameHours { get; set; }
@@ -41,19 +39,18 @@ public partial class RecordsTab
             return;
         }
 
-        Records = new(SaveFile);
         RecordComboItems = Record3.GetItems(SaveFile);
         GetRecord();
     }
 
     private void GetRecord()
     {
-        if (SaveFile is null || Records is null)
+        if (SaveFile is null)
         {
             return;
         }
 
-        CurrentRecordValue = Records.GetRecord(CurrentRecordIndex);
+        CurrentRecordValue = SaveFile.GetRecord(CurrentRecordIndex);
 
         if (HallOfFameIndexSelected)
         {
@@ -63,13 +60,13 @@ public partial class RecordsTab
 
     private void SetCurrentRecordValue(uint? newValue)
     {
-        if (SaveFile is null || Records is null)
+        if (SaveFile is null)
         {
             return;
         }
 
         CurrentRecordValue = newValue;
-        Records.SetRecord(CurrentRecordIndex, newValue ?? 0U);
+        SaveFile.SetRecord(CurrentRecordIndex, newValue ?? 0U);
 
         if (HallOfFameIndexSelected)
         {
@@ -79,17 +76,17 @@ public partial class RecordsTab
 
     private void ChangeFame()
     {
-        if (!HallOfFameIndexSelected || Records is null)
+        if (!HallOfFameIndexSelected || SaveFile is null)
         {
             return;
         }
 
-        Records.SetRecord(1, (uint)(CurrentRecordValue = GetFameTime()));
+        SaveFile.SetRecord(1, (uint)(CurrentRecordValue = GetFameTime()));
     }
 
     private uint GetFameTime()
     {
-        if (!HallOfFameIndexSelected || Records is null)
+        if (!HallOfFameIndexSelected || SaveFile is null)
         {
             return 0U;
         }
@@ -103,7 +100,7 @@ public partial class RecordsTab
 
     private void SetFameTime(uint time)
     {
-        if (!HallOfFameIndexSelected || Records is null)
+        if (!HallOfFameIndexSelected || SaveFile is null)
         {
             return;
         }
