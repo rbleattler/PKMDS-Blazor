@@ -1,28 +1,30 @@
 'use strict';
 
 window.spindaRenderer = {
-    // Spot container definitions ported from SpindaPatternPlugin (SpindaPatternForm.cs).
+    // Spot center ranges for the 512×512 HOME sprite.
     //
-    // The nibble in each byte controls position within a container region (0-66 % of
-    // the container's width/height). Some containers are also coordinate-rotated so
-    // ear spots follow the angled anatomy.
+    // Derived by anchoring each spot to the corresponding head-mask blob centroid
+    // at mid-range nibble (digit ≈ 8), then using the SpindaPatternPlugin container
+    // width (≈ 39–40 % of image × 66 % travel factor) as the movement range.
     //
-    // Nibble-to-spot mapping (plugin's hex-string order, least-significant first):
-    //   bits  0- 7  → leftEar  (hex digits 7-6)
-    //   bits  8-15  → rightEar (hex digits 5-4)
-    //   bits 16-23  → leftFace (hex digits 3-2)
-    //   bits 24-31  → rightFace(hex digits 1-0)
+    // Blob centroids (from alpha-channel analysis of 327-head.png):
+    //   leftEar  (184, 148)  rightEar (373, 176)
+    //   leftFace (214, 284)  rightFace(319, 275)
     //
-    // Each entry: cl/ct = container left/top (fraction of image size)
-    //             cw/ch = container width/height (fraction of image size)
-    //             sw/sh = spot width/height (fraction of container size)
-    //             rot   = spot ellipse tilt in degrees
-    //             crot  = container coordinate rotation in degrees
+    // Nibble-to-spot byte mapping (little-endian):
+    //   bits  0- 7 → spot 0 / left ear
+    //   bits  8-15 → spot 1 / right ear
+    //   bits 16-23 → spot 2 / left face
+    //   bits 24-31 → spot 3 / right face
+    //
+    // Within each byte: lower nibble = X (horizontal), upper nibble = Y (vertical).
+    // spotX = xMin + (digit / 15) * (xMax - xMin); similarly for Y.
+    // rx / ry = ellipse semi-axes (px);  rot = ellipse tilt (degrees).
     _spots: [
-        { cl: 0.17, ct: 0.12, cw: 0.40, ch: 0.40, sw: 0.33, sh: 0.36, rot: -6, crot:  0 }, // leftEar
-        { cl: 0.57, ct: 0.24, cw: 0.39, ch: 0.39, sw: 0.38, sh: 0.41, rot:  6, crot: 30 }, // rightEar
-        { cl: 0.20, ct: 0.39, cw: 0.39, ch: 0.39, sw: 0.35, sh: 0.39, rot: -6, crot:  0 }, // leftFace
-        { cl: 0.40, ct: 0.43, cw: 0.40, ch: 0.40, sw: 0.39, sh: 0.41, rot:  6, crot:  6 }, // rightFace
+        { xMin: 112, xMax: 247, yMin:  76, yMax: 211, rx: 34, ry: 37, rot: -6 }, // leftEar
+        { xMin: 303, xMax: 434, yMin: 106, yMax: 238, rx: 38, ry: 41, rot:  6 }, // rightEar
+        { xMin: 144, xMax: 276, yMin: 214, yMax: 345, rx: 35, ry: 39, rot: -6 }, // leftFace
+        { xMin: 247, xMax: 383, yMin: 203, yMax: 338, rx: 40, ry: 42, rot:  6 }, // rightFace
     ],
 
     _loadImage: function (src) {
@@ -67,37 +69,13 @@ window.spindaRenderer = {
             const xDigit = (pattern >>> (i * 8))     & 0xF;
             const yDigit = (pattern >>> (i * 8 + 4)) & 0xF;
 
-            // Container bounds in pixels.
-            const containerX = s.cl * SIZE;
-            const containerY = s.ct * SIZE;
-            const containerW = s.cw * SIZE;
-            const containerH = s.ch * SIZE;
+            // Map each nibble (0–15) linearly over the spot's center range.
+            const spotX = s.xMin + (xDigit / 15) * (s.xMax - s.xMin);
+            const spotY = s.yMin + (yDigit / 15) * (s.yMax - s.yMin);
 
-            // Position within the container: nibble maps 0-15 → 0-66 % of container.
-            const rawX = ((xDigit / 15) * 0.66) * containerW;
-            const rawY = ((yDigit / 15) * 0.66) * containerH;
-
-            // Apply optional container-coordinate rotation around the container centre.
-            let spotX, spotY;
-            if (Math.abs(s.crot) > 0.01) {
-                const ccX = containerW / 2;
-                const ccY = containerH / 2;
-                const relX = rawX - ccX;
-                const relY = rawY - ccY;
-                const rad = s.crot * Math.PI / 180;
-                spotX = containerX + ccX + relX * Math.cos(rad) - relY * Math.sin(rad);
-                spotY = containerY + ccY + relX * Math.sin(rad) + relY * Math.cos(rad);
-            } else {
-                spotX = containerX + rawX;
-                spotY = containerY + rawY;
-            }
-
-            const spotW = containerW * s.sw;
-            const spotH = containerH * s.sh;
-
-            // Draw the spot as a rotated, filled ellipse with a thin border.
+            // Draw as a rotated, filled ellipse with a thin border.
             sCtx.beginPath();
-            sCtx.ellipse(spotX, spotY, spotW / 2, spotH / 2, s.rot * Math.PI / 180, 0, Math.PI * 2);
+            sCtx.ellipse(spotX, spotY, s.rx, s.ry, s.rot * Math.PI / 180, 0, Math.PI * 2);
             sCtx.fillStyle = fillColor;
             sCtx.fill();
             sCtx.strokeStyle = strokeColor;
