@@ -69,12 +69,12 @@ public static class BadgeData
     [
         new("Trio Badge", 33),
         new("Basic Badge", 34),
-        new("Insect Badge", 35),
-        new("Bolt Badge", 36),
-        new("Quake Badge", 37),
-        new("Jet Badge", 38),
-        new("Freeze Badge", 39),
-        new("Legend Badge", 40),
+        new("Insect Badge", 36),
+        new("Bolt Badge", 37),
+        new("Quake Badge", 38),
+        new("Jet Badge", 39),
+        new("Freeze Badge", 40),
+        new("Legend Badge", 41),
     ];
 
     /// <summary>
@@ -84,12 +84,12 @@ public static class BadgeData
     public static readonly IReadOnlyList<BadgeInfo> UnovaB2W2Badges =
     [
         new("Basic Badge", 34),
-        new("Toxic Badge", 41),
-        new("Insect Badge", 35),
-        new("Bolt Badge", 36),
-        new("Quake Badge", 37),
-        new("Jet Badge", 38),
-        new("Legend Badge", 40),
+        new("Toxic Badge", 35),
+        new("Insect Badge", 36),
+        new("Bolt Badge", 37),
+        new("Quake Badge", 38),
+        new("Jet Badge", 39),
+        new("Legend Badge", 41),
         new("Wave Badge", 42),
     ];
 
