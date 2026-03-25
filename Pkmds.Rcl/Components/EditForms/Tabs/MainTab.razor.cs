@@ -89,7 +89,7 @@ public partial class MainTab : IDisposable
             return;
         }
 
-        if (!nature.IsFixed())
+        if (!nature.IsFixed)
         {
             nature = 0; // default valid
         }

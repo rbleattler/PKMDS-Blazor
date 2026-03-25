@@ -181,8 +181,8 @@
                 <MudTextField Label="Rival Name"
                               Variant="@Variant.Outlined"
                               MaxLength="@sav1Rival.MaxStringLengthTrainer"
-                              @bind-Value="@sav1Rival.Rival"
-                              For="@(() => sav1Rival.Rival)"/>
+                              @bind-Value="@sav1Rival.RivalName"
+                              For="@(() => sav1Rival.RivalName)"/>
             </div>
 
             <div class="form-field">
@@ -203,8 +203,8 @@
                 <MudTextField Label="Rival Name"
                               Variant="@Variant.Outlined"
                               MaxLength="@sav2Rival.MaxStringLengthTrainer"
-                              @bind-Value="@sav2Rival.Rival"
-                              For="@(() => sav2Rival.Rival)"/>
+                              @bind-Value="@sav2Rival.RivalName"
+                              For="@(() => sav2Rival.RivalName)"/>
             </div>
         }
 
@@ -248,22 +248,22 @@
         {
             <div class="form-field">
                 <MudNumericField Label="BP"
-                                 T="@uint"
+                                 T="@ushort"
                                  Variant="@Variant.Outlined"
                                  Min="0"
                                  Max="9999"
-                                 @bind-Value="@sav3.BP"
-                                 For="@(() => sav3.BP)"/>
+                                 @bind-Value="@sav3.SmallBlock.BP"
+                                 For="@(() => sav3.SmallBlock.BP)"/>
             </div>
 
             <div class="form-field">
                 <MudNumericField Label="Earned BP"
-                                 T="@uint"
+                                 T="@ushort"
                                  Variant="@Variant.Outlined"
                                  Min="0"
-                                 Max="@uint.MaxValue"
-                                 @bind-Value="@sav3.BPEarned"
-                                 For="@(() => sav3.BPEarned)"/>
+                                 Max="@ushort.MaxValue"
+                                 @bind-Value="@sav3.SmallBlock.BPEarned"
+                                 For="@(() => sav3.SmallBlock.BPEarned)"/>
             </div>
         }
 
