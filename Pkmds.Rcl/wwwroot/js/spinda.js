@@ -1,30 +1,26 @@
 'use strict';
 
 window.spindaRenderer = {
-    // Spot center ranges for the 512×512 HOME sprite.
+    // Spot parameters derived directly from pokeos.com's SpindaPatternGenerator CSS layout.
     //
-    // Derived by anchoring each spot to the corresponding head-mask blob centroid
-    // at mid-range nibble (digit ≈ 8), then using the SpindaPatternPlugin container
-    // width (≈ 39–40 % of image × 66 % travel factor) as the movement range.
+    // Each container is a square (side = cw * 512 px) positioned at (cl*512, ct*512).
+    // crot  = container CSS rotation in degrees (compounds with the spot's own rotation).
+    // spotW / spotH = spot dimensions as a fraction of the container side length.
     //
-    // Blob centroids (from alpha-channel analysis of 327-head.png):
-    //   leftEar  (184, 148)  rightEar (373, 176)
-    //   leftFace (214, 284)  rightFace(319, 275)
+    // Byte/nibble mapping (little-endian, from pattern uint32):
+    //   bits  0– 7 → spot 0 / leftEar   (lower nibble = X/left, upper nibble = Y/top)
+    //   bits  8–15 → spot 1 / rightEar
+    //   bits 16–23 → spot 2 / leftFace
+    //   bits 24–31 → spot 3 / rightFace
     //
-    // Nibble-to-spot byte mapping (little-endian):
-    //   bits  0- 7 → spot 0 / left ear
-    //   bits  8-15 → spot 1 / right ear
-    //   bits 16-23 → spot 2 / left face
-    //   bits 24-31 → spot 3 / right face
-    //
-    // Within each byte: lower nibble = X (horizontal), upper nibble = Y (vertical).
-    // spotX = xMin + (digit / 15) * (xMax - xMin); similarly for Y.
-    // rx / ry = ellipse semi-axes (px);  rot = ellipse tilt (degrees).
+    // Spot top-left inside container = (xDigit/15 * 0.66, yDigit/15 * 0.66) * containerSize.
+    // Spot center = top-left + (spotW/2, spotH/2) * containerSize, then rotated by crot around
+    // the container's own center.  Ellipse tilt in screen space = crot + rot.
     _spots: [
-        { xMin: 112, xMax: 247, yMin:  76, yMax: 211, rx: 34, ry: 37, rot: -6 }, // leftEar
-        { xMin: 303, xMax: 434, yMin: 106, yMax: 238, rx: 38, ry: 41, rot:  6 }, // rightEar
-        { xMin: 144, xMax: 276, yMin: 214, yMax: 345, rx: 35, ry: 39, rot: -6 }, // leftFace
-        { xMin: 247, xMax: 383, yMin: 203, yMax: 338, rx: 40, ry: 42, rot:  6 }, // rightFace
+        { cl: 0.11, ct: 0.04, cw: 0.40, spotW: 0.33, spotH: 0.36, crot:  0, rot: -6 }, // leftEar
+        { cl: 0.54, ct: 0.13, cw: 0.39, spotW: 0.38, spotH: 0.41, crot: 30, rot:  6 }, // rightEar
+        { cl: 0.14, ct: 0.31, cw: 0.39, spotW: 0.35, spotH: 0.39, crot:  0, rot: -6 }, // leftFace
+        { cl: 0.34, ct: 0.35, cw: 0.40, spotW: 0.39, spotH: 0.41, crot:  6, rot:  6 }, // rightFace
     ],
 
     _loadImage: function (src) {
@@ -59,8 +55,7 @@ window.spindaRenderer = {
         spotsCanvas.height = SIZE;
         const sCtx = spotsCanvas.getContext('2d');
 
-        const fillColor   = isShiny ? '#B7C75C' : '#FF3B4F';
-        const strokeColor = isShiny ? '#96AA46' : '#DC2840';
+        const fillColor = isShiny ? '#B7C75C' : '#FF3B4F';
 
         for (let i = 0; i < 4; i++) {
             const s = this._spots[i];
@@ -69,18 +64,43 @@ window.spindaRenderer = {
             const xDigit = (pattern >>> (i * 8))     & 0xF;
             const yDigit = (pattern >>> (i * 8 + 4)) & 0xF;
 
-            // Map each nibble (0–15) linearly over the spot's center range.
-            const spotX = s.xMin + (xDigit / 15) * (s.xMax - s.xMin);
-            const spotY = s.yMin + (yDigit / 15) * (s.yMax - s.yMin);
+            // Container dimensions and origin in image space.
+            const cSize       = s.cw * SIZE;
+            const contOriginX = s.cl * SIZE;
+            const contOriginY = s.ct * SIZE;
+            const contCenterX = contOriginX + cSize / 2;
+            const contCenterY = contOriginY + cSize / 2;
 
-            // Draw as a rotated, filled ellipse with a thin border.
+            // Spot semi-axes (half of the spot's CSS width/height within the container).
+            const rx = s.spotW * cSize / 2;
+            const ry = s.spotH * cSize / 2;
+
+            // Spot top-left in container local space (pokeos formula: n/15 * 66 %).
+            const tlX = (xDigit / 15 * 0.66) * cSize;
+            const tlY = (yDigit / 15 * 0.66) * cSize;
+
+            // Spot center in container local space = top-left + half spot size.
+            const localX = tlX + rx;
+            const localY = tlY + ry;
+
+            // Spot center in image space before container rotation.
+            const unrotX = contOriginX + localX;
+            const unrotY = contOriginY + localY;
+
+            // Rotate spot center around the container's center by crot (CSS transform compounds).
+            const crotRad = s.crot * Math.PI / 180;
+            const dx = unrotX - contCenterX;
+            const dy = unrotY - contCenterY;
+            const spotX = contCenterX + dx * Math.cos(crotRad) - dy * Math.sin(crotRad);
+            const spotY = contCenterY + dx * Math.sin(crotRad) + dy * Math.cos(crotRad);
+
+            // Ellipse tilt in screen space = container rotation + spot's own rotation.
+            const totalRot = (s.crot + s.rot) * Math.PI / 180;
+
             sCtx.beginPath();
-            sCtx.ellipse(spotX, spotY, s.rx, s.ry, s.rot * Math.PI / 180, 0, Math.PI * 2);
+            sCtx.ellipse(spotX, spotY, rx, ry, totalRot, 0, Math.PI * 2);
             sCtx.fillStyle = fillColor;
             sCtx.fill();
-            sCtx.strokeStyle = strokeColor;
-            sCtx.lineWidth = 1;
-            sCtx.stroke();
         }
 
         // Step 3 — clip spots to the head region using the mask.
@@ -88,11 +108,12 @@ window.spindaRenderer = {
         sCtx.drawImage(headImg, 0, 0, SIZE, SIZE);
         sCtx.globalCompositeOperation = 'source-over';
 
-        // Step 4 — composite masked spots onto the base.
+        // Step 4 — composite masked spots onto the base with multiply blend,
+        // then face and mouth overlays — all matching pokeos mix-blend-multiply.
+        ctx.globalCompositeOperation = 'multiply';
         ctx.drawImage(spotsCanvas, 0, 0);
-
-        // Step 5 — draw face and mouth overlays on top.
         ctx.drawImage(faceImg, 0, 0, SIZE, SIZE);
         ctx.drawImage(mouthImg, 0, 0, SIZE, SIZE);
+        ctx.globalCompositeOperation = 'source-over';
     }
 };
