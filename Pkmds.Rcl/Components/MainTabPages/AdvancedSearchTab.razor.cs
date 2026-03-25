@@ -27,6 +27,7 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
     private bool? isLegal;
 
     private bool isSearching;
+    private bool hasSearched;
 
     // Basic
     private bool? isShiny;
@@ -96,6 +97,7 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
         results = AppService.SearchPokemon(filter).ToList();
 
         isSearching = false;
+        hasSearched = true;
         StateHasChanged();
     }
 
