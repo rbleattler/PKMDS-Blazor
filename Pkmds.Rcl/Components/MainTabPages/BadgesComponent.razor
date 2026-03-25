@@ -1,4 +1,4 @@
-﻿@inherits BasePkmdsComponent
+@inherits BasePkmdsComponent
 
 @switch (AppState.SaveFile)
 {
@@ -35,16 +35,37 @@
         <MudGrid Justify="@Justify.Center">
             @{
                 var badges = GetSaveFileBadgesValue();
+                var badgeInfos = GetBadgeInfos();
             }
             @for (var i = 0; i < badges.Count; i++)
             {
                 var badgeIndex = i;
-                <MudItem xs="6"
-                         sm="3">
-                    <MudCheckBox Label="@($"Badge {badgeIndex + 1}")"
-                                 T="@bool"
-                                 Value="@badges[badgeIndex]"
-                                 ValueChanged="@(_ => OnBadgeToggle(badgeIndex))"/>
+                var obtained = badges[badgeIndex];
+                var info = badgeIndex < badgeInfos.Count ? badgeInfos[badgeIndex] : null;
+                var imgStyle = obtained ? "width: 48px; height: 48px; object-fit: contain;" : "width: 48px; height: 48px; object-fit: contain; filter: grayscale(100%) opacity(0.4);";
+                var textStyle = obtained ? "margin-top: 4px;" : "margin-top: 4px; color: var(--mud-palette-text-disabled);";
+                <MudItem xs="6" sm="3" md="2">
+                    <div style="display: flex; flex-direction: column; align-items: center; cursor: pointer; user-select: none; padding: 4px;"
+                         @onclick="@(() => OnBadgeToggle(badgeIndex))">
+                        @if (info is not null)
+                        {
+                            <img src="@info.SpriteUrl"
+                                 alt="@info.Name"
+                                 style="@imgStyle" />
+                            <MudText Typo="Typo.caption"
+                                     Align="Align.Center"
+                                     Style="@textStyle">
+                                @info.Name
+                            </MudText>
+                        }
+                        else
+                        {
+                            <MudCheckBox Label="@($"Badge {badgeIndex + 1}")"
+                                         T="@bool"
+                                         Value="@obtained"
+                                         ValueChanged="@(_ => OnBadgeToggle(badgeIndex))" />
+                        }
+                    </div>
                 </MudItem>
             }
         </MudGrid>

@@ -10,6 +10,20 @@ public partial class BadgesComponent : IDisposable
     protected override void OnInitialized() =>
         RefreshService.OnAppStateChanged += StateHasChanged;
 
+    private IReadOnlyList<BadgeInfo> GetBadgeInfos() => AppState.SaveFile switch
+    {
+        SAV1 or SAV3FRLG => BadgeData.KantoBadges,
+        SAV2 or SAV4HGSS => BadgeData.JohtoKantoBadges,
+        SAV3RS or SAV3E or SAV6AO => BadgeData.HoennBadges,
+        SAV4DP or SAV4Pt or SAV8BS => BadgeData.SinnohBadges,
+        SAV5BW => BadgeData.UnivoaBWBadges,
+        SAV5B2W2 => BadgeData.UnovaB2W2Badges,
+        SAV6XY => BadgeData.KalosBadges,
+        SAV8SWSH { Version: GameVersion.SW } => BadgeData.GalarSwordBadges,
+        SAV8SWSH => BadgeData.GalarShieldBadges,
+        _ => [],
+    };
+
     [SuppressMessage("ReSharper", "InconsistentNaming")]
     private List<bool> GetSaveFileBadgesValue()
     {
