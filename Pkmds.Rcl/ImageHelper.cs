@@ -938,14 +938,20 @@ public static partial class ImageHelper
                 : item.ToString()
         };
 
+    // Type byte → lowercase type name, matching PKHeX's text_Types_en.txt (0-indexed).
+    private static readonly string[] TypeNames =
+    [
+        "normal", "fighting", "flying", "poison", "ground", "rock", "bug", "ghost", "steel",
+        "fire", "water", "grass", "electric", "psychic", "ice", "dragon", "dark", "fairy",
+    ];
+
     /// <summary>
-    /// Returns the big-item sprite filename for a TM disc colored by move type.
-    /// Uses the Silvally Memory item sprites (bitem_903–bitem_920), which are colored
-    /// by type in the same order as PKHeX type byte values 1–18 (Normal–Fairy).
-    /// Falls back to the generic <c>bitem_tm.png</c> for type 0 (???) or types > 18.
+    /// Returns the TM disc sprite filename for the given PKHeX move-type byte.
+    /// Uses type-colored disc sprites (tm-fire.png, tm-water.png, etc.) from wwwroot/sprites/tm/.
+    /// Falls back to tm-case.png for Stellar type or any unknown type.
     /// </summary>
     public static string GetTypedTMSpriteFilename(byte moveType) =>
-        moveType is >= 1 and <= 18
-            ? $"{SpritesRoot}bi/bitem_{902 + moveType}.png"
-            : $"{SpritesRoot}bi/bitem_tm.png";
+        moveType < TypeNames.Length
+            ? $"{SpritesRoot}tm/tm-{TypeNames[moveType]}.png"
+            : $"{SpritesRoot}tm/tm-case.png";
 }

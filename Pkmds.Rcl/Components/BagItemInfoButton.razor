@@ -10,10 +10,15 @@
     <span style="position:relative;display:inline-flex;align-items:center;gap:2px;"
           @onclick:stopPropagation="true">
 
+        @{
+            var spriteSrc = _moveType.HasValue && HeldItemLumpUtil.GetIsLump(ItemIndex, Context).IsLump()
+                ? ImageHelper.GetTypedTMSpriteFilename(_moveType.Value)
+                : ImageHelper.GetItemSpriteFilename(ItemIndex, Context);
+        }
         <object class="item-sprite"
                 type="image/png"
                 style="object-fit: contain;"
-                data="@ImageHelper.GetItemSpriteFilename(ItemIndex, Context)"
+                data="@spriteSrc"
                 title="@ItemName">
             <img class="pkm-sprite"
                  src="@ImageHelper.ItemFallbackImageFileName"

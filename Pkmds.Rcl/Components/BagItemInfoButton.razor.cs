@@ -13,6 +13,18 @@ public partial class BagItemInfoButton
     private ItemSummary? _itemInfo;
     private MoveSummary? _moveInfo;
     private ushort? _moveId;
+    private byte? _moveType;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (ItemIndex != 0 && PouchType == InventoryType.TMHMs)
+        {
+            _moveId = await TryResolveTMMoveIdAsync();
+            if (_moveId.HasValue && AppState.SaveFile is { Context: var ctx })
+                _moveType = MoveInfo.GetType(_moveId.Value, ctx);
+            StateHasChanged();
+        }
+    }
 
     private async Task Toggle()
     {
