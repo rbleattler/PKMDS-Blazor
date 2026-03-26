@@ -1,0 +1,73 @@
+@inherits BasePkmdsComponent
+
+@if (ItemIndex != 0)
+{
+    @if (_open)
+    {
+        <div @onclick="Close"
+             style="position:fixed;inset:0;z-index:1199;cursor:default;"/>
+    }
+    <span style="position:relative;display:inline-flex;align-items:center;gap:2px;"
+          @onclick:stopPropagation="true">
+
+        <object class="item-sprite"
+                type="image/png"
+                style="object-fit: contain;"
+                data="@ImageHelper.GetItemSpriteFilename(ItemIndex, Context)"
+                title="@ItemName">
+            <img class="pkm-sprite"
+                 src="@ImageHelper.ItemFallbackImageFileName"
+                 title="@ItemName"
+                 alt="@ItemName">
+        </object>
+
+        <MudIconButton Icon="@Icons.Material.Outlined.Info"
+                       Size="@Size.Small"
+                       Color="@Color.Default"
+                       OnClick="@Toggle"
+                       title="More info"
+                       aria-label="More info"
+                       aria-expanded="@_open"/>
+        <MudPopover Open="@_open"
+                    AnchorOrigin="Origin.BottomLeft"
+                    TransformOrigin="Origin.TopLeft"
+                    OverflowBehavior="OverflowBehavior.FlipAlways"
+                    Paper="true"
+                    Class="pa-3"
+                    Style="max-width:320px;max-height:400px;overflow-y:auto;z-index:1200;">
+            @if (!_loaded)
+            {
+                <MudText Typo="@Typo.caption">Loading...</MudText>
+            }
+            else
+            {
+                <MudStack Spacing="2">
+                    @if (_moveId.HasValue && AppState.SaveFile is { Context: var ctx })
+                    {
+                        @MoveTypeAndCategorySummary(
+                            MoveInfo.GetType(_moveId.Value, ctx),
+                            GetMoveCategory(_moveId.Value, ctx))
+                    }
+                    @if (_moveInfo is { } moveInfo)
+                    {
+                        <MudText Typo="@Typo.subtitle2">@moveInfo.Name</MudText>
+                        <MudStack Row Spacing="3">
+                            <MudText Typo="@Typo.caption">Power: <b>@(moveInfo.Power?.ToString() ?? "—")</b></MudText>
+                            @if (moveInfo.PP.HasValue)
+                            {
+                                <MudText Typo="@Typo.caption">PP: <b>@moveInfo.PP</b></MudText>
+                            }
+                            <MudText Typo="@Typo.caption">Acc: <b>@(moveInfo.Accuracy is { } acc ? $"{acc}%" : "—")</b></MudText>
+                        </MudStack>
+                        <MudText Typo="@Typo.body2">@(string.IsNullOrEmpty(moveInfo.Description) ? "No description available." : moveInfo.Description)</MudText>
+                    }
+                    else if (_itemInfo is { } itemInfo)
+                    {
+                        <MudText Typo="@Typo.subtitle2">@itemInfo.Name</MudText>
+                        <MudText Typo="@Typo.body2">@(string.IsNullOrEmpty(itemInfo.Description) ? "No description available." : itemInfo.Description)</MudText>
+                    }
+                </MudStack>
+            }
+        </MudPopover>
+    </span>
+}

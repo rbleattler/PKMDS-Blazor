@@ -11,6 +11,66 @@ public partial class MainTab : IDisposable
     [Parameter]
     public LegalityAnalysis? Analysis { get; set; }
 
+    private PKM? _lastPokemon;
+    private ItemSummary? _heldItemInfo;
+    private AbilitySummary? _abilityInfo;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (ReferenceEquals(Pokemon, _lastPokemon))
+            return;
+        _lastPokemon = Pokemon;
+        await LoadDescriptionsAsync();
+    }
+
+    private async Task LoadDescriptionsAsync()
+    {
+        if (Pokemon is null || AppState.SaveFile is not { } sav)
+            return;
+
+        var version = sav.Version;
+
+        var itemName = Pokemon.HeldItem != 0 ? AppService.GetItemComboItem(Pokemon.HeldItem).Text : null;
+        _heldItemInfo = itemName is not null
+            ? await DescriptionService.GetItemInfoAsync(itemName, version)
+            : null;
+
+        _abilityInfo = Pokemon.Ability != 0
+            ? await DescriptionService.GetAbilityInfoAsync(Pokemon.Ability, version)
+            : null;
+    }
+
+    internal void SetHeldItem(ComboItem? item)
+    {
+        if (Pokemon is null)
+            return;
+        Pokemon.HeldItem = item?.Value ?? 0;
+        AppService.LoadPokemonStats(Pokemon);
+        RefreshService.Refresh();
+        if (Pokemon.HeldItem != 0)
+            _ = RefreshHeldItemInfoAsync(item?.Text);
+        else
+            _heldItemInfo = null;
+    }
+
+    private async Task RefreshHeldItemInfoAsync(string? itemName)
+    {
+        if (AppState.SaveFile is not { } sav || itemName is null)
+            return;
+        _heldItemInfo = await DescriptionService.GetItemInfoAsync(itemName, sav.Version);
+        StateHasChanged();
+    }
+
+    private async Task RefreshAbilityInfoAsync()
+    {
+        if (Pokemon is null || AppState.SaveFile is not { } sav)
+            return;
+        _abilityInfo = Pokemon.Ability != 0
+            ? await DescriptionService.GetAbilityInfoAsync(Pokemon.Ability, sav.Version)
+            : null;
+        StateHasChanged();
+    }
+
     private MudSelect<byte>? FormSelect { get; set; }
 
     private bool IsAlcremie => Pokemon?.Species == (ushort)Species.Alcremie;
@@ -167,6 +227,7 @@ public partial class MainTab : IDisposable
         Pokemon.SetAbilityIndex(slotIndex);
         AppService.LoadPokemonStats(Pokemon);
         RefreshService.Refresh();
+        _ = RefreshAbilityInfoAsync();
     }
 
     // ── HaX DEV_Ability helpers (any ability ID, Gen 4+) ─────────────────────
@@ -216,6 +277,7 @@ public partial class MainTab : IDisposable
 
         Pokemon.Ability = (ushort)item.Value;
         RefreshService.Refresh();
+        _ = RefreshAbilityInfoAsync();
     }
 
     private static IReadOnlyList<ComboItem> GetAbilityNumberItems() =>

@@ -20,6 +20,35 @@ public partial class MetTab : IDisposable
     [Parameter]
     public LegalityAnalysis? Analysis { get; set; }
 
+    private PKM? _lastPokemon;
+    private ItemSummary? _ballInfo;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (ReferenceEquals(Pokemon, _lastPokemon))
+            return;
+        _lastPokemon = Pokemon;
+        await LoadBallInfoAsync();
+    }
+
+    private async Task LoadBallInfoAsync()
+    {
+        if (Pokemon is null || AppState.SaveFile is not { } sav)
+            return;
+        var ballName = Pokemon.Ball != 0
+            ? GameInfo.FilteredSources.Balls.FirstOrDefault(b => b.Value == Pokemon.Ball)?.Text
+            : null;
+        _ballInfo = ballName is not null
+            ? await DescriptionService.GetItemInfoAsync(ballName, sav.Version)
+            : null;
+    }
+
+    internal async Task OnBallChanged()
+    {
+        await LoadBallInfoAsync();
+        StateHasChanged();
+    }
+
     private MetTimeOfDay GetMetTimeOfDay => Pokemon is not (PK2 and ICaughtData2 c2)
         ? MetTimeOfDay.None
         : (MetTimeOfDay)c2.MetTimeOfDay;

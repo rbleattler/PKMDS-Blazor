@@ -98,6 +98,51 @@
                                                        Message="@moveMsgText"/>
                                 }
                             </div>
+                            @if (moveId != 0)
+                            {
+                                <InfoButton>
+                                    <MudStack Spacing="2">
+                                        @MoveTypeAndCategorySummary(
+                                            MoveInfo.GetType(moveId, saveFileEntityContext),
+                                            GetMoveCategory(moveId, saveFileEntityContext))
+                                        @if (_moveInfos[i] is { } moveInfo)
+                                        {
+                                            <MudText Typo="@Typo.subtitle2">@moveInfo.Name</MudText>
+                                            <MudStack Row
+                                                      Spacing="3">
+                                                <MudText Typo="@Typo.caption">Power: <b>@(moveInfo.Power?.ToString() ?? "—")</b></MudText>
+                                                @if (moveInfo.PP.HasValue)
+                                                {
+                                                    <MudText Typo="@Typo.caption">PP: <b>@moveInfo.PP</b></MudText>
+                                                }
+                                                <MudText Typo="@Typo.caption">Acc: <b>@(moveInfo.Accuracy is { } acc ? $"{acc}%" : "—")</b></MudText>
+                                            </MudStack>
+                                            @if (!string.IsNullOrEmpty(moveInfo.Target))
+                                            {
+                                                <MudText Typo="@Typo.caption">Target: <b>@moveInfo.Target</b></MudText>
+                                            }
+                                            @if (moveInfo.Flags.Count > 0)
+                                            {
+                                                <MudStack Row
+                                                          Wrap="@Wrap.Wrap"
+                                                          Spacing="1">
+                                                    @foreach (var flag in moveInfo.Flags)
+                                                    {
+                                                        @if (FlagLabels.TryGetValue(flag, out var label))
+                                                        {
+                                                            <MudChip T="string"
+                                                                     Size="@Size.Small"
+                                                                     Variant="@Variant.Outlined"
+                                                                     Color="@Color.Default">@label</MudChip>
+                                                        }
+                                                    }
+                                                </MudStack>
+                                            }
+                                            <MudText Typo="@Typo.body2">@(string.IsNullOrEmpty(moveInfo.Description) ? "No description available." : moveInfo.Description)</MudText>
+                                        }
+                                    </MudStack>
+                                </InfoButton>
+                            }
                             @if (showPlusMove)
                             {
                                 var localMoveId = Pokemon.GetMove(i);
@@ -337,6 +382,54 @@
                                                            Message="@relearnMsgText"/>
                                     }
                                 </div>
+                                @if (relearnMoveId != 0)
+                                {
+                                    <InfoButton>
+                                        <MudStack Spacing="2">
+                                            @MoveTypeAndCategorySummary(
+                                                MoveInfo.GetType(relearnMoveId, saveFileEntityContext),
+                                                GetMoveCategory(relearnMoveId, saveFileEntityContext))
+                                            @if (_relearnMoveInfos[i] is { } relearnInfo)
+                                            {
+                                                <MudText Typo="@Typo.subtitle2">@relearnInfo.Name</MudText>
+                                                <MudStack Row
+                                                          Spacing="3">
+                                                    <MudText Typo="@Typo.caption">Power: <b>@(relearnInfo.Power?.ToString() ?? "—")</b></MudText>
+                                                    @if (relearnInfo.PP.HasValue)
+                                                    {
+                                                        <MudText Typo="@Typo.caption">PP: <b>@relearnInfo.PP</b></MudText>
+                                                    }
+                                                    <MudText Typo="@Typo.caption">Acc: <b>@(relearnInfo.Accuracy is { } relearnAcc ? $"{relearnAcc}%" : "—")</b></MudText>
+                                                </MudStack>
+                                                @if (!string.IsNullOrEmpty(relearnInfo.Target))
+                                                {
+                                                    <MudText Typo="@Typo.caption">Target: <b>@relearnInfo.Target</b></MudText>
+                                                }
+                                                @if (relearnInfo.Flags.Count > 0)
+                                                {
+                                                    <MudStack Row
+                                                              Wrap="@Wrap.Wrap"
+                                                              Spacing="1">
+                                                        @foreach (var flag in relearnInfo.Flags)
+                                                        {
+                                                            @if (FlagLabels.TryGetValue(flag, out var label))
+                                                            {
+                                                                <MudChip T="string"
+                                                                         Size="@Size.Small"
+                                                                         Variant="@Variant.Outlined"
+                                                                         Color="@Color.Default">@label</MudChip>
+                                                            }
+                                                        }
+                                                    </MudStack>
+                                                }
+                                                @if (!string.IsNullOrEmpty(relearnInfo.Description))
+                                                {
+                                                    <MudText Typo="@Typo.body2">@relearnInfo.Description</MudText>
+                                                }
+                                            }
+                                        </MudStack>
+                                    </InfoButton>
+                                }
                             </MudStack>
                         </MudItem>
                     </MudGrid>
@@ -367,43 +460,98 @@
                                          ? 11
                                          : 12)"
                                  Class="@ColumnClass">
-                            @if (UseTextSearch)
-                            {
-                                @* ReSharper disable once CSharpWarnings::CS8603 *@
-                                <MudAutocomplete T="@ComboItem"
-                                                 Label="Alpha Move"
-                                                 Variant="@Variant.Outlined"
-                                                 Margin="@Margin.Dense"
-                                                 Clearable
-                                                 @bind-Value:get="@(AppService.GetMoveComboItem(alphaMoveId))"
-                                                 @bind-Value:set="@(newMove => SetAlphaMove(newMove))"
-                                                 SearchFunc="@SearchMoves"
-                                                 ToStringFunc="@(move => move?.Text)">
-
-                                    <ItemTemplate Context="move">
-                                        @MoveRenderFragment(move, saveFileEntityContext)
-                                    </ItemTemplate>
-
-                                </MudAutocomplete>
-                            }
-                            else
-                            {
-                                <MudSelect T="@(int?)"
-                                           Label="Alpha Move"
-                                           Variant="@Variant.Outlined"
-                                           Margin="@Margin.Dense"
-                                           Clearable
-                                           @bind-Value:get="@GetAlphaMove()"
-                                           @bind-Value:set="@SetAlphaMove">
-                                    @* ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract *@
-                                    @foreach (var move in AppService.GetMoves())
+                            <MudStack Row
+                                      AlignItems="@AlignItems.Center"
+                                      Spacing="1"
+                                      Style="width: 100%;">
+                                <MudStack Style="flex: 1; min-width: 0;">
+                                    @if (UseTextSearch)
                                     {
-                                        <MudSelectItem Value="@move?.Value">
-                                            @MoveRenderFragment(move, saveFileEntityContext)
-                                        </MudSelectItem>
+                                        @* ReSharper disable once CSharpWarnings::CS8603 *@
+                                        <MudAutocomplete T="@ComboItem"
+                                                         Label="Alpha Move"
+                                                         Variant="@Variant.Outlined"
+                                                         Margin="@Margin.Dense"
+                                                         Clearable
+                                                         @bind-Value:get="@(AppService.GetMoveComboItem(alphaMoveId))"
+                                                         @bind-Value:set="@(newMove => SetAlphaMove(newMove))"
+                                                         SearchFunc="@SearchMoves"
+                                                         ToStringFunc="@(move => move?.Text)">
+
+                                            <ItemTemplate Context="move">
+                                                @MoveRenderFragment(move, saveFileEntityContext)
+                                            </ItemTemplate>
+
+                                        </MudAutocomplete>
                                     }
-                                </MudSelect>
-                            }
+                                    else
+                                    {
+                                        <MudSelect T="@(int?)"
+                                                   Label="Alpha Move"
+                                                   Variant="@Variant.Outlined"
+                                                   Margin="@Margin.Dense"
+                                                   Clearable
+                                                   @bind-Value:get="@GetAlphaMove()"
+                                                   @bind-Value:set="@SetAlphaMove">
+                                            @* ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract *@
+                                            @foreach (var move in AppService.GetMoves())
+                                            {
+                                                <MudSelectItem Value="@move?.Value">
+                                                    @MoveRenderFragment(move, saveFileEntityContext)
+                                                </MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    }
+                                </MudStack>
+                                @if (alphaMoveId != 0)
+                                {
+                                    <InfoButton>
+                                        <MudStack Spacing="2">
+                                            @MoveTypeAndCategorySummary(
+                                                MoveInfo.GetType(alphaMoveId, saveFileEntityContext),
+                                                GetMoveCategory(alphaMoveId, saveFileEntityContext))
+                                            @if (_alphaMoveInfo is { } alphaInfo)
+                                            {
+                                                <MudText Typo="@Typo.subtitle2">@alphaInfo.Name</MudText>
+                                                <MudStack Row
+                                                          Spacing="3">
+                                                    <MudText Typo="@Typo.caption">Power: <b>@(alphaInfo.Power?.ToString() ?? "—")</b></MudText>
+                                                    @if (alphaInfo.PP.HasValue)
+                                                    {
+                                                        <MudText Typo="@Typo.caption">PP: <b>@alphaInfo.PP</b></MudText>
+                                                    }
+                                                    <MudText Typo="@Typo.caption">Acc: <b>@(alphaInfo.Accuracy is { } alphaAcc ? $"{alphaAcc}%" : "—")</b></MudText>
+                                                </MudStack>
+                                                @if (!string.IsNullOrEmpty(alphaInfo.Target))
+                                                {
+                                                    <MudText Typo="@Typo.caption">Target: <b>@alphaInfo.Target</b></MudText>
+                                                }
+                                                @if (alphaInfo.Flags.Count > 0)
+                                                {
+                                                    <MudStack Row
+                                                              Wrap="@Wrap.Wrap"
+                                                              Spacing="1">
+                                                        @foreach (var flag in alphaInfo.Flags)
+                                                        {
+                                                            @if (FlagLabels.TryGetValue(flag, out var label))
+                                                            {
+                                                                <MudChip T="string"
+                                                                         Size="@Size.Small"
+                                                                         Variant="@Variant.Outlined"
+                                                                         Color="@Color.Default">@label</MudChip>
+                                                            }
+                                                        }
+                                                    </MudStack>
+                                                }
+                                                @if (!string.IsNullOrEmpty(alphaInfo.Description))
+                                                {
+                                                    <MudText Typo="@Typo.body2">@alphaInfo.Description</MudText>
+                                                }
+                                            }
+                                        </MudStack>
+                                    </InfoButton>
+                                }
+                            </MudStack>
                         </MudItem>
                     </MudGrid>
                 }

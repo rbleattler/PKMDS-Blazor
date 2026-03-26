@@ -394,38 +394,88 @@
                         <MudExpansionPanel Text="Misc">
                             <MudStack Spacing="2">
 
-                                <MudSelect T="@(int?)"
-                                           Label="Ball"
-                                           @bind-Value="@ball"
-                                           Clearable>
-                                    <MudSelectItem T="@(int?)"
-                                                   Value="@((int?)null)">Any
-                                    </MudSelectItem>
-                                    @foreach (var b in GameInfo.FilteredSources.Balls)
-                                    {
+                                <MudStack Row AlignItems="@AlignItems.Center" Spacing="1">
+                                    <MudSelect T="@(int?)"
+                                               Label="Ball"
+                                               Value="@ball"
+                                               ValueChanged="@OnBallFilterChanged"
+                                               Clearable
+                                               Style="flex:1;">
                                         <MudSelectItem T="@(int?)"
-                                                       Value="@b.Value">@b.Text</MudSelectItem>
+                                                       Value="@((int?)null)">Any
+                                        </MudSelectItem>
+                                        @foreach (var b in GameInfo.FilteredSources.Balls)
+                                        {
+                                            <MudSelectItem T="@(int?)"
+                                                           Value="@b.Value">@b.Text</MudSelectItem>
+                                        }
+                                    </MudSelect>
+                                    @if (ball is > 0)
+                                    {
+                                        <InfoButton>
+                                            @if (_filterBallInfo is { } ballInfo)
+                                            {
+                                                <MudText Typo="@Typo.subtitle2">@ballInfo.Name</MudText>
+                                                <MudText Typo="@Typo.body2">@(string.IsNullOrEmpty(ballInfo.Description) ? "No description available." : ballInfo.Description)</MudText>
+                                            }
+                                            else
+                                            {
+                                                <MudText Typo="@Typo.caption">Loading...</MudText>
+                                            }
+                                        </InfoButton>
                                     }
-                                </MudSelect>
+                                </MudStack>
 
-                                <MudAutocomplete T="@ComboItem"
-                                                 Label="Ability"
-                                                 Value="@abilityItem"
-                                                 ValueChanged="@OnAbilitySelected"
-                                                 SearchFunc="@SearchAbilitiesAsync"
-                                                 ToStringFunc="@ItemToString"
-                                                 Clearable
-                                                 ResetValueOnEmptyText/>
+                                <MudStack Row AlignItems="@AlignItems.Center" Spacing="1">
+                                    <MudAutocomplete T="@ComboItem"
+                                                     Label="Ability"
+                                                     Value="@abilityItem"
+                                                     ValueChanged="@OnAbilitySelected"
+                                                     SearchFunc="@SearchAbilitiesAsync"
+                                                     ToStringFunc="@ItemToString"
+                                                     Clearable
+                                                     ResetValueOnEmptyText
+                                                     Style="flex:1;"/>
+                                    @if (abilityId is > 0)
+                                    {
+                                        <InfoButton>
+                                            @if (_filterAbilityInfo is { } abilityInfo)
+                                            {
+                                                <MudText Typo="@Typo.subtitle2">@abilityInfo.Name</MudText>
+                                                <MudText Typo="@Typo.body2">@(string.IsNullOrEmpty(abilityInfo.Description) ? "No description available." : abilityInfo.Description)</MudText>
+                                            }
+                                            else
+                                            {
+                                                <MudText Typo="@Typo.caption">Loading...</MudText>
+                                            }
+                                        </InfoButton>
+                                    }
+                                </MudStack>
 
-                                <MudAutocomplete T="@ComboItem"
-                                                 Label="Held item"
-                                                 SearchFunc="@SearchItemsAsync"
-                                                 ToStringFunc="@ItemToString"
-                                                 ValueChanged="@(v => heldItemId = v is { Value: > 0 }
-                                                                   ? v.Value
-                                                                   : null)"
-                                                 Clearable
-                                                 ResetValueOnEmptyText/>
+                                <MudStack Row AlignItems="@AlignItems.Center" Spacing="1">
+                                    <MudAutocomplete T="@ComboItem"
+                                                     Label="Held item"
+                                                     SearchFunc="@SearchItemsAsync"
+                                                     ToStringFunc="@ItemToString"
+                                                     ValueChanged="@OnHeldItemFilterChanged"
+                                                     Clearable
+                                                     ResetValueOnEmptyText
+                                                     Style="flex:1;"/>
+                                    @if (heldItemId is > 0)
+                                    {
+                                        <InfoButton>
+                                            @if (_filterHeldItemInfo is { } heldItemInfo)
+                                            {
+                                                <MudText Typo="@Typo.subtitle2">@heldItemInfo.Name</MudText>
+                                                <MudText Typo="@Typo.body2">@(string.IsNullOrEmpty(heldItemInfo.Description) ? "No description available." : heldItemInfo.Description)</MudText>
+                                            }
+                                            else
+                                            {
+                                                <MudText Typo="@Typo.caption">Loading...</MudText>
+                                            }
+                                        </InfoButton>
+                                    }
+                                </MudStack>
 
                                 <MudSelect T="@(int?)"
                                            Label="Hidden Power type"
@@ -527,8 +577,6 @@
                               Height="calc(100dvh - 280px)"
                               @bind-SelectedItems="@selectedRows"
                               SortLabel="Sort By"
-                              OnRowClick="@OnRowClickAsync"
-                              RowStyleFunc="@RowStyleFunc"
                               RowsPerPage="25">
 
                             <HeaderContent>
@@ -570,6 +618,12 @@
                                     </MudTableSortLabel>
                                 </MudTh>
 
+                                <MudTh>Ball</MudTh>
+
+                                <MudTh>Held Item</MudTh>
+
+                                <MudTh></MudTh>
+
                             </HeaderContent>
 
                             <RowTemplate>
@@ -596,9 +650,112 @@
                                 </MudTd>
 
                                 <MudTd DataLabel="Ability">
-                                    @(GameInfo.FilteredSources.Abilities
-                                        .FirstOrDefault(a => a.Value == context.Pokemon.Ability)?.Text
-                                    ?? context.Pokemon.Ability.ToString())
+                                    <span @onclick:stopPropagation="true"
+                                          style="display:inline-flex;align-items:center;gap:4px;">
+                                        @(GameInfo.FilteredSources.Abilities
+                                            .FirstOrDefault(a => a.Value == context.Pokemon.Ability)?.Text
+                                        ?? context.Pokemon.Ability.ToString())
+                                        <InfoButton>
+                                            @if (_loadedAbilities.TryGetValue(context.Pokemon.Ability, out var abilityInfo)
+                                                 && abilityInfo is not null)
+                                            {
+                                                <MudText Typo="@Typo.subtitle2">@abilityInfo.Name</MudText>
+                                                <MudText Typo="@Typo.body2">@(string.IsNullOrEmpty(abilityInfo.Description)
+                                                    ? "No description available."
+                                                    : abilityInfo.Description)</MudText>
+                                            }
+                                            else
+                                            {
+                                                <MudText Typo="@Typo.caption">Loading...</MudText>
+                                            }
+                                        </InfoButton>
+                                    </span>
+                                </MudTd>
+
+                                <MudTd DataLabel="Ball">
+                                    @{
+                                        var ballName = GameInfo.FilteredSources.Balls
+                                            .FirstOrDefault(b => b.Value == context.Pokemon.Ball)?.Text;
+                                    }
+                                    <span @onclick:stopPropagation="true"
+                                          style="display:inline-flex;align-items:center;gap:4px;">
+                                        <img src="@ImageHelper.GetBallSpriteFilename(context.Pokemon.Ball)"
+                                             style="width:20px;height:20px;object-fit:contain;"
+                                             title="@(ballName ?? "Ball")"
+                                             alt="@(ballName ?? "Ball")"/>
+                                        <InfoButton>
+                                            @if (_loadedBalls.TryGetValue(context.Pokemon.Ball, out var ballInfo))
+                                            {
+                                                @if (ballInfo is not null)
+                                                {
+                                                    <MudText Typo="@Typo.subtitle2">@ballInfo.Name</MudText>
+                                                    <MudText Typo="@Typo.body2">@(string.IsNullOrEmpty(ballInfo.Description)
+                                                        ? "No description available."
+                                                        : ballInfo.Description)</MudText>
+                                                }
+                                                else
+                                                {
+                                                    <MudText Typo="@Typo.body2">@(ballName ?? "Unknown ball")</MudText>
+                                                    <MudText Typo="@Typo.caption">No description available.</MudText>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <MudText Typo="@Typo.caption">Loading...</MudText>
+                                            }
+                                        </InfoButton>
+                                    </span>
+                                </MudTd>
+
+                                <MudTd DataLabel="Held Item">
+                                    @if (context.Pokemon.HeldItem > 0
+                                         && AppState.SaveFile is { } sf
+                                         && context.Pokemon.HeldItem < GameInfo.Strings.itemlist.Length)
+                                    {
+                                        var heldItemName = GameInfo.Strings.itemlist[context.Pokemon.HeldItem];
+                                        <span @onclick:stopPropagation="true"
+                                              style="display:inline-flex;align-items:center;gap:4px;">
+                                            <object class="item-sprite"
+                                                    type="image/png"
+                                                    style="object-fit:contain;width:24px;height:24px;"
+                                                    data="@ImageHelper.GetItemSpriteFilename(context.Pokemon.HeldItem, sf.Context)"
+                                                    title="@heldItemName">
+                                                <img src="@ImageHelper.ItemFallbackImageFileName"
+                                                     style="width:24px;height:24px;"
+                                                     title="@heldItemName"
+                                                     alt="@heldItemName"/>
+                                            </object>
+                                            <InfoButton>
+                                                @if (_loadedHeldItems.TryGetValue(context.Pokemon.HeldItem, out var heldItemInfo))
+                                                {
+                                                    @if (heldItemInfo is not null)
+                                                    {
+                                                        <MudText Typo="@Typo.subtitle2">@heldItemInfo.Name</MudText>
+                                                        <MudText Typo="@Typo.body2">@(string.IsNullOrEmpty(heldItemInfo.Description)
+                                                            ? "No description available."
+                                                            : heldItemInfo.Description)</MudText>
+                                                    }
+                                                    else
+                                                    {
+                                                        <MudText Typo="@Typo.body2">@heldItemName</MudText>
+                                                        <MudText Typo="@Typo.caption">No description available.</MudText>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <MudText Typo="@Typo.caption">Loading...</MudText>
+                                                }
+                                            </InfoButton>
+                                        </span>
+                                    }
+                                </MudTd>
+
+                                <MudTd>
+                                    <MudIconButton Icon="@Icons.Material.Filled.OpenInNew"
+                                                   Size="@Size.Small"
+                                                   Color="@Color.Primary"
+                                                   title="Jump to Pokémon"
+                                                   OnClick="@(() => JumpToResultAsync(context))"/>
                                 </MudTd>
 
                             </RowTemplate>

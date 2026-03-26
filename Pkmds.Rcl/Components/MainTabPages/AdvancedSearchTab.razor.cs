@@ -44,9 +44,18 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
     // Trainer
     private string otName = string.Empty;
 
+    // ── Filter info state ─────────────────────────────────────────────────
+
+    private ItemSummary? _filterBallInfo;
+    private AbilitySummary? _filterAbilityInfo;
+    private ItemSummary? _filterHeldItemInfo;
+
     // ── Search state ──────────────────────────────────────────────────────
 
     private List<AdvancedSearchResult> results = [];
+    private Dictionary<int, AbilitySummary?> _loadedAbilities = [];
+    private Dictionary<int, ItemSummary?> _loadedHeldItems = [];
+    private Dictionary<int, ItemSummary?> _loadedBalls = [];
 
     // Saved filters
     private Dictionary<string, AdvancedSearchFilter> savedFilters = [];
@@ -99,6 +108,40 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
         isSearching = false;
         hasSearched = true;
         StateHasChanged();
+
+        // Load descriptions in the background; StateHasChanged after so popovers populate.
+        _ = LoadResultDescriptionsAsync();
+    }
+
+    private async Task LoadResultDescriptionsAsync()
+    {
+        if (AppState.SaveFile is not { } saveFile)
+            return;
+
+        _loadedAbilities.Clear();
+        _loadedHeldItems.Clear();
+        _loadedBalls.Clear();
+
+        var itemlist = GameInfo.Strings.itemlist;
+        foreach (var result in results)
+        {
+            var pkm = result.Pokemon;
+
+            if (!_loadedAbilities.ContainsKey(pkm.Ability))
+                _loadedAbilities[pkm.Ability] = await DescriptionService.GetAbilityInfoAsync(pkm.Ability, saveFile.Version);
+
+            if (pkm.HeldItem > 0 && pkm.HeldItem < itemlist.Length && !_loadedHeldItems.ContainsKey(pkm.HeldItem))
+                _loadedHeldItems[pkm.HeldItem] = await DescriptionService.GetItemInfoAsync(itemlist[pkm.HeldItem], saveFile.Version);
+
+            if (pkm.Ball > 0 && !_loadedBalls.ContainsKey(pkm.Ball))
+            {
+                var ballItem = GameInfo.FilteredSources.Balls.FirstOrDefault(b => b.Value == pkm.Ball);
+                if (ballItem is not null)
+                    _loadedBalls[pkm.Ball] = await DescriptionService.GetItemInfoAsync(ballItem.Text, saveFile.Version);
+            }
+        }
+
+        await InvokeAsync(StateHasChanged);
     }
 
     private void ResetFilter()
@@ -119,6 +162,9 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
         ball = null;
         abilityId = null;
         heldItemId = null;
+        _filterBallInfo = null;
+        _filterAbilityInfo = null;
+        _filterHeldItemInfo = null;
         originGame = null;
         hiddenPowerType = null;
         anyMoveItems = [];
@@ -174,15 +220,10 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
             HiddenPowerType = hiddenPowerType
         };
 
-    // ── Row click ─────────────────────────────────────────────────────────
+    // ── Row navigation ────────────────────────────────────────────────────
 
-    private async Task OnRowClickAsync(TableRowClickEventArgs<AdvancedSearchResult> args)
+    private async Task JumpToResultAsync(AdvancedSearchResult row)
     {
-        if (args.Item is not { } row)
-        {
-            return;
-        }
-
         if (row.IsParty)
         {
             AppService.SetSelectedPartyPokemon(row.Pokemon, row.SlotNumber);
@@ -266,12 +307,47 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
         );
     }
 
-    private void OnAbilitySelected(ComboItem? item)
+    private async Task OnBallFilterChanged(int? value)
+    {
+        ball = value;
+        if (value is > 0 && AppState.SaveFile is { } sf)
+        {
+            var ballItem = GameInfo.FilteredSources.Balls.FirstOrDefault(b => b.Value == value);
+            _filterBallInfo = ballItem is not null
+                ? await DescriptionService.GetItemInfoAsync(ballItem.Text, sf.Version)
+                : null;
+        }
+        else
+        {
+            _filterBallInfo = null;
+        }
+    }
+
+    private async Task OnAbilitySelected(ComboItem? item)
     {
         abilityItem = item;
-        abilityId = item is { Value: > 0 }
-            ? item.Value
-            : null;
+        abilityId = item is { Value: > 0 } ? item.Value : null;
+        if (abilityId.HasValue && AppState.SaveFile is { } sf)
+            _filterAbilityInfo = await DescriptionService.GetAbilityInfoAsync(abilityId.Value, sf.Version);
+        else
+            _filterAbilityInfo = null;
+    }
+
+    private async Task OnHeldItemFilterChanged(ComboItem? v)
+    {
+        heldItemId = v is { Value: > 0 } ? v.Value : null;
+        if (heldItemId.HasValue && AppState.SaveFile is { } sf)
+        {
+            var itemlist = GameInfo.Strings.itemlist;
+            var name = heldItemId.Value < itemlist.Length ? itemlist[heldItemId.Value] : null;
+            _filterHeldItemInfo = name is not null
+                ? await DescriptionService.GetItemInfoAsync(name, sf.Version)
+                : null;
+        }
+        else
+        {
+            _filterHeldItemInfo = null;
+        }
     }
 
     // ── Batch operations ──────────────────────────────────────────────────
@@ -418,7 +494,4 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
         }
     }
 
-    // ── Helper: table row style ───────────────────────────────────────────
-
-    private static string RowStyleFunc(AdvancedSearchResult _, int __) => "cursor: pointer;";
 }

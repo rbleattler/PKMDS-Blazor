@@ -937,4 +937,15 @@ public static partial class ImageHelper
                 ? "unk"
                 : item.ToString()
         };
+
+    /// <summary>
+    /// Returns the big-item sprite filename for a TM disc colored by move type.
+    /// Uses the Silvally Memory item sprites (bitem_903–bitem_920), which are colored
+    /// by type in the same order as PKHeX type byte values 1–18 (Normal–Fairy).
+    /// Falls back to the generic <c>bitem_tm.png</c> for type 0 (???) or types > 18.
+    /// </summary>
+    public static string GetTypedTMSpriteFilename(byte moveType) =>
+        moveType is >= 1 and <= 18
+            ? $"{SpritesRoot}bi/bitem_{902 + moveType}.png"
+            : $"{SpritesRoot}bi/bitem_tm.png";
 }
