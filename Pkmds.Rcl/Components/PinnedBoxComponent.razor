@@ -22,7 +22,8 @@
                         var boxName = saveFile is IBoxDetailNameRead boxDetailNameRead
                             ? boxDetailNameRead.GetBoxName(localBoxId)
                             : string.Empty;
-                        <MudSelectItem Value="@localBoxId" @key="@localBoxId">
+                        <MudSelectItem Value="@localBoxId"
+                                       @key="@localBoxId">
                             @($"Box {localBoxId + 1}: {boxName} ({GetBoxPokemonCount(localBoxId)}/{saveFile.BoxSlotCount})")
                         </MudSelectItem>
                     }

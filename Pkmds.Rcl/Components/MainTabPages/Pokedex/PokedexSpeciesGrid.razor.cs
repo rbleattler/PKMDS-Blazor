@@ -2,16 +2,16 @@ namespace Pkmds.Rcl.Components.MainTabPages.Pokedex;
 
 public partial class PokedexSpeciesGrid
 {
-    private int _lastRefreshToken = -1;
+    private bool hasDetailedEditor;
+    private int lastRefreshToken = -1;
 
     // Tracks the last seen values to avoid a full BuildRows() call on every re-render.
-    private SaveFile? _lastSaveFile;
-    private IReadOnlyList<RegionalDexDefinition> _regionalDexDefinitions = [];
-    private int _selectedRegionalDexFilter = -1; // -1 = All
-    private bool hasDetailedEditor;
+    private SaveFile? lastSaveFile;
+    private IReadOnlyList<RegionalDexDefinition> regionalDexDefinitions = [];
     private List<PokedexGridRow> rows = [];
 
     private string searchText = string.Empty;
+    private int selectedRegionalDexFilter = -1; // -1 = All
     private DexStatusFilter selectedStatusFilter = DexStatusFilter.All;
 
     // Incremented by PokedexTab after each bulk operation (Fill / Seen All / Clear).
@@ -33,13 +33,13 @@ public partial class PokedexSpeciesGrid
         // bulk operation increments RefreshToken.  Individual Seen/Caught toggles are
         // handled in-place by UpdateRowFromSave so the virtualizer's Items reference
         // changes without a full list rebuild.
-        if (ReferenceEquals(saveFile, _lastSaveFile) && RefreshToken == _lastRefreshToken)
+        if (ReferenceEquals(saveFile, lastSaveFile) && RefreshToken == lastRefreshToken)
         {
             return;
         }
 
-        _lastSaveFile = saveFile;
-        _lastRefreshToken = RefreshToken;
+        lastSaveFile = saveFile;
+        lastRefreshToken = RefreshToken;
         BuildRows();
     }
 
@@ -74,8 +74,8 @@ public partial class PokedexSpeciesGrid
         }
 
         rows = pokedexGridRows;
-        _regionalDexDefinitions = PokedexHelpers.GetRegionalDexDefinitions(saveFile);
-        _selectedRegionalDexFilter = -1;
+        regionalDexDefinitions = PokedexHelpers.GetRegionalDexDefinitions(saveFile);
+        selectedRegionalDexFilter = -1;
         hasDetailedEditor = saveFile is SAV4 or SAV5 or SAV6XY or SAV6AO or SAV7 or SAV7b
             or SAV8SWSH or SAV8LA or SAV8BS or SAV9SV or SAV9ZA;
         selectedStatusFilter = DexStatusFilter.All;
@@ -119,8 +119,8 @@ public partial class PokedexSpeciesGrid
             }
         }
 
-        if (_selectedRegionalDexFilter >= 0 && _selectedRegionalDexFilter < row.RegionalIds.Count
-                                            && row.RegionalIds[_selectedRegionalDexFilter] == 0)
+        if (selectedRegionalDexFilter >= 0 && selectedRegionalDexFilter < row.RegionalIds.Count
+                                           && row.RegionalIds[selectedRegionalDexFilter] == 0)
         {
             return false;
         }
@@ -256,14 +256,7 @@ public partial class PokedexSpeciesGrid
 
         // Build a new list so MudDataGrid's virtualizer detects the Items reference
         // change and re-renders visible rows with the updated Seen/Caught state.
-        var newRows = new List<PokedexGridRow>(rows)
-        {
-            [idx] = row with
-            {
-                IsSeen = saveFile.GetSeen(row.SpeciesId),
-                IsCaught = saveFile.GetCaught(row.SpeciesId)
-            }
-        };
+        var newRows = new List<PokedexGridRow>(rows) { [idx] = row with { IsSeen = saveFile.GetSeen(row.SpeciesId), IsCaught = saveFile.GetCaught(row.SpeciesId) } };
         rows = newRows;
     }
 

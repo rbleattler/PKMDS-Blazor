@@ -1,6 +1,6 @@
 namespace Pkmds.Web.Services;
 
-file sealed class NoOpDisposable : IDisposable
+sealed file class NoOpDisposable : IDisposable
 {
     public static readonly NoOpDisposable Instance = new();
     public void Dispose() { }

@@ -4,12 +4,12 @@ public partial class BoxListDialog : RefreshAwareComponent
 {
     private const int BoxBatchSize = 4;
 
+    private int renderedBoxCount;
+
     [CascadingParameter]
     private IMudDialogInstance? MudDialog { get; set; }
 
     protected override RefreshEvents SubscribeTo => RefreshEvents.AppState | RefreshEvents.BoxState;
-
-    private int renderedBoxCount;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

@@ -2,7 +2,7 @@ namespace Pkmds.Rcl.Components.Dialogs;
 
 public partial class PumpkabooSizeDialog
 {
-    private readonly HashSet<int> _failedFormSprites = [];
+    private readonly HashSet<int> failedFormSprites = [];
     private bool isPreviewShiny;
     private byte selectedForm;
 
@@ -38,7 +38,7 @@ public partial class PumpkabooSizeDialog
 
     private void OnFormSpriteError(int formIdx)
     {
-        if (_failedFormSprites.Add(formIdx))
+        if (failedFormSprites.Add(formIdx))
         {
             StateHasChanged();
         }

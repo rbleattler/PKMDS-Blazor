@@ -53,8 +53,7 @@ public partial class LegalityTab : IDisposable
     // PalPark trash bytes (Gen 3 → Gen 4 transfer) are not deterministically recoverable.
     private bool HasPalParkTrashByteIssues => HasTrashByteIssues &&
                                               Pokemon is { Format: 4 } &&
-                                              Analysis is { } la &&
-                                              la.EncounterMatch.Generation == 3;
+                                              Analysis is { EncounterMatch.Generation: 3 };
 
     private bool CanAutoFixTrashBytes => HasTrashByteIssues &&
                                          Pokemon is not null &&
@@ -63,14 +62,14 @@ public partial class LegalityTab : IDisposable
                                           Pokemon.Format >= 8 ||
                                           Pokemon.Context == EntityContext.Gen7b);
 
+    public void Dispose() =>
+        RefreshService.OnAppStateChanged -= StateHasChanged;
+
     private static bool IsTrashByteResultCode(LegalityCheckResultCode code) => code is
         LegalityCheckResultCode.TrashBytesExpected or
         LegalityCheckResultCode.TrashBytesMismatchInitial or
         LegalityCheckResultCode.TrashBytesMissingTerminatorFinal or
         LegalityCheckResultCode.TrashBytesShouldBeEmpty;
-
-    public void Dispose() =>
-        RefreshService.OnAppStateChanged -= StateHasChanged;
 
     protected override void OnInitialized() =>
         RefreshService.OnAppStateChanged += StateHasChanged;
@@ -206,7 +205,10 @@ public partial class LegalityTab : IDisposable
             var gift = pcd.Gift.PK;
             gift.OriginalTrainerTrash.CopyTo(Pokemon.OriginalTrainerTrash);
             if (pcd.Species == Pokemon.Species) // not evolved — nickname trash still relevant
+            {
                 gift.NicknameTrash.CopyTo(Pokemon.NicknameTrash);
+            }
+
             changed = true;
         }
         else if (Pokemon.Format >= 8 || Pokemon.Context == EntityContext.Gen7b)
@@ -218,11 +220,19 @@ public partial class LegalityTab : IDisposable
             // Clear trash for fields explicitly flagged as needing to be empty (e.g. Gen 8 eggs).
             // Checked per-field to avoid zeroing HT on traded eggs, which require non-empty trash.
             if (HasInvalidResult(la, CheckIdentifier.Nickname, LegalityCheckResultCode.TrashBytesShouldBeEmpty))
+            {
                 changed |= ClearTrashAfterTerminator(Pokemon, Pokemon.NicknameTrash);
+            }
+
             if (HasInvalidResult(la, CheckIdentifier.Trainer, LegalityCheckResultCode.TrashBytesShouldBeEmpty))
+            {
                 changed |= ClearTrashAfterTerminator(Pokemon, Pokemon.OriginalTrainerTrash);
+            }
+
             if (HasInvalidResult(la, CheckIdentifier.Handler, LegalityCheckResultCode.TrashBytesShouldBeEmpty))
+            {
                 changed |= ClearTrashAfterTerminator(Pokemon, Pokemon.HandlingTrainerTrash);
+            }
         }
 
         if (changed)
@@ -240,9 +250,15 @@ public partial class LegalityTab : IDisposable
     private static bool EnsureTrashTerminator(Span<byte> trash)
     {
         if (trash.Length < 2)
+        {
             return false;
+        }
+
         if (trash[^1] == 0 && trash[^2] == 0)
+        {
             return false;
+        }
+
         trash[^1] = 0;
         trash[^2] = 0;
         return true;
@@ -252,13 +268,22 @@ public partial class LegalityTab : IDisposable
     {
         var termCharIdx = pk.GetStringTerminatorIndex(trash);
         if (termCharIdx < 0)
+        {
             return false;
+        }
+
         var byteOffset = (termCharIdx + 1) * pk.GetBytesPerChar();
         if (byteOffset >= trash.Length)
+        {
             return false;
+        }
+
         var trashRegion = trash[byteOffset..];
         if (!trashRegion.ContainsAnyExcept<byte>(0))
+        {
             return false;
+        }
+
         trashRegion.Clear();
         return true;
     }

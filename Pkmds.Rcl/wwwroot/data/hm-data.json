@@ -1,1 +1,81 @@
-{"gen1":{"HM01":"Cut","HM02":"Fly","HM03":"Surf","HM04":"Strength","HM05":"Flash"},"gen2":{"HM01":"Cut","HM02":"Fly","HM03":"Surf","HM04":"Strength","HM05":"Flash","HM06":"Whirlpool","HM07":"Waterfall"},"gen3rse":{"HM01":"Cut","HM02":"Fly","HM03":"Surf","HM04":"Strength","HM05":"Flash","HM06":"Rock Smash","HM07":"Waterfall","HM08":"Dive"},"gen3frlg":{"HM01":"Cut","HM02":"Fly","HM03":"Surf","HM04":"Strength","HM05":"Flash","HM06":"Rock Smash","HM07":"Waterfall"},"gen4dpp":{"HM01":"Cut","HM02":"Fly","HM03":"Surf","HM04":"Strength","HM05":"Defog","HM06":"Rock Smash","HM07":"Waterfall","HM08":"Rock Climb"},"gen4hgss":{"HM01":"Cut","HM02":"Fly","HM03":"Surf","HM04":"Strength","HM05":"Whirlpool","HM06":"Rock Smash","HM07":"Waterfall","HM08":"Rock Climb"},"gen5":{"HM01":"Cut","HM02":"Fly","HM03":"Surf","HM04":"Strength","HM05":"Waterfall","HM06":"Dive"},"gen6xy":{"HM01":"Cut","HM02":"Fly","HM03":"Surf","HM04":"Strength","HM05":"Waterfall"},"gen6oras":{"HM01":"Cut","HM02":"Fly","HM03":"Surf","HM04":"Strength","HM05":"Waterfall","HM06":"Rock Smash","HM07":"Dive"}}
+{
+  "gen1": {
+    "HM01": "Cut",
+    "HM02": "Fly",
+    "HM03": "Surf",
+    "HM04": "Strength",
+    "HM05": "Flash"
+  },
+  "gen2": {
+    "HM01": "Cut",
+    "HM02": "Fly",
+    "HM03": "Surf",
+    "HM04": "Strength",
+    "HM05": "Flash",
+    "HM06": "Whirlpool",
+    "HM07": "Waterfall"
+  },
+  "gen3rse": {
+    "HM01": "Cut",
+    "HM02": "Fly",
+    "HM03": "Surf",
+    "HM04": "Strength",
+    "HM05": "Flash",
+    "HM06": "Rock Smash",
+    "HM07": "Waterfall",
+    "HM08": "Dive"
+  },
+  "gen3frlg": {
+    "HM01": "Cut",
+    "HM02": "Fly",
+    "HM03": "Surf",
+    "HM04": "Strength",
+    "HM05": "Flash",
+    "HM06": "Rock Smash",
+    "HM07": "Waterfall"
+  },
+  "gen4dpp": {
+    "HM01": "Cut",
+    "HM02": "Fly",
+    "HM03": "Surf",
+    "HM04": "Strength",
+    "HM05": "Defog",
+    "HM06": "Rock Smash",
+    "HM07": "Waterfall",
+    "HM08": "Rock Climb"
+  },
+  "gen4hgss": {
+    "HM01": "Cut",
+    "HM02": "Fly",
+    "HM03": "Surf",
+    "HM04": "Strength",
+    "HM05": "Whirlpool",
+    "HM06": "Rock Smash",
+    "HM07": "Waterfall",
+    "HM08": "Rock Climb"
+  },
+  "gen5": {
+    "HM01": "Cut",
+    "HM02": "Fly",
+    "HM03": "Surf",
+    "HM04": "Strength",
+    "HM05": "Waterfall",
+    "HM06": "Dive"
+  },
+  "gen6xy": {
+    "HM01": "Cut",
+    "HM02": "Fly",
+    "HM03": "Surf",
+    "HM04": "Strength",
+    "HM05": "Waterfall"
+  },
+  "gen6oras": {
+    "HM01": "Cut",
+    "HM02": "Fly",
+    "HM03": "Surf",
+    "HM04": "Strength",
+    "HM05": "Waterfall",
+    "HM06": "Rock Smash",
+    "HM07": "Dive"
+  }
+}

@@ -5,7 +5,7 @@
         <MudText Typo="@Typo.h6">Trash Bytes Editor — @FieldLabel</MudText>
     </TitleContent>
     <DialogContent>
-        @if (Pokemon is not null && _rawBytes.Length > 0)
+        @if (Pokemon is not null && rawBytes.Length > 0)
         {
             <MudText Typo="@Typo.body2"
                      Class="mb-1">
@@ -18,19 +18,20 @@
             </MudText>
 
             <MudText Typo="@Typo.subtitle2"
-                     Class="mb-1">Raw Buffer</MudText>
+                     Class="mb-1">Raw Buffer
+            </MudText>
             <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 16px;">
-                @for (var i = 0; i < _rawBytes.Length; i++)
+                @for (var i = 0; i < rawBytes.Length; i++)
                 {
                     var index = i;
-                    var isTrash = index >= _terminatorByteOffset;
+                    var isTrash = index >= terminatorByteOffset;
                     <div style="display: flex; flex-direction: column; align-items: center; gap: 1px;">
                         <MudText Typo="@Typo.caption"
                                  Style="@($"font-size: 9px; color: {(isTrash ? "var(--mud-palette-warning-darken)" : "var(--mud-palette-text-secondary)")}")">
                             @($"0x{index:X2}")
                         </MudText>
                         <MudTextField T="string"
-                                      Value="@_rawBytes[index].ToString("X2")"
+                                      Value="@rawBytes[index].ToString("X2")"
                                       ValueChanged="@(v => SetByte(index, v))"
                                       Style="@($"width: 46px; font-family: monospace; {(isTrash ? "background-color: var(--mud-palette-warning-hover);" : "")}")"
                                       Variant="@Variant.Outlined"
@@ -56,26 +57,28 @@
             <MudDivider Class="my-3"/>
 
             <MudText Typo="@Typo.subtitle2"
-                     Class="mb-2">Apply Underlayer</MudText>
+                     Class="mb-2">Apply Underlayer
+            </MudText>
             <MudText Typo="@Typo.caption"
                      Color="@Color.Secondary"
                      Class="mb-2">
-                Fills bytes after the current string's null terminator with a species name encoding, mirroring the trash bytes set during a typical catch.
+                Fills bytes after the current string's null terminator with a species name encoding, mirroring the trash
+                bytes set during a typical catch.
             </MudText>
             <MudStack Spacing="2">
                 <MudAutocomplete T="@ComboItem"
                                  Label="Species"
                                  Variant="@Variant.Outlined"
                                  Margin="@Margin.Dense"
-                                 Value="@AppService.GetSpeciesComboItem(_underlaySpecies)"
-                                 ValueChanged="@(item => _underlaySpecies = (ushort)(item?.Value ?? 1))"
+                                 Value="@AppService.GetSpeciesComboItem(underlaySpecies)"
+                                 ValueChanged="@(item => underlaySpecies = (ushort)(item?.Value ?? 1))"
                                  SearchFunc="@SearchPokemonNames"
                                  ToStringFunc="@(s => s?.Text)"/>
                 <MudSelect T="int"
                            Label="Language"
                            Variant="@Variant.Outlined"
                            Margin="@Margin.Dense"
-                           @bind-Value="@_underlayLanguage">
+                           @bind-Value="@underlayLanguage">
                     @foreach (var item in AppService.GetLanguageComboItems(Pokemon.Format, Pokemon.Context))
                     {
                         <MudSelectItem T="int"
@@ -97,10 +100,12 @@
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="@Cancel"
-                   Variant="@Variant.Outlined">Cancel</MudButton>
+                   Variant="@Variant.Outlined">Cancel
+        </MudButton>
         <MudButton OnClick="@Save"
                    Variant="@Variant.Filled"
                    Color="@Color.Primary"
-                   Disabled="@(_rawBytes.Length == 0)">Save</MudButton>
+                   Disabled="@(rawBytes.Length == 0)">Save
+        </MudButton>
     </DialogActions>
 </MudDialog>

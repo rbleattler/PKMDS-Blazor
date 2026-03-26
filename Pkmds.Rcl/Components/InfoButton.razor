@@ -1,20 +1,21 @@
 @* Transparent full-screen overlay — sits below the popover (z-index 1199) so
    tapping anywhere outside the popover closes it on both mouse and touch. *@
-@if (_open)
+@if (open)
 {
     <div @onclick="Close"
-         style="position:fixed;inset:0;z-index:1199;cursor:default;" />
+         style="position:fixed;inset:0;z-index:1199;cursor:default;"></div>
 }
 
-<span @ref="_anchor" style="position:relative;display:inline-flex;align-items:center;">
+<span @ref="anchor"
+      style="position:relative;display:inline-flex;align-items:center;">
     <MudIconButton Icon="@Icons.Material.Outlined.Info"
                    Size="@Size.Small"
                    Color="@Color.Default"
                    OnClick="@Toggle"
                    title="More info"
                    aria-label="More info"
-                   aria-expanded="@_open" />
-    <MudPopover Open="@_open"
+                   aria-expanded="@open"/>
+    <MudPopover Open="@open"
                 AnchorOrigin="Origin.BottomLeft"
                 TransformOrigin="Origin.TopLeft"
                 OverflowBehavior="OverflowBehavior.FlipAlways"
@@ -28,20 +29,9 @@
                            title="Close"
                            aria-label="Close"/>
         </div>
-        <div class="pa-3" style="padding-top:0;">
+        <div class="pa-3"
+             style="padding-top:0;">
             @ChildContent
         </div>
     </MudPopover>
 </span>
-
-@code {
-    private bool _open;
-    private ElementReference _anchor;
-
-    /// <summary>The content to display inside the info popover.</summary>
-    [Parameter, EditorRequired]
-    public RenderFragment ChildContent { get; set; } = default!;
-
-    private void Toggle() => _open = !_open;
-    private void Close() => _open = false;
-}

@@ -1,5 +1,3 @@
-using Pkmds.Rcl.Models;
-
 namespace Pkmds.Rcl.Services;
 
 public interface IDescriptionService
@@ -27,11 +25,11 @@ public interface IDescriptionService
     /// Returns the move name taught by the TM with the given zero-padded number (e.g. "01", "001")
     /// for the specified game version, or <c>null</c> if not found or the game has no TM data.
     /// </summary>
-    Task<string?> GetTMMoveNameAsync(string tmNumber, GameVersion version);
+    Task<string?> GetTmMoveNameAsync(string tmNumber, GameVersion version);
 
     /// <summary>
     /// Returns the move name taught by the HM with the given key (e.g. "HM01", "HM05")
     /// for the specified game version, or <c>null</c> if not found or the game has no HMs.
     /// </summary>
-    Task<string?> GetHMMoveNameAsync(string hmKey, GameVersion version);
+    Task<string?> GetHmMoveNameAsync(string hmKey, GameVersion version);
 }

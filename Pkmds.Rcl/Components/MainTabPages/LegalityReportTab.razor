@@ -117,66 +117,66 @@
                       RowsPerPage="25"
                       Class="legality-report-table">
 
-                    <HeaderContent>
+                <HeaderContent>
 
-                        <MudTh>
-                            <MudTableSortLabel SortBy="@(new Func<LegalityReportEntry, object>(e => e.SpeciesName))">
-                                Species
-                            </MudTableSortLabel>
-                        </MudTh>
+                    <MudTh>
+                        <MudTableSortLabel SortBy="@(new Func<LegalityReportEntry, object>(e => e.SpeciesName))">
+                            Species
+                        </MudTableSortLabel>
+                    </MudTh>
 
-                        <MudTh>
-                            <MudTableSortLabel SortBy="@(new Func<LegalityReportEntry, object>(e => e.Location))">
-                                Location
-                            </MudTableSortLabel>
-                        </MudTh>
+                    <MudTh>
+                        <MudTableSortLabel SortBy="@(new Func<LegalityReportEntry, object>(e => e.Location))">
+                            Location
+                        </MudTableSortLabel>
+                    </MudTh>
 
-                        <MudTh>
-                            <MudTableSortLabel SortBy="@(new Func<LegalityReportEntry, object>(e => (int)e.Status))">
-                                Status
-                            </MudTableSortLabel>
-                        </MudTh>
+                    <MudTh>
+                        <MudTableSortLabel SortBy="@(new Func<LegalityReportEntry, object>(e => (int)e.Status))">
+                            Status
+                        </MudTableSortLabel>
+                    </MudTh>
 
-                        <MudTh>First Issue</MudTh>
+                    <MudTh>First Issue</MudTh>
 
-                    </HeaderContent>
+                </HeaderContent>
 
-                    <RowTemplate>
+                <RowTemplate>
 
-                        <MudTd DataLabel="Species">@context.SpeciesName</MudTd>
+                    <MudTd DataLabel="Species">@context.SpeciesName</MudTd>
 
-                        <MudTd DataLabel="Location">@context.Location</MudTd>
+                    <MudTd DataLabel="Location">@context.Location</MudTd>
 
-                        <MudTd DataLabel="Status">
-                            <MudChip T="@string"
-                                     Color="@GetStatusColor(context.Status)"
-                                     Size="@Size.Small"
-                                     Icon="@GetStatusIcon(context.Status)"
-                                     Variant="@Variant.Filled">
-                                @GetStatusLabel(context.Status)
-                            </MudChip>
-                        </MudTd>
+                    <MudTd DataLabel="Status">
+                        <MudChip T="@string"
+                                 Color="@GetStatusColor(context.Status)"
+                                 Size="@Size.Small"
+                                 Icon="@GetStatusIcon(context.Status)"
+                                 Variant="@Variant.Filled">
+                            @GetStatusLabel(context.Status)
+                        </MudChip>
+                    </MudTd>
 
-                        <MudTd DataLabel="First Issue">@context.FirstIssue</MudTd>
+                    <MudTd DataLabel="First Issue">@context.FirstIssue</MudTd>
 
-                    </RowTemplate>
+                </RowTemplate>
 
-                    <NoRecordsContent>
-                        @if (isScanning)
-                        {
-                            <MudText>Scanning…</MudText>
-                        }
-                        else
-                        {
-                            <MudText>No Pokémon match the current filter.</MudText>
-                        }
-                    </NoRecordsContent>
+                <NoRecordsContent>
+                    @if (isScanning)
+                    {
+                        <MudText>Scanning…</MudText>
+                    }
+                    else
+                    {
+                        <MudText>No Pokémon match the current filter.</MudText>
+                    }
+                </NoRecordsContent>
 
-                    <PagerContent>
-                        <MudTablePager/>
-                    </PagerContent>
+                <PagerContent>
+                    <MudTablePager/>
+                </PagerContent>
 
-                </MudTable>
+            </MudTable>
         }
     }
 

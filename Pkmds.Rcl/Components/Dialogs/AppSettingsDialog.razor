@@ -26,25 +26,25 @@
                                     Size="@Size.Small">
                         <MudIconButton Icon="@Icons.Material.Filled.LightMode"
                                        Color="@Color.Inherit"
-                                       Style="@(_themeMode == ThemeMode.Light
+                                       Style="@(themeMode == ThemeMode.Light
                                                   ? "background-color: var(--mud-palette-primary-lighten);"
                                                   : "opacity: 0.6;")"
                                        title="Light mode"
-                                       OnClick="@(() => _themeMode = ThemeMode.Light)"/>
+                                       OnClick="@(() => themeMode = ThemeMode.Light)"/>
                         <MudIconButton Icon="@Icons.Material.Filled.SettingsBrightness"
                                        Color="@Color.Inherit"
-                                       Style="@(_themeMode == ThemeMode.System
+                                       Style="@(themeMode == ThemeMode.System
                                                   ? "background-color: var(--mud-palette-primary-lighten);"
                                                   : "opacity: 0.6;")"
                                        title="System default"
-                                       OnClick="@(() => _themeMode = ThemeMode.System)"/>
+                                       OnClick="@(() => themeMode = ThemeMode.System)"/>
                         <MudIconButton Icon="@Icons.Material.Filled.DarkMode"
                                        Color="@Color.Inherit"
-                                       Style="@(_themeMode == ThemeMode.Dark
+                                       Style="@(themeMode == ThemeMode.Dark
                                                   ? "background-color: var(--mud-palette-primary-lighten);"
                                                   : "opacity: 0.6;")"
                                        title="Dark mode"
-                                       OnClick="@(() => _themeMode = ThemeMode.Dark)"/>
+                                       OnClick="@(() => themeMode = ThemeMode.Dark)"/>
                     </MudButtonGroup>
 
                     <MudDivider/>
@@ -57,20 +57,20 @@
                                     Size="@Size.Small">
                         <MudButton StartIcon="@Icons.Material.Filled.Home"
                                    Color="@Color.Inherit"
-                                   Style="@(_spriteStyle == SpriteStyle.Home
+                                   Style="@(spriteStyle == SpriteStyle.Home
                                               ? "background-color: var(--mud-palette-primary-lighten);"
                                               : "opacity: 0.6;")"
                                    title="Home (high-res 512×512 sprites)"
-                                   OnClick="@(() => _spriteStyle = SpriteStyle.Home)">
+                                   OnClick="@(() => spriteStyle = SpriteStyle.Home)">
                             Home
                         </MudButton>
                         <MudButton StartIcon="@Icons.Material.Filled.VideogameAsset"
                                    Color="@Color.Inherit"
-                                   Style="@(_spriteStyle == SpriteStyle.Game
+                                   Style="@(spriteStyle == SpriteStyle.Game
                                               ? "background-color: var(--mud-palette-primary-lighten);"
                                               : "opacity: 0.6;")"
                                    title="Game (era-accurate pixel-art sprites matched to save file)"
-                                   OnClick="@(() => _spriteStyle = SpriteStyle.Game)">
+                                   OnClick="@(() => spriteStyle = SpriteStyle.Game)">
                             Game
                         </MudButton>
                     </MudButtonGroup>
@@ -89,12 +89,12 @@
                              Color="@Color.Primary">
                         Developer Options
                     </MudText>
-                    <MudSwitch Value="@_isHaXEnabled"
+                    <MudSwitch Value="@isHaXEnabled"
                                Color="@Color.Warning"
                                Label="PKHaX Mode"
                                title="Enables unrestricted editing. May create illegal/untradable Pokémon. Use at your own risk."
                                ValueChanged="@((bool value) => OnHaXEnabledChanged(value))"/>
-                    <MudSwitch @bind-Value="@_isVerboseLogging"
+                    <MudSwitch @bind-Value="@isVerboseLogging"
                                Color="@Color.Primary"
                                Label="Verbose Logging"
                                title="Enable verbose logging to browser console"/>
@@ -109,22 +109,22 @@
                              Color="@Color.Secondary">
                         Configure your preferred trainer default values.
                     </MudText>
-                    <MudTextField @bind-Value="@_defaultOtName"
+                    <MudTextField @bind-Value="@defaultOtName"
                                   Label="Default OT Name"
                                   MaxLength="12"
                                   Variant="@Variant.Outlined"
                                   Clearable/>
-                    <MudNumericField @bind-Value="@_defaultTrainerId"
+                    <MudNumericField @bind-Value="@defaultTrainerId"
                                      Label="Default TID"
                                      Variant="@Variant.Outlined"
                                      Min="@((uint)0)"
                                      Max="@((uint)999999)"/>
-                    <MudNumericField @bind-Value="@_defaultSecretId"
+                    <MudNumericField @bind-Value="@defaultSecretId"
                                      Label="Default SID"
                                      Variant="@Variant.Outlined"
                                      Min="@((uint)0)"
                                      Max="@((uint)65535)"/>
-                    <MudSelect @bind-Value="@_defaultLanguageId"
+                    <MudSelect @bind-Value="@defaultLanguageId"
                                Label="Default Language"
                                Variant="@Variant.Outlined">
                         @foreach (var lang in SupportedLanguages)

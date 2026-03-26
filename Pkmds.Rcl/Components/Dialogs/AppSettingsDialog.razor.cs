@@ -16,16 +16,16 @@ public partial class AppSettingsDialog
         (LanguageID.SpanishL, "Spanish LATAM (Español LATAM)")
     ];
 
-    private LanguageID _defaultLanguageId = LanguageID.English;
-    private string _defaultOtName = string.Empty;
-    private uint _defaultSecretId;
-    private uint _defaultTrainerId;
-    private bool _isHaXEnabled;
-    private bool _isVerboseLogging;
-    private SpriteStyle _spriteStyle;
+    private LanguageID defaultLanguageId = LanguageID.English;
+    private string defaultOtName = string.Empty;
+    private uint defaultSecretId;
+    private uint defaultTrainerId;
+    private bool isHaXEnabled;
+    private bool isVerboseLogging;
+    private SpriteStyle spriteStyle;
 
     // Working copy — only committed on Save
-    private ThemeMode _themeMode;
+    private ThemeMode themeMode;
 
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; } = null!;
@@ -35,19 +35,19 @@ public partial class AppSettingsDialog
 
     protected override void OnInitialized()
     {
-        _themeMode = InitialSettings.ThemeMode switch
+        themeMode = InitialSettings.ThemeMode switch
         {
             "light" => ThemeMode.Light,
             "dark" => ThemeMode.Dark,
             _ => ThemeMode.System
         };
-        _isHaXEnabled = InitialSettings.IsHaXEnabled;
-        _isVerboseLogging = InitialSettings.IsVerboseLoggingEnabled;
-        _spriteStyle = InitialSettings.SpriteStyle;
-        _defaultOtName = InitialSettings.DefaultOtName;
-        _defaultTrainerId = InitialSettings.DefaultTrainerId;
-        _defaultSecretId = InitialSettings.DefaultSecretId;
-        _defaultLanguageId = InitialSettings.DefaultLanguageId;
+        isHaXEnabled = InitialSettings.IsHaXEnabled;
+        isVerboseLogging = InitialSettings.IsVerboseLoggingEnabled;
+        spriteStyle = InitialSettings.SpriteStyle;
+        defaultOtName = InitialSettings.DefaultOtName;
+        defaultTrainerId = InitialSettings.DefaultTrainerId;
+        defaultSecretId = InitialSettings.DefaultSecretId;
+        defaultLanguageId = InitialSettings.DefaultLanguageId;
     }
 
     private async Task OnHaXEnabledChanged(bool newValue)
@@ -67,7 +67,7 @@ public partial class AppSettingsDialog
             }
         }
 
-        _isHaXEnabled = newValue;
+        isHaXEnabled = newValue;
     }
 
     private async Task OnResetAll()
@@ -84,14 +84,14 @@ public partial class AppSettingsDialog
         }
 
         var defaults = new AppSettings();
-        _themeMode = ThemeMode.System;
-        _isHaXEnabled = defaults.IsHaXEnabled;
-        _isVerboseLogging = defaults.IsVerboseLoggingEnabled;
-        _spriteStyle = defaults.SpriteStyle;
-        _defaultOtName = defaults.DefaultOtName;
-        _defaultTrainerId = defaults.DefaultTrainerId;
-        _defaultSecretId = defaults.DefaultSecretId;
-        _defaultLanguageId = defaults.DefaultLanguageId;
+        themeMode = ThemeMode.System;
+        isHaXEnabled = defaults.IsHaXEnabled;
+        isVerboseLogging = defaults.IsVerboseLoggingEnabled;
+        spriteStyle = defaults.SpriteStyle;
+        defaultOtName = defaults.DefaultOtName;
+        defaultTrainerId = defaults.DefaultTrainerId;
+        defaultSecretId = defaults.DefaultSecretId;
+        defaultLanguageId = defaults.DefaultLanguageId;
         StateHasChanged();
     }
 
@@ -99,7 +99,7 @@ public partial class AppSettingsDialog
 
     private void Save()
     {
-        var themeStr = _themeMode switch
+        var themeStr = themeMode switch
         {
             ThemeMode.Light => "light",
             ThemeMode.Dark => "dark",
@@ -109,13 +109,13 @@ public partial class AppSettingsDialog
         var updated = new AppSettings
         {
             ThemeMode = themeStr,
-            IsHaXEnabled = _isHaXEnabled,
-            IsVerboseLoggingEnabled = _isVerboseLogging,
-            SpriteStyle = _spriteStyle,
-            DefaultOtName = _defaultOtName,
-            DefaultTrainerId = _defaultTrainerId,
-            DefaultSecretId = _defaultSecretId,
-            DefaultLanguageId = _defaultLanguageId
+            IsHaXEnabled = isHaXEnabled,
+            IsVerboseLoggingEnabled = isVerboseLogging,
+            SpriteStyle = spriteStyle,
+            DefaultOtName = defaultOtName,
+            DefaultTrainerId = defaultTrainerId,
+            DefaultSecretId = defaultSecretId,
+            DefaultLanguageId = defaultLanguageId
         };
 
         MudDialog.Close(DialogResult.Ok(updated));

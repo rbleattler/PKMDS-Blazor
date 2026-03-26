@@ -1,9 +1,14 @@
 ﻿@inherits BasePkmdsComponent
 
-<MudOverlay Visible="@_isSyncing" DarkBackground="true" ZIndex="9999">
-    <MudStack AlignItems="AlignItems.Center" Spacing="4">
-        <MudProgressCircular Indeterminate="true" Color="Color.Primary"/>
-        <MudText Typo="Typo.body1" Color="Color.Default">@_syncMessage</MudText>
+<MudOverlay Visible="@isSyncing"
+            DarkBackground="true"
+            ZIndex="9999">
+    <MudStack AlignItems="AlignItems.Center"
+              Spacing="4">
+        <MudProgressCircular Indeterminate="true"
+                             Color="Color.Primary"/>
+        <MudText Typo="Typo.body1"
+                 Color="Color.Default">@syncMessage</MudText>
     </MudStack>
 </MudOverlay>
 

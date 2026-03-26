@@ -100,7 +100,7 @@ public class EvolveTests
     public void WurmpleGen6_GetWurmpleEncryptionConstant_ProducesMatchingEvoGroup()
     {
         // Arrange
-        var evoGroup = WurmpleEvolution.Silcoon;
+        const WurmpleEvolution evoGroup = WurmpleEvolution.Silcoon;
 
         // Act
         var ec = WurmpleUtil.GetWurmpleEncryptionConstant(evoGroup);
@@ -114,13 +114,16 @@ public class EvolveTests
     {
         // Arrange — simulate what ApplyEvolution does for Gen 3 Wurmple
         var pk = MakePk3((ushort)Species.Wurmple);
-        var evoGroup = WurmpleEvolution.Cascoon;
+        const WurmpleEvolution evoGroup = WurmpleEvolution.Cascoon;
 
         // Act — loop until a PID matches the desired branch (same loop as ApplyEvolution)
         uint pid;
         var rnd = Util.Rand;
-        do pid = rnd.Rand32();
-        while (evoGroup != WurmpleUtil.GetWurmpleEvoVal(pid));
+        do
+        {
+            pid = rnd.Rand32();
+        } while (evoGroup != WurmpleUtil.GetWurmpleEvoVal(pid));
+
         pk.PID = pid;
 
         // Assert — EC getter on Gen3 returns PID

@@ -2,7 +2,7 @@ namespace Pkmds.Rcl.Components.Dialogs;
 
 public partial class FurfrouEditorDialog
 {
-    private readonly HashSet<int> _failedFormSprites = [];
+    private readonly HashSet<int> failedFormSprites = [];
     private uint daysRemaining;
     private bool isPreviewShiny;
 
@@ -57,7 +57,7 @@ public partial class FurfrouEditorDialog
 
     private void OnFormSpriteError(int formIdx)
     {
-        if (_failedFormSprites.Add(formIdx))
+        if (failedFormSprites.Add(formIdx))
         {
             StateHasChanged();
         }

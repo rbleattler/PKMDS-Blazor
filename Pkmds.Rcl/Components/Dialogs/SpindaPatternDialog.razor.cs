@@ -1,5 +1,4 @@
 using System.Buffers.Binary;
-using System.Globalization;
 
 namespace Pkmds.Rcl.Components.Dialogs;
 
@@ -11,10 +10,10 @@ public partial class SpindaPatternDialog
     private const string FaceUrl = "_content/Pkmds.Rcl/sprites/spinda/327-face.png";
     private const string MouthUrl = "_content/Pkmds.Rcl/sprites/spinda/327-mouth.png";
 
-    private ElementReference _canvas;
-    private uint _pattern;
-    private string _patternHex = string.Empty;
+    private ElementReference canvas;
     private bool isPreviewShiny;
+    private uint pattern;
+    private string patternHex = string.Empty;
 
     [Parameter]
     [EditorRequired]
@@ -31,8 +30,8 @@ public partial class SpindaPatternDialog
         }
 
         isPreviewShiny = Pokemon.IsShiny;
-        _pattern = GetPatternValue(Pokemon);
-        _patternHex = _pattern.ToString("X8");
+        pattern = GetPatternValue(Pokemon);
+        patternHex = pattern.ToString("X8");
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -45,24 +44,26 @@ public partial class SpindaPatternDialog
 
     private async Task RenderAsync()
     {
-        var baseUrl = isPreviewShiny ? BaseShinyUrl : BaseUrl;
+        var baseUrl = isPreviewShiny
+            ? BaseShinyUrl
+            : BaseUrl;
         await JSRuntime.InvokeVoidAsync(
             "spindaRenderer.render",
-            _canvas, _pattern, isPreviewShiny, baseUrl, HeadUrl, FaceUrl, MouthUrl);
+            canvas, pattern, isPreviewShiny, baseUrl, HeadUrl, FaceUrl, MouthUrl);
     }
 
     private async Task Randomize()
     {
-        _pattern = Util.Rand.Rand32();
-        _patternHex = _pattern.ToString("X8");
+        pattern = Util.Rand.Rand32();
+        patternHex = pattern.ToString("X8");
         await RenderAsync();
     }
 
     private async Task OnPatternHexChanged()
     {
-        if (uint.TryParse(_patternHex, NumberStyles.HexNumber, null, out var parsed))
+        if (uint.TryParse(patternHex, NumberStyles.HexNumber, null, out var parsed))
         {
-            _pattern = parsed;
+            pattern = parsed;
             await RenderAsync();
         }
     }
@@ -75,7 +76,7 @@ public partial class SpindaPatternDialog
             return;
         }
 
-        ApplyPattern(Pokemon, _pattern);
+        ApplyPattern(Pokemon, pattern);
         MudDialog?.Close(DialogResult.Ok(true));
     }
 
@@ -89,7 +90,7 @@ public partial class SpindaPatternDialog
     {
         PB8 pb8 => BinaryPrimitives.ReverseEndianness(pb8.EncryptionConstant),
         _ when pk.Format <= 5 => pk.PID,
-        _ => pk.EncryptionConstant,
+        _ => pk.EncryptionConstant
     };
 
     /// <summary>

@@ -3,6 +3,9 @@ namespace Pkmds.Rcl.Components.MainTabPages;
 public partial class AdvancedSearchTab : RefreshAwareComponent
 {
     private const string LocalStorageKey = "pkmds.search.filters";
+    private readonly Dictionary<int, AbilitySummary?> loadedAbilities = [];
+    private readonly Dictionary<int, ItemSummary?> loadedBalls = [];
+    private readonly Dictionary<int, ItemSummary?> loadedHeldItems = [];
     private int? abilityId;
 
     // ── Ability autocomplete ──────────────────────────────────────────────
@@ -18,7 +21,14 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
     // Moves
     private List<ComboItem> anyMoveItems = [];
     private int? ball;
+    private AbilitySummary? filterAbilityInfo;
+
+    // ── Filter info state ─────────────────────────────────────────────────
+
+    private ItemSummary? filterBallInfo;
+    private ItemSummary? filterHeldItemInfo;
     private int? gender; // null=any, 0=male, 1=female, -1=genderless
+    private bool hasSearched;
     private int? heldItemId;
     private int? hiddenPowerType;
     private int? hpEvMin, atkEvMin, defEvMin, spaEvMin, spdEvMin, speEvMin;
@@ -27,7 +37,6 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
     private bool? isLegal;
 
     private bool isSearching;
-    private bool hasSearched;
 
     // Basic
     private bool? isShiny;
@@ -44,18 +53,9 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
     // Trainer
     private string otName = string.Empty;
 
-    // ── Filter info state ─────────────────────────────────────────────────
-
-    private ItemSummary? _filterBallInfo;
-    private AbilitySummary? _filterAbilityInfo;
-    private ItemSummary? _filterHeldItemInfo;
-
     // ── Search state ──────────────────────────────────────────────────────
 
     private List<AdvancedSearchResult> results = [];
-    private Dictionary<int, AbilitySummary?> _loadedAbilities = [];
-    private Dictionary<int, ItemSummary?> _loadedHeldItems = [];
-    private Dictionary<int, ItemSummary?> _loadedBalls = [];
 
     // Saved filters
     private Dictionary<string, AdvancedSearchFilter> savedFilters = [];
@@ -116,28 +116,38 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
     private async Task LoadResultDescriptionsAsync()
     {
         if (AppState.SaveFile is not { } saveFile)
+        {
             return;
+        }
 
-        _loadedAbilities.Clear();
-        _loadedHeldItems.Clear();
-        _loadedBalls.Clear();
+        loadedAbilities.Clear();
+        loadedHeldItems.Clear();
+        loadedBalls.Clear();
 
         var itemlist = GameInfo.Strings.itemlist;
         foreach (var result in results)
         {
             var pkm = result.Pokemon;
 
-            if (!_loadedAbilities.ContainsKey(pkm.Ability))
-                _loadedAbilities[pkm.Ability] = await DescriptionService.GetAbilityInfoAsync(pkm.Ability, saveFile.Version);
-
-            if (pkm.HeldItem > 0 && pkm.HeldItem < itemlist.Length && !_loadedHeldItems.ContainsKey(pkm.HeldItem))
-                _loadedHeldItems[pkm.HeldItem] = await DescriptionService.GetItemInfoAsync(itemlist[pkm.HeldItem], saveFile.Version);
-
-            if (pkm.Ball > 0 && !_loadedBalls.ContainsKey(pkm.Ball))
+            if (!loadedAbilities.ContainsKey(pkm.Ability))
             {
-                var ballItem = GameInfo.FilteredSources.Balls.FirstOrDefault(b => b.Value == pkm.Ball);
-                if (ballItem is not null)
-                    _loadedBalls[pkm.Ball] = await DescriptionService.GetItemInfoAsync(ballItem.Text, saveFile.Version);
+                loadedAbilities[pkm.Ability] = await DescriptionService.GetAbilityInfoAsync(pkm.Ability, saveFile.Version);
+            }
+
+            if (pkm.HeldItem > 0 && pkm.HeldItem < itemlist.Length && !loadedHeldItems.ContainsKey(pkm.HeldItem))
+            {
+                loadedHeldItems[pkm.HeldItem] = await DescriptionService.GetItemInfoAsync(itemlist[pkm.HeldItem], saveFile.Version);
+            }
+
+            if (pkm.Ball <= 0 || loadedBalls.ContainsKey(pkm.Ball))
+            {
+                continue;
+            }
+
+            var ballItem = GameInfo.FilteredSources.Balls.FirstOrDefault(b => b.Value == pkm.Ball);
+            if (ballItem is not null)
+            {
+                loadedBalls[pkm.Ball] = await DescriptionService.GetItemInfoAsync(ballItem.Text, saveFile.Version);
             }
         }
 
@@ -162,9 +172,9 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
         ball = null;
         abilityId = null;
         heldItemId = null;
-        _filterBallInfo = null;
-        _filterAbilityInfo = null;
-        _filterHeldItemInfo = null;
+        filterBallInfo = null;
+        filterAbilityInfo = null;
+        filterHeldItemInfo = null;
         originGame = null;
         hiddenPowerType = null;
         anyMoveItems = [];
@@ -313,40 +323,50 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
         if (value is > 0 && AppState.SaveFile is { } sf)
         {
             var ballItem = GameInfo.FilteredSources.Balls.FirstOrDefault(b => b.Value == value);
-            _filterBallInfo = ballItem is not null
+            filterBallInfo = ballItem is not null
                 ? await DescriptionService.GetItemInfoAsync(ballItem.Text, sf.Version)
                 : null;
         }
         else
         {
-            _filterBallInfo = null;
+            filterBallInfo = null;
         }
     }
 
     private async Task OnAbilitySelected(ComboItem? item)
     {
         abilityItem = item;
-        abilityId = item is { Value: > 0 } ? item.Value : null;
+        abilityId = item is { Value: > 0 }
+            ? item.Value
+            : null;
         if (abilityId.HasValue && AppState.SaveFile is { } sf)
-            _filterAbilityInfo = await DescriptionService.GetAbilityInfoAsync(abilityId.Value, sf.Version);
+        {
+            filterAbilityInfo = await DescriptionService.GetAbilityInfoAsync(abilityId.Value, sf.Version);
+        }
         else
-            _filterAbilityInfo = null;
+        {
+            filterAbilityInfo = null;
+        }
     }
 
     private async Task OnHeldItemFilterChanged(ComboItem? v)
     {
-        heldItemId = v is { Value: > 0 } ? v.Value : null;
+        heldItemId = v is { Value: > 0 }
+            ? v.Value
+            : null;
         if (heldItemId.HasValue && AppState.SaveFile is { } sf)
         {
             var itemlist = GameInfo.Strings.itemlist;
-            var name = heldItemId.Value < itemlist.Length ? itemlist[heldItemId.Value] : null;
-            _filterHeldItemInfo = name is not null
+            var name = heldItemId.Value < itemlist.Length
+                ? itemlist[heldItemId.Value]
+                : null;
+            filterHeldItemInfo = name is not null
                 ? await DescriptionService.GetItemInfoAsync(name, sf.Version)
                 : null;
         }
         else
         {
-            _filterHeldItemInfo = null;
+            filterHeldItemInfo = null;
         }
     }
 
@@ -493,5 +513,4 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
             // Ignore localStorage failures.
         }
     }
-
 }

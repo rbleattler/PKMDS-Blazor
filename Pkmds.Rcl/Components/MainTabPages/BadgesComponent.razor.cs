@@ -16,12 +16,12 @@ public partial class BadgesComponent : IDisposable
         SAV2 or SAV4HGSS => BadgeData.JohtoKantoBadges,
         SAV3RS or SAV3E or SAV6AO => BadgeData.HoennBadges,
         SAV4DP or SAV4Pt or SAV8BS => BadgeData.SinnohBadges,
-        SAV5BW => BadgeData.UnivoaBWBadges,
+        SAV5BW => BadgeData.UnivoaBwBadges,
         SAV5B2W2 => BadgeData.UnovaB2W2Badges,
         SAV6XY => BadgeData.KalosBadges,
         SAV8SWSH { Version: GameVersion.SW } => BadgeData.GalarSwordBadges,
         SAV8SWSH => BadgeData.GalarShieldBadges,
-        _ => [],
+        _ => []
     };
 
     [SuppressMessage("ReSharper", "InconsistentNaming")]

@@ -4,7 +4,7 @@ using Pkmds.Core.Utilities;
 namespace Pkmds.Tests;
 
 /// <summary>
-/// Tests for <see cref="ManicEmuSaveHelper"/> ZIP detection, extraction, and rebuild logic.
+/// Tests for <see cref="ManicEmuSaveHelper" /> ZIP detection, extraction, and rebuild logic.
 /// </summary>
 public class ManicEmuSaveHelperTests
 {
@@ -12,7 +12,10 @@ public class ManicEmuSaveHelperTests
 
     // ── Helpers ───────────────────────────────────────────────────────────
 
-    /// <summary>Builds an in-memory ZIP with one entry at <paramref name="entryPath"/> containing <paramref name="entryBytes"/>.</summary>
+    /// <summary>
+    /// Builds an in-memory ZIP with one entry at <paramref name="entryPath" /> containing
+    /// <paramref name="entryBytes" />.
+    /// </summary>
     private static byte[] BuildZip(string entryPath, byte[] entryBytes, string? extraEntryPath = null, byte[]? extraEntryBytes = null)
     {
         using var ms = new MemoryStream();
@@ -20,19 +23,24 @@ public class ManicEmuSaveHelperTests
         {
             var entry = archive.CreateEntry(entryPath, CompressionLevel.Optimal);
             using (var stream = entry.Open())
-                stream.Write(entryBytes, 0, entryBytes.Length);
-
-            if (extraEntryPath is not null && extraEntryBytes is not null)
             {
-                var extra = archive.CreateEntry(extraEntryPath, CompressionLevel.Optimal);
-                using var extraStream = extra.Open();
-                extraStream.Write(extraEntryBytes, 0, extraEntryBytes.Length);
+                stream.Write(entryBytes, 0, entryBytes.Length);
             }
+
+            if (extraEntryPath is null || extraEntryBytes is null)
+            {
+                return ms.ToArray();
+            }
+
+            var extra = archive.CreateEntry(extraEntryPath, CompressionLevel.Optimal);
+            using var extraStream = extra.Open();
+            extraStream.Write(extraEntryBytes, 0, extraEntryBytes.Length);
         }
+
         return ms.ToArray();
     }
 
-    /// <summary>Builds an in-memory ZIP with <paramref name="count"/> entries all under a non-<c>sdmc/</c> path.</summary>
+    /// <summary>Builds an in-memory ZIP with <paramref name="count" /> entries all under a non-<c>sdmc/</c> path.</summary>
     private static byte[] BuildZipWithManyNonSdmcEntries(int count)
     {
         using var ms = new MemoryStream();
@@ -42,13 +50,14 @@ public class ManicEmuSaveHelperTests
             {
                 var entry = archive.CreateEntry($"other/dir{i}/file.bin", CompressionLevel.Optimal);
                 using var stream = entry.Open();
-                stream.Write(new byte[] { 0xAA }, 0, 1);
+                stream.Write([0xAA], 0, 1);
             }
         }
+
         return ms.ToArray();
     }
 
-    /// <summary>Builds an in-memory ZIP with <paramref name="count"/> entries all under <c>sdmc/</c>.</summary>
+    /// <summary>Builds an in-memory ZIP with <paramref name="count" /> entries all under <c>sdmc/</c>.</summary>
     private static byte[] BuildZipWithManySdmcEntries(int count)
     {
         using var ms = new MemoryStream();
@@ -58,9 +67,10 @@ public class ManicEmuSaveHelperTests
             {
                 var entry = archive.CreateEntry($"sdmc/dir{i}/file.bin", CompressionLevel.Optimal);
                 using var stream = entry.Open();
-                stream.Write(new byte[] { 0xAA }, 0, 1);
+                stream.Write([0xAA], 0, 1);
             }
         }
+
         return ms.ToArray();
     }
 
@@ -81,10 +91,7 @@ public class ManicEmuSaveHelperTests
     }
 
     [Fact]
-    public void IsZip_EmptySpan_ReturnsFalse()
-    {
-        ManicEmuSaveHelper.IsZip(ReadOnlySpan<byte>.Empty).Should().BeFalse();
-    }
+    public void IsZip_EmptySpan_ReturnsFalse() => ManicEmuSaveHelper.IsZip(ReadOnlySpan<byte>.Empty).Should().BeFalse();
 
     // ── TryExtractSaveFromZip ─────────────────────────────────────────────
 
@@ -101,7 +108,7 @@ public class ManicEmuSaveHelperTests
     public void TryExtractSaveFromZip_ZipWithNoSdmcEntries_ReturnsFalse()
     {
         // ZIP contains an entry NOT under sdmc/ — should be ignored
-        var zipBytes = BuildZip("other/path/save.bin", new byte[] { 0xDE, 0xAD, 0xBE, 0xEF });
+        var zipBytes = BuildZip("other/path/save.bin", [0xDE, 0xAD, 0xBE, 0xEF]);
         ManicEmuSaveHelper.TryExtractSaveFromZip(zipBytes, null, out _, out _).Should().BeFalse();
     }
 

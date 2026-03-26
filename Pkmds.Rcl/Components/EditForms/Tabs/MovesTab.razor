@@ -105,22 +105,26 @@
                                         @MoveTypeAndCategorySummary(
                                             MoveInfo.GetType(moveId, saveFileEntityContext),
                                             GetMoveCategory(moveId, saveFileEntityContext))
-                                        @if (_moveInfos[i] is { } moveInfo)
+                                        @if (moveInfos[i] is { } moveInfo)
                                         {
                                             <MudText Typo="@Typo.subtitle2">@moveInfo.Name</MudText>
                                             <MudStack Row
                                                       Spacing="3">
-                                                <MudText Typo="@Typo.caption">Power: <b>@(moveInfo.Power?.ToString() ?? "—")</b></MudText>
-                                                @if (moveInfo.PP.HasValue)
+                                                <MudText Typo="@Typo.caption">Power:
+                                                    <b>@(moveInfo.Power?.ToString() ?? "—")</b></MudText>
+                                                @if (moveInfo.Pp.HasValue)
                                                 {
-                                                    <MudText Typo="@Typo.caption">PP: <b>@moveInfo.PP</b></MudText>
+                                                    <MudText Typo="@Typo.caption">PP: <b>@moveInfo.Pp</b></MudText>
                                                 }
-                                                <MudText Typo="@Typo.caption">Acc: <b>@(moveInfo.Accuracy is { } acc ? $"{acc}%" : "—")</b></MudText>
+                                                <MudText Typo="@Typo.caption">Acc: <b>@(moveInfo.Accuracy is { } acc
+                                                            ? $"{acc}%"
+                                                            : "—")</b></MudText>
                                             </MudStack>
                                             @if (!string.IsNullOrEmpty(moveInfo.Target))
                                             {
                                                 <MudText Typo="@Typo.caption">Target: <b>@moveInfo.Target</b></MudText>
                                             }
+
                                             @if (moveInfo.Flags.Count > 0)
                                             {
                                                 <MudStack Row
@@ -138,7 +142,10 @@
                                                     }
                                                 </MudStack>
                                             }
-                                            <MudText Typo="@Typo.body2">@(string.IsNullOrEmpty(moveInfo.Description) ? "No description available." : moveInfo.Description)</MudText>
+
+                                            <MudText Typo="@Typo.body2">@(string.IsNullOrEmpty(moveInfo.Description)
+                                                    ? "No description available."
+                                                    : moveInfo.Description)</MudText>
                                         }
                                     </MudStack>
                                 </InfoButton>
@@ -389,22 +396,29 @@
                                             @MoveTypeAndCategorySummary(
                                                 MoveInfo.GetType(relearnMoveId, saveFileEntityContext),
                                                 GetMoveCategory(relearnMoveId, saveFileEntityContext))
-                                            @if (_relearnMoveInfos[i] is { } relearnInfo)
+                                            @if (relearnMoveInfos[i] is { } relearnInfo)
                                             {
                                                 <MudText Typo="@Typo.subtitle2">@relearnInfo.Name</MudText>
                                                 <MudStack Row
                                                           Spacing="3">
-                                                    <MudText Typo="@Typo.caption">Power: <b>@(relearnInfo.Power?.ToString() ?? "—")</b></MudText>
-                                                    @if (relearnInfo.PP.HasValue)
+                                                    <MudText Typo="@Typo.caption">Power:
+                                                        <b>@(relearnInfo.Power?.ToString() ?? "—")</b></MudText>
+                                                    @if (relearnInfo.Pp.HasValue)
                                                     {
-                                                        <MudText Typo="@Typo.caption">PP: <b>@relearnInfo.PP</b></MudText>
+                                                        <MudText Typo="@Typo.caption">PP: <b>@relearnInfo.Pp</b>
+                                                        </MudText>
                                                     }
-                                                    <MudText Typo="@Typo.caption">Acc: <b>@(relearnInfo.Accuracy is { } relearnAcc ? $"{relearnAcc}%" : "—")</b></MudText>
+                                                    <MudText Typo="@Typo.caption">Acc:
+                                                        <b>@(relearnInfo.Accuracy is { } relearnAcc
+                                                                ? $"{relearnAcc}%"
+                                                                : "—")</b></MudText>
                                                 </MudStack>
                                                 @if (!string.IsNullOrEmpty(relearnInfo.Target))
                                                 {
-                                                    <MudText Typo="@Typo.caption">Target: <b>@relearnInfo.Target</b></MudText>
+                                                    <MudText Typo="@Typo.caption">Target: <b>@relearnInfo.Target</b>
+                                                    </MudText>
                                                 }
+
                                                 @if (relearnInfo.Flags.Count > 0)
                                                 {
                                                     <MudStack Row
@@ -422,6 +436,7 @@
                                                         }
                                                     </MudStack>
                                                 }
+
                                                 @if (!string.IsNullOrEmpty(relearnInfo.Description))
                                                 {
                                                     <MudText Typo="@Typo.body2">@relearnInfo.Description</MudText>
@@ -510,22 +525,28 @@
                                             @MoveTypeAndCategorySummary(
                                                 MoveInfo.GetType(alphaMoveId, saveFileEntityContext),
                                                 GetMoveCategory(alphaMoveId, saveFileEntityContext))
-                                            @if (_alphaMoveInfo is { } alphaInfo)
+                                            @if (alphaMoveInfo is { } alphaInfo)
                                             {
                                                 <MudText Typo="@Typo.subtitle2">@alphaInfo.Name</MudText>
                                                 <MudStack Row
                                                           Spacing="3">
-                                                    <MudText Typo="@Typo.caption">Power: <b>@(alphaInfo.Power?.ToString() ?? "—")</b></MudText>
-                                                    @if (alphaInfo.PP.HasValue)
+                                                    <MudText Typo="@Typo.caption">Power:
+                                                        <b>@(alphaInfo.Power?.ToString() ?? "—")</b></MudText>
+                                                    @if (alphaInfo.Pp.HasValue)
                                                     {
-                                                        <MudText Typo="@Typo.caption">PP: <b>@alphaInfo.PP</b></MudText>
+                                                        <MudText Typo="@Typo.caption">PP: <b>@alphaInfo.Pp</b></MudText>
                                                     }
-                                                    <MudText Typo="@Typo.caption">Acc: <b>@(alphaInfo.Accuracy is { } alphaAcc ? $"{alphaAcc}%" : "—")</b></MudText>
+                                                    <MudText Typo="@Typo.caption">Acc:
+                                                        <b>@(alphaInfo.Accuracy is { } alphaAcc
+                                                                ? $"{alphaAcc}%"
+                                                                : "—")</b></MudText>
                                                 </MudStack>
                                                 @if (!string.IsNullOrEmpty(alphaInfo.Target))
                                                 {
-                                                    <MudText Typo="@Typo.caption">Target: <b>@alphaInfo.Target</b></MudText>
+                                                    <MudText Typo="@Typo.caption">Target: <b>@alphaInfo.Target</b>
+                                                    </MudText>
                                                 }
+
                                                 @if (alphaInfo.Flags.Count > 0)
                                                 {
                                                     <MudStack Row
@@ -543,6 +564,7 @@
                                                         }
                                                     </MudStack>
                                                 }
+
                                                 @if (!string.IsNullOrEmpty(alphaInfo.Description))
                                                 {
                                                     <MudText Typo="@Typo.body2">@alphaInfo.Description</MudText>

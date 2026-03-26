@@ -15,8 +15,8 @@
                                Variant="@Variant.Filled"
                                Size="@Size.Small"/>
 
-                <MudSelect Value="@_currentBox"
-                           ValueChanged="@((int newBox) => _currentBox = newBox)"
+                <MudSelect Value="@currentBox"
+                           ValueChanged="@((int newBox) => currentBox = newBox)"
                            Dense
                            Class="flex-1">
                     @for (var boxId = 0; boxId < saveFile.BoxCount; boxId++)
@@ -25,7 +25,8 @@
                         var boxName = saveFile is IBoxDetailNameRead r
                             ? r.GetBoxName(localBoxId)
                             : string.Empty;
-                        <MudSelectItem Value="@localBoxId" @key="@localBoxId">
+                        <MudSelectItem Value="@localBoxId"
+                                       @key="@localBoxId">
                             @($"Box {localBoxId + 1}: {boxName}")
                         </MudSelectItem>
                     }
@@ -39,7 +40,7 @@
                                Size="@Size.Small"/>
             </div>
 
-            <BoxGrid BoxNumber="@_currentBox"/>
+            <BoxGrid BoxNumber="@currentBox"/>
         }
     </DialogContent>
     <DialogActions>

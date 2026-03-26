@@ -6,7 +6,7 @@ public interface IBugReportService
 
     /// <summary>
     /// Pushes a new Sentry scope with the raw file bytes attached. The attachment is
-    /// automatically removed when the returned <see cref="IDisposable"/> is disposed,
+    /// automatically removed when the returned <see cref="IDisposable" /> is disposed,
     /// preventing it from leaking into unrelated events.
     /// </summary>
     /// <returns>A disposable scope that should wrap the error logging call.</returns>

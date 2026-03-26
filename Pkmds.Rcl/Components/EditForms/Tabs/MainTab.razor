@@ -388,7 +388,7 @@
                           Height="22"/>
                 <InfoButton>
                     <MudStack Spacing="2">
-                        @if (_heldItemInfo is { } itemInfo)
+                        @if (heldItemInfo is { } itemInfo)
                         {
                             <MudText Typo="@Typo.subtitle2">@itemInfo.Name</MudText>
                             <MudText Typo="@Typo.body2">
@@ -456,8 +456,10 @@
                     Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Ability))"/>
                 <InfoButton>
                     <MudStack Spacing="2">
-                        <MudText Typo="@Typo.subtitle2">@(_abilityInfo?.Name ?? GameInfo.Strings.abilitylist[Pokemon!.Ability])</MudText>
-                        <MudText Typo="@Typo.body2">@(_abilityInfo is { Description: { Length: > 0 } desc } ? desc : "No description available.")</MudText>
+                        <MudText Typo="@Typo.subtitle2">@(abilityInfo?.Name ?? GameInfo.Strings.abilitylist[Pokemon!.Ability])</MudText>
+                        <MudText Typo="@Typo.body2">@(abilityInfo is { Description: { Length: > 0 } desc }
+                                ? desc
+                                : "No description available.")</MudText>
                     </MudStack>
                 </InfoButton>
             </MudStack>
@@ -487,8 +489,10 @@
                     Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Ability))"/>
                 <InfoButton>
                     <MudStack Spacing="2">
-                        <MudText Typo="@Typo.subtitle2">@(_abilityInfo?.Name ?? GameInfo.Strings.abilitylist[Pokemon!.Ability])</MudText>
-                        <MudText Typo="@Typo.body2">@(_abilityInfo is { Description: { Length: > 0 } desc } ? desc : "No description available.")</MudText>
+                        <MudText Typo="@Typo.subtitle2">@(abilityInfo?.Name ?? GameInfo.Strings.abilitylist[Pokemon!.Ability])</MudText>
+                        <MudText Typo="@Typo.body2">@(abilityInfo is { Description: { Length: > 0 } desc }
+                                ? desc
+                                : "No description available.")</MudText>
                     </MudStack>
                 </InfoButton>
             </MudStack>

@@ -13,13 +13,13 @@
                         <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward"
                                        Size="@Size.Small"
                                        Variant="@Variant.Outlined"
-                                       Disabled="@(_selectedBoxIndex == 0)"
+                                       Disabled="@(selectedBoxIndex == 0)"
                                        OnClick="@MoveBoxUp"
                                        title="Move box up"/>
                         <MudIconButton Icon="@Icons.Material.Filled.ArrowDownward"
                                        Size="@Size.Small"
                                        Variant="@Variant.Outlined"
-                                       Disabled="@(_selectedBoxIndex >= _boxNames.Length - 1)"
+                                       Disabled="@(selectedBoxIndex >= boxNames.Length - 1)"
                                        OnClick="@MoveBoxDown"
                                        title="Move box down"/>
                     </div>
@@ -27,15 +27,15 @@
                               Class="overflow-y-auto"
                               Style="max-height: 380px;">
                         <MudList T="@int"
-                                 SelectedValue="@_selectedBoxIndex"
+                                 SelectedValue="@selectedBoxIndex"
                                  SelectedValueChanged="@((int idx) => SelectBox(idx))"
                                  Dense>
-                            @for (var i = 0; i < _boxNames.Length; i++)
+                            @for (var i = 0; i < boxNames.Length; i++)
                             {
                                 var boxIndex = i;
                                 <MudListItem T="@int"
                                              Value="@boxIndex">
-                                    @($"Box {boxIndex + 1}: {_boxNames[boxIndex]} ({GetBoxPokemonCount(boxIndex)}/{saveFile.BoxSlotCount})")
+                                    @($"Box {boxIndex + 1}: {boxNames[boxIndex]} ({GetBoxPokemonCount(boxIndex)}/{saveFile.BoxSlotCount})")
                                 </MudListItem>
                             }
                         </MudList>
@@ -43,43 +43,43 @@
                 </MudItem>
 
                 <MudItem xs="7">
-                    @if (_supportsNameRead)
+                    @if (supportsNameRead)
                     {
-                        <MudTextField @key="@($"name-{_selectedBoxIndex}")"
-                                      Value="@_boxNames[_selectedBoxIndex]"
+                        <MudTextField @key="@($"name-{selectedBoxIndex}")"
+                                      Value="@boxNames[selectedBoxIndex]"
                                       ValueChanged="@((string v) => OnBoxNameChanged(v))"
                                       Label="Box Name"
                                       Immediate
                                       MaxLength="@GetBoxNameMaxLength()"
-                                      ReadOnly="@(!_supportsNameWrite)"
+                                      ReadOnly="@(!supportsNameWrite)"
                                       Class="mb-3"/>
                     }
 
-                    @if (_supportsWallpaper && _wallpaperNameList.Length > 0)
+                    @if (supportsWallpaper && wallpaperNameList.Length > 0)
                     {
-                        <MudSelect @key="@($"wallpaper-{_selectedBoxIndex}")"
-                                   Value="@_wallpaperIds[_selectedBoxIndex]"
+                        <MudSelect @key="@($"wallpaper-{selectedBoxIndex}")"
+                                   Value="@wallpaperIds[selectedBoxIndex]"
                                    ValueChanged="@((int id) => OnWallpaperChanged(id))"
                                    Label="Wallpaper"
                                    Class="mb-3">
-                            @for (var i = 0; i < _wallpaperNameList.Length; i++)
+                            @for (var i = 0; i < wallpaperNameList.Length; i++)
                             {
                                 var localId = i;
-                                <MudSelectItem Value="@localId">@_wallpaperNameList[localId]</MudSelectItem>
+                                <MudSelectItem Value="@localId">@wallpaperNameList[localId]</MudSelectItem>
                             }
                         </MudSelect>
 
-                        @if (!string.IsNullOrEmpty(_wallpaperSpriteUrl))
+                        @if (!string.IsNullOrEmpty(wallpaperSpriteUrl))
                         {
-                            <img src="@_wallpaperSpriteUrl"
+                            <img src="@wallpaperSpriteUrl"
                                  alt="Wallpaper preview"
                                  class="w-full rounded mb-3"/>
                         }
                     }
 
-                    @if (_showUnlocked)
+                    @if (showUnlocked)
                     {
-                        <MudSelect Value="@_boxesUnlocked"
+                        <MudSelect Value="@boxesUnlocked"
                                    ValueChanged="@((int v) => OnBoxesUnlockedChanged(v))"
                                    Label="Unlocked"
                                    Class="mb-3">
@@ -91,16 +91,16 @@
                         </MudSelect>
                     }
 
-                    @if (_boxFlags.Length > 0)
+                    @if (boxFlags.Length > 0)
                     {
                         <MudText Typo="@Typo.caption"
                                  Class="mb-1">Flags
                         </MudText>
-                        @for (var i = 0; i < _boxFlags.Length; i++)
+                        @for (var i = 0; i < boxFlags.Length; i++)
                         {
                             var idx = i;
                             <MudNumericField T="@byte"
-                                             Value="@_boxFlags[idx]"
+                                             Value="@boxFlags[idx]"
                                              ValueChanged="@(v => OnFlagChanged(idx, v))"
                                              Label="@($"Flag {idx}")"
                                              Min="0"

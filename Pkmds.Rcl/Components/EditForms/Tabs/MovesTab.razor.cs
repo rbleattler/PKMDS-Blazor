@@ -2,6 +2,13 @@ namespace Pkmds.Rcl.Components.EditForms.Tabs;
 
 public partial class MovesTab
 {
+    private readonly MoveSummary?[] moveInfos = new MoveSummary?[4];
+    private readonly MoveSummary?[] relearnMoveInfos = new MoveSummary?[4];
+    private MoveSummary? alphaMoveInfo;
+
+    // Cached move summaries — reloaded when the Pokemon reference changes.
+    private PKM? lastPokemon;
+
     [Parameter]
     [EditorRequired]
     public PKM? Pokemon { get; set; }
@@ -11,41 +18,40 @@ public partial class MovesTab
 
     private bool UseTextSearch { get; set; } = true;
 
-    // Cached move summaries — reloaded when the Pokemon reference changes.
-    private PKM? _lastPokemon;
-    private MoveSummary?[] _moveInfos = new MoveSummary?[4];
-    private MoveSummary?[] _relearnMoveInfos = new MoveSummary?[4];
-    private MoveSummary? _alphaMoveInfo;
-
     protected override async Task OnParametersSetAsync()
     {
-        if (ReferenceEquals(Pokemon, _lastPokemon))
+        if (ReferenceEquals(Pokemon, lastPokemon))
+        {
             return;
-        _lastPokemon = Pokemon;
+        }
+
+        lastPokemon = Pokemon;
         await LoadMoveInfosAsync();
     }
 
     private async Task LoadMoveInfosAsync()
     {
         if (Pokemon is null || AppState.SaveFile is null)
+        {
             return;
+        }
 
         var version = AppState.SaveFile.Version;
 
-        for (var i = 0; i < Pokemon.Moves.Length && i < _moveInfos.Length; i++)
+        for (var i = 0; i < Pokemon.Moves.Length && i < moveInfos.Length; i++)
         {
             var moveId = Pokemon.Moves[i];
-            _moveInfos[i] = moveId != 0
+            moveInfos[i] = moveId != 0
                 ? await DescriptionService.GetMoveInfoAsync(moveId, version)
                 : null;
         }
 
         if (Pokemon.HasRelearnMoves())
         {
-            for (var i = 0; i < _relearnMoveInfos.Length; i++)
+            for (var i = 0; i < relearnMoveInfos.Length; i++)
             {
                 var moveId = Pokemon.GetRelearnMove(i);
-                _relearnMoveInfos[i] = moveId != 0
+                relearnMoveInfos[i] = moveId != 0
                     ? await DescriptionService.GetMoveInfoAsync(moveId, version)
                     : null;
             }
@@ -54,7 +60,7 @@ public partial class MovesTab
         if (Pokemon is PA8 pa8Alpha)
         {
             var alphaMoveId = pa8Alpha.AlphaMove;
-            _alphaMoveInfo = alphaMoveId != 0
+            alphaMoveInfo = alphaMoveId != 0
                 ? await DescriptionService.GetMoveInfoAsync(alphaMoveId, version)
                 : null;
         }
@@ -86,7 +92,7 @@ public partial class MovesTab
             return;
         }
 
-        _moveInfos[moveIndex] = null;
+        moveInfos[moveIndex] = null;
         SetPokemonPP(moveIndex, 0);
         SetPokemonPPUps(moveIndex, 0);
     }
@@ -94,8 +100,11 @@ public partial class MovesTab
     private async Task RefreshMoveInfoAsync(int moveIndex, int moveId)
     {
         if (AppState.SaveFile is not { } sav)
+        {
             return;
-        _moveInfos[moveIndex] = await DescriptionService.GetMoveInfoAsync(moveId, sav.Version);
+        }
+
+        moveInfos[moveIndex] = await DescriptionService.GetMoveInfoAsync(moveId, sav.Version);
         StateHasChanged();
     }
 

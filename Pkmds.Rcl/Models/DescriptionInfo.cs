@@ -1,12 +1,13 @@
 namespace Pkmds.Rcl.Models;
 
 /// <summary>Result from a move description lookup, resolved for a specific game version.</summary>
+[SuppressMessage("ReSharper", "NotAccessedPositionalProperty.Global")]
 public sealed record MoveSummary(
     string Name,
     string Type,
     string Category,
     int? Power,
-    int? PP,
+    int? Pp,
     int? Accuracy,
     string Description,
     string Target,

@@ -3,6 +3,10 @@ namespace Pkmds.Rcl.Components.EditForms.Tabs;
 public partial class MainTab : IDisposable
 {
     private static readonly DialogOptions AppearanceDialogOptions = new() { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
+    private AbilitySummary? abilityInfo;
+    private ItemSummary? heldItemInfo;
+
+    private PKM? lastPokemon;
 
     [Parameter]
     [EditorRequired]
@@ -10,66 +14,6 @@ public partial class MainTab : IDisposable
 
     [Parameter]
     public LegalityAnalysis? Analysis { get; set; }
-
-    private PKM? _lastPokemon;
-    private ItemSummary? _heldItemInfo;
-    private AbilitySummary? _abilityInfo;
-
-    protected override async Task OnParametersSetAsync()
-    {
-        if (ReferenceEquals(Pokemon, _lastPokemon))
-            return;
-        _lastPokemon = Pokemon;
-        await LoadDescriptionsAsync();
-    }
-
-    private async Task LoadDescriptionsAsync()
-    {
-        if (Pokemon is null || AppState.SaveFile is not { } sav)
-            return;
-
-        var version = sav.Version;
-
-        var itemName = Pokemon.HeldItem != 0 ? AppService.GetItemComboItem(Pokemon.HeldItem).Text : null;
-        _heldItemInfo = itemName is not null
-            ? await DescriptionService.GetItemInfoAsync(itemName, version)
-            : null;
-
-        _abilityInfo = Pokemon.Ability != 0
-            ? await DescriptionService.GetAbilityInfoAsync(Pokemon.Ability, version)
-            : null;
-    }
-
-    internal void SetHeldItem(ComboItem? item)
-    {
-        if (Pokemon is null)
-            return;
-        Pokemon.HeldItem = item?.Value ?? 0;
-        AppService.LoadPokemonStats(Pokemon);
-        RefreshService.Refresh();
-        if (Pokemon.HeldItem != 0)
-            _ = RefreshHeldItemInfoAsync(item?.Text);
-        else
-            _heldItemInfo = null;
-    }
-
-    private async Task RefreshHeldItemInfoAsync(string? itemName)
-    {
-        if (AppState.SaveFile is not { } sav || itemName is null)
-            return;
-        _heldItemInfo = await DescriptionService.GetItemInfoAsync(itemName, sav.Version);
-        StateHasChanged();
-    }
-
-    private async Task RefreshAbilityInfoAsync()
-    {
-        if (Pokemon is null || AppState.SaveFile is not { } sav)
-            return;
-        _abilityInfo = Pokemon.Ability != 0
-            ? await DescriptionService.GetAbilityInfoAsync(Pokemon.Ability, sav.Version)
-            : null;
-        StateHasChanged();
-    }
 
     private MudSelect<byte>? FormSelect { get; set; }
 
@@ -90,8 +34,88 @@ public partial class MainTab : IDisposable
 
     private bool IsSpinda => Pokemon?.Species == (ushort)Species.Spinda;
 
+    private bool CanEvolve =>
+        Pokemon is { IsEgg: false } &&
+        AppService.GetDirectEvolutions(Pokemon).Count > 0;
+
     public void Dispose() =>
         RefreshService.OnAppStateChanged -= Refresh;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (ReferenceEquals(Pokemon, lastPokemon))
+        {
+            return;
+        }
+
+        lastPokemon = Pokemon;
+        await LoadDescriptionsAsync();
+    }
+
+    private async Task LoadDescriptionsAsync()
+    {
+        if (Pokemon is null || AppState.SaveFile is not { } sav)
+        {
+            return;
+        }
+
+        var version = sav.Version;
+
+        var itemName = Pokemon.HeldItem != 0
+            ? AppService.GetItemComboItem(Pokemon.HeldItem).Text
+            : null;
+        heldItemInfo = itemName is not null
+            ? await DescriptionService.GetItemInfoAsync(itemName, version)
+            : null;
+
+        abilityInfo = Pokemon.Ability != 0
+            ? await DescriptionService.GetAbilityInfoAsync(Pokemon.Ability, version)
+            : null;
+    }
+
+    private void SetHeldItem(ComboItem? item)
+    {
+        if (Pokemon is null)
+        {
+            return;
+        }
+
+        Pokemon.HeldItem = item?.Value ?? 0;
+        AppService.LoadPokemonStats(Pokemon);
+        RefreshService.Refresh();
+        if (Pokemon.HeldItem != 0)
+        {
+            _ = RefreshHeldItemInfoAsync(item?.Text);
+        }
+        else
+        {
+            heldItemInfo = null;
+        }
+    }
+
+    private async Task RefreshHeldItemInfoAsync(string? itemName)
+    {
+        if (AppState.SaveFile is not { } sav || itemName is null)
+        {
+            return;
+        }
+
+        heldItemInfo = await DescriptionService.GetItemInfoAsync(itemName, sav.Version);
+        StateHasChanged();
+    }
+
+    private async Task RefreshAbilityInfoAsync()
+    {
+        if (Pokemon is null || AppState.SaveFile is not { } sav)
+        {
+            return;
+        }
+
+        abilityInfo = Pokemon.Ability != 0
+            ? await DescriptionService.GetAbilityInfoAsync(Pokemon.Ability, sav.Version)
+            : null;
+        StateHasChanged();
+    }
 
     /// <summary>
     /// Returns the sprite filename for the form-dropdown preview image.
@@ -524,10 +548,6 @@ public partial class MainTab : IDisposable
         Pokemon.IsNicknamed = false;
     }
 
-    private bool CanEvolve =>
-        Pokemon is { IsEgg: false } &&
-        AppService.GetDirectEvolutions(Pokemon).Count > 0;
-
     private async Task EvolveAsync()
     {
         if (Pokemon is null)
@@ -548,11 +568,7 @@ public partial class MainTab : IDisposable
         }
         else
         {
-            var parameters = new DialogParameters<EvolvePickerDialog>
-            {
-                { x => x.Choices, choices },
-                { x => x.Pokemon, Pokemon },
-            };
+            var parameters = new DialogParameters<EvolvePickerDialog> { { x => x.Choices, choices }, { x => x.Pokemon, Pokemon } };
             var dialog = await DialogService.ShowAsync<EvolvePickerDialog>("Choose Evolution", parameters,
                 new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true });
             var result = await dialog.Result;
@@ -566,7 +582,9 @@ public partial class MainTab : IDisposable
 
         // Capture Nincada snapshot before applying (Shedinja side-effect).
         var isNincada = Pokemon.Species == (ushort)Species.Nincada && chosen.Species == (ushort)Species.Ninjask;
-        var nincadaSnapshot = isNincada ? Pokemon.Clone() : null;
+        var nincadaSnapshot = isNincada
+            ? Pokemon.Clone()
+            : null;
 
         ApplyEvolution(chosen);
 
@@ -580,7 +598,7 @@ public partial class MainTab : IDisposable
     {
         EvolutionType.LevelUpMale or EvolutionType.UseItemMale => 0,
         EvolutionType.LevelUpFemale or EvolutionType.UseItemFemale => 1,
-        _ => null,
+        _ => null
     };
 
     private void ApplyEvolution(EvolutionMethod method)
@@ -608,8 +626,11 @@ public partial class MainTab : IDisposable
                 // which is acceptable in a save editor context.
                 uint pid;
                 var rnd = Util.Rand;
-                do pid = rnd.Rand32();
-                while (evoGroup != WurmpleUtil.GetWurmpleEvoVal(pid));
+                do
+                {
+                    pid = rnd.Rand32();
+                } while (evoGroup != WurmpleUtil.GetWurmpleEvoVal(pid));
+
                 Pokemon.PID = pid;
             }
         }

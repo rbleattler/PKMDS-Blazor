@@ -17,10 +17,10 @@ window.spindaRenderer = {
     // Spot center = top-left + (spotW/2, spotH/2) * containerSize, then rotated by crot around
     // the container's own center.  Ellipse tilt in screen space = crot + rot.
     _spots: [
-        { cl: 0.11, ct: 0.04, cw: 0.40, spotW: 0.33, spotH: 0.36, crot:  0, rot: -6 }, // leftEar
-        { cl: 0.54, ct: 0.13, cw: 0.39, spotW: 0.38, spotH: 0.41, crot: 30, rot:  6 }, // rightEar
-        { cl: 0.14, ct: 0.31, cw: 0.39, spotW: 0.35, spotH: 0.39, crot:  0, rot: -6 }, // leftFace
-        { cl: 0.34, ct: 0.35, cw: 0.40, spotW: 0.39, spotH: 0.41, crot:  6, rot:  6 }, // rightFace
+        {cl: 0.11, ct: 0.04, cw: 0.40, spotW: 0.33, spotH: 0.36, crot: 0, rot: -6}, // leftEar
+        {cl: 0.54, ct: 0.13, cw: 0.39, spotW: 0.38, spotH: 0.41, crot: 30, rot: 6}, // rightEar
+        {cl: 0.14, ct: 0.31, cw: 0.39, spotW: 0.35, spotH: 0.39, crot: 0, rot: -6}, // leftFace
+        {cl: 0.34, ct: 0.35, cw: 0.40, spotW: 0.39, spotH: 0.41, crot: 6, rot: 6}, // rightFace
     ],
 
     _loadImage: function (src) {
@@ -61,11 +61,11 @@ window.spindaRenderer = {
             const s = this._spots[i];
 
             // Lower nibble of each byte = xDigit (horizontal), upper = yDigit (vertical).
-            const xDigit = (pattern >>> (i * 8))     & 0xF;
+            const xDigit = (pattern >>> (i * 8)) & 0xF;
             const yDigit = (pattern >>> (i * 8 + 4)) & 0xF;
 
             // Container dimensions and origin in image space.
-            const cSize       = s.cw * SIZE;
+            const cSize = s.cw * SIZE;
             const contOriginX = s.cl * SIZE;
             const contOriginY = s.ct * SIZE;
             const contCenterX = contOriginX + cSize / 2;
