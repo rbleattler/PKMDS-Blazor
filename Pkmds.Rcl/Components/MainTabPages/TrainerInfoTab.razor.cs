@@ -131,8 +131,16 @@ public partial class TrainerInfoTab : IDisposable
             return;
         }
 
+        var oldGender = saveFile.Gender;
         var genderByte = (byte)newGender;
         saveFile.Gender = genderByte;
+
+        // PKHeX's IsFromTrainer checks name + ID32 + gender to determine if a Pokémon
+        // belongs to the active trainer. After a gender change, Pokémon with the old
+        // OT_Gender would fail that check and trigger "Invalid Current handler value"
+        // legality errors. Propagate the new gender to all matching Pokémon.
+        if (oldGender != genderByte)
+            SyncOTGenderToPokemon(saveFile, oldGender, genderByte);
 
         // Several games store gender-specific fashion/appearance data.
         // Changing gender without resetting it causes the player model to become
@@ -158,6 +166,40 @@ public partial class TrainerInfoTab : IDisposable
                 break;
         }
     }
+
+    private static void SyncOTGenderToPokemon(SaveFile saveFile, byte oldGender, byte newGender)
+    {
+        var id32 = saveFile.ID32;
+        var ot = saveFile.OT;
+
+        for (var i = 0; i < saveFile.PartyCount; i++)
+        {
+            var pkm = saveFile.GetPartySlotAtIndex(i);
+            if (!IsOTMatch(pkm, id32, ot, oldGender))
+                continue;
+            pkm.OriginalTrainerGender = newGender;
+            saveFile.SetPartySlotAtIndex(pkm, i);
+        }
+
+        for (var box = 0; box < saveFile.BoxCount; box++)
+        {
+            for (var slot = 0; slot < saveFile.BoxSlotCount; slot++)
+            {
+                var pkm = saveFile.GetBoxSlotAtIndex(box, slot);
+                if (!IsOTMatch(pkm, id32, ot, oldGender))
+                    continue;
+                pkm.OriginalTrainerGender = newGender;
+                saveFile.SetBoxSlotAtIndex(pkm, box, slot);
+            }
+        }
+    }
+
+    private static bool IsOTMatch(PKM pkm, uint id32, string ot, byte gender) =>
+        pkm.Species != 0 &&
+        pkm.Format > 3 && // Gen 3 does not store OT gender on the PKM
+        pkm.ID32 == id32 &&
+        pkm.OriginalTrainerGender == gender &&
+        pkm.OriginalTrainerName == ot;
 
     private uint GetCoins() => AppState.SaveFile switch
     {
