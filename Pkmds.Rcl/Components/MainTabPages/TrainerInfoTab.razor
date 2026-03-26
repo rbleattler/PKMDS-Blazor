@@ -1,5 +1,12 @@
 ﻿@inherits BasePkmdsComponent
 
+<MudOverlay Visible="@_isSyncing" DarkBackground="true" ZIndex="9999">
+    <MudStack AlignItems="AlignItems.Center" Spacing="4">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary"/>
+        <MudText Typo="Typo.body1" Color="Color.Default">@_syncMessage</MudText>
+    </MudStack>
+</MudOverlay>
+
 <div class="form-grid">
 
     @if (AppState.SaveFile is
@@ -15,7 +22,8 @@
             <MudTextField Label="Name"
                           Variant="@Variant.Outlined"
                           MaxLength="@saveFile.MaxStringLengthTrainer"
-                          @bind-Value="@saveFile.OT"
+                          @bind-Value:get="@saveFile.OT"
+                          @bind-Value:set="@(async (string value) => await OnOTNameChangedAsync(saveFile, value))"
                           For="@(() => saveFile.OT)"/>
         </div>
 
@@ -26,7 +34,8 @@
                 <div class="form-field">
                     <MudNumericField Label="ID"
                                      Variant="@Variant.Outlined"
-                                     @bind-Value="@saveFile.TID16"
+                                     @bind-Value:get="@saveFile.TID16"
+                                     @bind-Value:set="@(async (uint value) => await OnTID16ChangedAsync(saveFile, (ushort)value))"
                                      Format="@AppService.GetIdFormatString()"
                                      For="@(() => saveFile.TID16)"/>
                 </div>
@@ -36,7 +45,8 @@
                     <div class="form-field">
                         <MudNumericField Label="SID"
                                          Variant="@Variant.Outlined"
-                                         @bind-Value="@saveFile.SID16"
+                                         @bind-Value:get="@saveFile.SID16"
+                                         @bind-Value:set="@(async (uint value) => await OnSID16ChangedAsync(saveFile, (ushort)value))"
                                          Format="@AppService.GetIdFormatString(true)"
                                          For="@(() => saveFile.SID16)"/>
                     </div>
@@ -49,7 +59,8 @@
                 <div class="form-field">
                     <MudNumericField Label="ID"
                                      Variant="@Variant.Outlined"
-                                     @bind-Value="@saveFile.TrainerTID7"
+                                     @bind-Value:get="@saveFile.TrainerTID7"
+                                     @bind-Value:set="@(async (uint value) => await OnTrainerTID7ChangedAsync(saveFile, value))"
                                      Format="@AppService.GetIdFormatString()"
                                      For="@(() => saveFile.TrainerTID7)"/>
                 </div>
@@ -59,7 +70,8 @@
                     <div class="form-field">
                         <MudNumericField Label="SID"
                                          Variant="@Variant.Outlined"
-                                         @bind-Value="@saveFile.TrainerSID7"
+                                         @bind-Value:get="@saveFile.TrainerSID7"
+                                         @bind-Value:set="@(async (uint value) => await OnTrainerSID7ChangedAsync(saveFile, value))"
                                          Format="@AppService.GetIdFormatString(true)"
                                          For="@(() => saveFile.TrainerSID7)"/>
                     </div>
@@ -72,7 +84,7 @@
         {
             <div class="form-field">
                 <GenderDisplayComponent Gender="@((Gender)saveFile.Gender)"
-                                        OnChange="@OnGenderToggle"/>
+                                        OnChange="@OnGenderToggleAsync"/>
             </div>
         }
 

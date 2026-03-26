@@ -124,6 +124,40 @@ public partial class TrainerInfoTab : IDisposable
         Regions = Util.GetCountryRegionList($"{regionPrefix}sr_{countryId:000}", GameInfo.CurrentLanguage);
     }
 
+    private bool _isSyncing;
+    private string _syncMessage = string.Empty;
+
+    private async Task RunSyncAsync(string message, Action sync)
+    {
+        _isSyncing = true;
+        _syncMessage = message;
+        StateHasChanged();
+        await Task.Yield();
+        try { sync(); }
+        finally
+        {
+            _isSyncing = false;
+        }
+    }
+
+    private Task OnGenderToggleAsync(Gender newGender) =>
+        RunSyncAsync("Syncing OT gender to matching Pokémon…", () => OnGenderToggle(newGender));
+
+    private Task OnOTNameChangedAsync(SaveFile saveFile, string value) =>
+        RunSyncAsync("Syncing OT name to matching Pokémon…", () => OnOTNameChanged(saveFile, value));
+
+    private Task OnTID16ChangedAsync(SaveFile saveFile, ushort value) =>
+        RunSyncAsync("Syncing Trainer ID to matching Pokémon…", () => OnTID16Changed(saveFile, value));
+
+    private Task OnSID16ChangedAsync(SaveFile saveFile, ushort value) =>
+        RunSyncAsync("Syncing Secret ID to matching Pokémon…", () => OnSID16Changed(saveFile, value));
+
+    private Task OnTrainerTID7ChangedAsync(SaveFile saveFile, uint value) =>
+        RunSyncAsync("Syncing Trainer ID to matching Pokémon…", () => OnTrainerTID7Changed(saveFile, value));
+
+    private Task OnTrainerSID7ChangedAsync(SaveFile saveFile, uint value) =>
+        RunSyncAsync("Syncing Secret ID to matching Pokémon…", () => OnTrainerSID7Changed(saveFile, value));
+
     private void OnGenderToggle(Gender newGender)
     {
         if (AppState.SaveFile is not { } saveFile)
@@ -131,8 +165,16 @@ public partial class TrainerInfoTab : IDisposable
             return;
         }
 
+        var oldGender = saveFile.Gender;
         var genderByte = (byte)newGender;
         saveFile.Gender = genderByte;
+
+        // PKHeX's IsFromTrainer checks name + ID32 + gender to determine if a Pokémon
+        // belongs to the active trainer. After a gender change, Pokémon with the old
+        // OT_Gender would fail that check and trigger "Invalid Current handler value"
+        // legality errors. Propagate the new gender to all matching Pokémon.
+        if (oldGender != genderByte)
+            SyncOTGenderToPokemon(saveFile, oldGender, genderByte);
 
         // Several games store gender-specific fashion/appearance data.
         // Changing gender without resetting it causes the player model to become
@@ -158,6 +200,114 @@ public partial class TrainerInfoTab : IDisposable
                 break;
         }
     }
+
+    private static void OnOTNameChanged(SaveFile saveFile, string value)
+    {
+        var oldName = saveFile.OT;
+        saveFile.OT = value;
+        if (oldName == saveFile.OT) return;
+        SyncPokemon(saveFile,
+            pkm => IsOTMatch(pkm, saveFile.ID32, oldName, saveFile.Gender),
+            pkm => pkm.OriginalTrainerName = saveFile.OT,
+            pkm => IsHTMatch(pkm, oldName, oldGender: null),
+            pkm => pkm.HandlingTrainerName = saveFile.OT);
+    }
+
+    private static void OnTID16Changed(SaveFile saveFile, ushort value)
+    {
+        var oldID32 = saveFile.ID32;
+        saveFile.TID16 = value;
+        SyncOTIDToPokemon(saveFile, oldID32);
+    }
+
+    private static void OnSID16Changed(SaveFile saveFile, ushort value)
+    {
+        var oldID32 = saveFile.ID32;
+        saveFile.SID16 = value;
+        SyncOTIDToPokemon(saveFile, oldID32);
+    }
+
+    private static void OnTrainerTID7Changed(SaveFile saveFile, uint value)
+    {
+        var oldID32 = saveFile.ID32;
+        saveFile.TrainerTID7 = value;
+        SyncOTIDToPokemon(saveFile, oldID32);
+    }
+
+    private static void OnTrainerSID7Changed(SaveFile saveFile, uint value)
+    {
+        var oldID32 = saveFile.ID32;
+        saveFile.TrainerSID7 = value;
+        SyncOTIDToPokemon(saveFile, oldID32);
+    }
+
+    private static void SyncOTIDToPokemon(SaveFile saveFile, uint oldID32)
+    {
+        if (saveFile.ID32 == oldID32) return;
+        var newTID16 = saveFile.TID16;
+        var newSID16 = saveFile.SID16;
+        // HT does not store a trainer ID, so only OT sync is needed here.
+        SyncPokemon(saveFile,
+            pkm => IsOTMatch(pkm, oldID32, saveFile.OT, saveFile.Gender),
+            pkm => { pkm.TID16 = newTID16; pkm.SID16 = newSID16; });
+    }
+
+    private static void SyncOTGenderToPokemon(SaveFile saveFile, byte oldGender, byte newGender) =>
+        SyncPokemon(saveFile,
+            pkm => IsOTMatch(pkm, saveFile.ID32, saveFile.OT, oldGender),
+            pkm => pkm.OriginalTrainerGender = newGender,
+            pkm => IsHTMatch(pkm, saveFile.OT, oldGender),
+            pkm => pkm.HandlingTrainerGender = newGender);
+
+    /// <summary>
+    /// Iterates every party and box slot once, applying <paramref name="otMutate"/> to slots
+    /// matching <paramref name="isOTMatch"/> and <paramref name="htMutate"/> to slots matching
+    /// <paramref name="isHTMatch"/>. Both checks run per slot so the whole save is covered in
+    /// a single pass.
+    /// </summary>
+    private static void SyncPokemon(SaveFile saveFile,
+        Func<PKM, bool> isOTMatch, Action<PKM> otMutate,
+        Func<PKM, bool>? isHTMatch = null, Action<PKM>? htMutate = null)
+    {
+        for (var i = 0; i < saveFile.PartyCount; i++)
+        {
+            var pkm = saveFile.GetPartySlotAtIndex(i);
+            if (!ApplySync(pkm, isOTMatch, otMutate, isHTMatch, htMutate)) continue;
+            saveFile.SetPartySlotAtIndex(pkm, i);
+        }
+        for (var box = 0; box < saveFile.BoxCount; box++)
+        {
+            for (var slot = 0; slot < saveFile.BoxSlotCount; slot++)
+            {
+                var pkm = saveFile.GetBoxSlotAtIndex(box, slot);
+                if (!ApplySync(pkm, isOTMatch, otMutate, isHTMatch, htMutate)) continue;
+                saveFile.SetBoxSlotAtIndex(pkm, box, slot);
+            }
+        }
+    }
+
+    private static bool ApplySync(PKM pkm,
+        Func<PKM, bool> isOTMatch, Action<PKM> otMutate,
+        Func<PKM, bool>? isHTMatch, Action<PKM>? htMutate)
+    {
+        var changed = false;
+        if (isOTMatch(pkm)) { otMutate(pkm); changed = true; }
+        if (isHTMatch?.Invoke(pkm) == true) { htMutate!(pkm); changed = true; }
+        return changed;
+    }
+
+    private static bool IsHTMatch(PKM pkm, string htName, byte? oldGender) =>
+        pkm.Species != 0 &&
+        pkm.CurrentHandler == 1 &&
+        pkm.HandlingTrainerName == htName &&
+        (oldGender is null || pkm.HandlingTrainerGender == oldGender);
+
+    private static bool IsOTMatch(PKM pkm, uint id32, string ot, byte gender) =>
+        pkm.Species != 0 &&
+        pkm.ID32 == id32 &&
+        pkm.OriginalTrainerName == ot &&
+        // Gen 3 does not store OT gender on the PKM, so skip the gender check for those.
+        (pkm.Format <= 3 || pkm.OriginalTrainerGender == gender);
 
     private uint GetCoins() => AppState.SaveFile switch
     {
