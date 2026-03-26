@@ -125,30 +125,45 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
         loadedBalls.Clear();
 
         var itemlist = GameInfo.Strings.itemlist;
-        foreach (var result in results)
+        var version = saveFile.Version;
+
+        var distinctAbilityIds = results.Select(r => r.Pokemon.Ability).Distinct().ToList();
+        var distinctHeldItemIds = results.Select(r => r.Pokemon.HeldItem)
+            .Where(id => id > 0 && id < itemlist.Length)
+            .Distinct()
+            .ToList();
+        var distinctBallIds = results.Select(r => r.Pokemon.Ball)
+            .Where(id => id > 0)
+            .Distinct()
+            .ToList();
+
+        var abilityResults = await Task.WhenAll(
+            distinctAbilityIds.Select(async id => (id, info: await DescriptionService.GetAbilityInfoAsync(id, version))));
+        var heldItemResults = await Task.WhenAll(
+            distinctHeldItemIds.Select(async id => (id, info: await DescriptionService.GetItemInfoAsync(itemlist[id], version))));
+        var ballResults = await Task.WhenAll(
+            distinctBallIds.Select(async id =>
+            {
+                var ballItem = GameInfo.FilteredSources.Balls.FirstOrDefault(b => b.Value == id);
+                var info = ballItem is not null
+                    ? await DescriptionService.GetItemInfoAsync(ballItem.Text, version)
+                    : null;
+                return (id, info);
+            }));
+
+        foreach (var (id, info) in abilityResults)
         {
-            var pkm = result.Pokemon;
+            loadedAbilities[id] = info;
+        }
 
-            if (!loadedAbilities.ContainsKey(pkm.Ability))
-            {
-                loadedAbilities[pkm.Ability] = await DescriptionService.GetAbilityInfoAsync(pkm.Ability, saveFile.Version);
-            }
+        foreach (var (id, info) in heldItemResults)
+        {
+            loadedHeldItems[id] = info;
+        }
 
-            if (pkm.HeldItem > 0 && pkm.HeldItem < itemlist.Length && !loadedHeldItems.ContainsKey(pkm.HeldItem))
-            {
-                loadedHeldItems[pkm.HeldItem] = await DescriptionService.GetItemInfoAsync(itemlist[pkm.HeldItem], saveFile.Version);
-            }
-
-            if (pkm.Ball <= 0 || loadedBalls.ContainsKey(pkm.Ball))
-            {
-                continue;
-            }
-
-            var ballItem = GameInfo.FilteredSources.Balls.FirstOrDefault(b => b.Value == pkm.Ball);
-            if (ballItem is not null)
-            {
-                loadedBalls[pkm.Ball] = await DescriptionService.GetItemInfoAsync(ballItem.Text, saveFile.Version);
-            }
+        foreach (var (id, info) in ballResults)
+        {
+            loadedBalls[id] = info;
         }
 
         await InvokeAsync(StateHasChanged);

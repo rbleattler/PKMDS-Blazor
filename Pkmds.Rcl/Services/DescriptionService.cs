@@ -2,7 +2,7 @@
 
 namespace Pkmds.Rcl.Services;
 
-public sealed class DescriptionService(HttpClient http) : IDescriptionService
+public sealed class DescriptionService(HttpClient http, ILogger<DescriptionService> logger) : IDescriptionService
 {
     // -------------------------------------------------------------------------
     // Lazy loaders
@@ -127,8 +127,9 @@ public sealed class DescriptionService(HttpClient http) : IDescriptionService
             var stream = await http.GetStreamAsync(path);
             return await JsonSerializer.DeserializeAsync<T>(stream, JsonOptions) ?? new T();
         }
-        catch
+        catch (Exception ex)
         {
+            logger.LogWarning(ex, "Failed to load description data from {Path}", path);
             return new T();
         }
     }
