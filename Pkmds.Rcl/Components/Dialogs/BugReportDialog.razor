@@ -27,13 +27,17 @@
                           Required
                           Placeholder="Describe the issue in detail. Include: what you were doing, what happened, and what you expected to happen. Mention the game title and any specific Pokémon or field involved."
                           HelperText="@($"Minimum {MinDescriptionLength} characters. {description.Length} entered.")"
-                          Validation="@((string v) => (v?.Length ?? 0) >= MinDescriptionLength ? null : $"Please provide at least {MinDescriptionLength} characters of detail.")"
+                          Validation="@((string v) => (v?.Length ?? 0) >= MinDescriptionLength
+                                          ? null
+                                          : $"Please provide at least {MinDescriptionLength} characters of detail.")"
                           Variant="@Variant.Outlined"/>
             <MudTextField @bind-Value="@email"
                           Label="Email"
                           InputType="@InputType.Email"
                           Required
-                          Validation="@((string v) => EmailValidator.IsValid(v) ? null : "Please enter a valid email address.")"
+                          Validation="@((string v) => EmailValidator.IsValid(v)
+                                          ? null
+                                          : "Please enter a valid email address.")"
                           Variant="@Variant.Outlined"/>
             <MudTextField @bind-Value="@name"
                           Label="Name"

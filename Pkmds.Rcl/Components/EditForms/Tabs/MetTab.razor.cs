@@ -2,9 +2,12 @@ namespace Pkmds.Rcl.Components.EditForms.Tabs;
 
 public partial class MetTab : IDisposable
 {
+    private ItemSummary? ballInfo;
     private EntityContext currentLocationSearchContext = EntityContext.None;
 
     private GameVersion currentLocationSearchVersion = GameVersion.Any;
+
+    private PKM? lastPokemon;
 
     private EntityContext originFormat = EntityContext.None;
 
@@ -62,6 +65,38 @@ public partial class MetTab : IDisposable
 
     public void Dispose() =>
         RefreshService.OnAppStateChanged -= StateHasChanged;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (ReferenceEquals(Pokemon, lastPokemon))
+        {
+            return;
+        }
+
+        lastPokemon = Pokemon;
+        await LoadBallInfoAsync();
+    }
+
+    private async Task LoadBallInfoAsync()
+    {
+        if (Pokemon is null || AppState.SaveFile is not { } sav)
+        {
+            return;
+        }
+
+        var ballName = Pokemon.Ball != 0
+            ? GameInfo.FilteredSources.Balls.FirstOrDefault(b => b.Value == Pokemon.Ball)?.Text
+            : null;
+        ballInfo = ballName is not null
+            ? await DescriptionService.GetItemInfoAsync(ballName, sav.Version)
+            : null;
+    }
+
+    private async Task OnBallChanged()
+    {
+        await LoadBallInfoAsync();
+        StateHasChanged();
+    }
 
     private GroundTileType GetGroundTile() => Pokemon is IGroundTile g
         ? g.GroundTile
@@ -210,23 +245,23 @@ public partial class MetTab : IDisposable
         switch (newValue)
         {
             case false:
-            {
-                if (Pokemon.IsEgg)
                 {
-                    Pokemon.IsEgg = false;
-                }
+                    if (Pokemon.IsEgg)
+                    {
+                        Pokemon.IsEgg = false;
+                    }
 
-                Pokemon.EggDay = Pokemon.EggMonth = Pokemon.EggYear = 0;
-                Pokemon.EggLocation = 0;
-                break;
-            }
+                    Pokemon.EggDay = Pokemon.EggMonth = Pokemon.EggYear = 0;
+                    Pokemon.EggLocation = 0;
+                    break;
+                }
             case true:
-            {
-                var currentMetDate = Pokemon.MetDate;
-                Pokemon.SetEggMetData(Pokemon.Version, Pokemon.Version);
-                Pokemon.EggMetDate = Pokemon.MetDate = currentMetDate;
-                break;
-            }
+                {
+                    var currentMetDate = Pokemon.MetDate;
+                    Pokemon.SetEggMetData(Pokemon.Version, Pokemon.Version);
+                    Pokemon.EggMetDate = Pokemon.MetDate = currentMetDate;
+                    break;
+                }
         }
     }
 

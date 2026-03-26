@@ -1,0 +1,37 @@
+@* Transparent full-screen overlay — sits below the popover (z-index 1199) so
+   tapping anywhere outside the popover closes it on both mouse and touch. *@
+@if (open)
+{
+    <div @onclick="Close"
+         style="position:fixed;inset:0;z-index:1199;cursor:default;"></div>
+}
+
+<span @ref="anchor"
+      style="position:relative;display:inline-flex;align-items:center;">
+    <MudIconButton Icon="@Icons.Material.Outlined.Info"
+                   Size="@Size.Small"
+                   Color="@Color.Default"
+                   OnClick="@Toggle"
+                   title="More info"
+                   aria-label="More info"
+                   aria-expanded="@open"/>
+    <MudPopover Open="@open"
+                AnchorOrigin="Origin.BottomLeft"
+                TransformOrigin="Origin.TopLeft"
+                OverflowBehavior="OverflowBehavior.FlipAlways"
+                Paper="true"
+                Style="max-width:320px;max-height:400px;overflow-y:auto;z-index:1200;">
+        <div style="display:flex;justify-content:flex-end;padding:4px 4px 0 4px;">
+            <MudIconButton Icon="@Icons.Material.Filled.Close"
+                           Size="@Size.Small"
+                           Color="@Color.Default"
+                           OnClick="@Close"
+                           title="Close"
+                           aria-label="Close"/>
+        </div>
+        <div class="pa-3"
+             style="padding-top:0;">
+            @ChildContent
+        </div>
+    </MudPopover>
+</span>

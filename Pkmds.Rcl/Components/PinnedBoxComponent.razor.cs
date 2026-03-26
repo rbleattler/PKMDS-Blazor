@@ -17,7 +17,9 @@ public partial class PinnedBoxComponent : RefreshAwareComponent
             return;
         }
 
-        OnBoxChanged(currentBox == 0 ? saveFile.BoxCount - 1 : currentBox - 1);
+        OnBoxChanged(currentBox == 0
+            ? saveFile.BoxCount - 1
+            : currentBox - 1);
     }
 
     private void GoToNextBox()
@@ -27,7 +29,9 @@ public partial class PinnedBoxComponent : RefreshAwareComponent
             return;
         }
 
-        OnBoxChanged(currentBox == saveFile.BoxCount - 1 ? 0 : currentBox + 1);
+        OnBoxChanged(currentBox == saveFile.BoxCount - 1
+            ? 0
+            : currentBox + 1);
     }
 
     private int GetBoxPokemonCount(int boxId)

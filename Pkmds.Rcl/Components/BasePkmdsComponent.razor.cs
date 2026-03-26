@@ -2,23 +2,66 @@ namespace Pkmds.Rcl.Components;
 
 public partial class BasePkmdsComponent
 {
-    private static readonly DialogOptions TrashBytesEditorDialogOptions = new()
-    {
-        MaxWidth = MaxWidth.Small,
-        FullWidth = true,
-        CloseButton = true,
-        CloseOnEscapeKey = true,
-    };
+    private static readonly DialogOptions TrashBytesEditorDialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
+
+    protected static readonly IReadOnlyDictionary<string, string> FlagLabels =
+        new Dictionary<string, string>
+        {
+            ["contact"] = "Makes Contact",
+            ["charge"] = "Has Charge Turn",
+            ["recharge"] = "Must Recharge",
+            ["protect"] = "Blocked by Protect",
+            ["reflectable"] = "Reflectable",
+            ["snatch"] = "Snatchable",
+            ["mirror"] = "Copied by Mirror Move",
+            ["punch"] = "Punch-based",
+            ["sound"] = "Sound-based",
+            ["gravity"] = "Unusable during Gravity",
+            ["defrost"] = "Defrosts User",
+            ["distance"] = "Hits Non-adjacent Targets",
+            ["heal"] = "Heals",
+            ["authentic"] = "Bypasses Substitute",
+            ["mental"] = "Mental Herb / Overcoat",
+            ["powder"] = "Powder-based",
+            ["bite"] = "Jaw-based",
+            ["pulse"] = "Pulse-based",
+            ["ballistics"] = "Ballistics-based",
+            ["non-sky-battle"] = "Unusable in Sky Battles",
+            ["dance"] = "Dance",
+            ["wind"] = "Wind-based",
+            ["slicing"] = "Slicing-based"
+        };
+
+    /// <summary>
+    /// Minimum save-file generation in which a flag's associated mechanic exists.
+    /// Flags not listed here are relevant in all generations.
+    /// </summary>
+    protected static readonly IReadOnlyDictionary<string, int> FlagMinGeneration =
+        new Dictionary<string, int>
+        {
+            ["reflectable"] = 3, // Magic Coat — Gen 3
+            ["snatch"] = 3, // Snatch — Gen 3
+            ["punch"] = 4, // Iron Fist — Gen 4
+            ["gravity"] = 4, // Gravity move — Gen 4
+            ["authentic"] = 4, // Substitute interaction — Gen 4
+            ["heal"] = 4, // Heal Block — Gen 4
+            ["mental"] = 5, // Overcoat / Mental Herb — Gen 5
+            ["bite"] = 6, // Strong Jaw — Gen 6
+            ["ballistics"] = 6, // Bulletproof — Gen 6
+            ["powder"] = 6, // Overcoat powder immunity — Gen 6
+            ["pulse"] = 6, // Mega Launcher — Gen 6
+            ["non-sky-battle"] = 6, // Sky Battles — Gen 6
+            ["dance"] = 7, // Dancer — Gen 7
+            ["wind"] = 9, // Wind Rider / Wind Power — Gen 9
+            ["slicing"] = 9 // Sharpness — Gen 9
+        };
 
     protected Task OpenTrashBytesEditorAsync(PKM? pokemon, StringSource field)
     {
-        var parameters = new DialogParameters<TrashBytesEditorDialog>
-        {
-            { x => x.Pokemon, pokemon },
-            { x => x.Field, field },
-        };
+        var parameters = new DialogParameters<TrashBytesEditorDialog> { { x => x.Pokemon, pokemon }, { x => x.Field, field } };
         return DialogService.ShowAsync<TrashBytesEditorDialog>("Trash Bytes Editor", parameters, TrashBytesEditorDialogOptions);
     }
+
     /// <summary>
     /// Returns the nature modifier for a given stat, taking into account Gen 8+
     /// StatNature vs Nature.
@@ -66,4 +109,8 @@ public partial class BasePkmdsComponent
         NatureModifier.Hindered => "Hindered by nature (-10%)",
         _ => string.Empty
     };
+
+    /// <summary>Returns true if the flag should be shown for the given save-file generation.</summary>
+    protected static bool IsFlagRelevant(string flag, int saveGeneration) =>
+        !FlagMinGeneration.TryGetValue(flag, out var minGen) || saveGeneration >= minGen;
 }

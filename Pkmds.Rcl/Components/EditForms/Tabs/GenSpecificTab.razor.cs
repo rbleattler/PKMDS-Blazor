@@ -13,10 +13,12 @@ public partial class GenSpecificTab : IDisposable
         RefreshService.OnAppStateChanged += StateHasChanged;
 
     private static bool GetShinyLeafBit(int shinyLeaf, int bit) =>
-        (shinyLeaf & (1 << bit)) != 0;
+        (shinyLeaf & 1 << bit) != 0;
 
     private static int SetShinyLeafBit(int shinyLeaf, int bit, bool value) =>
-        value ? shinyLeaf | (1 << bit) : shinyLeaf & ~(1 << bit);
+        value
+            ? shinyLeaf | 1 << bit
+            : shinyLeaf & ~(1 << bit);
 
     private static string GetTeraTypeDisplayName(byte teraTypeId) => teraTypeId == TeraTypeUtil.Stellar
         ? GameInfo.Strings.Types[TeraTypeUtil.StellarTypeDisplayStringIndex]

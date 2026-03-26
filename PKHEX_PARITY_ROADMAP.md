@@ -2,7 +2,7 @@
 
 This roadmap outlines the path to achieving 100% feature parity with PKHeX. Tasks are broken down into actionable items organized by feature category and priority.
 
-**Last Updated:** 2026-03-25 (One-Touch Evolve implemented — §1.1, tracks #448; Gen-Specific editor tab implemented — §1.1 #419; Box pop-out dialogs implemented — §6.2, tracks #352; Pokédex per-species grid + LA research editor implemented — §2.5, tracks #414/#437/#438/#439; Fix Load Pokémon/Gift File slot behaviour implemented — §4.1, tracks #445; Trash bytes auto-fixer added to legality tab — tracks #542; Spinda spot preview implemented — tracks #554; Manic EMU `.3ds.sav` ZIP round-trip support added — tracks #537; Bag virtualization enabled via MudBlazor 9.2.0 — §7.2a, tracks #454)
+**Last Updated:** 2026-03-26 (One-Touch Evolve implemented — §1.1, tracks #448; Gen-Specific editor tab implemented — §1.1 #419; Box pop-out dialogs implemented — §6.2, tracks #352; Pokédex per-species grid + LA research editor implemented — §2.5, tracks #414/#437/#438/#439; Fix Load Pokémon/Gift File slot behaviour implemented — §4.1, tracks #445; Trash bytes auto-fixer added to legality tab — tracks #542; Spinda spot preview implemented — tracks #554; Manic EMU `.3ds.sav` ZIP round-trip support added — tracks #537; Bag virtualization enabled via MudBlazor 9.2.0 — §7.2a, tracks #454; Info popovers for moves/items/abilities/balls added — §4.1, tracks #579)
 
 ---
 
@@ -399,6 +399,7 @@ Bring the Mystery Gift Database tab to full parity with PKHeX's `SAV_MysteryGift
 - [x] Implement saved search filters (localStorage via JS interop)
 - [x] Support batch operations on search results (Showdown text copy)
 - [x] Add search export functionality (Showdown clipboard export)
+- [x] **Info popovers on filter fields and result rows (#579)** — ball/ability/held item filter fields show item sprites and description popovers; result rows show ball and held item sprites; explicit "Jump to Pokémon" button per row replaces implicit row-click navigation
 
 ### 2.5 Pokédex Editor
 **Tracks:** #414
@@ -768,7 +769,8 @@ Bring the Mystery Gift Database tab to full parity with PKHeX's `SAV_MysteryGift
 - [x] **Theme-aware startup / loading screen + three-way theme toggle (#449)** — inline script in `index.html` stamps `data-theme` on `<html>` before WASM boots (no white flash); `app.css` adds `@media (prefers-color-scheme: dark)` + `[data-theme]` CSS rules for the loading screen; `MainLayout.razor` AppBar toggle redesigned from `MudSwitch` to a `MudButtonGroup` with Light / System / Dark icon buttons; `MainLayout.razor.cs` gains `ThemeMode` enum, persists choice to `pkmds_theme` in `localStorage`, and only follows live OS changes in System mode.
 - [ ] Add theme customization (dark/light modes already exist, add more)
 - [ ] Create customizable hotkeys
-- [ ] Add tooltip help system
+- [x] **Info popovers for moves, items, abilities, and balls (#579)** — `DescriptionService` fetches Bulbapedia-sourced descriptions from bundled JSON; reusable `InfoButton` and `BagItemInfoButton` components with lazy-loading `MudPopover`s; Moves tab shows type/category/power/PP/accuracy/description per slot; Main tab shows held item and ability descriptions; Met tab shows ball description; Bag tab shows item sprite + move details for TM/HM items; Advanced Search shows info buttons on filters and result rows with explicit jump-to-Pokémon button
+- [ ] Add tooltip help system (wiki-link HelpButton — see §6.3)
 - [ ] Implement context menus for Pokemon slots
 - [ ] Add quick-edit mode (inline editing)
 - [ ] Create Pokemon comparison view (side-by-side)

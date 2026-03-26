@@ -467,6 +467,17 @@ public static partial class ImageHelper
     private static readonly int[] Gen3MailIds = [121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132];
     private static readonly int[] Gen45MailIds = [137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148];
 
+    // Type byte → lowercase type name, matching PKHeX's text_Types_en.txt (0-indexed).
+    private static readonly string[] TypeNames =
+    [
+        "normal", "fighting", "flying", "poison", "ground", "rock", "bug", "ghost", "steel",
+        "fire", "water", "grass", "electric", "psychic", "ice", "dragon", "dark", "fairy"
+    ];
+
+    // Only four HM type sprites exist: normal, fighting, flying, water.
+    private static readonly IReadOnlySet<string> HmTypeNames =
+        new HashSet<string>(StringComparer.Ordinal) { "normal", "fighting", "flying", "water" };
+
     /// <summary>
     /// Returns <see langword="true" /> if PokeAPI hosts a gender-specific home sprite for this species
     /// in the <c>female/</c> subdirectory.
@@ -937,4 +948,23 @@ public static partial class ImageHelper
                 ? "unk"
                 : item.ToString()
         };
+
+    /// <summary>
+    /// Returns the TM disc sprite filename for the given PKHeX move-type byte.
+    /// Uses type-colored disc sprites (tm-fire.png, tm-water.png, etc.) from wwwroot/sprites/tm/.
+    /// Falls back to bitem_tm.png for Stellar type or any unknown type.
+    /// </summary>
+    public static string GetTypedTmSpriteFilename(byte moveType) =>
+        moveType < TypeNames.Length
+            ? $"{SpritesRoot}tm/tm-{TypeNames[moveType]}.png"
+            : $"{SpritesRoot}bi/bitem_tm.png";
+
+    /// <summary>
+    /// Returns the HM disc sprite filename for the given PKHeX move-type byte, or null if no
+    /// type-colored HM sprite exists for that type (caller should fall back to the item sprite).
+    /// </summary>
+    public static string? GetTypedHmSpriteFilename(byte moveType) =>
+        moveType < TypeNames.Length && HmTypeNames.Contains(TypeNames[moveType])
+            ? $"{SpritesRoot}hm/hm-{TypeNames[moveType]}.png"
+            : null;
 }

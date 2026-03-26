@@ -1,0 +1,131 @@
+@inherits BasePkmdsComponent
+
+@if (ItemIndex != 0)
+{
+    @if (open)
+    {
+        <div @onclick="Close"
+             style="position:fixed;inset:0;z-index:1199;cursor:default;"></div>
+    }
+
+    <span style="position:relative;display:inline-flex;align-items:center;gap:2px;"
+          @onclick:stopPropagation="true">
+
+        @{
+            var isHm = ItemName.StartsWith("HM", StringComparison.OrdinalIgnoreCase);
+            // moveType is only ever set for TM/HM/TR items, so its presence is sufficient
+            // to select a typed sprite without needing HeldItemLumpUtil (which only covers Gen2-4, Gen8, Gen9).
+            var spriteSrc = moveType.HasValue && isHm
+                ? ImageHelper.GetTypedHmSpriteFilename(moveType.Value) ?? ImageHelper.GetItemSpriteFilename(ItemIndex, Context)
+                : moveType.HasValue
+                    ? ImageHelper.GetTypedTmSpriteFilename(moveType.Value)
+                    : ImageHelper.GetItemSpriteFilename(ItemIndex, Context);
+        }
+        <object @key="@spriteSrc"
+                class="item-sprite"
+                type="image/png"
+                style="object-fit: contain;"
+                data="@spriteSrc"
+                title="@ItemName">
+            <img class="pkm-sprite"
+                 src="@ImageHelper.ItemFallbackImageFileName"
+                 title="@ItemName"
+                 alt="@ItemName">
+        </object>
+
+        <MudIconButton Icon="@Icons.Material.Outlined.Info"
+                       Size="@Size.Small"
+                       Color="@Color.Default"
+                       OnClick="@Toggle"
+                       title="More info"
+                       aria-label="More info"
+                       aria-expanded="@open"/>
+        <MudPopover Open="@open"
+                    AnchorOrigin="Origin.BottomLeft"
+                    TransformOrigin="Origin.TopLeft"
+                    OverflowBehavior="OverflowBehavior.FlipAlways"
+                    Paper="true"
+                    Style="max-width:320px;max-height:400px;overflow-y:auto;z-index:1200;">
+            <div style="display:flex;justify-content:flex-end;padding:4px 4px 0 4px;">
+                <MudIconButton Icon="@Icons.Material.Filled.Close"
+                               Size="@Size.Small"
+                               Color="@Color.Default"
+                               OnClick="@Close"
+                               title="Close"
+                               aria-label="Close"/>
+            </div>
+            <div class="pa-3"
+                 style="padding-top:0;">
+                @if (!loaded)
+                {
+                    <MudText Typo="@Typo.caption">Loading...</MudText>
+                }
+                else
+                {
+                    <MudStack Spacing="2">
+                        @if (moveId.HasValue && AppState.SaveFile is { Context: var ctx })
+                        {
+                            @MoveTypeAndCategorySummary(
+                                MoveInfo.GetType(moveId.Value, ctx),
+                                GetMoveCategory(moveId.Value, ctx))
+                        }
+                        @if (moveInfo is { } localMoveInfo)
+                        {
+                            <MudText Typo="@Typo.subtitle2">@localMoveInfo.Name</MudText>
+                            <MudStack Row
+                                      Spacing="3">
+                                <MudText Typo="@Typo.caption">Power: <b>@(localMoveInfo.Power?.ToString() ?? "—")</b></MudText>
+                                @if (localMoveInfo.Pp.HasValue)
+                                {
+                                    <MudText Typo="@Typo.caption">PP: <b>@localMoveInfo.Pp</b></MudText>
+                                }
+                                <MudText Typo="@Typo.caption">Acc: <b>@(localMoveInfo.Accuracy is { } acc
+                                            ? $"{acc}%"
+                                            : "—")</b></MudText>
+                            </MudStack>
+                            @if (!string.IsNullOrEmpty(localMoveInfo.Target))
+                            {
+                                <MudText Typo="@Typo.caption">Target: <b>@localMoveInfo.Target</b></MudText>
+                            }
+
+                            @if (localMoveInfo.Flags.Count > 0)
+                            {
+                                <MudStack Row
+                                          Wrap="@Wrap.Wrap"
+                                          Spacing="1">
+                                    @foreach (var flag in localMoveInfo.Flags)
+                                    {
+                                        @if (FlagLabels.TryGetValue(flag, out var label) &&
+                                             IsFlagRelevant(flag, AppState.SaveFile?.Generation ?? int.MaxValue))
+                                        {
+                                            <MudChip T="string"
+                                                     Size="@Size.Small"
+                                                     Variant="@Variant.Outlined"
+                                                     Color="@Color.Default">@label</MudChip>
+                                        }
+                                    }
+                                </MudStack>
+                            }
+
+                            <MudText Typo="@Typo.body2">@(string.IsNullOrEmpty(localMoveInfo.Description)
+                                    ? "No description available."
+                                    : localMoveInfo.Description)</MudText>
+                        }
+                        else if (itemInfo is { } localItemInfo)
+                        {
+                            <MudText Typo="@Typo.subtitle2">@localItemInfo.Name</MudText>
+                            <MudText Typo="@Typo.body2">@(string.IsNullOrEmpty(localItemInfo.Description)
+                                    ? "No description available."
+                                    : localItemInfo.Description)</MudText>
+                        }
+                        else
+                        {
+                            <MudText Typo="@Typo.subtitle2">@ItemName</MudText>
+                            <MudText Typo="@Typo.body2">No description available.</MudText>
+                        }
+                    </MudStack>
+                }
+            </div>
+        </MudPopover>
+    </span>
+}

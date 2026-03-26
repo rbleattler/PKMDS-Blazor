@@ -6,14 +6,13 @@ public record BugReportData(string Description, string Email, string Name, bool 
 
 public partial class BugReportDialog
 {
+    private const int MinDescriptionLength = 30;
     private static readonly EmailAddressAttribute EmailValidator = new();
+    private bool attachSaveFile;
 
     private string description = string.Empty;
     private string email = string.Empty;
     private string name = string.Empty;
-    private bool attachSaveFile;
-
-    private const int MinDescriptionLength = 30;
 
     private bool IsEmailValid => !string.IsNullOrWhiteSpace(email) && EmailValidator.IsValid(email);
 
@@ -30,5 +29,4 @@ public partial class BugReportDialog
 
     private void Submit() =>
         MudDialog.Close(DialogResult.Ok(new BugReportData(description, email, name, attachSaveFile)));
-
 }

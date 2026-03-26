@@ -7,7 +7,7 @@
     <DialogContent>
         <MudList T="@EvolutionMethod"
                  SelectionMode="@SelectionMode.SingleSelection"
-                 @bind-SelectedValue="@_selected">
+                 @bind-SelectedValue="@selected">
             @foreach (var method in Choices)
             {
                 <MudListItem T="@EvolutionMethod"
@@ -36,7 +36,7 @@
         <MudButton OnClick="@Confirm"
                    Variant="@Variant.Filled"
                    Color="@Color.Primary"
-                   Disabled="@(_selected == default)">Evolve
+                   Disabled="@(selected == default)">Evolve
         </MudButton>
     </DialogActions>
 </MudDialog>

@@ -98,6 +98,7 @@
                 <MudSelect Label="Ball"
                            Variant="@Variant.Outlined"
                            @bind-Value="@Pokemon.Ball"
+                           @bind-Value:after="@OnBallChanged"
                            For="@(() => Pokemon.Ball)">
                     @foreach (var ball in GameInfo.FilteredSources.Balls.DistinctBy(ball => ball.Value))
                     {
@@ -122,6 +123,14 @@
             <LegalityIndicator
                 Severity="@(GetCheckResult(CheckIdentifier.Ball)?.Judgement ?? PKHeX.Core.Severity.Valid)"
                 Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Ball))"/>
+            <InfoButton>
+                <MudStack Spacing="2">
+                    <MudText Typo="@Typo.subtitle2">@(ballInfo?.Name ?? GameInfo.FilteredSources.Balls.FirstOrDefault(b => b.Value == Pokemon?.Ball)?.Text ?? "Ball")</MudText>
+                    <MudText Typo="@Typo.body2">@(ballInfo is { Description: { Length: > 0 } desc }
+                            ? desc
+                            : "No description available.")</MudText>
+                </MudStack>
+            </InfoButton>
         </MudStack>
     }
 

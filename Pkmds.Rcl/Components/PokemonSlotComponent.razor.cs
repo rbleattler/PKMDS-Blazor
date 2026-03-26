@@ -10,6 +10,7 @@ public partial class PokemonSlotComponent : IDisposable
         HighResLoadedSpecies = [];
 
     private bool highResLoaded;
+    private bool isDragOverWithExternalFile;
     private byte lastLoadedForm;
     private uint lastLoadedFormArg;
     private bool lastLoadedIsFemale;
@@ -18,7 +19,6 @@ public partial class PokemonSlotComponent : IDisposable
     private SpriteStyle lastLoadedSpriteStyle;
 
     private bool? legalityValid;
-    private bool isDragOverWithExternalFile;
 
     [Parameter]
     [EditorRequired]

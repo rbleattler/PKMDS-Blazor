@@ -2,6 +2,9 @@ namespace Pkmds.Rcl.Components.MainTabPages;
 
 public partial class TrainerInfoTab : IDisposable
 {
+    private bool isSyncing;
+    private string syncMessage = string.Empty;
+
     private DateTime? GameStartedDate
     {
         get;
@@ -124,19 +127,16 @@ public partial class TrainerInfoTab : IDisposable
         Regions = Util.GetCountryRegionList($"{regionPrefix}sr_{countryId:000}", GameInfo.CurrentLanguage);
     }
 
-    private bool _isSyncing;
-    private string _syncMessage = string.Empty;
-
     private async Task RunSyncAsync(string message, Action sync)
     {
-        _isSyncing = true;
-        _syncMessage = message;
+        isSyncing = true;
+        syncMessage = message;
         StateHasChanged();
         await Task.Yield();
         try { sync(); }
         finally
         {
-            _isSyncing = false;
+            isSyncing = false;
         }
     }
 
@@ -174,7 +174,9 @@ public partial class TrainerInfoTab : IDisposable
         // OT_Gender would fail that check and trigger "Invalid Current handler value"
         // legality errors. Propagate the new gender to all matching Pokémon.
         if (oldGender != genderByte)
-            SyncOTGenderToPokemon(saveFile, oldGender, genderByte);
+        {
+            SyncOtGenderToPokemon(saveFile, oldGender, genderByte);
+        }
 
         // Several games store gender-specific fashion/appearance data.
         // Changing gender without resetting it causes the player model to become
@@ -188,13 +190,13 @@ public partial class TrainerInfoTab : IDisposable
             case SAV7 sav7:
                 // SM/USUM: DressUpSkinColor must match the gender's parity or the
                 // player model becomes invisible. Mirrors PKHeX WinForms UpdateSkinColor.
-                sav7.MyStatus.DressUpSkinColor = (sav7.MyStatus.DressUpSkinColor & ~1) | genderByte;
+                sav7.MyStatus.DressUpSkinColor = sav7.MyStatus.DressUpSkinColor & ~1 | genderByte;
                 break;
             case SAV8SWSH sav8:
                 // SWSH: GenderAppearance is a separate byte from Gender, and a full
                 // appearance reset is needed to keep skin/clothing compatible.
                 var currentSkin = PlayerSkinColor8Extensions.GetSkinColorFromSkin(sav8.MyStatus.Skin);
-                var skinIndex = ((int)currentSkin & ~1) | genderByte;
+                var skinIndex = (int)currentSkin & ~1 | genderByte;
                 sav8.MyStatus.GenderAppearance = genderByte;
                 sav8.MyStatus.ResetAppearance((PlayerSkinColor8)skinIndex);
                 break;
@@ -205,104 +207,137 @@ public partial class TrainerInfoTab : IDisposable
     {
         var oldName = saveFile.OT;
         saveFile.OT = value;
-        if (oldName == saveFile.OT) return;
+        if (oldName == saveFile.OT)
+        {
+            return;
+        }
+
         SyncPokemon(saveFile,
-            pkm => IsOTMatch(pkm, saveFile.ID32, oldName, saveFile.Gender),
+            pkm => IsOtMatch(pkm, saveFile.ID32, oldName, saveFile.Gender),
             pkm => pkm.OriginalTrainerName = saveFile.OT,
-            pkm => IsHTMatch(pkm, oldName, oldGender: null),
+            pkm => IsHtMatch(pkm, oldName, oldGender: null),
             pkm => pkm.HandlingTrainerName = saveFile.OT);
     }
 
     private static void OnTID16Changed(SaveFile saveFile, ushort value)
     {
-        var oldID32 = saveFile.ID32;
+        var oldId32 = saveFile.ID32;
         saveFile.TID16 = value;
-        SyncOTIDToPokemon(saveFile, oldID32);
+        SyncOtidToPokemon(saveFile, oldId32);
     }
 
     private static void OnSID16Changed(SaveFile saveFile, ushort value)
     {
-        var oldID32 = saveFile.ID32;
+        var oldId32 = saveFile.ID32;
         saveFile.SID16 = value;
-        SyncOTIDToPokemon(saveFile, oldID32);
+        SyncOtidToPokemon(saveFile, oldId32);
     }
 
     private static void OnTrainerTID7Changed(SaveFile saveFile, uint value)
     {
-        var oldID32 = saveFile.ID32;
+        var oldId32 = saveFile.ID32;
         saveFile.TrainerTID7 = value;
-        SyncOTIDToPokemon(saveFile, oldID32);
+        SyncOtidToPokemon(saveFile, oldId32);
     }
 
     private static void OnTrainerSID7Changed(SaveFile saveFile, uint value)
     {
-        var oldID32 = saveFile.ID32;
+        var oldId32 = saveFile.ID32;
         saveFile.TrainerSID7 = value;
-        SyncOTIDToPokemon(saveFile, oldID32);
+        SyncOtidToPokemon(saveFile, oldId32);
     }
 
-    private static void SyncOTIDToPokemon(SaveFile saveFile, uint oldID32)
+    private static void SyncOtidToPokemon(SaveFile saveFile, uint oldId32)
     {
-        if (saveFile.ID32 == oldID32) return;
-        var newTID16 = saveFile.TID16;
-        var newSID16 = saveFile.SID16;
+        if (saveFile.ID32 == oldId32)
+        {
+            return;
+        }
+
+        var newTid16 = saveFile.TID16;
+        var newSid16 = saveFile.SID16;
         // HT does not store a trainer ID, so only OT sync is needed here.
         SyncPokemon(saveFile,
-            pkm => IsOTMatch(pkm, oldID32, saveFile.OT, saveFile.Gender),
-            pkm => { pkm.TID16 = newTID16; pkm.SID16 = newSID16; });
+            pkm => IsOtMatch(pkm, oldId32, saveFile.OT, saveFile.Gender),
+            pkm =>
+            {
+                pkm.TID16 = newTid16;
+                pkm.SID16 = newSid16;
+            });
     }
 
-    private static void SyncOTGenderToPokemon(SaveFile saveFile, byte oldGender, byte newGender) =>
+    private static void SyncOtGenderToPokemon(SaveFile saveFile, byte oldGender, byte newGender) =>
         SyncPokemon(saveFile,
-            pkm => IsOTMatch(pkm, saveFile.ID32, saveFile.OT, oldGender),
+            pkm => IsOtMatch(pkm, saveFile.ID32, saveFile.OT, oldGender),
             pkm => pkm.OriginalTrainerGender = newGender,
-            pkm => IsHTMatch(pkm, saveFile.OT, oldGender),
+            pkm => IsHtMatch(pkm, saveFile.OT, oldGender),
             pkm => pkm.HandlingTrainerGender = newGender);
 
     /// <summary>
-    /// Iterates every party and box slot once, applying <paramref name="otMutate"/> to slots
-    /// matching <paramref name="isOTMatch"/> and <paramref name="htMutate"/> to slots matching
-    /// <paramref name="isHTMatch"/>. Both checks run per slot so the whole save is covered in
+    /// Iterates every party and box slot once, applying <paramref name="otMutate" /> to slots
+    /// matching <paramref name="isOtMatch" /> and <paramref name="htMutate" /> to slots matching
+    /// <paramref name="isHtMatch" />. Both checks run per slot so the whole save is covered in
     /// a single pass.
     /// </summary>
     private static void SyncPokemon(SaveFile saveFile,
-        Func<PKM, bool> isOTMatch, Action<PKM> otMutate,
-        Func<PKM, bool>? isHTMatch = null, Action<PKM>? htMutate = null)
+        Func<PKM, bool> isOtMatch, Action<PKM> otMutate,
+        Func<PKM, bool>? isHtMatch = null, Action<PKM>? htMutate = null)
     {
         for (var i = 0; i < saveFile.PartyCount; i++)
         {
             var pkm = saveFile.GetPartySlotAtIndex(i);
-            if (!ApplySync(pkm, isOTMatch, otMutate, isHTMatch, htMutate)) continue;
+            if (!ApplySync(pkm, isOtMatch, otMutate, isHtMatch, htMutate))
+            {
+                continue;
+            }
+
             saveFile.SetPartySlotAtIndex(pkm, i);
         }
+
         for (var box = 0; box < saveFile.BoxCount; box++)
         {
             for (var slot = 0; slot < saveFile.BoxSlotCount; slot++)
             {
                 var pkm = saveFile.GetBoxSlotAtIndex(box, slot);
-                if (!ApplySync(pkm, isOTMatch, otMutate, isHTMatch, htMutate)) continue;
+                if (!ApplySync(pkm, isOtMatch, otMutate, isHtMatch, htMutate))
+                {
+                    continue;
+                }
+
                 saveFile.SetBoxSlotAtIndex(pkm, box, slot);
             }
         }
     }
 
     private static bool ApplySync(PKM pkm,
-        Func<PKM, bool> isOTMatch, Action<PKM> otMutate,
-        Func<PKM, bool>? isHTMatch, Action<PKM>? htMutate)
+        Func<PKM, bool> isOtMatch, Action<PKM> otMutate,
+        Func<PKM, bool>? isHtMatch, Action<PKM>? htMutate)
     {
         var changed = false;
-        if (isOTMatch(pkm)) { otMutate(pkm); changed = true; }
-        if (isHTMatch?.Invoke(pkm) == true) { htMutate!(pkm); changed = true; }
+        if (isOtMatch(pkm))
+        {
+            otMutate(pkm);
+            changed = true;
+        }
+
+        if (isHtMatch?.Invoke(pkm) != true)
+        {
+            return changed;
+        }
+
+        htMutate!(pkm);
+        changed = true;
+
         return changed;
     }
 
-    private static bool IsHTMatch(PKM pkm, string htName, byte? oldGender) =>
+    private static bool IsHtMatch(PKM pkm, string htName, byte? oldGender) =>
         pkm.Species != 0 &&
         pkm.CurrentHandler == 1 &&
         pkm.HandlingTrainerName == htName &&
         (oldGender is null || pkm.HandlingTrainerGender == oldGender);
 
-    private static bool IsOTMatch(PKM pkm, uint id32, string ot, byte gender) =>
+    private static bool IsOtMatch(PKM pkm, uint id32, string ot, byte gender) =>
         pkm.Species != 0 &&
         pkm.ID32 == id32 &&
         pkm.OriginalTrainerName == ot &&

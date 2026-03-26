@@ -60,7 +60,8 @@ services
     .AddSingleton<JsService>()
     .AddSingleton<BlazorAesProvider>()
     .AddSingleton<BlazorMd5Provider>()
-    .AddSingleton<IBugReportService, BugReportService>();
+    .AddSingleton<IBugReportService, BugReportService>()
+    .AddSingleton<IDescriptionService, DescriptionService>();
 
 var app = builder.Build();
 

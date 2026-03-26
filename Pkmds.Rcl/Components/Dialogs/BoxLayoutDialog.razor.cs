@@ -13,18 +13,18 @@ public partial class BoxLayoutDialog : BasePkmdsComponent
         "Polka-Dot", "PokéCenter", "Machine", "Simple"
     ];
 
-    private int _boxesUnlocked;
-    private byte[] _boxFlags = [];
-    private string[] _boxNames = [];
+    private int boxesUnlocked;
+    private byte[] boxFlags = [];
+    private string[] boxNames = [];
 
-    private int _selectedBoxIndex;
-    private bool _showUnlocked;
-    private bool _supportsNameRead;
-    private bool _supportsNameWrite;
-    private bool _supportsWallpaper;
-    private int[] _wallpaperIds = [];
-    private string[] _wallpaperNameList = [];
-    private string _wallpaperSpriteUrl = string.Empty;
+    private int selectedBoxIndex;
+    private bool showUnlocked;
+    private bool supportsNameRead;
+    private bool supportsNameWrite;
+    private bool supportsWallpaper;
+    private int[] wallpaperIds = [];
+    private string[] wallpaperNameList = [];
+    private string wallpaperSpriteUrl = string.Empty;
 
     [CascadingParameter]
     private IMudDialogInstance? MudDialog { get; set; }
@@ -42,40 +42,40 @@ public partial class BoxLayoutDialog : BasePkmdsComponent
             return;
         }
 
-        _supportsNameRead = sav is IBoxDetailNameRead;
-        _supportsNameWrite = sav is IBoxDetailName;
-        _supportsWallpaper = sav is IBoxDetailWallpaper;
+        supportsNameRead = sav is IBoxDetailNameRead;
+        supportsNameWrite = sav is IBoxDetailName;
+        supportsWallpaper = sav is IBoxDetailWallpaper;
 
-        _boxNames = new string[sav.BoxCount];
+        boxNames = new string[sav.BoxCount];
         if (sav is IBoxDetailNameRead r)
         {
             for (var i = 0; i < sav.BoxCount; i++)
             {
-                _boxNames[i] = r.GetBoxName(i);
+                boxNames[i] = r.GetBoxName(i);
             }
         }
 
-        _wallpaperIds = new int[sav.BoxCount];
+        wallpaperIds = new int[sav.BoxCount];
         if (sav is IBoxDetailWallpaper w)
         {
             for (var i = 0; i < sav.BoxCount; i++)
             {
-                _wallpaperIds[i] = w.GetBoxWallpaper(i);
+                wallpaperIds[i] = w.GetBoxWallpaper(i);
             }
         }
 
-        _wallpaperNameList = BuildWallpaperNames(sav);
-        _showUnlocked = sav.BoxesUnlocked > 0;
-        _boxesUnlocked = _showUnlocked
+        wallpaperNameList = BuildWallpaperNames(sav);
+        showUnlocked = sav.BoxesUnlocked > 0;
+        boxesUnlocked = showUnlocked
             ? sav.BoxesUnlocked
             : 0;
 
         var flags = sav.BoxFlags;
-        _boxFlags = flags.Length > 0
+        boxFlags = flags.Length > 0
             ? [.. flags]
             : [];
 
-        _selectedBoxIndex = 0;
+        selectedBoxIndex = 0;
         UpdateWallpaperPreview();
     }
 
@@ -132,54 +132,54 @@ public partial class BoxLayoutDialog : BasePkmdsComponent
 
     private void SelectBox(int index)
     {
-        _selectedBoxIndex = index;
+        selectedBoxIndex = index;
         UpdateWallpaperPreview();
     }
 
     private void MoveBoxUp()
     {
-        if (_selectedBoxIndex <= 0 || AppState.SaveFile is not { } sav)
+        if (selectedBoxIndex <= 0 || AppState.SaveFile is not { } sav)
         {
             return;
         }
 
-        var newIndex = _selectedBoxIndex - 1;
-        if (!sav.SwapBox(_selectedBoxIndex, newIndex))
+        var newIndex = selectedBoxIndex - 1;
+        if (!sav.SwapBox(selectedBoxIndex, newIndex))
         {
             Snackbar.Add("Locked or team slots prevent moving this box.", Severity.Warning);
             return;
         }
 
-        (_boxNames[_selectedBoxIndex], _boxNames[newIndex]) =
-            (_boxNames[newIndex], _boxNames[_selectedBoxIndex]);
-        (_wallpaperIds[_selectedBoxIndex], _wallpaperIds[newIndex]) =
-            (_wallpaperIds[newIndex], _wallpaperIds[_selectedBoxIndex]);
+        (boxNames[selectedBoxIndex], boxNames[newIndex]) =
+            (boxNames[newIndex], boxNames[selectedBoxIndex]);
+        (wallpaperIds[selectedBoxIndex], wallpaperIds[newIndex]) =
+            (wallpaperIds[newIndex], wallpaperIds[selectedBoxIndex]);
 
-        _selectedBoxIndex = newIndex;
+        selectedBoxIndex = newIndex;
         RefreshService.RefreshBoxState();
         UpdateWallpaperPreview();
     }
 
     private void MoveBoxDown()
     {
-        if (AppState.SaveFile is not { } sav || _selectedBoxIndex >= sav.BoxCount - 1)
+        if (AppState.SaveFile is not { } sav || selectedBoxIndex >= sav.BoxCount - 1)
         {
             return;
         }
 
-        var newIndex = _selectedBoxIndex + 1;
-        if (!sav.SwapBox(_selectedBoxIndex, newIndex))
+        var newIndex = selectedBoxIndex + 1;
+        if (!sav.SwapBox(selectedBoxIndex, newIndex))
         {
             Snackbar.Add("Locked or team slots prevent moving this box.", Severity.Warning);
             return;
         }
 
-        (_boxNames[_selectedBoxIndex], _boxNames[newIndex]) =
-            (_boxNames[newIndex], _boxNames[_selectedBoxIndex]);
-        (_wallpaperIds[_selectedBoxIndex], _wallpaperIds[newIndex]) =
-            (_wallpaperIds[newIndex], _wallpaperIds[_selectedBoxIndex]);
+        (boxNames[selectedBoxIndex], boxNames[newIndex]) =
+            (boxNames[newIndex], boxNames[selectedBoxIndex]);
+        (wallpaperIds[selectedBoxIndex], wallpaperIds[newIndex]) =
+            (wallpaperIds[newIndex], wallpaperIds[selectedBoxIndex]);
 
-        _selectedBoxIndex = newIndex;
+        selectedBoxIndex = newIndex;
         RefreshService.RefreshBoxState();
         UpdateWallpaperPreview();
     }
@@ -191,8 +191,8 @@ public partial class BoxLayoutDialog : BasePkmdsComponent
             return;
         }
 
-        _boxNames[_selectedBoxIndex] = value;
-        names.SetBoxName(_selectedBoxIndex, value);
+        boxNames[selectedBoxIndex] = value;
+        names.SetBoxName(selectedBoxIndex, value);
     }
 
     private void OnWallpaperChanged(int id)
@@ -202,43 +202,43 @@ public partial class BoxLayoutDialog : BasePkmdsComponent
             return;
         }
 
-        _wallpaperIds[_selectedBoxIndex] = id;
-        w.SetBoxWallpaper(_selectedBoxIndex, id);
+        wallpaperIds[selectedBoxIndex] = id;
+        w.SetBoxWallpaper(selectedBoxIndex, id);
         UpdateWallpaperPreview();
     }
 
     private void OnBoxesUnlockedChanged(int value)
     {
-        if (AppState.SaveFile is not { } sav || !_showUnlocked)
+        if (AppState.SaveFile is not { } sav || !showUnlocked)
         {
             return;
         }
 
-        _boxesUnlocked = value;
+        boxesUnlocked = value;
         sav.BoxesUnlocked = value;
     }
 
     private void OnFlagChanged(int index, byte value)
     {
-        if (AppState.SaveFile is not { } sav || index >= _boxFlags.Length)
+        if (AppState.SaveFile is not { } sav || index >= boxFlags.Length)
         {
             return;
         }
 
-        _boxFlags[index] = value;
-        sav.BoxFlags = _boxFlags;
+        boxFlags[index] = value;
+        sav.BoxFlags = boxFlags;
     }
 
     private void UpdateWallpaperPreview()
     {
-        if (AppState.SaveFile is { } sav && _wallpaperIds.Length > _selectedBoxIndex)
+        if (AppState.SaveFile is { } sav && wallpaperIds.Length > selectedBoxIndex)
         {
-            _wallpaperSpriteUrl = ImageHelper.GetBoxWallpaperSpriteFileName(
-                _wallpaperIds[_selectedBoxIndex], sav.Version);
+            wallpaperSpriteUrl = ImageHelper.GetBoxWallpaperSpriteFileName(
+                wallpaperIds[selectedBoxIndex], sav.Version);
         }
         else
         {
-            _wallpaperSpriteUrl = string.Empty;
+            wallpaperSpriteUrl = string.Empty;
         }
     }
 

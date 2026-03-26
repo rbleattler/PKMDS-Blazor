@@ -16,14 +16,14 @@
                            Label="Shiny Preview"
                            Class="mb-1"/>
 
-                <canvas @ref="_canvas"
+                <canvas @ref="canvas"
                         style="width:256px; height:256px; image-rendering:pixelated;"
                         width="512"
-                        height="512"/>
+                        height="512"></canvas>
 
                 <MudTextField T="@string"
                               Label="Pattern"
-                              @bind-Value="_patternHex"
+                              @bind-Value="patternHex"
                               @bind-Value:after="@OnPatternHexChanged"
                               Adornment="@Adornment.Start"
                               AdornmentText="0x"

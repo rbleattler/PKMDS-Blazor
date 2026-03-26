@@ -168,8 +168,10 @@ public partial class EncounterDatabaseTab : RefreshAwareComponent
     /// occupied, prompts the user to overwrite, use the first available slot, or cancel.
     /// Falls back to the first empty box slot automatically when no slot is selected.
     /// </summary>
-    /// <returns><see langword="true"/> if a slot is ready and the caller should proceed;
-    /// <see langword="false"/> if the caller should abort.</returns>
+    /// <returns>
+    /// <see langword="true" /> if a slot is ready and the caller should proceed;
+    /// <see langword="false" /> if the caller should abort.
+    /// </returns>
     private async Task<bool> EnsureTargetSlotSelectedAsync()
     {
         var slotType = AppService.GetSelectedPokemonSlot(out _, out _, out _);
@@ -178,27 +180,27 @@ public partial class EncounterDatabaseTab : RefreshAwareComponent
 
         if (hasSelectedSlot)
         {
-            if (AppService.EditFormPokemon?.Species != 0)
+            if (AppService.EditFormPokemon?.Species == 0)
             {
-                var occupantName = GameInfo.Strings.Species[AppService.EditFormPokemon!.Species];
-                var confirmed = await DialogService.ShowMessageBoxAsync(
-                    "Overwrite Pokémon?",
-                    $"The selected slot contains {occupantName}. Overwrite it?",
-                    yesText: "Overwrite",
-                    noText: "Use First Available Slot",
-                    cancelText: "Cancel");
-                if (confirmed is null)
-                {
-                    return false;
-                }
+                return true;
+            }
 
-                if (confirmed == false && !AppService.TrySelectFirstEmptyBoxSlot())
-                {
+            var occupantName = GameInfo.Strings.Species[AppService.EditFormPokemon!.Species];
+            var confirmed = await DialogService.ShowMessageBoxAsync(
+                "Overwrite Pokémon?",
+                $"The selected slot contains {occupantName}. Overwrite it?",
+                yesText: "Overwrite",
+                noText: "Use First Available Slot",
+                cancelText: "Cancel");
+            switch (confirmed)
+            {
+                case null:
+                    return false;
+                case false when !AppService.TrySelectFirstEmptyBoxSlot():
                     Snackbar.Add(
                         "No empty box slots available. Free up a slot and try again.",
                         Severity.Warning);
                     return false;
-                }
             }
         }
         else if (!AppService.TrySelectFirstEmptyBoxSlot())

@@ -4,7 +4,8 @@
     <DialogContent>
         @if (HintText is not null)
         {
-            <MudAlert Severity="@Severity.Info" Class="mb-3">@HintText</MudAlert>
+            <MudAlert Severity="@Severity.Info"
+                      Class="mb-3">@HintText</MudAlert>
         }
         <MudFileUpload T="@IBrowserFile"
                        Accept="*/*"

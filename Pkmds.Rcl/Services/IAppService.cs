@@ -212,7 +212,10 @@ public interface IAppService
     /// Finds the first empty box slot in the save file and selects it.
     /// For Let's Go saves (SAV7b), uses flat unified-storage indexing.
     /// </summary>
-    /// <returns><see langword="true"/> if an empty slot was found and selected; <see langword="false"/> if all slots are full or no save is loaded.</returns>
+    /// <returns>
+    /// <see langword="true" /> if an empty slot was found and selected; <see langword="false" /> if all slots are
+    /// full or no save is loaded.
+    /// </returns>
     bool TrySelectFirstEmptyBoxSlot();
 
     /// <summary>

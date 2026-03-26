@@ -3,7 +3,7 @@ namespace Pkmds.Rcl.Components;
 public partial class PokemonStorageComponent : RefreshAwareComponent
 {
     [Inject]
-    private IBrowserViewportService BrowserViewportService { get; set; } = default!;
+    private IBrowserViewportService BrowserViewportService { get; set; } = null!;
 
     private void GoToNextBox()
     {
@@ -92,7 +92,7 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
                 FullScreen = isXs,
                 CloseButton = true,
                 BackdropClick = true,
-                CloseOnEscapeKey = true,
+                CloseOnEscapeKey = true
             });
     }
 

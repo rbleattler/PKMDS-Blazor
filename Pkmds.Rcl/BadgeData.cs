@@ -16,7 +16,7 @@ public static class BadgeData
         new("Soul Badge", 5),
         new("Marsh Badge", 6),
         new("Volcano Badge", 7),
-        new("Earth Badge", 8),
+        new("Earth Badge", 8)
     ];
 
     public static readonly IReadOnlyList<BadgeInfo> JohtoKantoBadges =
@@ -38,7 +38,7 @@ public static class BadgeData
         new("Soul Badge", 5),
         new("Marsh Badge", 6),
         new("Volcano Badge", 7),
-        new("Earth Badge", 8),
+        new("Earth Badge", 8)
     ];
 
     public static readonly IReadOnlyList<BadgeInfo> HoennBadges =
@@ -50,7 +50,7 @@ public static class BadgeData
         new("Balance Badge", 21),
         new("Feather Badge", 22),
         new("Mind Badge", 23),
-        new("Rain Badge", 24),
+        new("Rain Badge", 24)
     ];
 
     public static readonly IReadOnlyList<BadgeInfo> SinnohBadges =
@@ -62,10 +62,10 @@ public static class BadgeData
         new("Relic Badge", 29),
         new("Mine Badge", 30),
         new("Icicle Badge", 31),
-        new("Beacon Badge", 32),
+        new("Beacon Badge", 32)
     ];
 
-    public static readonly IReadOnlyList<BadgeInfo> UnivoaBWBadges =
+    public static readonly IReadOnlyList<BadgeInfo> UnivoaBwBadges =
     [
         new("Trio Badge", 33),
         new("Basic Badge", 34),
@@ -74,7 +74,7 @@ public static class BadgeData
         new("Quake Badge", 38),
         new("Jet Badge", 39),
         new("Freeze Badge", 40),
-        new("Legend Badge", 41),
+        new("Legend Badge", 41)
     ];
 
     /// <summary>
@@ -90,7 +90,7 @@ public static class BadgeData
         new("Quake Badge", 38),
         new("Jet Badge", 39),
         new("Legend Badge", 41),
-        new("Wave Badge", 42),
+        new("Wave Badge", 42)
     ];
 
     public static readonly IReadOnlyList<BadgeInfo> KalosBadges =
@@ -102,7 +102,7 @@ public static class BadgeData
         new("Voltage Badge", 47),
         new("Fairy Badge", 48),
         new("Psychic Badge", 49),
-        new("Iceberg Badge", 50),
+        new("Iceberg Badge", 50)
     ];
 
     /// <summary>Galar — Pokémon Sword. Slot 4 = Fighting (Bea), slot 6 = Rock (Gordie).</summary>
@@ -115,7 +115,7 @@ public static class BadgeData
         new("Fairy Badge", 56),
         new("Rock Badge", 57),
         new("Dark Badge", 59),
-        new("Dragon Badge", 60),
+        new("Dragon Badge", 60)
     ];
 
     /// <summary>Galar — Pokémon Shield. Slot 4 = Ghost (Allister), slot 6 = Ice (Melony).</summary>
@@ -128,7 +128,7 @@ public static class BadgeData
         new("Fairy Badge", 56),
         new("Ice Badge", 58),
         new("Dark Badge", 59),
-        new("Dragon Badge", 60),
+        new("Dragon Badge", 60)
     ];
 
     public static readonly IReadOnlyList<BadgeInfo> PaldeaBadges =
@@ -140,6 +140,6 @@ public static class BadgeData
         new("Normal Badge", 74),
         new("Ghost Badge", 75),
         new("Psychic Badge", 76),
-        new("Ice Badge", 77),
+        new("Ice Badge", 77)
     ];
 }

@@ -16,10 +16,10 @@ public partial class AlcremieEditorDialog
         "Clover Sweet", "Flower Sweet", "Ribbon Sweet"
     ];
 
-    private readonly HashSet<int> _failedCreamSprites = [];
-    private readonly HashSet<int> _failedDecoSprites = [];
-    private bool _previewFailed;
+    private readonly HashSet<int> failedCreamSprites = [];
+    private readonly HashSet<int> failedDecoSprites = [];
     private bool isPreviewShiny;
+    private bool previewFailed;
 
     private byte selectedCream;
     private uint selectedDeco;
@@ -71,7 +71,7 @@ public partial class AlcremieEditorDialog
 
     private void OnCreamSpriteError(int creamIdx)
     {
-        if (_failedCreamSprites.Add(creamIdx))
+        if (failedCreamSprites.Add(creamIdx))
         {
             StateHasChanged();
         }
@@ -79,7 +79,7 @@ public partial class AlcremieEditorDialog
 
     private void OnDecoSpriteError(int decoIdx)
     {
-        if (_failedDecoSprites.Add(decoIdx))
+        if (failedDecoSprites.Add(decoIdx))
         {
             StateHasChanged();
         }
@@ -87,12 +87,12 @@ public partial class AlcremieEditorDialog
 
     private void OnPreviewSpriteError()
     {
-        if (_previewFailed)
+        if (previewFailed)
         {
             return;
         }
 
-        _previewFailed = true;
+        previewFailed = true;
         StateHasChanged();
     }
 

@@ -79,7 +79,29 @@
                                 <PropertyColumn Property="@(item => item.Index)"
                                                 Title="Item">
                                     <CellTemplate>
-                                        <MudText>@ItemList[context.Item.Index]</MudText>
+                                        <MudStack Row
+                                                  Spacing="1"
+                                                  AlignItems="@AlignItems.Center">
+                                            @if (context.Item.Index != 0)
+                                            {
+                                                <object class="item-sprite"
+                                                        type="image/png"
+                                                        style="object-fit: contain;"
+                                                        data="@ImageHelper.GetItemSpriteFilename(context.Item.Index, saveFile.Context)"
+                                                        title="@ItemList[context.Item.Index]">
+                                                    <img class="pkm-sprite"
+                                                         src="@ImageHelper.ItemFallbackImageFileName"
+                                                         title="@ItemList[context.Item.Index]"
+                                                         alt="@ItemList[context.Item.Index]">
+                                                </object>
+                                            }
+                                            <MudText>@ItemList[context.Item.Index]</MudText>
+                                            <BagItemInfoButton ItemIndex="@context.Item.Index"
+                                                               ItemName="@ItemList[context.Item.Index]"
+                                                               PouchType="@pouch.Type"
+                                                               Context="@saveFile.Context"
+                                                               Version="@saveFile.Version"/>
+                                        </MudStack>
                                     </CellTemplate>
                                     <EditTemplate>
                                         <MudStack Row
@@ -112,20 +134,11 @@
                                                     </MudStack>
                                                 </ItemTemplate>
                                             </MudAutocomplete>
-                                            @if (context.Item.Index != 0)
-                                            {
-                                                var itemText = ItemList[context.Item.Index];
-                                                <object class="item-sprite"
-                                                        type="image/png"
-                                                        style="object-fit: contain;"
-                                                        data="@ImageHelper.GetItemSpriteFilename(context.Item.Index, saveFile.Context)"
-                                                        title="@itemText">
-                                                    <img class="pkm-sprite"
-                                                         src="@ImageHelper.ItemFallbackImageFileName"
-                                                         title="@itemText"
-                                                         alt="@itemText">
-                                                </object>
-                                            }
+                                            <BagItemInfoButton ItemIndex="@context.Item.Index"
+                                                               ItemName="@ItemList[context.Item.Index]"
+                                                               PouchType="@pouch.Type"
+                                                               Context="@saveFile.Context"
+                                                               Version="@saveFile.Version"/>
                                         </MudStack>
                                     </EditTemplate>
                                 </PropertyColumn>

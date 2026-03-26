@@ -2,22 +2,22 @@ namespace Pkmds.Rcl.Components.Dialogs;
 
 public partial class BoxViewerDialog : RefreshAwareComponent
 {
+    private int currentBox;
+
     [CascadingParameter]
     private IMudDialogInstance? MudDialog { get; set; }
 
     [Inject]
-    private IBrowserViewportService BrowserViewportService { get; set; } = default!;
+    private IBrowserViewportService BrowserViewportService { get; set; } = null!;
 
     [Parameter]
     public int InitialBox { get; set; }
-
-    private int _currentBox;
 
     protected override RefreshEvents SubscribeTo => RefreshEvents.BoxState;
 
     protected override void OnInitialized()
     {
-        _currentBox = InitialBox;
+        currentBox = InitialBox;
         base.OnInitialized();
     }
 
@@ -28,7 +28,7 @@ public partial class BoxViewerDialog : RefreshAwareComponent
             return;
         }
 
-        _currentBox = (_currentBox + 1) % saveFile.BoxCount;
+        currentBox = (currentBox + 1) % saveFile.BoxCount;
     }
 
     private void GoToPreviousBox()
@@ -38,7 +38,7 @@ public partial class BoxViewerDialog : RefreshAwareComponent
             return;
         }
 
-        _currentBox = (_currentBox - 1 + saveFile.BoxCount) % saveFile.BoxCount;
+        currentBox = (currentBox - 1 + saveFile.BoxCount) % saveFile.BoxCount;
     }
 
     private async Task OpenBoxList()
@@ -54,7 +54,7 @@ public partial class BoxViewerDialog : RefreshAwareComponent
                 FullScreen = isXs,
                 CloseButton = true,
                 BackdropClick = true,
-                CloseOnEscapeKey = true,
+                CloseOnEscapeKey = true
             });
     }
 

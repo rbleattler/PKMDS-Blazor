@@ -13,14 +13,15 @@ namespace Pkmds.Core.Utilities;
 /// e.g. <c>sdmc/Nintendo 3DS/…/title/00040000/00055d00/data/00000001/&lt;savefile&gt;</c>.
 /// The actual PKHeX-compatible save bytes are stored as a single binary file entry
 /// inside that directory structure.
-///
 /// To round-trip a save through PKMDS:
 /// <list type="number">
-///   <item>User exports <c>.3ds.sav</c> from Manic EMU.</item>
-///   <item>PKMDS detects the ZIP, finds the save entry, and loads it.</item>
-///   <item>User edits the save in PKMDS.</item>
-///   <item>PKMDS rebuilds the ZIP with the edited save bytes and offers it for download
-///         as <c>.3ds.sav</c> so Manic EMU can import it directly.</item>
+/// <item>User exports <c>.3ds.sav</c> from Manic EMU.</item>
+/// <item>PKMDS detects the ZIP, finds the save entry, and loads it.</item>
+/// <item>User edits the save in PKMDS.</item>
+/// <item>
+/// PKMDS rebuilds the ZIP with the edited save bytes and offers it for download
+/// as <c>.3ds.sav</c> so Manic EMU can import it directly.
+/// </item>
 /// </list>
 /// </remarks>
 public static class ManicEmuSaveHelper
@@ -39,12 +40,7 @@ public static class ManicEmuSaveHelper
     private const int MaxSdmcEntriesToInspect = 100;
 
     /// <summary>
-    /// Metadata required to rebuild a <c>.3ds.sav</c> ZIP after the save has been edited.
-    /// </summary>
-    public sealed record ManicEmuSaveContext(byte[] OriginalZipBytes, string SaveEntryPath);
-
-    /// <summary>
-    /// Determines whether <paramref name="data"/> looks like a ZIP archive.
+    /// Determines whether <paramref name="data" /> looks like a ZIP archive.
     /// </summary>
     public static bool IsZip(ReadOnlySpan<byte> data) =>
         data.Length >= 4 &&
@@ -56,19 +52,19 @@ public static class ManicEmuSaveHelper
     /// </summary>
     /// <param name="zipBytes">Raw bytes of the <c>.3ds.sav</c> ZIP archive.</param>
     /// <param name="fileName">
-    ///   Original filename of the ZIP (forwarded to <see cref="SaveUtil.TryGetSaveFile"/> for
-    ///   format detection); may be <see langword="null"/>.
+    /// Original filename of the ZIP (forwarded to <see cref="SaveUtil.TryGetSaveFile" /> for
+    /// format detection); may be <see langword="null" />.
     /// </param>
     /// <param name="saveFile">
-    ///   The parsed <see cref="SaveFile"/> instance, ready to use directly.
+    /// The parsed <see cref="SaveFile" /> instance, ready to use directly.
     /// </param>
     /// <param name="context">
-    ///   Metadata needed to rebuild the ZIP on export.  Pass this back to
-    ///   <see cref="RebuildZip"/> once the user has finished editing.
+    /// Metadata needed to rebuild the ZIP on export.  Pass this back to
+    /// <see cref="RebuildZip" /> once the user has finished editing.
     /// </param>
     /// <returns>
-    ///   <see langword="true"/> if a recognisable save was found inside the ZIP;
-    ///   <see langword="false"/> otherwise.
+    /// <see langword="true" /> if a recognisable save was found inside the ZIP;
+    /// <see langword="false" /> otherwise.
     /// </returns>
     public static bool TryExtractSaveFromZip(
         byte[] zipBytes,
@@ -80,7 +76,9 @@ public static class ManicEmuSaveHelper
         context = null;
 
         if (!IsZip(zipBytes))
+        {
             return false;
+        }
 
         try
         {
@@ -88,19 +86,27 @@ public static class ManicEmuSaveHelper
             using var archive = new ZipArchive(zipStream, ZipArchiveMode.Read);
 
             if (archive.Entries.Count > MaxTotalEntries)
+            {
                 return false;
+            }
 
             var inspected = 0;
             foreach (var entry in archive.Entries)
             {
                 if (!entry.FullName.StartsWith(SdmcPrefix, StringComparison.OrdinalIgnoreCase))
+                {
                     continue;
+                }
 
                 if (++inspected > MaxSdmcEntriesToInspect)
+                {
                     break;
+                }
 
                 if (entry.Length == 0 || entry.Length > MaxUncompressedEntrySize)
+                {
                     continue;
+                }
 
                 // Copy with a hard byte limit to guard against ZIP bombs where
                 // entry.Length metadata is falsified.
@@ -119,17 +125,22 @@ public static class ManicEmuSaveHelper
                             tooLarge = true;
                             break;
                         }
+
                         entryStream.Write(buffer, 0, read);
                     }
                 }
 
                 if (tooLarge)
+                {
                     continue;
+                }
 
                 var entryBytes = entryStream.ToArray();
 
                 if (!SaveUtil.TryGetSaveFile(entryBytes, out var sf, fileName))
+                {
                     continue;
+                }
 
                 saveFile = sf;
                 context = new ManicEmuSaveContext(zipBytes, entry.FullName);
@@ -154,11 +165,11 @@ public static class ManicEmuSaveHelper
 
     /// <summary>
     /// Rebuilds the original <c>.3ds.sav</c> ZIP archive, replacing the save file entry
-    /// with <paramref name="newSaveBytes"/>.  All other entries are re-compressed at
-    /// <see cref="CompressionLevel.Optimal"/>; timestamps are preserved but other per-entry
+    /// with <paramref name="newSaveBytes" />.  All other entries are re-compressed at
+    /// <see cref="CompressionLevel.Optimal" />; timestamps are preserved but other per-entry
     /// metadata (compression method, extra fields) may differ from the original.
     /// </summary>
-    /// <param name="context">The context returned by <see cref="TryExtractSaveFromZip"/>.</param>
+    /// <param name="context">The context returned by <see cref="TryExtractSaveFromZip" />.</param>
     /// <param name="newSaveBytes">The edited save data to embed.</param>
     /// <returns>Raw bytes of the rebuilt <c>.3ds.sav</c> ZIP.</returns>
     public static byte[] RebuildZip(ManicEmuSaveContext context, byte[] newSaveBytes)
@@ -193,8 +204,11 @@ public static class ManicEmuSaveHelper
                     {
                         totalRead += read;
                         if (totalRead > MaxUncompressedEntrySize)
+                        {
                             throw new InvalidDataException(
                                 $"Non-save entry '{entry.FullName}' exceeds the {MaxUncompressedEntrySize / (1024 * 1024)} MB size limit.");
+                        }
+
                         dest.Write(buffer, 0, read);
                     }
                 }
@@ -203,4 +217,9 @@ public static class ManicEmuSaveHelper
 
         return resultStream.ToArray();
     }
+
+    /// <summary>
+    /// Metadata required to rebuild a <c>.3ds.sav</c> ZIP after the save has been edited.
+    /// </summary>
+    public sealed record ManicEmuSaveContext(byte[] OriginalZipBytes, string SaveEntryPath);
 }

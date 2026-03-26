@@ -8,8 +8,8 @@ public partial class MainLayout : IDisposable
     private const string GitHubTooltip = "Source code on GitHub";
 
     private IBrowserFile? browserLoadSaveFile;
-    private ManicEmuSaveHelper.ManicEmuSaveContext? manicEmuSaveContext;
     private bool isDarkMode;
+    private ManicEmuSaveHelper.ManicEmuSaveContext? manicEmuSaveContext;
     private MudThemeProvider? mudThemeProvider;
     private bool systemIsDarkMode;
     private ThemeMode themeMode = ThemeMode.System;
@@ -191,10 +191,7 @@ public partial class MainLayout : IDisposable
 
     private async Task ShowBugReportDialog()
     {
-        var parameters = new DialogParameters
-        {
-            { nameof(BugReportDialog.HasSaveFile), AppState.SaveFile is not null }
-        };
+        var parameters = new DialogParameters { { nameof(BugReportDialog.HasSaveFile), AppState.SaveFile is not null } };
 
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
 
@@ -216,11 +213,7 @@ public partial class MainLayout : IDisposable
             "Tip: If you're using Manic EMU, upload the .3ds.sav export directly " +
             "for seamless round-trip import support.";
 
-        var dialogParameters = new DialogParameters
-        {
-            { nameof(FileUploadDialog.Message), message },
-            { nameof(FileUploadDialog.HintText), manicEmuHint }
-        };
+        var dialogParameters = new DialogParameters { { nameof(FileUploadDialog.Message), message }, { nameof(FileUploadDialog.HintText), manicEmuHint } };
 
         var dialog = await DialogService.ShowAsync<FileUploadDialog>("Load Save File",
             dialogParameters,
@@ -384,7 +377,8 @@ public partial class MainLayout : IDisposable
         {
             // Build the export filename: strip any existing extension (including the
             // compound .3ds.sav) so we never produce double-extension names like foo.sav.3ds.sav.
-            var stem = originalName is null ? "save"
+            var stem = originalName is null
+                ? "save"
                 : originalName.EndsWith(".3ds.sav", StringComparison.OrdinalIgnoreCase)
                     ? originalName[..^".3ds.sav".Length]
                     : Path.GetFileNameWithoutExtension(originalName);
@@ -451,7 +445,7 @@ public partial class MainLayout : IDisposable
         var result = await dialog.Result;
         if (result is { Data: IBrowserFile selectedFile })
         {
-            await LoadMysteryGiftFile(selectedFile, title);
+            await LoadMysteryGiftFile(selectedFile);
         }
     }
 
@@ -543,7 +537,7 @@ public partial class MainLayout : IDisposable
         }
     }
 
-    private async Task LoadMysteryGiftFile(IBrowserFile browserLoadMysteryGiftFile, string title)
+    private async Task LoadMysteryGiftFile(IBrowserFile browserLoadMysteryGiftFile)
     {
         if (AppState.SaveFile is not { } saveFile)
         {
@@ -657,8 +651,10 @@ public partial class MainLayout : IDisposable
     /// occupied, prompts the user to overwrite, use the first available slot, or cancel.
     /// Falls back to the first empty box slot automatically when no slot is selected.
     /// </summary>
-    /// <returns><see langword="true"/> if a slot is ready and the caller should proceed;
-    /// <see langword="false"/> if the caller should abort.</returns>
+    /// <returns>
+    /// <see langword="true" /> if a slot is ready and the caller should proceed;
+    /// <see langword="false" /> if the caller should abort.
+    /// </returns>
     private async Task<bool> EnsureTargetSlotSelectedAsync(SaveFile saveFile)
     {
         var slotType = AppService.GetSelectedPokemonSlot(out _, out _, out _);
@@ -667,26 +663,26 @@ public partial class MainLayout : IDisposable
 
         if (hasSelectedSlot)
         {
-            if (AppService.EditFormPokemon?.Species != 0)
+            if (AppService.EditFormPokemon?.Species == 0)
             {
-                var occupantName = GameInfo.Strings.Species[AppService.EditFormPokemon!.Species];
-                var confirmed = await DialogService.ShowMessageBoxAsync(
-                    "Overwrite Pokémon?",
-                    $"The selected slot contains {occupantName}. Overwrite it?",
-                    yesText: "Overwrite",
-                    noText: "Use First Available Slot",
-                    cancelText: "Cancel");
-                if (confirmed is null)
-                {
-                    return false;
-                }
+                return true;
+            }
 
-                if (confirmed == false && !AppService.TrySelectFirstEmptyBoxSlot())
-                {
+            var occupantName = GameInfo.Strings.Species[AppService.EditFormPokemon!.Species];
+            var confirmed = await DialogService.ShowMessageBoxAsync(
+                "Overwrite Pokémon?",
+                $"The selected slot contains {occupantName}. Overwrite it?",
+                yesText: "Overwrite",
+                noText: "Use First Available Slot",
+                cancelText: "Cancel");
+            switch (confirmed)
+            {
+                case null:
+                    return false;
+                case false when !AppService.TrySelectFirstEmptyBoxSlot():
                     Logger.LogWarning("No available box slots");
                     Snackbar.Add("No empty box slots available. Free up a slot and try again.", Severity.Warning);
                     return false;
-                }
             }
         }
         else if (!AppService.TrySelectFirstEmptyBoxSlot())

@@ -2,6 +2,10 @@ namespace Pkmds.Rcl.Components.Dialogs;
 
 public partial class EvolvePickerDialog
 {
+    private readonly HashSet<ushort> failedSprites = [];
+
+    private EvolutionMethod selected;
+
     [Parameter]
     [EditorRequired]
     public IReadOnlyList<EvolutionMethod> Choices { get; set; } = [];
@@ -13,16 +17,12 @@ public partial class EvolvePickerDialog
     [CascadingParameter]
     private IMudDialogInstance? MudDialog { get; set; }
 
-    private EvolutionMethod _selected;
-
-    private readonly HashSet<ushort> _failedSprites = [];
-
     protected override void OnParametersSet()
     {
         // Pre-select the first choice for convenience.
         if (Choices.Count > 0)
         {
-            _selected = Choices[0];
+            selected = Choices[0];
         }
     }
 
@@ -39,7 +39,7 @@ public partial class EvolvePickerDialog
         }
 
         // If the sprite previously failed, fall back to form 0 (base form always exists).
-        if (_failedSprites.Contains(method.Species))
+        if (failedSprites.Contains(method.Species))
         {
             return ImageHelper.GetPokemonSpriteFilenameForForm(method.Species, Pokemon.Context, 0);
         }
@@ -50,7 +50,7 @@ public partial class EvolvePickerDialog
 
     private void OnSpriteError(EvolutionMethod method)
     {
-        if (_failedSprites.Add(method.Species))
+        if (failedSprites.Add(method.Species))
         {
             StateHasChanged();
         }
@@ -99,7 +99,7 @@ public partial class EvolvePickerDialog
             EvolutionType.LevelUpUnionCircle => "Level up (Union Circle)",
             EvolutionType.LevelUpInBattleEC100 or EvolutionType.LevelUpInBattleECElse => "Level up (in-battle condition)",
             EvolutionType.LevelUpCollect999 => "Collect 999 Gimmighoul Coins",
-            EvolutionType.LevelUpDefeatEquals => $"Level up (defeat Pawniard)",
+            EvolutionType.LevelUpDefeatEquals => "Level up (defeat Pawniard)",
             EvolutionType.LevelUpUseMoveSpecial => "Level up (use Rage Fist 20 times)",
             EvolutionType.LevelUpRecoilDamageMale or EvolutionType.LevelUpRecoilDamageFemale => "Level up (recoil damage)",
             EvolutionType.LevelUpWalkStepsWith => "Level up (walk 1000 steps)",
@@ -125,28 +125,37 @@ public partial class EvolvePickerDialog
         // since the binary format doesn't encode these conditions.
         // Cross-reference Gen 4 to surface the actual requirement (e.g. Tyrogue's stat branches,
         // Espeon's morning friendship, Umbreon's night friendship).
-        if (Pokemon is not null)
+        if (Pokemon is null)
         {
-            var modernTree = EvolutionTree.GetEvolutionTree(EntityContext.Gen4);
-            var modernMethods = modernTree.Forward.GetForward(Pokemon.Species, Pokemon.Form);
-            foreach (var m in modernMethods.Span)
+            return method.Level == 0
+                ? "Level up"
+                : $"Level {method.Level}";
+        }
+
+        var modernTree = EvolutionTree.GetEvolutionTree(EntityContext.Gen4);
+        var modernMethods = modernTree.Forward.GetForward(Pokemon.Species, Pokemon.Form);
+        foreach (var m in modernMethods.Span)
+        {
+            if (m.Species == method.Species)
             {
-                if (m.Species == method.Species)
+                return m.Method switch
                 {
-                    return m.Method switch
-                    {
-                        EvolutionType.LevelUpFriendship => "Level up (high friendship)",
-                        EvolutionType.LevelUpFriendshipMorning => "Level up (high friendship, morning)",
-                        EvolutionType.LevelUpFriendshipNight => "Level up (high friendship, night)",
-                        EvolutionType.LevelUpATK => $"Level {method.Level} (ATK > DEF)",
-                        EvolutionType.LevelUpAeqD => $"Level {method.Level} (ATK = DEF)",
-                        EvolutionType.LevelUpDEF => $"Level {method.Level} (DEF > ATK)",
-                        _ => method.Level == 0 ? "Level up" : $"Level {method.Level}",
-                    };
-                }
+                    EvolutionType.LevelUpFriendship => "Level up (high friendship)",
+                    EvolutionType.LevelUpFriendshipMorning => "Level up (high friendship, morning)",
+                    EvolutionType.LevelUpFriendshipNight => "Level up (high friendship, night)",
+                    EvolutionType.LevelUpATK => $"Level {method.Level} (ATK > DEF)",
+                    EvolutionType.LevelUpAeqD => $"Level {method.Level} (ATK = DEF)",
+                    EvolutionType.LevelUpDEF => $"Level {method.Level} (DEF > ATK)",
+                    _ => method.Level == 0
+                        ? "Level up"
+                        : $"Level {method.Level}"
+                };
             }
         }
-        return method.Level == 0 ? "Level up" : $"Level {method.Level}";
+
+        return method.Level == 0
+            ? "Level up"
+            : $"Level {method.Level}";
     }
 
     private string GetTradeDescription(EvolutionMethod method)
@@ -154,20 +163,27 @@ public partial class EvolvePickerDialog
         // Gen 2 stores all trade evolutions as plain Trade (type 5) with Argument=0,
         // because the Gen 2 binary format predates held-item trade tracking.
         // Cross-reference with the Gen 4 tree to surface the actual held item requirement.
-        if (method.Argument == 0 && Pokemon is not null)
+        if (method.Argument != 0 || Pokemon is null)
         {
-            var modernTree = EvolutionTree.GetEvolutionTree(EntityContext.Gen4);
-            var modernMethods = modernTree.Forward.GetForward(Pokemon.Species, Pokemon.Form);
-            foreach (var m in modernMethods.Span)
-            {
-                if (m.Species == method.Species && m.Method == EvolutionType.TradeHeldItem && m.Argument != 0)
-                {
-                    var items = GameInfo.Strings.GetItemStrings(EntityContext.Gen4);
-                    var itemName = m.Argument < items.Length ? items[m.Argument] : $"item #{m.Argument}";
-                    return $"Trade holding {itemName}";
-                }
-            }
+            return "Trade";
         }
+
+        var modernTree = EvolutionTree.GetEvolutionTree(EntityContext.Gen4);
+        var modernMethods = modernTree.Forward.GetForward(Pokemon.Species, Pokemon.Form);
+        foreach (var m in modernMethods.Span)
+        {
+            if (m.Species != method.Species || m.Method != EvolutionType.TradeHeldItem || m.Argument == 0)
+            {
+                continue;
+            }
+
+            var items = GameInfo.Strings.GetItemStrings(EntityContext.Gen4);
+            var itemName = m.Argument < items.Length
+                ? items[m.Argument]
+                : $"item #{m.Argument}";
+            return $"Trade holding {itemName}";
+        }
+
         return "Trade";
     }
 
@@ -179,7 +195,9 @@ public partial class EvolvePickerDialog
         var items = Pokemon is not null
             ? GameInfo.Strings.GetItemStrings(Pokemon.Context)
             : GameInfo.Strings.itemlist;
-        return itemId < items.Length ? items[itemId] : $"item #{itemId}";
+        return itemId < items.Length
+            ? items[itemId]
+            : $"item #{itemId}";
     }
 
     private string GetMoveName(ushort moveId) =>
@@ -189,12 +207,12 @@ public partial class EvolvePickerDialog
 
     private void Confirm()
     {
-        if (_selected == default)
+        if (selected == default)
         {
             return;
         }
 
-        MudDialog?.Close(DialogResult.Ok(_selected));
+        MudDialog?.Close(DialogResult.Ok(selected));
     }
 
     private void Cancel() => MudDialog?.Close(DialogResult.Cancel());

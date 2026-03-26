@@ -359,23 +359,8 @@ body, html {
     background-color: orange;
 }
 
-.square-slot:hover .pkm-sprite {
-    transform-origin: center;
-    animation: bounce 500ms linear infinite;
-}
-
 .current-tera-type-image {
     align-self: center;
-}
-
-@keyframes bounce {
-    0%, 100% {
-        transform: translateY(0);
-    }
-
-    50% {
-        transform: translateY(-5px);
-    }
 }
 
 .plus-nature label,
