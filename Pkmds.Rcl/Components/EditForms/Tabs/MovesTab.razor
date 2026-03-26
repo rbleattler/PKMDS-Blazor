@@ -247,6 +247,14 @@
                         <MudText Typo="@Typo.body2">
                             <b>@GameInfo.Strings.Ability[Pokemon.Ability]</b>
                         </MudText>
+                        <InfoButton>
+                            <MudStack Spacing="2">
+                                <MudText Typo="@Typo.subtitle2">@(abilityInfo?.Name ?? GameInfo.Strings.Ability[Pokemon.Ability])</MudText>
+                                <MudText Typo="@Typo.body2">@(abilityInfo is { Description: { Length: > 0 } desc }
+                                        ? desc
+                                        : "No description available.")</MudText>
+                            </MudStack>
+                        </InfoButton>
                     </MudStack>
                 }
                 @if (hasNature)

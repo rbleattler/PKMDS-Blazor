@@ -5,6 +5,7 @@ public partial class MovesTab
     private readonly MoveSummary?[] moveInfos = new MoveSummary?[4];
     private readonly MoveSummary?[] relearnMoveInfos = new MoveSummary?[4];
     private MoveSummary? alphaMoveInfo;
+    private AbilitySummary? abilityInfo;
 
     // Cached move summaries — reloaded when the Pokemon reference changes.
     private PKM? lastPokemon;
@@ -37,6 +38,10 @@ public partial class MovesTab
         }
 
         var version = AppState.SaveFile.Version;
+
+        abilityInfo = Pokemon.Ability != 0
+            ? await DescriptionService.GetAbilityInfoAsync(Pokemon.Ability, version)
+            : null;
 
         for (var i = 0; i < Pokemon.Moves.Length && i < moveInfos.Length; i++)
         {
