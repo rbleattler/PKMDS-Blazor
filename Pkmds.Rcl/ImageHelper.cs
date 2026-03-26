@@ -953,5 +953,5 @@ public static partial class ImageHelper
     public static string GetTypedTMSpriteFilename(byte moveType) =>
         moveType < TypeNames.Length
             ? $"{SpritesRoot}tm/tm-{TypeNames[moveType]}.png"
-            : $"{SpritesRoot}tm/tm-case.png";
+            : $"{SpritesRoot}bi/bitem_tm.png";
 }
