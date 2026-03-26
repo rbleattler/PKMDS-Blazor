@@ -137,16 +137,20 @@ public partial class TrainerInfoTab : IDisposable
         // Several games store gender-specific fashion/appearance data.
         // Changing gender without resetting it causes the player model to become
         // invisible in-game because clothing items don't exist for the new gender's model.
+        // Skin color slots are gender-paired (even = male, odd = female).
+        // Aligning the skin color's LSB to the new gender is required to avoid
+        // a corrupted appearance (invisible player model) in games that tie
+        // skin/appearance data to gender.
         switch (saveFile)
         {
             case SAV7 sav7:
-                // SM/USUM: fashion data is gender-specific; incompatible clothing causes an invisible player model.
-                sav7.Fashion.Reset();
+                // SM/USUM: DressUpSkinColor must match the gender's parity or the
+                // player model becomes invisible. Mirrors PKHeX WinForms UpdateSkinColor.
+                sav7.MyStatus.DressUpSkinColor = (sav7.MyStatus.DressUpSkinColor & ~1) | genderByte;
                 break;
             case SAV8SWSH sav8:
-                // SWSH: GenderAppearance is a separate byte from Gender, and all appearance data
-                // (skin, hair, clothing, etc.) is gender-specific. Skin color slots are paired:
-                // even = male, odd = female — keep the same "shade" but flip to the new gender.
+                // SWSH: GenderAppearance is a separate byte from Gender, and a full
+                // appearance reset is needed to keep skin/clothing compatible.
                 var currentSkin = PlayerSkinColor8Extensions.GetSkinColorFromSkin(sav8.MyStatus.Skin);
                 var skinIndex = ((int)currentSkin & ~1) | genderByte;
                 sav8.MyStatus.GenderAppearance = genderByte;
