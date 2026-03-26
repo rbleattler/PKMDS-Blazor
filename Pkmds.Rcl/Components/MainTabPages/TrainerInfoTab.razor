@@ -1,7 +1,10 @@
 ﻿@inherits BasePkmdsComponent
 
 <MudOverlay Visible="@_isSyncing" DarkBackground="true" ZIndex="9999">
-    <MudProgressCircular Indeterminate="true" Color="Color.Primary"/>
+    <MudStack AlignItems="AlignItems.Center" Spacing="4">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary"/>
+        <MudText Typo="Typo.body1" Color="Color.Default">@_syncMessage</MudText>
+    </MudStack>
 </MudOverlay>
 
 <div class="form-grid">

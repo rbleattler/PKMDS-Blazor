@@ -125,10 +125,12 @@ public partial class TrainerInfoTab : IDisposable
     }
 
     private bool _isSyncing;
+    private string _syncMessage = string.Empty;
 
-    private async Task RunSyncAsync(Action sync)
+    private async Task RunSyncAsync(string message, Action sync)
     {
         _isSyncing = true;
+        _syncMessage = message;
         StateHasChanged();
         await Task.Yield();
         try { sync(); }
@@ -139,22 +141,22 @@ public partial class TrainerInfoTab : IDisposable
     }
 
     private Task OnGenderToggleAsync(Gender newGender) =>
-        RunSyncAsync(() => OnGenderToggle(newGender));
+        RunSyncAsync("Syncing OT gender to matching Pokémon…", () => OnGenderToggle(newGender));
 
     private Task OnOTNameChangedAsync(SaveFile saveFile, string value) =>
-        RunSyncAsync(() => OnOTNameChanged(saveFile, value));
+        RunSyncAsync("Syncing OT name to matching Pokémon…", () => OnOTNameChanged(saveFile, value));
 
     private Task OnTID16ChangedAsync(SaveFile saveFile, ushort value) =>
-        RunSyncAsync(() => OnTID16Changed(saveFile, value));
+        RunSyncAsync("Syncing Trainer ID to matching Pokémon…", () => OnTID16Changed(saveFile, value));
 
     private Task OnSID16ChangedAsync(SaveFile saveFile, ushort value) =>
-        RunSyncAsync(() => OnSID16Changed(saveFile, value));
+        RunSyncAsync("Syncing Secret ID to matching Pokémon…", () => OnSID16Changed(saveFile, value));
 
     private Task OnTrainerTID7ChangedAsync(SaveFile saveFile, uint value) =>
-        RunSyncAsync(() => OnTrainerTID7Changed(saveFile, value));
+        RunSyncAsync("Syncing Trainer ID to matching Pokémon…", () => OnTrainerTID7Changed(saveFile, value));
 
     private Task OnTrainerSID7ChangedAsync(SaveFile saveFile, uint value) =>
-        RunSyncAsync(() => OnTrainerSID7Changed(saveFile, value));
+        RunSyncAsync("Syncing Secret ID to matching Pokémon…", () => OnTrainerSID7Changed(saveFile, value));
 
     private void OnGenderToggle(Gender newGender)
     {
