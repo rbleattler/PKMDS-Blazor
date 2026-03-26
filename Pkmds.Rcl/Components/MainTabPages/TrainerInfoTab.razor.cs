@@ -243,10 +243,10 @@ public partial class TrainerInfoTab : IDisposable
 
     private static bool IsOTMatch(PKM pkm, uint id32, string ot, byte gender) =>
         pkm.Species != 0 &&
-        pkm.Format > 3 && // Gen 3 does not store OT gender on the PKM
         pkm.ID32 == id32 &&
-        pkm.OriginalTrainerGender == gender &&
-        pkm.OriginalTrainerName == ot;
+        pkm.OriginalTrainerName == ot &&
+        // Gen 3 does not store OT gender on the PKM, so skip the gender check for those.
+        (pkm.Format <= 3 || pkm.OriginalTrainerGender == gender);
 
     private uint GetCoins() => AppState.SaveFile switch
     {
