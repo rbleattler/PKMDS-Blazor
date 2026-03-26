@@ -208,6 +208,9 @@ public partial class TrainerInfoTab : IDisposable
         if (oldName == saveFile.OT) return;
         SyncMatchingPokemon(saveFile, saveFile.ID32, oldName, saveFile.Gender,
             pkm => pkm.OriginalTrainerName = saveFile.OT);
+        // Also update HT name for Pokémon where this trainer is the current handler.
+        SyncMatchingHTPokemon(saveFile, oldName, oldGender: null,
+            pkm => pkm.HandlingTrainerName = saveFile.OT);
     }
 
     private static void OnTID16Changed(SaveFile saveFile, ushort value)
@@ -250,9 +253,14 @@ public partial class TrainerInfoTab : IDisposable
         });
     }
 
-    private static void SyncOTGenderToPokemon(SaveFile saveFile, byte oldGender, byte newGender) =>
+    private static void SyncOTGenderToPokemon(SaveFile saveFile, byte oldGender, byte newGender)
+    {
         SyncMatchingPokemon(saveFile, saveFile.ID32, saveFile.OT, oldGender,
             pkm => pkm.OriginalTrainerGender = newGender);
+        // Also update HT gender for Pokémon where this trainer is the current handler.
+        SyncMatchingHTPokemon(saveFile, saveFile.OT, oldGender,
+            pkm => pkm.HandlingTrainerGender = newGender);
+    }
 
     private static void SyncMatchingPokemon(SaveFile saveFile, uint id32, string ot, byte gender, Action<PKM> mutate)
     {
@@ -274,6 +282,33 @@ public partial class TrainerInfoTab : IDisposable
             }
         }
     }
+
+    private static void SyncMatchingHTPokemon(SaveFile saveFile, string htName, byte? oldGender, Action<PKM> mutate)
+    {
+        for (var i = 0; i < saveFile.PartyCount; i++)
+        {
+            var pkm = saveFile.GetPartySlotAtIndex(i);
+            if (!IsHTMatch(pkm, htName, oldGender)) continue;
+            mutate(pkm);
+            saveFile.SetPartySlotAtIndex(pkm, i);
+        }
+        for (var box = 0; box < saveFile.BoxCount; box++)
+        {
+            for (var slot = 0; slot < saveFile.BoxSlotCount; slot++)
+            {
+                var pkm = saveFile.GetBoxSlotAtIndex(box, slot);
+                if (!IsHTMatch(pkm, htName, oldGender)) continue;
+                mutate(pkm);
+                saveFile.SetBoxSlotAtIndex(pkm, box, slot);
+            }
+        }
+    }
+
+    private static bool IsHTMatch(PKM pkm, string htName, byte? oldGender) =>
+        pkm.Species != 0 &&
+        pkm.CurrentHandler == 1 &&
+        pkm.HandlingTrainerName == htName &&
+        (oldGender is null || pkm.HandlingTrainerGender == oldGender);
 
     private static bool IsOTMatch(PKM pkm, uint id32, string ot, byte gender) =>
         pkm.Species != 0 &&
