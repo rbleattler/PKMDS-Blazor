@@ -93,4 +93,32 @@ public partial class BasePkmdsComponent
             ["wind"]           = "Wind-based",
             ["slicing"]        = "Slicing-based",
         };
+
+    /// <summary>
+    /// Minimum save-file generation in which a flag's associated mechanic exists.
+    /// Flags not listed here are relevant in all generations.
+    /// </summary>
+    protected static readonly IReadOnlyDictionary<string, int> FlagMinGeneration =
+        new Dictionary<string, int>
+        {
+            ["reflectable"]    = 3,  // Magic Coat — Gen 3
+            ["snatch"]         = 3,  // Snatch — Gen 3
+            ["punch"]          = 4,  // Iron Fist — Gen 4
+            ["gravity"]        = 4,  // Gravity move — Gen 4
+            ["authentic"]      = 4,  // Substitute interaction — Gen 4
+            ["heal"]           = 4,  // Heal Block — Gen 4
+            ["mental"]         = 5,  // Overcoat / Mental Herb — Gen 5
+            ["bite"]           = 6,  // Strong Jaw — Gen 6
+            ["ballistics"]     = 6,  // Bulletproof — Gen 6
+            ["powder"]         = 6,  // Overcoat powder immunity — Gen 6
+            ["pulse"]          = 6,  // Mega Launcher — Gen 6
+            ["non-sky-battle"] = 6,  // Sky Battles — Gen 6
+            ["dance"]          = 7,  // Dancer — Gen 7
+            ["wind"]           = 9,  // Wind Rider / Wind Power — Gen 9
+            ["slicing"]        = 9,  // Sharpness — Gen 9
+        };
+
+    /// <summary>Returns true if the flag should be shown for the given save-file generation.</summary>
+    protected static bool IsFlagRelevant(string flag, int saveGeneration) =>
+        !FlagMinGeneration.TryGetValue(flag, out var minGen) || saveGeneration >= minGen;
 }

@@ -64,7 +64,7 @@ public partial class BagItemInfoButton
             return null;
 
         // Extract the TM/HM/TR prefix and number: "TM001 Hone Claws" → key "001",
-        // "TR00 Swords Dance" → key "TR00", "HM01 Cut" → key "01"
+        // "TR00 Swords Dance" → key "TR00", "HM01" → key "HM01"
         if (ItemName.Length < 3)
             return null;
         var prefix = ItemName.Split(' ')[0]; // e.g. "TM001", "HM01", "TR00"
@@ -76,10 +76,25 @@ public partial class BagItemInfoButton
             if (!trNumber.All(char.IsDigit)) return null;
             lookupKey = $"TR{trNumber}";
         }
-        else if (prefix.StartsWith("TM", StringComparison.OrdinalIgnoreCase) ||
-                 prefix.StartsWith("HM", StringComparison.OrdinalIgnoreCase))
+        else if (prefix.StartsWith("HM", StringComparison.OrdinalIgnoreCase))
         {
-            var tmNumber = prefix[2..]; // strip "TM" or "HM"
+            // HM items use "HM01"-style keys in hm-data.json to avoid colliding with TM keys.
+            var hmNumber = prefix[2..];
+            if (!hmNumber.All(char.IsDigit)) return null;
+            var hmMoveName = await DescriptionService.GetHMMoveNameAsync($"HM{hmNumber}", Version);
+            if (hmMoveName is null)
+                return null;
+            var movelist = GameInfo.Strings.movelist;
+            for (ushort i = 1; i < movelist.Length; i++)
+            {
+                if (string.Equals(movelist[i], hmMoveName, StringComparison.OrdinalIgnoreCase))
+                    return i;
+            }
+            return null;
+        }
+        else if (prefix.StartsWith("TM", StringComparison.OrdinalIgnoreCase))
+        {
+            var tmNumber = prefix[2..];
             if (!tmNumber.All(char.IsDigit)) return null;
             lookupKey = tmNumber;
         }
@@ -95,10 +110,10 @@ public partial class BagItemInfoButton
         if (moveName is null)
             return null;
 
-        var movelist = GameInfo.Strings.movelist;
-        for (ushort i = 1; i < movelist.Length; i++)
+        var tmMovelist = GameInfo.Strings.movelist;
+        for (ushort i = 1; i < tmMovelist.Length; i++)
         {
-            if (string.Equals(movelist[i], moveName, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(tmMovelist[i], moveName, StringComparison.OrdinalIgnoreCase))
                 return i;
         }
 

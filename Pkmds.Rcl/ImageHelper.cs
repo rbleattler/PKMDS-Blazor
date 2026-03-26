@@ -948,10 +948,23 @@ public static partial class ImageHelper
     /// <summary>
     /// Returns the TM disc sprite filename for the given PKHeX move-type byte.
     /// Uses type-colored disc sprites (tm-fire.png, tm-water.png, etc.) from wwwroot/sprites/tm/.
-    /// Falls back to tm-case.png for Stellar type or any unknown type.
+    /// Falls back to bitem_tm.png for Stellar type or any unknown type.
     /// </summary>
     public static string GetTypedTMSpriteFilename(byte moveType) =>
         moveType < TypeNames.Length
             ? $"{SpritesRoot}tm/tm-{TypeNames[moveType]}.png"
             : $"{SpritesRoot}bi/bitem_tm.png";
+
+    // Only four HM type sprites exist: normal, fighting, flying, water.
+    private static readonly IReadOnlySet<string> HmTypeNames =
+        new HashSet<string>(StringComparer.Ordinal) { "normal", "fighting", "flying", "water" };
+
+    /// <summary>
+    /// Returns the HM disc sprite filename for the given PKHeX move-type byte, or null if no
+    /// type-colored HM sprite exists for that type (caller should fall back to the item sprite).
+    /// </summary>
+    public static string? GetTypedHMSpriteFilename(byte moveType) =>
+        moveType < TypeNames.Length && HmTypeNames.Contains(TypeNames[moveType])
+            ? $"{SpritesRoot}hm/hm-{TypeNames[moveType]}.png"
+            : null;
 }

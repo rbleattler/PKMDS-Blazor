@@ -11,11 +11,13 @@ public sealed class DescriptionService(HttpClient http) : IDescriptionService
         PropertyNameCaseInsensitive = true,
     };
 
-    // Lazily loaded caches — null until first use.
-    private Dictionary<string, JsonAbilityEntry>? _abilities;
-    private Dictionary<string, JsonMoveEntry>? _moves;
-    private Dictionary<string, JsonItemEntry>? _items;
-    private Dictionary<string, Dictionary<string, string>>? _tmData;
+    // Lazily loaded caches — store the Task so all concurrent callers share one HTTP request
+    // rather than each firing their own (which causes silent failures under load in WASM).
+    private Task<Dictionary<string, JsonAbilityEntry>>? _abilitiesTask;
+    private Task<Dictionary<string, JsonMoveEntry>>? _movesTask;
+    private Task<Dictionary<string, JsonItemEntry>>? _itemsTask;
+    private Task<Dictionary<string, Dictionary<string, string>>>? _tmDataTask;
+    private Task<Dictionary<string, Dictionary<string, string>>>? _hmDataTask;
 
     // -------------------------------------------------------------------------
     // Public API
@@ -23,7 +25,7 @@ public sealed class DescriptionService(HttpClient http) : IDescriptionService
 
     public async Task<MoveSummary?> GetMoveInfoAsync(int moveId, GameVersion version)
     {
-        var moves = await GetMovesAsync();
+        var moves = await GetMovesAsync().ConfigureAwait(false);
         if (!moves.TryGetValue(moveId.ToString(), out var entry))
             return null;
 
@@ -47,7 +49,7 @@ public sealed class DescriptionService(HttpClient http) : IDescriptionService
 
     public async Task<AbilitySummary?> GetAbilityInfoAsync(int abilityId, GameVersion version)
     {
-        var abilities = await GetAbilitiesAsync();
+        var abilities = await GetAbilitiesAsync().ConfigureAwait(false);
         if (!abilities.TryGetValue(abilityId.ToString(), out var entry))
             return null;
 
@@ -60,16 +62,25 @@ public sealed class DescriptionService(HttpClient http) : IDescriptionService
 
     public async Task<string?> GetTMMoveNameAsync(string tmNumber, GameVersion version)
     {
-        var tmData = await GetTmDataAsync();
+        var tmData = await GetTmDataAsync().ConfigureAwait(false);
         var key = ToTmDataKey(version);
         if (key is null || !tmData.TryGetValue(key, out var versionData))
             return null;
         return versionData.TryGetValue(tmNumber, out var moveName) ? moveName : null;
     }
 
+    public async Task<string?> GetHMMoveNameAsync(string hmKey, GameVersion version)
+    {
+        var hmData = await GetHmDataAsync().ConfigureAwait(false);
+        var key = ToHmDataKey(version);
+        if (key is null || !hmData.TryGetValue(key, out var versionData))
+            return null;
+        return versionData.TryGetValue(hmKey, out var moveName) ? moveName : null;
+    }
+
     public async Task<ItemSummary?> GetItemInfoAsync(string itemName, GameVersion version)
     {
-        var items = await GetItemsAsync();
+        var items = await GetItemsAsync().ConfigureAwait(false);
         var key = itemName.Trim().ToLowerInvariant();
         if (!items.TryGetValue(key, out var entry))
             return null;
@@ -87,17 +98,20 @@ public sealed class DescriptionService(HttpClient http) : IDescriptionService
 
     private const string DataRoot = "_content/Pkmds.Rcl/data/";
 
-    private async ValueTask<Dictionary<string, JsonAbilityEntry>> GetAbilitiesAsync() =>
-        _abilities ??= await LoadAsync<Dictionary<string, JsonAbilityEntry>>(DataRoot + "ability-info.json");
+    private Task<Dictionary<string, JsonAbilityEntry>> GetAbilitiesAsync() =>
+        _abilitiesTask ??= LoadAsync<Dictionary<string, JsonAbilityEntry>>(DataRoot + "ability-info.json");
 
-    private async ValueTask<Dictionary<string, JsonMoveEntry>> GetMovesAsync() =>
-        _moves ??= await LoadAsync<Dictionary<string, JsonMoveEntry>>(DataRoot + "move-info.json");
+    private Task<Dictionary<string, JsonMoveEntry>> GetMovesAsync() =>
+        _movesTask ??= LoadAsync<Dictionary<string, JsonMoveEntry>>(DataRoot + "move-info.json");
 
-    private async ValueTask<Dictionary<string, JsonItemEntry>> GetItemsAsync() =>
-        _items ??= await LoadAsync<Dictionary<string, JsonItemEntry>>(DataRoot + "item-info.json");
+    private Task<Dictionary<string, JsonItemEntry>> GetItemsAsync() =>
+        _itemsTask ??= LoadAsync<Dictionary<string, JsonItemEntry>>(DataRoot + "item-info.json");
 
-    private async ValueTask<Dictionary<string, Dictionary<string, string>>> GetTmDataAsync() =>
-        _tmData ??= await LoadAsync<Dictionary<string, Dictionary<string, string>>>(DataRoot + "tm-data.json");
+    private Task<Dictionary<string, Dictionary<string, string>>> GetTmDataAsync() =>
+        _tmDataTask ??= LoadAsync<Dictionary<string, Dictionary<string, string>>>(DataRoot + "tm-data.json");
+
+    private Task<Dictionary<string, Dictionary<string, string>>> GetHmDataAsync() =>
+        _hmDataTask ??= LoadAsync<Dictionary<string, Dictionary<string, string>>>(DataRoot + "hm-data.json");
 
     private async Task<T> LoadAsync<T>(string path) where T : new()
     {
@@ -115,6 +129,29 @@ public sealed class DescriptionService(HttpClient http) : IDescriptionService
     // -------------------------------------------------------------------------
     // Version-group resolution
     // -------------------------------------------------------------------------
+
+    /// <summary>
+    /// Maps a PKHeX <see cref="GameVersion"/> to the hm-data.json key for that game's HM list.
+    /// Returns null for games without HMs (Gen 7+, PLA, GCN games).
+    /// </summary>
+    private static string? ToHmDataKey(GameVersion version) => version switch
+    {
+        GameVersion.RD or GameVersion.GN or GameVersion.BU
+            or GameVersion.RB or GameVersion.RBY or GameVersion.YW
+            or GameVersion.Gen1                                          => "gen1",
+        GameVersion.GD or GameVersion.SI or GameVersion.C
+            or GameVersion.GS or GameVersion.GSC or GameVersion.Gen2    => "gen2",
+        GameVersion.R or GameVersion.S or GameVersion.E
+            or GameVersion.RS or GameVersion.RSE                        => "gen3rse",
+        GameVersion.FR or GameVersion.LG or GameVersion.FRLG            => "gen3frlg",
+        GameVersion.D or GameVersion.P or GameVersion.Pt or GameVersion.DP => "gen4dpp",
+        GameVersion.HG or GameVersion.SS or GameVersion.HGSS            => "gen4hgss",
+        GameVersion.B or GameVersion.W or GameVersion.B2 or GameVersion.W2
+            or GameVersion.BW or GameVersion.B2W2 or GameVersion.Gen5   => "gen5",
+        GameVersion.X or GameVersion.Y or GameVersion.XY                => "gen6xy",
+        GameVersion.OR or GameVersion.AS or GameVersion.ORAS            => "gen6oras",
+        _                                                                => null, // Gen 7+, PLA, GCN — no HMs
+    };
 
     /// <summary>
     /// Maps a PKHeX <see cref="GameVersion"/> to the tm-data.json key for that game's TM list.

@@ -11,11 +11,17 @@
           @onclick:stopPropagation="true">
 
         @{
-            var spriteSrc = _moveType.HasValue && HeldItemLumpUtil.GetIsLump(ItemIndex, Context).IsLump()
-                ? ImageHelper.GetTypedTMSpriteFilename(_moveType.Value)
-                : ImageHelper.GetItemSpriteFilename(ItemIndex, Context);
+            var isHm = ItemName.StartsWith("HM", StringComparison.OrdinalIgnoreCase);
+            // _moveType is only ever set for TM/HM/TR items, so its presence is sufficient
+            // to select a typed sprite without needing HeldItemLumpUtil (which only covers Gen2-4, Gen8, Gen9).
+            var spriteSrc = _moveType.HasValue && isHm
+                ? (ImageHelper.GetTypedHMSpriteFilename(_moveType.Value) ?? ImageHelper.GetItemSpriteFilename(ItemIndex, Context))
+                : _moveType.HasValue
+                    ? ImageHelper.GetTypedTMSpriteFilename(_moveType.Value)
+                    : ImageHelper.GetItemSpriteFilename(ItemIndex, Context);
         }
-        <object class="item-sprite"
+        <object @key="@spriteSrc"
+                class="item-sprite"
                 type="image/png"
                 style="object-fit: contain;"
                 data="@spriteSrc"
@@ -81,7 +87,8 @@
                                 <MudStack Row Wrap="@Wrap.Wrap" Spacing="1">
                                     @foreach (var flag in moveInfo.Flags)
                                     {
-                                        @if (FlagLabels.TryGetValue(flag, out var label))
+                                        @if (FlagLabels.TryGetValue(flag, out var label) &&
+                                             IsFlagRelevant(flag, AppState.SaveFile?.Generation ?? int.MaxValue))
                                         {
                                             <MudChip T="string"
                                                      Size="@Size.Small"

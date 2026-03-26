@@ -128,7 +128,7 @@
                                                           Spacing="1">
                                                     @foreach (var flag in moveInfo.Flags)
                                                     {
-                                                        @if (FlagLabels.TryGetValue(flag, out var label))
+                                                        @if (FlagLabels.TryGetValue(flag, out var label) && IsFlagRelevant(flag, AppState.SaveFile?.Generation ?? int.MaxValue))
                                                         {
                                                             <MudChip T="string"
                                                                      Size="@Size.Small"
@@ -412,7 +412,7 @@
                                                               Spacing="1">
                                                         @foreach (var flag in relearnInfo.Flags)
                                                         {
-                                                            @if (FlagLabels.TryGetValue(flag, out var label))
+                                                            @if (FlagLabels.TryGetValue(flag, out var label) && IsFlagRelevant(flag, AppState.SaveFile?.Generation ?? int.MaxValue))
                                                             {
                                                                 <MudChip T="string"
                                                                          Size="@Size.Small"
@@ -533,7 +533,7 @@
                                                               Spacing="1">
                                                         @foreach (var flag in alphaInfo.Flags)
                                                         {
-                                                            @if (FlagLabels.TryGetValue(flag, out var label))
+                                                            @if (FlagLabels.TryGetValue(flag, out var label) && IsFlagRelevant(flag, AppState.SaveFile?.Generation ?? int.MaxValue))
                                                             {
                                                                 <MudChip T="string"
                                                                          Size="@Size.Small"
