@@ -8,7 +8,7 @@ public partial class BoxGrid : RefreshAwareComponent
 
     private string BoxGridClass =>
         AppState.SaveFile?.BoxSlotCount == 20
-            ? "w-80 h-[400px] grid grid-cols-4 grid-rows-5"
+            ? "w-80 h-[400px] grid grid-cols-4 grid-rows-5 gap-1"
             : "grid grid-cols-6 gap-1 w-full aspect-[6/5] mx-auto";
 
     private void SetSelectedPokemon(PKM? pokemon, int boxNumber, int slotNumber) =>

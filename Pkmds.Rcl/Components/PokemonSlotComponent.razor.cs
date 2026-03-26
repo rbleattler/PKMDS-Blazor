@@ -214,6 +214,12 @@ public partial class PokemonSlotComponent : IDisposable
             return false;
         }
 
+        // Drag and drop is not supported for Let's Go games
+        if (AppState.SaveFile is SAV7b)
+        {
+            return false;
+        }
+
         // Don't allow dragging the last battle-ready Pokémon in the party
         // ReSharper disable once ConvertIfStatementToReturnStatement
         if (IsPartySlot && IsLastBattleReadyPokemon())
@@ -314,19 +320,12 @@ public partial class PokemonSlotComponent : IDisposable
                 return;
             }
 
-            // For Let's Go games, disable all party dragging (party-to-party, party-to-box, box-to-party)
-            // This is because SetPartySlotAtIndex moves actual box data instead of just reordering party pointers
+            // Drag and drop is not supported for Let's Go games
             if (AppState.SaveFile is SAV7b)
             {
-                var isAnyPartyDrag = DragDropService.IsDragSourceParty || IsPartySlot;
-
-                if (isAnyPartyDrag)
-                {
-                    // Silently prevent all party dragging for Let's Go games
-                    DragDropService.ClearDrag();
-                    StateHasChanged();
-                    return;
-                }
+                DragDropService.ClearDrag();
+                StateHasChanged();
+                return;
             }
 
             // Move the Pokémon
