@@ -15,7 +15,8 @@
             <MudTextField Label="Name"
                           Variant="@Variant.Outlined"
                           MaxLength="@saveFile.MaxStringLengthTrainer"
-                          @bind-Value="@saveFile.OT"
+                          @bind-Value:get="@saveFile.OT"
+                          @bind-Value:set="@((string value) => OnOTNameChanged(saveFile, value))"
                           For="@(() => saveFile.OT)"/>
         </div>
 
@@ -26,7 +27,8 @@
                 <div class="form-field">
                     <MudNumericField Label="ID"
                                      Variant="@Variant.Outlined"
-                                     @bind-Value="@saveFile.TID16"
+                                     @bind-Value:get="@saveFile.TID16"
+                                     @bind-Value:set="@((uint value) => OnTID16Changed(saveFile, (ushort)value))"
                                      Format="@AppService.GetIdFormatString()"
                                      For="@(() => saveFile.TID16)"/>
                 </div>
@@ -36,7 +38,8 @@
                     <div class="form-field">
                         <MudNumericField Label="SID"
                                          Variant="@Variant.Outlined"
-                                         @bind-Value="@saveFile.SID16"
+                                         @bind-Value:get="@saveFile.SID16"
+                                         @bind-Value:set="@((uint value) => OnSID16Changed(saveFile, (ushort)value))"
                                          Format="@AppService.GetIdFormatString(true)"
                                          For="@(() => saveFile.SID16)"/>
                     </div>
@@ -49,7 +52,8 @@
                 <div class="form-field">
                     <MudNumericField Label="ID"
                                      Variant="@Variant.Outlined"
-                                     @bind-Value="@saveFile.TrainerTID7"
+                                     @bind-Value:get="@saveFile.TrainerTID7"
+                                     @bind-Value:set="@((uint value) => OnTrainerTID7Changed(saveFile, value))"
                                      Format="@AppService.GetIdFormatString()"
                                      For="@(() => saveFile.TrainerTID7)"/>
                 </div>
@@ -59,7 +63,8 @@
                     <div class="form-field">
                         <MudNumericField Label="SID"
                                          Variant="@Variant.Outlined"
-                                         @bind-Value="@saveFile.TrainerSID7"
+                                         @bind-Value:get="@saveFile.TrainerSID7"
+                                         @bind-Value:set="@((uint value) => OnTrainerSID7Changed(saveFile, value))"
                                          Format="@AppService.GetIdFormatString(true)"
                                          For="@(() => saveFile.TrainerSID7)"/>
                     </div>

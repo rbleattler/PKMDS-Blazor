@@ -167,28 +167,75 @@ public partial class TrainerInfoTab : IDisposable
         }
     }
 
-    private static void SyncOTGenderToPokemon(SaveFile saveFile, byte oldGender, byte newGender)
+    private static void OnOTNameChanged(SaveFile saveFile, string value)
     {
-        var id32 = saveFile.ID32;
-        var ot = saveFile.OT;
+        var oldName = saveFile.OT;
+        saveFile.OT = value;
+        if (oldName == saveFile.OT) return;
+        SyncMatchingPokemon(saveFile, saveFile.ID32, oldName, saveFile.Gender,
+            pkm => pkm.OriginalTrainerName = saveFile.OT);
+    }
 
+    private static void OnTID16Changed(SaveFile saveFile, ushort value)
+    {
+        var oldID32 = saveFile.ID32;
+        saveFile.TID16 = value;
+        SyncOTIDToPokemon(saveFile, oldID32);
+    }
+
+    private static void OnSID16Changed(SaveFile saveFile, ushort value)
+    {
+        var oldID32 = saveFile.ID32;
+        saveFile.SID16 = value;
+        SyncOTIDToPokemon(saveFile, oldID32);
+    }
+
+    private static void OnTrainerTID7Changed(SaveFile saveFile, uint value)
+    {
+        var oldID32 = saveFile.ID32;
+        saveFile.TrainerTID7 = value;
+        SyncOTIDToPokemon(saveFile, oldID32);
+    }
+
+    private static void OnTrainerSID7Changed(SaveFile saveFile, uint value)
+    {
+        var oldID32 = saveFile.ID32;
+        saveFile.TrainerSID7 = value;
+        SyncOTIDToPokemon(saveFile, oldID32);
+    }
+
+    private static void SyncOTIDToPokemon(SaveFile saveFile, uint oldID32)
+    {
+        if (saveFile.ID32 == oldID32) return;
+        var newTID16 = saveFile.TID16;
+        var newSID16 = saveFile.SID16;
+        SyncMatchingPokemon(saveFile, oldID32, saveFile.OT, saveFile.Gender, pkm =>
+        {
+            pkm.TID16 = newTID16;
+            pkm.SID16 = newSID16;
+        });
+    }
+
+    private static void SyncOTGenderToPokemon(SaveFile saveFile, byte oldGender, byte newGender) =>
+        SyncMatchingPokemon(saveFile, saveFile.ID32, saveFile.OT, oldGender,
+            pkm => pkm.OriginalTrainerGender = newGender);
+
+    private static void SyncMatchingPokemon(SaveFile saveFile, uint id32, string ot, byte gender, Action<PKM> mutate)
+    {
         for (var i = 0; i < saveFile.PartyCount; i++)
         {
             var pkm = saveFile.GetPartySlotAtIndex(i);
-            if (!IsOTMatch(pkm, id32, ot, oldGender))
-                continue;
-            pkm.OriginalTrainerGender = newGender;
+            if (!IsOTMatch(pkm, id32, ot, gender)) continue;
+            mutate(pkm);
             saveFile.SetPartySlotAtIndex(pkm, i);
         }
-
         for (var box = 0; box < saveFile.BoxCount; box++)
         {
             for (var slot = 0; slot < saveFile.BoxSlotCount; slot++)
             {
                 var pkm = saveFile.GetBoxSlotAtIndex(box, slot);
-                if (!IsOTMatch(pkm, id32, ot, oldGender))
-                    continue;
-                pkm.OriginalTrainerGender = newGender;
+                if (!IsOTMatch(pkm, id32, ot, gender)) continue;
+                mutate(pkm);
                 saveFile.SetBoxSlotAtIndex(pkm, box, slot);
             }
         }
