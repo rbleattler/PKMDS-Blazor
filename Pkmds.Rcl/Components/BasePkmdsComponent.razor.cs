@@ -66,4 +66,31 @@ public partial class BasePkmdsComponent
         NatureModifier.Hindered => "Hindered by nature (-10%)",
         _ => string.Empty
     };
+
+    protected static readonly IReadOnlyDictionary<string, string> FlagLabels =
+        new Dictionary<string, string>
+        {
+            ["contact"]        = "Makes Contact",
+            ["charge"]         = "Has Charge Turn",
+            ["recharge"]       = "Must Recharge",
+            ["protect"]        = "Blocked by Protect",
+            ["reflectable"]    = "Reflectable",
+            ["snatch"]         = "Snatchable",
+            ["mirror"]         = "Copied by Mirror Move",
+            ["punch"]          = "Punch-based",
+            ["sound"]          = "Sound-based",
+            ["gravity"]        = "Unusable during Gravity",
+            ["defrost"]        = "Defrosts User",
+            ["distance"]       = "Hits Non-adjacent Targets",
+            ["heal"]           = "Heals",
+            ["authentic"]      = "Bypasses Substitute",
+            ["powder"]         = "Powder-based",
+            ["bite"]           = "Jaw-based",
+            ["pulse"]          = "Pulse-based",
+            ["ballistics"]     = "Ballistics-based",
+            ["non-sky-battle"] = "Unusable in Sky Battles",
+            ["dance"]          = "Dance",
+            ["wind"]           = "Wind-based",
+            ["slicing"]        = "Slicing-based",
+        };
 }

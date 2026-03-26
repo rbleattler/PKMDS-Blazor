@@ -33,41 +33,74 @@
                     TransformOrigin="Origin.TopLeft"
                     OverflowBehavior="OverflowBehavior.FlipAlways"
                     Paper="true"
-                    Class="pa-3"
                     Style="max-width:320px;max-height:400px;overflow-y:auto;z-index:1200;">
-            @if (!_loaded)
-            {
-                <MudText Typo="@Typo.caption">Loading...</MudText>
-            }
-            else
-            {
-                <MudStack Spacing="2">
-                    @if (_moveId.HasValue && AppState.SaveFile is { Context: var ctx })
-                    {
-                        @MoveTypeAndCategorySummary(
-                            MoveInfo.GetType(_moveId.Value, ctx),
-                            GetMoveCategory(_moveId.Value, ctx))
-                    }
-                    @if (_moveInfo is { } moveInfo)
-                    {
-                        <MudText Typo="@Typo.subtitle2">@moveInfo.Name</MudText>
-                        <MudStack Row Spacing="3">
-                            <MudText Typo="@Typo.caption">Power: <b>@(moveInfo.Power?.ToString() ?? "—")</b></MudText>
-                            @if (moveInfo.PP.HasValue)
+            <div style="display:flex;justify-content:flex-end;padding:4px 4px 0 4px;">
+                <MudIconButton Icon="@Icons.Material.Filled.Close"
+                               Size="@Size.Small"
+                               Color="@Color.Default"
+                               OnClick="@Close"
+                               title="Close"
+                               aria-label="Close"/>
+            </div>
+            <div class="pa-3" style="padding-top:0;">
+                @if (!_loaded)
+                {
+                    <MudText Typo="@Typo.caption">Loading...</MudText>
+                }
+                else
+                {
+                    <MudStack Spacing="2">
+                        @if (_moveId.HasValue && AppState.SaveFile is { Context: var ctx })
+                        {
+                            @MoveTypeAndCategorySummary(
+                                MoveInfo.GetType(_moveId.Value, ctx),
+                                GetMoveCategory(_moveId.Value, ctx))
+                        }
+                        @if (_moveInfo is { } moveInfo)
+                        {
+                            <MudText Typo="@Typo.subtitle2">@moveInfo.Name</MudText>
+                            <MudStack Row Spacing="3">
+                                <MudText Typo="@Typo.caption">Power: <b>@(moveInfo.Power?.ToString() ?? "—")</b></MudText>
+                                @if (moveInfo.PP.HasValue)
+                                {
+                                    <MudText Typo="@Typo.caption">PP: <b>@moveInfo.PP</b></MudText>
+                                }
+                                <MudText Typo="@Typo.caption">Acc: <b>@(moveInfo.Accuracy is { } acc ? $"{acc}%" : "—")</b></MudText>
+                            </MudStack>
+                            @if (!string.IsNullOrEmpty(moveInfo.Target))
                             {
-                                <MudText Typo="@Typo.caption">PP: <b>@moveInfo.PP</b></MudText>
+                                <MudText Typo="@Typo.caption">Target: <b>@moveInfo.Target</b></MudText>
                             }
-                            <MudText Typo="@Typo.caption">Acc: <b>@(moveInfo.Accuracy is { } acc ? $"{acc}%" : "—")</b></MudText>
-                        </MudStack>
-                        <MudText Typo="@Typo.body2">@(string.IsNullOrEmpty(moveInfo.Description) ? "No description available." : moveInfo.Description)</MudText>
-                    }
-                    else if (_itemInfo is { } itemInfo)
-                    {
-                        <MudText Typo="@Typo.subtitle2">@itemInfo.Name</MudText>
-                        <MudText Typo="@Typo.body2">@(string.IsNullOrEmpty(itemInfo.Description) ? "No description available." : itemInfo.Description)</MudText>
-                    }
-                </MudStack>
-            }
+                            @if (moveInfo.Flags.Count > 0)
+                            {
+                                <MudStack Row Wrap="@Wrap.Wrap" Spacing="1">
+                                    @foreach (var flag in moveInfo.Flags)
+                                    {
+                                        @if (FlagLabels.TryGetValue(flag, out var label))
+                                        {
+                                            <MudChip T="string"
+                                                     Size="@Size.Small"
+                                                     Variant="@Variant.Outlined"
+                                                     Color="@Color.Default">@label</MudChip>
+                                        }
+                                    }
+                                </MudStack>
+                            }
+                            <MudText Typo="@Typo.body2">@(string.IsNullOrEmpty(moveInfo.Description) ? "No description available." : moveInfo.Description)</MudText>
+                        }
+                        else if (_itemInfo is { } itemInfo)
+                        {
+                            <MudText Typo="@Typo.subtitle2">@itemInfo.Name</MudText>
+                            <MudText Typo="@Typo.body2">@(string.IsNullOrEmpty(itemInfo.Description) ? "No description available." : itemInfo.Description)</MudText>
+                        }
+                        else
+                        {
+                            <MudText Typo="@Typo.subtitle2">@ItemName</MudText>
+                            <MudText Typo="@Typo.body2">No description available.</MudText>
+                        }
+                    </MudStack>
+                }
+            </div>
         </MudPopover>
     </span>
 }

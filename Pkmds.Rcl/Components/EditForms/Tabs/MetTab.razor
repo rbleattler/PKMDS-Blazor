@@ -123,15 +123,12 @@
             <LegalityIndicator
                 Severity="@(GetCheckResult(CheckIdentifier.Ball)?.Judgement ?? PKHeX.Core.Severity.Valid)"
                 Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Ball))"/>
-            @if (_ballInfo is { } ballInfo)
-            {
-                <InfoButton>
-                    <MudStack Spacing="2">
-                        <MudText Typo="@Typo.subtitle2">@ballInfo.Name</MudText>
-                        <MudText Typo="@Typo.body2">@(string.IsNullOrEmpty(ballInfo.Description) ? "No description available." : ballInfo.Description)</MudText>
-                    </MudStack>
-                </InfoButton>
-            }
+            <InfoButton>
+                <MudStack Spacing="2">
+                    <MudText Typo="@Typo.subtitle2">@(_ballInfo?.Name ?? GameInfo.FilteredSources.Balls.FirstOrDefault(b => b.Value == Pokemon?.Ball)?.Text ?? "Ball")</MudText>
+                    <MudText Typo="@Typo.body2">@(_ballInfo is { Description: { Length: > 0 } desc } ? desc : "No description available.")</MudText>
+                </MudStack>
+            </InfoButton>
         </MudStack>
     }
 

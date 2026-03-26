@@ -397,6 +397,11 @@
                                     : itemInfo.Description)
                             </MudText>
                         }
+                        else
+                        {
+                            <MudText Typo="@Typo.subtitle2">@itemText</MudText>
+                            <MudText Typo="@Typo.body2">No description available.</MudText>
+                        }
                     </MudStack>
                 </InfoButton>
             }
@@ -449,15 +454,12 @@
                 <LegalityIndicator
                     Severity="@(GetCheckResult(CheckIdentifier.Ability)?.Judgement ?? PKHeX.Core.Severity.Valid)"
                     Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Ability))"/>
-                @if (_abilityInfo is { } haXAbilityInfo)
-                {
-                    <InfoButton>
-                        <MudStack Spacing="2">
-                            <MudText Typo="@Typo.subtitle2">@haXAbilityInfo.Name</MudText>
-                            <MudText Typo="@Typo.body2">@(string.IsNullOrEmpty(haXAbilityInfo.Description) ? "No description available." : haXAbilityInfo.Description)</MudText>
-                        </MudStack>
-                    </InfoButton>
-                }
+                <InfoButton>
+                    <MudStack Spacing="2">
+                        <MudText Typo="@Typo.subtitle2">@(_abilityInfo?.Name ?? GameInfo.Strings.abilitylist[Pokemon!.Ability])</MudText>
+                        <MudText Typo="@Typo.body2">@(_abilityInfo is { Description: { Length: > 0 } desc } ? desc : "No description available.")</MudText>
+                    </MudStack>
+                </InfoButton>
             </MudStack>
         }
         else
@@ -483,15 +485,12 @@
                 <LegalityIndicator
                     Severity="@(GetCheckResult(CheckIdentifier.Ability)?.Judgement ?? PKHeX.Core.Severity.Valid)"
                     Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Ability))"/>
-                @if (_abilityInfo is { } abilityInfo)
-                {
-                    <InfoButton>
-                        <MudStack Spacing="2">
-                            <MudText Typo="@Typo.subtitle2">@abilityInfo.Name</MudText>
-                            <MudText Typo="@Typo.body2">@(string.IsNullOrEmpty(abilityInfo.Description) ? "No description available." : abilityInfo.Description)</MudText>
-                        </MudStack>
-                    </InfoButton>
-                }
+                <InfoButton>
+                    <MudStack Spacing="2">
+                        <MudText Typo="@Typo.subtitle2">@(_abilityInfo?.Name ?? GameInfo.Strings.abilitylist[Pokemon!.Ability])</MudText>
+                        <MudText Typo="@Typo.body2">@(_abilityInfo is { Description: { Length: > 0 } desc } ? desc : "No description available.")</MudText>
+                    </MudStack>
+                </InfoButton>
             </MudStack>
         }
     }
