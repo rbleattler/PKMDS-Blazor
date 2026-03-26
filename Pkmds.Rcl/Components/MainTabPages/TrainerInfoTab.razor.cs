@@ -124,6 +124,38 @@ public partial class TrainerInfoTab : IDisposable
         Regions = Util.GetCountryRegionList($"{regionPrefix}sr_{countryId:000}", GameInfo.CurrentLanguage);
     }
 
+    private bool _isSyncing;
+
+    private async Task RunSyncAsync(Action sync)
+    {
+        _isSyncing = true;
+        StateHasChanged();
+        await Task.Yield();
+        try { sync(); }
+        finally
+        {
+            _isSyncing = false;
+        }
+    }
+
+    private Task OnGenderToggleAsync(Gender newGender) =>
+        RunSyncAsync(() => OnGenderToggle(newGender));
+
+    private Task OnOTNameChangedAsync(SaveFile saveFile, string value) =>
+        RunSyncAsync(() => OnOTNameChanged(saveFile, value));
+
+    private Task OnTID16ChangedAsync(SaveFile saveFile, ushort value) =>
+        RunSyncAsync(() => OnTID16Changed(saveFile, value));
+
+    private Task OnSID16ChangedAsync(SaveFile saveFile, ushort value) =>
+        RunSyncAsync(() => OnSID16Changed(saveFile, value));
+
+    private Task OnTrainerTID7ChangedAsync(SaveFile saveFile, uint value) =>
+        RunSyncAsync(() => OnTrainerTID7Changed(saveFile, value));
+
+    private Task OnTrainerSID7ChangedAsync(SaveFile saveFile, uint value) =>
+        RunSyncAsync(() => OnTrainerSID7Changed(saveFile, value));
+
     private void OnGenderToggle(Gender newGender)
     {
         if (AppState.SaveFile is not { } saveFile)
