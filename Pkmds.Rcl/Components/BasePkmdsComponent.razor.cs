@@ -21,6 +21,7 @@ public partial class BasePkmdsComponent
             ["distance"] = "Hits Non-adjacent Targets",
             ["heal"] = "Heals",
             ["authentic"] = "Bypasses Substitute",
+            ["mental"] = "Mental Herb / Overcoat",
             ["powder"] = "Powder-based",
             ["bite"] = "Jaw-based",
             ["pulse"] = "Pulse-based",

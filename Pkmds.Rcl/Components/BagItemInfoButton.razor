@@ -13,7 +13,7 @@
 
         @{
             var isHm = ItemName.StartsWith("HM", StringComparison.OrdinalIgnoreCase);
-            // _moveType is only ever set for TM/HM/TR items, so its presence is sufficient
+            // moveType is only ever set for TM/HM/TR items, so its presence is sufficient
             // to select a typed sprite without needing HeldItemLumpUtil (which only covers Gen2-4, Gen8, Gen9).
             var spriteSrc = moveType.HasValue && isHm
                 ? ImageHelper.GetTypedHmSpriteFilename(moveType.Value) ?? ImageHelper.GetItemSpriteFilename(ItemIndex, Context)

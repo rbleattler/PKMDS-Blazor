@@ -124,7 +124,7 @@ public sealed class DescriptionService(HttpClient http, ILogger<DescriptionServi
     {
         try
         {
-            var stream = await http.GetStreamAsync(path);
+            await using var stream = await http.GetStreamAsync(path);
             return await JsonSerializer.DeserializeAsync<T>(stream, JsonOptions) ?? new T();
         }
         catch (Exception ex)
