@@ -250,6 +250,19 @@ public partial class MainLayout : IDisposable
             return;
         }
 
+        var fileExtension = Path.GetExtension(selectedFile.Name);
+        if (fileExtension.Equals(".state", StringComparison.OrdinalIgnoreCase) ||
+            fileExtension.Equals(".savestate", StringComparison.OrdinalIgnoreCase))
+        {
+            Logger.LogWarning("User attempted to load a save state: {FileName}", selectedFile.Name);
+            AppState.ShowProgressIndicator = false;
+            await DialogService.ShowMessageBoxAsync("Wrong file type",
+                "This looks like an emulator save state, not a save file. " +
+                "Save states are internal emulator snapshots and cannot be edited here. " +
+                "Please export the actual save file from your emulator instead (usually a .sav or .dsv file).");
+            return;
+        }
+
         Logger.LogInformation("Loading save file: {FileName}", selectedFile.Name);
         AppService.ClearSelection();
         ParseSettings.ClearActiveTrainer();

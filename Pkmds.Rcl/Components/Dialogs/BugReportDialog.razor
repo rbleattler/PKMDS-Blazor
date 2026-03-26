@@ -12,6 +12,15 @@
     <DialogContent>
         <MudStack Spacing="3"
                   Class="pa-2">
+            @if (!HasSaveFile)
+            {
+                <MudAlert Severity="@Severity.Info"
+                          Dense="true">
+                    If your issue is that a file failed to load, make sure you are uploading a
+                    <strong>save file</strong> (.sav, .dsv, .bin, etc.) — not a save state (.state)
+                    or ROM file. Save states are emulator snapshots and cannot be edited here.
+                </MudAlert>
+            }
             <MudTextField @bind-Value="@description"
                           Label="What went wrong?"
                           Lines="5"
