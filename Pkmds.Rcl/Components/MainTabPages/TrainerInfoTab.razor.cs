@@ -131,7 +131,28 @@ public partial class TrainerInfoTab : IDisposable
             return;
         }
 
-        saveFile.Gender = (byte)newGender;
+        var genderByte = (byte)newGender;
+        saveFile.Gender = genderByte;
+
+        // Several games store gender-specific fashion/appearance data.
+        // Changing gender without resetting it causes the player model to become
+        // invisible in-game because clothing items don't exist for the new gender's model.
+        switch (saveFile)
+        {
+            case SAV7 sav7:
+                // SM/USUM: fashion data is gender-specific; incompatible clothing causes an invisible player model.
+                sav7.Fashion.Reset();
+                break;
+            case SAV8SWSH sav8:
+                // SWSH: GenderAppearance is a separate byte from Gender, and all appearance data
+                // (skin, hair, clothing, etc.) is gender-specific. Skin color slots are paired:
+                // even = male, odd = female — keep the same "shade" but flip to the new gender.
+                var currentSkin = PlayerSkinColor8Extensions.GetSkinColorFromSkin(sav8.MyStatus.Skin);
+                var skinIndex = ((int)currentSkin & ~1) | genderByte;
+                sav8.MyStatus.GenderAppearance = genderByte;
+                sav8.MyStatus.ResetAppearance((PlayerSkinColor8)skinIndex);
+                break;
+        }
     }
 
     private uint GetCoins() => AppState.SaveFile switch
