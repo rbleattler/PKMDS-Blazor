@@ -14,8 +14,11 @@
                   Class="pa-2">
             <MudTextField @bind-Value="@description"
                           Label="What went wrong?"
-                          Lines="4"
+                          Lines="5"
                           Required
+                          Placeholder="Describe the issue in detail. Include: what you were doing, what happened, and what you expected to happen. Mention the game title and any specific Pokémon or field involved."
+                          HelperText="@($"Minimum {MinDescriptionLength} characters. {description.Length} entered.")"
+                          Validation="@((string v) => (v?.Length ?? 0) >= MinDescriptionLength ? null : $"Please provide at least {MinDescriptionLength} characters of detail.")"
                           Variant="@Variant.Outlined"/>
             <MudTextField @bind-Value="@email"
                           Label="Email"
@@ -49,7 +52,7 @@
         <MudButton OnClick="@Submit"
                    Color="@Color.Primary"
                    Variant="@Variant.Filled"
-                   Disabled="@(string.IsNullOrWhiteSpace(description) || !IsEmailValid || string.IsNullOrWhiteSpace(name))">
+                   Disabled="@(description.Length < MinDescriptionLength || !IsEmailValid || string.IsNullOrWhiteSpace(name))">
             Submit Report
         </MudButton>
     </DialogActions>

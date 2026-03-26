@@ -13,7 +13,9 @@ public partial class BugReportDialog
     private string name = string.Empty;
     private bool attachSaveFile;
 
-    private bool IsEmailValid => EmailValidator.IsValid(email);
+    private const int MinDescriptionLength = 30;
+
+    private bool IsEmailValid => !string.IsNullOrWhiteSpace(email) && EmailValidator.IsValid(email);
 
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; } = null!;
