@@ -40,7 +40,7 @@
                     <MudNumericField Label="ID"
                                      Variant="@Variant.Outlined"
                                      @bind-Value:get="@saveFile.TID16"
-                                     @bind-Value:set="@(async (uint value) => await OnTID16ChangedAsync(saveFile, (ushort)value))"
+                                     @bind-Value:set="@(async (ushort value) => await OnTID16ChangedAsync(saveFile, value))"
                                      Format="@AppService.GetIdFormatString()"
                                      For="@(() => saveFile.TID16)"/>
                 </div>
@@ -51,7 +51,7 @@
                         <MudNumericField Label="SID"
                                          Variant="@Variant.Outlined"
                                          @bind-Value:get="@saveFile.SID16"
-                                         @bind-Value:set="@(async (uint value) => await OnSID16ChangedAsync(saveFile, (ushort)value))"
+                                         @bind-Value:set="@(async (ushort value) => await OnSID16ChangedAsync(saveFile, value))"
                                          Format="@AppService.GetIdFormatString(true)"
                                          For="@(() => saveFile.SID16)"/>
                     </div>
