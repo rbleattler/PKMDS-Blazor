@@ -416,7 +416,7 @@ JsonObject GenerateMoveInfo(string csvDir)
 
         move.TryGetValue("target_id", out var targetId);
         move.TryGetValue("identifier", out var moveIdentifier);
-        var moveFlags = flagsByMove.TryGetValue(moveId, out var flags) ? [..flags] : new List<string>();
+        var moveFlags = flagsByMove.TryGetValue(moveId, out var flags) ? [..flags] : [];
         if (moveIdentifier is not null && windMoveIdentifiers.Contains(moveIdentifier))
             moveFlags.Add("wind");
         if (moveIdentifier is not null && slicingMoveIdentifiers.Contains(moveIdentifier))

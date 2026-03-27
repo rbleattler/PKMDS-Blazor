@@ -314,7 +314,6 @@ public partial class OtMiscTab : IDisposable
                 break;
         }
 
-        AppService.LoadPokemonStats(Pokemon);
         RefreshService.Refresh();
     }
 

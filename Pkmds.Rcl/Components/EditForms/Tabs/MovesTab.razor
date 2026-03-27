@@ -171,7 +171,7 @@
                                                             (null, { } mx) => $"Hits up to {mx} times",
                                                             _ => string.Empty,
                                                         };
-                                                        @if (!string.IsNullOrEmpty(hitsText))
+                                                        @if (hitsText.Length > 0)
                                                         {
                                                             <MudText Typo="@Typo.caption"><b>@hitsText</b></MudText>
                                                         }
@@ -184,13 +184,14 @@
                                                     {
                                                         <MudText Typo="@Typo.caption"><b>High critical hit ratio</b></MudText>
                                                     }
+                                                    @{ var partialStatChance = fx.StatChance > 0 && fx.StatChance < 100; }
                                                     @foreach (var sc in fx.StatChanges)
                                                     {
                                                         var verbFull = sc.Change > 0 ? "Raises" : "Lowers";
                                                         var verbBase = sc.Change > 0 ? "raise" : "lower";
                                                         var stages = Math.Abs(sc.Change);
                                                         var stageWord = stages == 1 ? "stage" : "stages";
-                                                        @if (fx.StatChance > 0 && fx.StatChance < 100)
+                                                        @if (partialStatChance)
                                                         {
                                                             <MudText Typo="@Typo.caption"><b>@(fx.StatChance)%</b> chance to @verbBase <b>@sc.Stat</b> by <b>@stages @stageWord</b></MudText>
                                                         }

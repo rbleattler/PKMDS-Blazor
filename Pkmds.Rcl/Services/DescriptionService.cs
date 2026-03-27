@@ -52,7 +52,7 @@ public sealed class DescriptionService(HttpClient http, ILogger<DescriptionServi
                 m.MaxHits,
                 m.CritRate,
                 m.StatChance,
-                m.StatChanges?.Select(sc => new MoveStatChange(sc.Stat, sc.Change)).ToList() ?? []);
+                m.StatChanges ?? []);
         }
 
         return new MoveSummary(
@@ -354,9 +354,7 @@ public sealed class DescriptionService(HttpClient http, ILogger<DescriptionServi
         int? MaxHits = null,
         int CritRate = 0,
         int StatChance = 0,
-        List<JsonMoveStatChange>? StatChanges = null);
-
-    private sealed record JsonMoveStatChange(string Stat, int Change);
+        List<MoveStatChange>? StatChanges = null);
 
     private sealed record JsonItemEntry(
         string Name,
