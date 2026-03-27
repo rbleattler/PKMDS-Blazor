@@ -337,6 +337,50 @@ JsonObject GenerateMoveInfo(string csvDir)
         list.Add(identifier);
     }
 
+    // PokeAPI does not track wind or slicing flags (Gen IX mechanics). Supplement from Showdown data.
+    // Identifiers match moves.csv `identifier` column (hyphenated lowercase).
+    HashSet<string> windMoveIdentifiers =
+    [
+        "aeroblast", "air-cutter", "bleakwind-storm", "blizzard", "fairy-wind",
+        "gust", "heat-wave", "hurricane", "icy-wind", "petal-blizzard",
+        "sandsear-storm", "sandstorm", "springtide-storm", "tailwind", "twister",
+        "whirlwind", "wildbolt-storm",
+    ];
+    HashSet<string> slicingMoveIdentifiers =
+    [
+        "aerial-ace", "air-cutter", "air-slash", "aqua-cutter", "behemoth-blade",
+        "bitter-blade", "ceaseless-edge", "cross-poison", "cut", "fury-cutter",
+        "kowtow-cleave", "leaf-blade", "mighty-cleave", "night-slash", "population-bomb",
+        "psyblade", "psycho-cut", "razor-leaf", "razor-shell", "sacred-sword",
+        "secret-sword", "slash", "solar-blade", "stone-axe", "tachyon-cutter", "x-scissor",
+    ];
+
+    // move_meta: secondary effects (ailment, flinch, drain, healing, multi-hit, crit rate)
+    var moveMetaById = new Dictionary<string, Dictionary<string, string>>();
+    foreach (var r in ReadCsv(Path.Combine(csvDir, "move_meta.csv")))
+        moveMetaById[r["move_id"]] = r;
+
+    // ailment names (English only)
+    var ailmentNames = new Dictionary<string, string>();
+    foreach (var r in ReadCsv(Path.Combine(csvDir, "move_meta_ailment_names.csv")))
+        if (r["local_language_id"] == English) ailmentNames[r["move_meta_ailment_id"]] = r["name"];
+
+    // stat changes per move
+    var statChangesByMove = new Dictionary<string, List<(string stat, int change)>>();
+    var statNameById = new Dictionary<string, string>
+    {
+        ["1"] = "HP", ["2"] = "Attack", ["3"] = "Defense",
+        ["4"] = "Sp. Atk", ["5"] = "Sp. Def", ["6"] = "Speed",
+        ["7"] = "Accuracy", ["8"] = "Evasion",
+    };
+    foreach (var r in ReadCsv(Path.Combine(csvDir, "move_meta_stat_changes.csv")))
+    {
+        var id = r["move_id"];
+        if (!statChangesByMove.TryGetValue(id, out var list)) statChangesByMove[id] = list = [];
+        var statName = statNameById.GetValueOrDefault(r["stat_id"], r["stat_id"]);
+        list.Add((statName, int.Parse(r["change"])));
+    }
+
     var result = new JsonObject();
     foreach (var move in ReadCsv(Path.Combine(csvDir, "moves.csv")))
     {
@@ -371,20 +415,65 @@ JsonObject GenerateMoveInfo(string csvDir)
         var priority = int.TryParse(priorityStr, out var p) ? p : 0;
 
         move.TryGetValue("target_id", out var targetId);
+        move.TryGetValue("identifier", out var moveIdentifier);
+        var moveFlags = flagsByMove.TryGetValue(moveId, out var flags) ? [..flags] : new List<string>();
+        if (moveIdentifier is not null && windMoveIdentifiers.Contains(moveIdentifier))
+            moveFlags.Add("wind");
+        if (moveIdentifier is not null && slicingMoveIdentifiers.Contains(moveIdentifier))
+            moveFlags.Add("slicing");
         var entry = new JsonObject
         {
             ["name"] = name,
             ["description"] = rawDesc,
             ["target"] = targetId is not null ? targetNames.GetValueOrDefault(targetId, "") : "",
-            ["flags"] = flagsByMove.TryGetValue(moveId, out var flags)
-                ? new JsonArray(flags.Select(f => JsonValue.Create(f)).ToArray<JsonNode?>())
-                : [],
+            ["flags"] = new JsonArray(moveFlags.Select(f => JsonValue.Create(f)).ToArray<JsonNode?>()),
             ["stats"] = resolvedStats,
         };
         if (priority != 0)
             entry["priority"] = priority;
         if (flavor.TryGetValue(moveId, out var flavorMap))
             entry["flavor"] = ToJsonObject(flavorMap);
+
+        // Secondary effects from move_meta
+        if (moveMetaById.TryGetValue(moveId, out var meta))
+        {
+            var metaObj = new JsonObject();
+
+            var ailmentIdStr = meta.GetValueOrDefault("meta_ailment_id", "0");
+            if (int.TryParse(ailmentIdStr, out var ailmentId) && ailmentId != 0)
+            {
+                metaObj["ailmentId"] = ailmentId;
+                if (ailmentNames.TryGetValue(ailmentIdStr, out var ailmentName))
+                    metaObj["ailmentName"] = ailmentName;
+            }
+            if (int.TryParse(meta.GetValueOrDefault("ailment_chance", "0"), out var ailmentChance) && ailmentChance > 0)
+                metaObj["ailmentChance"] = ailmentChance;
+            if (int.TryParse(meta.GetValueOrDefault("flinch_chance", "0"), out var flinchChance) && flinchChance > 0)
+                metaObj["flinchChance"] = flinchChance;
+            if (int.TryParse(meta.GetValueOrDefault("drain", "0"), out var drain) && drain != 0)
+                metaObj["drain"] = drain;
+            if (int.TryParse(meta.GetValueOrDefault("healing", "0"), out var healing) && healing != 0)
+                metaObj["healing"] = healing;
+            var minHitsStr = meta.GetValueOrDefault("min_hits", "");
+            var maxHitsStr = meta.GetValueOrDefault("max_hits", "");
+            if (!string.IsNullOrEmpty(minHitsStr)) metaObj["minHits"] = int.Parse(minHitsStr);
+            if (!string.IsNullOrEmpty(maxHitsStr)) metaObj["maxHits"] = int.Parse(maxHitsStr);
+            if (int.TryParse(meta.GetValueOrDefault("crit_rate", "0"), out var critRate) && critRate > 0)
+                metaObj["critRate"] = critRate;
+            if (int.TryParse(meta.GetValueOrDefault("stat_chance", "0"), out var statChance) && statChance > 0)
+                metaObj["statChance"] = statChance;
+
+            if (statChangesByMove.TryGetValue(moveId, out var statChanges) && statChanges.Count > 0)
+            {
+                var changesArr = new JsonArray();
+                foreach (var (stat, change) in statChanges)
+                    changesArr.Add(new JsonObject { ["stat"] = stat, ["change"] = change });
+                metaObj["statChanges"] = changesArr;
+            }
+
+            if (metaObj.Count > 0)
+                entry["meta"] = metaObj;
+        }
 
         result[moveId] = entry;
     }
