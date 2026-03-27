@@ -254,6 +254,8 @@ def generate_move_info(csv_dir: Path) -> dict:
                 'accuracy': int(epoch['accuracy']) if epoch.get('accuracy') else None,
             })
 
+        priority = int(move.get('priority', 0) or 0)
+
         entry: dict = {
             'name': name,
             'description': description,
@@ -261,6 +263,8 @@ def generate_move_info(csv_dir: Path) -> dict:
             'flags': flags_by_move.get(move_id, []),
             'stats': resolved_stats,
         }
+        if priority != 0:
+            entry['priority'] = priority
         if move_id in flavor:
             entry['flavor'] = flavor[move_id]
 

@@ -125,6 +125,11 @@
                                                 <MudText Typo="@Typo.caption">Target: <b>@moveInfo.Target</b></MudText>
                                             }
 
+                                            @if (moveInfo.Priority != 0)
+                                            {
+                                                <MudText Typo="@Typo.caption">Priority: <b>@(moveInfo.Priority > 0 ? $"+{moveInfo.Priority}" : moveInfo.Priority.ToString())</b></MudText>
+                                            }
+
                                             @if (moveInfo.Flags.Count > 0)
                                             {
                                                 <MudStack Row
@@ -427,6 +432,11 @@
                                                     </MudText>
                                                 }
 
+                                                @if (relearnInfo.Priority != 0)
+                                                {
+                                                    <MudText Typo="@Typo.caption">Priority: <b>@(relearnInfo.Priority > 0 ? $"+{relearnInfo.Priority}" : relearnInfo.Priority.ToString())</b></MudText>
+                                                }
+
                                                 @if (relearnInfo.Flags.Count > 0)
                                                 {
                                                     <MudStack Row
@@ -553,6 +563,11 @@
                                                 {
                                                     <MudText Typo="@Typo.caption">Target: <b>@alphaInfo.Target</b>
                                                     </MudText>
+                                                }
+
+                                                @if (alphaInfo.Priority != 0)
+                                                {
+                                                    <MudText Typo="@Typo.caption">Priority: <b>@(alphaInfo.Priority > 0 ? $"+{alphaInfo.Priority}" : alphaInfo.Priority.ToString())</b></MudText>
                                                 }
 
                                                 @if (alphaInfo.Flags.Count > 0)

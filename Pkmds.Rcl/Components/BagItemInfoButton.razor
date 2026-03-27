@@ -88,6 +88,11 @@
                                 <MudText Typo="@Typo.caption">Target: <b>@localMoveInfo.Target</b></MudText>
                             }
 
+                            @if (localMoveInfo.Priority != 0)
+                            {
+                                <MudText Typo="@Typo.caption">Priority: <b>@(localMoveInfo.Priority > 0 ? $"+{localMoveInfo.Priority}" : localMoveInfo.Priority.ToString())</b></MudText>
+                            }
+
                             @if (localMoveInfo.Flags.Count > 0)
                             {
                                 <MudStack Row
