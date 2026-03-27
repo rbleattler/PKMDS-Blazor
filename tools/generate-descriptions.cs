@@ -321,7 +321,11 @@ static ShowdownSecondaryEffect? ParseShowdownSecondary(string content)
 {
     var chance = SdInt(content, "chance") ?? 0;
     var status = SdStr(content, "status");
-    var flinch = content.Contains("'flinch'") || content.Contains("\"flinch\"");
+    var volatileStatus = SdStr(content, "volatileStatus");
+    // flinch is a volatileStatus but handled separately for clarity
+    var flinch = volatileStatus == "flinch"
+        || content.Contains("'flinch'") || content.Contains("\"flinch\"");
+    if (flinch) volatileStatus = null; // don't double-report flinch
 
     var boosts = new List<(string, int)>();
     var boostsContent = ExtractShowdownBlock(content, "boosts");
@@ -332,8 +336,8 @@ static ShowdownSecondaryEffect? ParseShowdownSecondary(string content)
                 boosts.Add((bm.Groups[1].Value, bv));
     }
 
-    return status is null && !flinch && boosts.Count == 0 ? null
-        : new ShowdownSecondaryEffect(chance, status, flinch, boosts);
+    return status is null && volatileStatus is null && !flinch && boosts.Count == 0 ? null
+        : new ShowdownSecondaryEffect(chance, status, volatileStatus, flinch, boosts);
 }
 
 /// <summary>
@@ -465,6 +469,18 @@ static IReadOnlyDictionary<int, ShowdownMoveSupplement> ReadShowdownMoves(string
     Console.WriteLine($"  → {result.Count} moves with secondary/status/flag data from Showdown");
     return result;
 }
+
+// Human-readable name for a Showdown volatile status that appears in a secondary effect.
+// Returns null for volatile statuses that are better described by other fields (e.g. stat changes)
+// or that don't have a meaningful user-facing description.
+static string? ShowdownVolatileAilmentName(string volatileStatus) => volatileStatus switch
+{
+    "confusion"     => "Confusion",
+    "saltcure"      => "Salt Cure",
+    "healblock"     => "Heal Block",
+    "syrupbomb"     => "Syrup Bomb",
+    _               => null,
+};
 
 // PokeAPI ailment ID + English name for a Showdown status abbreviation.
 static (int Id, string Name) ShowdownAilment(string statusCode) => statusCode switch
@@ -803,6 +819,14 @@ JsonObject GenerateMoveInfo(string csvDir, string? showdownPath = null)
                     if (fx.Chance is > 0 and < 100 && !metaObj.ContainsKey("ailmentChance"))
                         metaObj["ailmentChance"] = fx.Chance;
                 }
+                if (fx.VolatileStatus is { } vs && ShowdownVolatileAilmentName(vs) is { } vsName
+                    && !metaObj.ContainsKey("ailmentId"))
+                {
+                    metaObj["ailmentId"] = -2; // sentinel: volatile/move-specific condition
+                    metaObj["ailmentName"] = vsName;
+                    if (fx.Chance is > 0 and < 100 && !metaObj.ContainsKey("ailmentChance"))
+                        metaObj["ailmentChance"] = fx.Chance;
+                }
                 if (fx.Flinch && fx.Chance > 0 && !metaObj.ContainsKey("flinchChance"))
                     metaObj["flinchChance"] = fx.Chance;
                 if (fx.Boosts.Count > 0)
@@ -923,6 +947,7 @@ return 0;
 record ShowdownSecondaryEffect(
     int Chance,
     string? Status,
+    string? VolatileStatus,
     bool Flinch,
     IReadOnlyList<(string Stat, int Change)> Boosts);
 
