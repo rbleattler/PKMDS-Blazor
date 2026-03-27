@@ -38,6 +38,23 @@ public sealed class DescriptionService(HttpClient http, ILogger<DescriptionServi
             ? flavor
             : entry.Description;
 
+        MoveSecondaryEffects? secondaryEffects = null;
+        if (entry.Meta is { } m)
+        {
+            secondaryEffects = new MoveSecondaryEffects(
+                m.AilmentId,
+                m.AilmentName,
+                m.AilmentChance,
+                m.FlinchChance,
+                m.Drain,
+                m.Healing,
+                m.MinHits,
+                m.MaxHits,
+                m.CritRate,
+                m.StatChance,
+                m.StatChanges ?? []);
+        }
+
         return new MoveSummary(
             entry.Name,
             epoch?.Type ?? string.Empty,
@@ -48,7 +65,8 @@ public sealed class DescriptionService(HttpClient http, ILogger<DescriptionServi
             description,
             entry.Target ?? string.Empty,
             entry.Flags ?? [],
-            entry.Priority);
+            entry.Priority,
+            secondaryEffects);
     }
 
     public async Task<AbilitySummary?> GetAbilityInfoAsync(int abilityId, GameVersion version)
@@ -314,7 +332,8 @@ public sealed class DescriptionService(HttpClient http, ILogger<DescriptionServi
         List<string>? Flags,
         List<JsonMoveStatEpoch> Stats,
         Dictionary<string, string>? Flavor,
-        int Priority = 0);
+        int Priority = 0,
+        JsonMoveMeta? Meta = null);
 
     private sealed record JsonMoveStatEpoch(
         int FromVersionGroup,
@@ -323,6 +342,19 @@ public sealed class DescriptionService(HttpClient http, ILogger<DescriptionServi
         int? Power,
         int? Pp,
         int? Accuracy);
+
+    private sealed record JsonMoveMeta(
+        int AilmentId = 0,
+        string? AilmentName = null,
+        int AilmentChance = 0,
+        int FlinchChance = 0,
+        int Drain = 0,
+        int Healing = 0,
+        int? MinHits = null,
+        int? MaxHits = null,
+        int CritRate = 0,
+        int StatChance = 0,
+        List<MoveStatChange>? StatChanges = null);
 
     private sealed record JsonItemEntry(
         string Name,

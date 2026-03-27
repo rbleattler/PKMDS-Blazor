@@ -313,6 +313,8 @@ public partial class OtMiscTab : IDisposable
                 Pokemon.SetTrainerSID7(saveFile.TrainerSID7);
                 break;
         }
+
+        RefreshService.Refresh();
     }
 
     private void OnGenderToggle(Gender newGender) => Pokemon?.OriginalTrainerGender = (byte)newGender;
