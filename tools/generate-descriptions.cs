@@ -342,6 +342,34 @@ static ShowdownSecondaryEffect? ParseShowdownSecondary(string content)
 /// </summary>
 static IReadOnlyDictionary<int, ShowdownMoveSupplement> ReadShowdownMoves(string showdownPath)
 {
+    // Maps Showdown flag names → PokeAPI move flag identifiers.
+    // Showdown-only flags (metronome, allyanim, noassist, etc.) are intentionally omitted.
+    Dictionary<string, string> flagMap = new()
+    {
+        ["contact"]    = "contact",
+        ["charge"]     = "charge",
+        ["recharge"]   = "recharge",
+        ["protect"]    = "protect",
+        ["reflectable"]= "reflectable",
+        ["snatch"]     = "snatch",
+        ["mirror"]     = "mirror",
+        ["punch"]      = "punch",
+        ["sound"]      = "sound",
+        ["gravity"]    = "gravity",
+        ["defrost"]    = "defrost",
+        ["distance"]   = "distance",
+        ["heal"]       = "heal",
+        ["bypasssub"]  = "authentic",
+        ["powder"]     = "powder",
+        ["bite"]       = "bite",
+        ["pulse"]      = "pulse",
+        ["bullet"]     = "ballistics",
+        ["nonsky"]     = "non-sky-battle",
+        ["dance"]      = "dance",
+        ["wind"]       = "wind",
+        ["slicing"]    = "slicing",
+    };
+
     var movesTs = File.Exists(showdownPath) && Path.GetExtension(showdownPath) == ".ts"
         ? showdownPath
         : Path.Combine(showdownPath, "data", "moves.ts");
@@ -409,15 +437,27 @@ static IReadOnlyDictionary<int, ShowdownMoveSupplement> ReadShowdownMoves(string
         else if (SdInt(block, "multihit") is { } mhFixed)
             multihitFixed = mhFixed;
 
+        // Flags: extract from flags: { key: 1, ... } block and map to PokeAPI identifiers
+        var sdFlags = new List<string>();
+        var flagsContent = ExtractShowdownBlock(block, "flags");
+        if (flagsContent is not null)
+        {
+            foreach (Match fm in Regex.Matches(flagsContent, @"(\w+):"))
+            {
+                if (flagMap.TryGetValue(fm.Groups[1].Value, out var pokeApiFlag))
+                    sdFlags.Add(pokeApiFlag);
+            }
+        }
+
         bool hasData = secondaries.Count > 0 || topStatus is not null
             || drain.HasValue || recoil.HasValue || heal.HasValue
             || multihitFixed.HasValue || multihitRange.HasValue
-            || critRatio is > 1;
+            || critRatio is > 1 || sdFlags.Count > 0;
         if (!hasData) continue;
 
         result[num.Value] = new ShowdownMoveSupplement(
             secondaries, topStatus, drain, recoil, heal,
-            multihitFixed, multihitRange, critRatio is > 1 ? critRatio : null);
+            multihitFixed, multihitRange, critRatio is > 1 ? critRatio : null, sdFlags);
     }
 
     Console.WriteLine($"  → {result.Count} moves with secondary data from Showdown");
@@ -673,6 +713,12 @@ JsonObject GenerateMoveInfo(string csvDir, string? showdownPath = null)
         move.TryGetValue("target_id", out var targetId);
         move.TryGetValue("identifier", out var moveIdentifier);
         var moveFlags = flagsByMove.TryGetValue(moveId, out var flags) ? new List<string>(flags) : [];
+        // For moves absent from PokeAPI's move_flag_map, supplement from Showdown.
+        if (moveFlags.Count == 0
+            && int.TryParse(moveId, out var flagMoveIdInt)
+            && showdownMoves.TryGetValue(flagMoveIdInt, out var sdForFlags)
+            && sdForFlags.Flags.Count > 0)
+            moveFlags.AddRange(sdForFlags.Flags);
         if (moveIdentifier is not null && windMoveIdentifiers.Contains(moveIdentifier))
             moveFlags.Add("wind");
         if (moveIdentifier is not null && slicingMoveIdentifiers.Contains(moveIdentifier))
@@ -887,4 +933,5 @@ record ShowdownMoveSupplement(
     (int N, int D)? Heal,
     int? MultihitFixed,
     (int Min, int Max)? MultihitRange,
-    int? CritRatio);
+    int? CritRatio,
+    IReadOnlyList<string> Flags);
