@@ -416,7 +416,7 @@ JsonObject GenerateMoveInfo(string csvDir)
 
         move.TryGetValue("target_id", out var targetId);
         move.TryGetValue("identifier", out var moveIdentifier);
-        var moveFlags = flagsByMove.TryGetValue(moveId, out var flags) ? [..flags] : [];
+        var moveFlags = flagsByMove.TryGetValue(moveId, out var flags) ? new List<string>(flags) : [];
         if (moveIdentifier is not null && windMoveIdentifiers.Contains(moveIdentifier))
             moveFlags.Add("wind");
         if (moveIdentifier is not null && slicingMoveIdentifiers.Contains(moveIdentifier))
@@ -456,8 +456,8 @@ JsonObject GenerateMoveInfo(string csvDir)
                 metaObj["healing"] = healing;
             var minHitsStr = meta.GetValueOrDefault("min_hits", "");
             var maxHitsStr = meta.GetValueOrDefault("max_hits", "");
-            if (!string.IsNullOrEmpty(minHitsStr)) metaObj["minHits"] = int.Parse(minHitsStr);
-            if (!string.IsNullOrEmpty(maxHitsStr)) metaObj["maxHits"] = int.Parse(maxHitsStr);
+            if (int.TryParse(minHitsStr, out var minHits)) metaObj["minHits"] = minHits;
+            if (int.TryParse(maxHitsStr, out var maxHits)) metaObj["maxHits"] = maxHits;
             if (int.TryParse(meta.GetValueOrDefault("crit_rate", "0"), out var critRate) && critRate > 0)
                 metaObj["critRate"] = critRate;
             if (int.TryParse(meta.GetValueOrDefault("stat_chance", "0"), out var statChance) && statChance > 0)
