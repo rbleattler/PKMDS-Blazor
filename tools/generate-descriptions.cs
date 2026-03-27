@@ -344,7 +344,7 @@ static IReadOnlyDictionary<int, ShowdownMoveSupplement> ReadShowdownMoves(string
 {
     // Maps Showdown flag names → PokeAPI move flag identifiers.
     // Showdown-only flags (metronome, allyanim, noassist, etc.) are intentionally omitted.
-    Dictionary<string, string> flagMap = new()
+    IReadOnlyDictionary<string, string> flagMap = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["contact"]    = "contact",
         ["charge"]     = "charge",
@@ -438,16 +438,18 @@ static IReadOnlyDictionary<int, ShowdownMoveSupplement> ReadShowdownMoves(string
             multihitFixed = mhFixed;
 
         // Flags: extract from flags: { key: 1, ... } block and map to PokeAPI identifiers
-        var sdFlags = new List<string>();
+        var sdFlagsSet = new HashSet<string>(StringComparer.Ordinal);
         var flagsContent = ExtractShowdownBlock(block, "flags");
         if (flagsContent is not null)
         {
             foreach (Match fm in Regex.Matches(flagsContent, @"(\w+):"))
             {
                 if (flagMap.TryGetValue(fm.Groups[1].Value, out var pokeApiFlag))
-                    sdFlags.Add(pokeApiFlag);
+                    sdFlagsSet.Add(pokeApiFlag);
             }
         }
+        // Sort for deterministic JSON output
+        var sdFlags = sdFlagsSet.OrderBy(f => f).ToList();
 
         bool hasData = secondaries.Count > 0 || topStatus is not null
             || drain.HasValue || recoil.HasValue || heal.HasValue
@@ -460,7 +462,7 @@ static IReadOnlyDictionary<int, ShowdownMoveSupplement> ReadShowdownMoves(string
             multihitFixed, multihitRange, critRatio is > 1 ? critRatio : null, sdFlags);
     }
 
-    Console.WriteLine($"  → {result.Count} moves with secondary data from Showdown");
+    Console.WriteLine($"  → {result.Count} moves with secondary/status/flag data from Showdown");
     return result;
 }
 
@@ -719,9 +721,9 @@ JsonObject GenerateMoveInfo(string csvDir, string? showdownPath = null)
             && showdownMoves.TryGetValue(flagMoveIdInt, out var sdForFlags)
             && sdForFlags.Flags.Count > 0)
             moveFlags.AddRange(sdForFlags.Flags);
-        if (moveIdentifier is not null && windMoveIdentifiers.Contains(moveIdentifier))
+        if (moveIdentifier is not null && windMoveIdentifiers.Contains(moveIdentifier) && !moveFlags.Contains("wind"))
             moveFlags.Add("wind");
-        if (moveIdentifier is not null && slicingMoveIdentifiers.Contains(moveIdentifier))
+        if (moveIdentifier is not null && slicingMoveIdentifiers.Contains(moveIdentifier) && !moveFlags.Contains("slicing"))
             moveFlags.Add("slicing");
         var entry = new JsonObject
         {
