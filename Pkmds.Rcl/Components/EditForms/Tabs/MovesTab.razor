@@ -127,7 +127,7 @@
 
                                             @if (moveInfo.Priority != 0)
                                             {
-                                                <MudText Typo="@Typo.caption">Priority: <b>@(moveInfo.Priority > 0 ? $"+{moveInfo.Priority}" : moveInfo.Priority.ToString())</b></MudText>
+                                                <MudText Typo="@Typo.caption">Priority: <b>@FormatPriority(moveInfo.Priority)</b></MudText>
                                             }
 
                                             @if (moveInfo.Flags.Count > 0)

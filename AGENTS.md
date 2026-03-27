@@ -81,12 +81,16 @@ dotnet run tools/generate-descriptions.cs -- --pokeapi ~/Code/codemonkey85/pokea
 
 ### `tools/generate-tm-data.cs`
 
-Generates `tm-data.json` from a saved Bulbapedia "List of TMs" HTML page. Also merges Sword/Shield TR data (TR00–TR99) from hardcoded PKHeX.Core move IDs. Requires `move-info.json` to already exist (run `generate-descriptions.cs` first).
+Generates `tm-data.json` from the Bulbapedia "List of TMs" page. Also merges Sword/Shield TR data (TR00–TR99) from hardcoded PKHeX.Core move IDs. Requires `move-info.json` to already exist (run `generate-descriptions.cs` first).
 
-- **Source**: Save the page at https://bulbapedia.bulbagarden.net/wiki/List_of_TMs as an HTML file
+- **Source**: Fetched directly from https://bulbapedia.bulbagarden.net/wiki/List_of_TMs (or supply a saved HTML file with `--input`)
 - **Output**: `Pkmds.Rcl/wwwroot/data/tm-data.json`
 
 ```sh
+# Fetch live from Bulbapedia (default)
+dotnet run tools/generate-tm-data.cs
+
+# Use a previously saved HTML file
 dotnet run tools/generate-tm-data.cs -- --input "path/to/List of TMs - Bulbapedia.html"
 ```
 

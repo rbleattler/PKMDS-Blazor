@@ -1,19 +1,19 @@
 #!/usr/bin/env dotnet-run
 #:property PublishAot=false
 /*
- * Generate tm-data.json from a saved Bulbapedia "List of TMs" HTML page.
+ * Generate tm-data.json from the Bulbapedia "List of TMs" page.
  *
  * The output maps each game version key to a dict of TM/TR-number -> move-name.
  * TM numbers preserve their zero-padded format from the page (e.g. "01", "001").
  * TR entries for Sword/Shield use "TR00"-"TR99" keys in the gen8swsh section.
  *
  * Usage:
- *   dotnet run generate-tm-data.cs -- --input "path/to/List of TMs - Bulbapedia.html"
- *                                     [--output /path/to/output]
+ *   dotnet run tools/generate-tm-data.cs [-- [--url <url>] [--input path/to/file.html] [--output /path/to/output]]
  *
  * Arguments:
- *   --input   Path to the saved Bulbapedia HTML file.
- *             (https://bulbapedia.bulbagarden.net/wiki/List_of_TMs)
+ *   --input   Path to a saved Bulbapedia HTML file (optional; fetches live if omitted).
+ *   --url     URL to fetch HTML from (default: https://bulbapedia.bulbagarden.net/wiki/List_of_TMs).
+ *             Ignored when --input is provided.
  *   --output  Output directory for tm-data.json.
  *             Defaults to ../Pkmds.Rcl/wwwroot/data/ relative to the repo root.
  *
@@ -41,6 +41,8 @@
  *   gen9za   -> Legends Z-A
  */
 
+using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
@@ -76,25 +78,16 @@ string[] TableKeys =
 // Args
 // ---------------------------------------------------------------------------
 
+const string DefaultBulbapediaUrl = "https://bulbapedia.bulbagarden.net/wiki/List_of_TMs";
+
 string? inputArg = null;
+string? urlArg = null;
 string? outputArg = null;
 for (var i = 0; i < args.Length; i++)
 {
     if (args[i] == "--input" && i + 1 < args.Length) inputArg = args[++i];
+    else if (args[i] == "--url" && i + 1 < args.Length) urlArg = args[++i];
     else if (args[i] == "--output" && i + 1 < args.Length) outputArg = args[++i];
-}
-
-if (inputArg is null)
-{
-    Console.Error.WriteLine("Usage: dotnet run generate-tm-data.cs -- --input path/to/bulbapedia.html [--output /path/to/output]");
-    return 1;
-}
-
-var inputPath = Path.GetFullPath(inputArg);
-if (!File.Exists(inputPath))
-{
-    Console.Error.WriteLine($"ERROR: Input file not found: {inputPath}");
-    return 1;
 }
 
 var outputDir = outputArg is not null
@@ -103,9 +96,30 @@ var outputDir = outputArg is not null
 
 Directory.CreateDirectory(outputDir);
 
-Console.WriteLine($"Reading HTML from : {inputPath}");
-Console.WriteLine($"Writing JSON to   : {outputDir}");
-Console.WriteLine();
+string html;
+if (inputArg is not null)
+{
+    var inputPath = Path.GetFullPath(inputArg);
+    if (!File.Exists(inputPath))
+    {
+        Console.Error.WriteLine($"ERROR: Input file not found: {inputPath}");
+        return 1;
+    }
+    Console.WriteLine($"Reading HTML from : {inputPath}");
+    Console.WriteLine($"Writing JSON to   : {outputDir}");
+    Console.WriteLine();
+    html = File.ReadAllText(inputPath, Encoding.UTF8);
+}
+else
+{
+    var fetchUrl = urlArg ?? DefaultBulbapediaUrl;
+    Console.WriteLine($"Fetching HTML from: {fetchUrl}");
+    Console.WriteLine($"Writing JSON to   : {outputDir}");
+    Console.WriteLine();
+    using var httpClient = new HttpClient();
+    httpClient.DefaultRequestHeaders.Add("User-Agent", "PKMDS-Blazor/1.0 (data-generation tool; +https://github.com/codemonkey85/PKMDS-Blazor)");
+    html = await httpClient.GetStringAsync(fetchUrl);
+}
 
 // ---------------------------------------------------------------------------
 // HTML parsing
@@ -113,7 +127,15 @@ Console.WriteLine();
 
 string StripTags(string html) => Regex.Replace(html, "<[^>]+>", "");
 
-string Clean(string text) => Regex.Replace(StripTags(text), @"\s+", " ").Trim();
+string Clean(string text)
+{
+    var decoded = WebUtility.HtmlDecode(text);
+    var stripped = StripTags(decoded);
+    var normalized = stripped.Replace('\u00A0', ' ');
+    // Remove footnote/annotation fragments (e.g. [1], [a], [note])
+    var noFootnotes = Regex.Replace(normalized, @"\[[^\]]{1,10}\]", "");
+    return Regex.Replace(noFootnotes, @"\s+", " ").Trim();
+}
 
 List<Dictionary<string, string>> ParseTables(string html)
 {
@@ -183,7 +205,6 @@ string FindDefaultOutputDir()
 // Main
 // ---------------------------------------------------------------------------
 
-var html = File.ReadAllText(inputPath, Encoding.UTF8);
 var tables = ParseTables(html);
 
 if (tables.Count != TableKeys.Length)
@@ -231,7 +252,7 @@ for (var i = 0; i < Math.Min(tables.Count, TableKeys.Length); i++)
 }
 
 var outPath = Path.Combine(outputDir, "tm-data.json");
-File.WriteAllText(outPath, result.ToJsonString(serializerOptions), Encoding.UTF8);
+File.WriteAllText(outPath, result.ToJsonString(serializerOptions), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
 var sizeKb = new FileInfo(outPath).Length / 1024;
 
 Console.WriteLine();

@@ -443,7 +443,7 @@ foreach (var (file, generator, label) in tasks)
     Console.Write($"Generating {file}...");
     var data = generator(csvDir);
     var outPath = Path.Combine(outputDir, file);
-    File.WriteAllText(outPath, data.ToJsonString(serializerOptions), Encoding.UTF8);
+    File.WriteAllText(outPath, data.ToJsonString(serializerOptions), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
     var sizeKb = new FileInfo(outPath).Length / 1024;
     Console.WriteLine($"  {data.Count:N0} {label} -> {file} ({sizeKb} KB)");
 }
