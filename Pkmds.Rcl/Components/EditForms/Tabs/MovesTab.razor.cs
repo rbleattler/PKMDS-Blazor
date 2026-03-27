@@ -134,12 +134,19 @@ public partial class MovesTab
     private void SetPokemonPPUps(int moveIndex, int ppUps) =>
         Pokemon?.SetPPUps(moveIndex, ppUps);
 
-    private bool GetPokemonMoveIsPlus(int moveIndex) =>
-        Pokemon is PA9 pa9 && pa9.GetMovePlusFlag(moveIndex);
+    private bool GetPokemonMoveIsPlus(int moveIndex)
+    {
+        if (moveIndex < 0 || Pokemon is not PA9 pa9)
+        {
+            return false;
+        }
+
+        return pa9.GetMovePlusFlag(moveIndex);
+    }
 
     private void SetPokemonMoveIsPlus(int moveIndex, bool isPlus)
     {
-        if (Pokemon is not PA9 pa9)
+        if (moveIndex < 0 || Pokemon is not PA9 pa9)
         {
             return;
         }
