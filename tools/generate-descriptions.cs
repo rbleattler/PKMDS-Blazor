@@ -44,15 +44,17 @@ using System.Text.RegularExpressions;
 
 string? pokeapiArg = null;
 string? outputArg = null;
+string? showdownArg = null;
 for (var i = 0; i < args.Length; i++)
 {
     if (args[i] == "--pokeapi" && i + 1 < args.Length) pokeapiArg = args[++i];
     else if (args[i] == "--output" && i + 1 < args.Length) outputArg = args[++i];
+    else if (args[i] == "--showdown" && i + 1 < args.Length) showdownArg = args[++i];
 }
 
 if (pokeapiArg is null)
 {
-    Console.Error.WriteLine("Usage: dotnet run generate-descriptions.cs -- --pokeapi /path/to/pokeapi [--output /path/to/output]");
+    Console.Error.WriteLine("Usage: dotnet run tools/generate-descriptions.cs -- --pokeapi /path/to/pokeapi [--showdown /path/to/pokemon-showdown] [--output /path/to/output]");
     return 1;
 }
 
@@ -195,6 +197,255 @@ JsonObject ToJsonObject(Dictionary<string, string> dict)
 }
 
 // ---------------------------------------------------------------------------
+// Showdown moves.ts parser
+// ---------------------------------------------------------------------------
+//
+// Reads pokemon-showdown/data/moves.ts and extracts secondary effects for moves
+// missing from PokeAPI's move_meta / move_meta_stat_changes CSV files.
+// Only the fields that map to our JSON meta model are extracted.
+//
+// Handles:
+//   secondary: { chance, status, boosts }  — volatileStatus only checked for 'flinch'
+//   secondaries: [{ ... }, { ... }]
+//   drain: [n, d]       recoil: [n, d]     heal: [n, d]
+//   multihit: n         multihit: [min, max]
+//   critRatio: n        status: 'xxx'  (top-level, for status moves)
+
+/// <summary>
+/// Walk forward from <paramref name="openPos"/> (which must be the opening char)
+/// and return the index of the matching close char, respecting string literals and comments.
+/// Returns -1 on failure.
+/// </summary>
+static int FindMatchingClose(string text, int openPos, char open, char close)
+{
+    int depth = 0;
+    bool inStr = false;
+    char strChar = '\0';
+    for (int i = openPos; i < text.Length; i++)
+    {
+        char c = text[i];
+        if (inStr)
+        {
+            if (c == '\\') { i++; continue; }
+            if (c == strChar) inStr = false;
+            continue;
+        }
+        if (c is '\'' or '"' or '`') { inStr = true; strChar = c; continue; }
+        // single-line comment
+        if (c == '/' && i + 1 < text.Length && text[i + 1] == '/')
+        {
+            while (i < text.Length && text[i] != '\n') i++;
+            continue;
+        }
+        // multi-line comment
+        if (c == '/' && i + 1 < text.Length && text[i + 1] == '*')
+        {
+            i += 2;
+            while (i + 1 < text.Length && !(text[i] == '*' && text[i + 1] == '/')) i++;
+            i++;
+            continue;
+        }
+        if (c == open) depth++;
+        else if (c == close) { if (--depth == 0) return i; }
+    }
+    return -1;
+}
+
+/// <summary>
+/// Extract the content between the balanced open/close for a named field within
+/// <paramref name="text"/>.  Returns null if the field is absent or is <c>null</c>.
+/// </summary>
+static string? ExtractShowdownBlock(string text, string field, char open = '{', char close = '}')
+{
+    var m = Regex.Match(text, $@"\b{Regex.Escape(field)}:\s*([{Regex.Escape(open.ToString())}n])");
+    if (!m.Success) return null;
+    if (m.Groups[1].Value == "n") return null; // "null"
+    int openIdx = text.IndexOf(open, m.Index + m.Length - 1);
+    if (openIdx < 0) return null;
+    int closeIdx = FindMatchingClose(text, openIdx, open, close);
+    if (closeIdx < 0) return null;
+    return text[(openIdx + 1)..closeIdx];
+}
+
+/// <summary>Split the content of a JS array into its top-level elements.</summary>
+static IReadOnlyList<string> SplitJsArray(string arrayContent)
+{
+    var result = new List<string>();
+    int depth = 0;
+    bool inStr = false;
+    char strChar = '\0';
+    int start = 0;
+    for (int i = 0; i < arrayContent.Length; i++)
+    {
+        char c = arrayContent[i];
+        if (inStr)
+        {
+            if (c == '\\') { i++; continue; }
+            if (c == strChar) inStr = false;
+            continue;
+        }
+        if (c is '\'' or '"' or '`') { inStr = true; strChar = c; continue; }
+        if (c is '{' or '[' or '(') depth++;
+        else if (c is '}' or ']' or ')') depth--;
+        else if (c == ',' && depth == 0)
+        {
+            var elem = arrayContent[start..i].Trim();
+            if (elem.Length > 0) result.Add(elem);
+            start = i + 1;
+        }
+    }
+    var last = arrayContent[start..].Trim();
+    if (last.Length > 0) result.Add(last);
+    return result;
+}
+
+static int? SdInt(string text, string field)
+{
+    var m = Regex.Match(text, $@"\b{Regex.Escape(field)}:\s*(-?\d+)");
+    return m.Success && int.TryParse(m.Groups[1].Value, out var v) ? v : null;
+}
+
+static string? SdStr(string text, string field)
+{
+    var m = Regex.Match(text, $@"\b{Regex.Escape(field)}:\s*['""](\w+)['""]");
+    return m.Success ? m.Groups[1].Value : null;
+}
+
+static (int N, int D)? SdPair(string text, string field)
+{
+    var m = Regex.Match(text, $@"\b{Regex.Escape(field)}:\s*\[(-?\d+),\s*(-?\d+)\]");
+    return m.Success ? (int.Parse(m.Groups[1].Value), int.Parse(m.Groups[2].Value)) : null;
+}
+
+static ShowdownSecondaryEffect? ParseShowdownSecondary(string content)
+{
+    var chance = SdInt(content, "chance") ?? 0;
+    var status = SdStr(content, "status");
+    var flinch = content.Contains("'flinch'") || content.Contains("\"flinch\"");
+
+    var boosts = new List<(string, int)>();
+    var boostsContent = ExtractShowdownBlock(content, "boosts");
+    if (boostsContent is not null)
+    {
+        foreach (Match bm in Regex.Matches(boostsContent, @"(\w+):\s*(-?\d+)"))
+            if (int.TryParse(bm.Groups[2].Value, out var bv))
+                boosts.Add((bm.Groups[1].Value, bv));
+    }
+
+    return status is null && !flinch && boosts.Count == 0 ? null
+        : new ShowdownSecondaryEffect(chance, status, flinch, boosts);
+}
+
+/// <summary>
+/// Parse pokemon-showdown/data/moves.ts and return a dictionary of
+/// PokeAPI move ID → supplemental secondary-effect data.
+/// </summary>
+static IReadOnlyDictionary<int, ShowdownMoveSupplement> ReadShowdownMoves(string showdownPath)
+{
+    var movesTs = File.Exists(showdownPath) && Path.GetExtension(showdownPath) == ".ts"
+        ? showdownPath
+        : Path.Combine(showdownPath, "data", "moves.ts");
+
+    if (!File.Exists(movesTs))
+    {
+        Console.Error.WriteLine($"WARNING: Showdown moves.ts not found at {movesTs}");
+        return new Dictionary<int, ShowdownMoveSupplement>();
+    }
+
+    var text = File.ReadAllText(movesTs, Encoding.UTF8);
+    var result = new Dictionary<int, ShowdownMoveSupplement>();
+
+    // Each top-level move entry starts with: \n\t<identifier>: {
+    var entryRe = new Regex(@"\n\t[a-z0-9]+:\s*\{", RegexOptions.Compiled);
+
+    foreach (Match entryMatch in entryRe.Matches(text))
+    {
+        int openPos = entryMatch.Index + entryMatch.Length - 1; // the {
+        int closePos = FindMatchingClose(text, openPos, '{', '}');
+        if (closePos < 0) continue;
+
+        var block = text[(openPos + 1)..closePos];
+
+        var num = SdInt(block, "num");
+        if (num is not > 0) continue;
+
+        // Secondary effects
+        var secondaries = new List<ShowdownSecondaryEffect>();
+
+        var secContent = ExtractShowdownBlock(block, "secondary");
+        if (secContent is not null)
+        {
+            var fx = ParseShowdownSecondary(secContent);
+            if (fx is not null) secondaries.Add(fx);
+        }
+
+        var secsContent = ExtractShowdownBlock(block, "secondaries", '[', ']');
+        if (secsContent is not null)
+        {
+            foreach (var elem in SplitJsArray(secsContent))
+            {
+                var inner = elem.Trim();
+                if (!inner.StartsWith('{')) continue;
+                var fx = ParseShowdownSecondary(inner[1..(inner.EndsWith('}') ? inner.Length - 1 : inner.Length)]);
+                if (fx is not null) secondaries.Add(fx);
+            }
+        }
+
+        // Top-level status (status moves like Will-O-Wisp).
+        // Only relevant when no secondary already carries a status.
+        string? topStatus = secondaries.Any(s => s.Status is not null) ? null : SdStr(block, "status");
+
+        var drain = SdPair(block, "drain");
+        var recoil = SdPair(block, "recoil");
+        var heal = SdPair(block, "heal");
+        var critRatio = SdInt(block, "critRatio");
+
+        // multihit: try [min, max] first, then scalar
+        (int Min, int Max)? multihitRange = null;
+        int? multihitFixed = null;
+        var mhPair = SdPair(block, "multihit");
+        if (mhPair.HasValue)
+            multihitRange = (mhPair.Value.N, mhPair.Value.D);
+        else if (SdInt(block, "multihit") is { } mhFixed)
+            multihitFixed = mhFixed;
+
+        bool hasData = secondaries.Count > 0 || topStatus is not null
+            || drain.HasValue || recoil.HasValue || heal.HasValue
+            || multihitFixed.HasValue || multihitRange.HasValue
+            || critRatio is > 1;
+        if (!hasData) continue;
+
+        result[num.Value] = new ShowdownMoveSupplement(
+            secondaries, topStatus, drain, recoil, heal,
+            multihitFixed, multihitRange, critRatio is > 1 ? critRatio : null);
+    }
+
+    Console.WriteLine($"  → {result.Count} moves with secondary data from Showdown");
+    return result;
+}
+
+// PokeAPI ailment ID + English name for a Showdown status abbreviation.
+static (int Id, string Name) ShowdownAilment(string statusCode) => statusCode switch
+{
+    "par" => (1, "Paralysis"),
+    "slp" => (2, "Sleep"),
+    "frz" => (3, "Freeze"),
+    "brn" => (4, "Burn"),
+    "psn" => (5, "Poison"),
+    "tox" => (5, "Badly Poisoned"),
+    _ => (99, statusCode),
+};
+
+// Full stat name from Showdown abbreviation.
+static string ShowdownStatName(string abbr) => abbr switch
+{
+    "atk" => "Attack", "def" => "Defense",
+    "spa" => "Sp. Atk", "spd" => "Sp. Def", "spe" => "Speed",
+    "acc" => "Accuracy", "eva" => "Evasion",
+    _ => abbr,
+};
+
+// ---------------------------------------------------------------------------
 // Move stat epoch logic
 // ---------------------------------------------------------------------------
 
@@ -295,7 +546,7 @@ JsonObject GenerateAbilityInfo(string csvDir)
     return result;
 }
 
-JsonObject GenerateMoveInfo(string csvDir)
+JsonObject GenerateMoveInfo(string csvDir, string? showdownPath = null)
 {
     var damageClasses = new Dictionary<string, string> { ["1"] = "Status", ["2"] = "Physical", ["3"] = "Special" };
 
@@ -380,6 +631,11 @@ JsonObject GenerateMoveInfo(string csvDir)
         var statName = statNameById.GetValueOrDefault(r["stat_id"], r["stat_id"]);
         list.Add((statName, int.Parse(r["change"])));
     }
+
+    // Load Showdown supplement for moves absent from PokeAPI's move_meta CSV.
+    var showdownMoves = showdownPath is not null
+        ? ReadShowdownMoves(showdownPath)
+        : (IReadOnlyDictionary<int, ShowdownMoveSupplement>)new Dictionary<int, ShowdownMoveSupplement>();
 
     var result = new JsonObject();
     foreach (var move in ReadCsv(Path.Combine(csvDir, "moves.csv")))
@@ -474,6 +730,76 @@ JsonObject GenerateMoveInfo(string csvDir)
             if (metaObj.Count > 0)
                 entry["meta"] = metaObj;
         }
+        else if (int.TryParse(moveId, out var moveIdInt)
+                 && showdownMoves.TryGetValue(moveIdInt, out var sd))
+        {
+            // Supplement: build meta from Showdown data for moves missing from PokeAPI move_meta.
+            var metaObj = new JsonObject();
+
+            // Top-level status (e.g. Will-O-Wisp): guaranteed ailment
+            if (sd.TopLevelStatus is { } topStatus)
+            {
+                var (aId, aName) = ShowdownAilment(topStatus);
+                metaObj["ailmentId"] = aId;
+                metaObj["ailmentName"] = aName;
+            }
+
+            // Secondary effects (merge across all secondaries/secondaries[] entries)
+            foreach (var fx in sd.Secondaries)
+            {
+                if (fx.Status is { } status)
+                {
+                    var (aId, aName) = ShowdownAilment(status);
+                    if (!metaObj.ContainsKey("ailmentId")) metaObj["ailmentId"] = aId;
+                    if (!metaObj.ContainsKey("ailmentName")) metaObj["ailmentName"] = aName;
+                    if (fx.Chance is > 0 and < 100 && !metaObj.ContainsKey("ailmentChance"))
+                        metaObj["ailmentChance"] = fx.Chance;
+                }
+                if (fx.Flinch && fx.Chance > 0 && !metaObj.ContainsKey("flinchChance"))
+                    metaObj["flinchChance"] = fx.Chance;
+                if (fx.Boosts.Count > 0)
+                {
+                    if (fx.Chance is > 0 and < 100 && !metaObj.ContainsKey("statChance"))
+                        metaObj["statChance"] = fx.Chance;
+                    if (!metaObj.ContainsKey("statChanges"))
+                    {
+                        var changesArr = new JsonArray();
+                        foreach (var (abbr, change) in fx.Boosts)
+                            changesArr.Add(new JsonObject { ["stat"] = ShowdownStatName(abbr), ["change"] = change });
+                        metaObj["statChanges"] = changesArr;
+                    }
+                }
+            }
+
+            // Drain / recoil
+            if (sd.Drain.HasValue)
+                metaObj["drain"] = (int)Math.Round(sd.Drain.Value.N * 100.0 / sd.Drain.Value.D, MidpointRounding.AwayFromZero);
+            else if (sd.Recoil.HasValue)
+                metaObj["drain"] = -(int)Math.Round(sd.Recoil.Value.N * 100.0 / sd.Recoil.Value.D, MidpointRounding.AwayFromZero);
+
+            // Self-healing (Recover, Roost, etc.)
+            if (sd.Heal.HasValue)
+                metaObj["healing"] = (int)Math.Round(sd.Heal.Value.N * 100.0 / sd.Heal.Value.D, MidpointRounding.AwayFromZero);
+
+            // Multi-hit
+            if (sd.MultihitFixed.HasValue)
+            {
+                metaObj["minHits"] = sd.MultihitFixed.Value;
+                metaObj["maxHits"] = sd.MultihitFixed.Value;
+            }
+            else if (sd.MultihitRange.HasValue)
+            {
+                metaObj["minHits"] = sd.MultihitRange.Value.Min;
+                metaObj["maxHits"] = sd.MultihitRange.Value.Max;
+            }
+
+            // Crit rate (Showdown critRatio > 1 → high crit; use the value directly)
+            if (sd.CritRatio.HasValue)
+                metaObj["critRate"] = sd.CritRatio.Value;
+
+            if (metaObj.Count > 0)
+                entry["meta"] = metaObj;
+        }
 
         result[moveId] = entry;
     }
@@ -522,9 +848,9 @@ var serializerOptions = new JsonSerializerOptions
 
 var tasks = new (string file, Func<string, JsonObject> generator, string label)[]
 {
-    ("ability-info.json", GenerateAbilityInfo, "abilities"),
-    ("move-info.json",    GenerateMoveInfo,    "moves"),
-    ("item-info.json",    GenerateItemInfo,    "items"),
+    ("ability-info.json", GenerateAbilityInfo,                        "abilities"),
+    ("move-info.json",    csv => GenerateMoveInfo(csv, showdownArg),  "moves"),
+    ("item-info.json",    GenerateItemInfo,                           "items"),
 };
 
 foreach (var (file, generator, label) in tasks)
@@ -540,3 +866,25 @@ foreach (var (file, generator, label) in tasks)
 Console.WriteLine();
 Console.WriteLine("Done.");
 return 0;
+
+// ---------------------------------------------------------------------------
+// Showdown data types (must be declared after all top-level statements)
+// ---------------------------------------------------------------------------
+
+/// <summary>One secondary effect from a Showdown secondary/secondaries entry.</summary>
+record ShowdownSecondaryEffect(
+    int Chance,
+    string? Status,
+    bool Flinch,
+    IReadOnlyList<(string Stat, int Change)> Boosts);
+
+/// <summary>All supplemental data extracted from one Showdown move entry.</summary>
+record ShowdownMoveSupplement(
+    IReadOnlyList<ShowdownSecondaryEffect> Secondaries,
+    string? TopLevelStatus,
+    (int N, int D)? Drain,
+    (int N, int D)? Recoil,
+    (int N, int D)? Heal,
+    int? MultihitFixed,
+    (int Min, int Max)? MultihitRange,
+    int? CritRatio);

@@ -70,13 +70,18 @@ Static JSON data files consumed by `DescriptionService` are generated from exter
 
 ### `tools/generate-descriptions.cs`
 
-Generates `ability-info.json`, `move-info.json`, and `item-info.json` from PokeAPI CSV data.
+Generates `ability-info.json`, `move-info.json`, and `item-info.json` from PokeAPI CSV data, with optional secondary-effect supplement from Pokémon Showdown.
 
 - **Source**: PokeAPI repo (CSV files under `data/v2/csv/`)
+- **Source (optional)**: Pokémon Showdown repo (`data/moves.ts`) — supplements secondary effects (stat changes, status, flinch, drain, multi-hit, crit rate) for Gen 8+ moves that PokeAPI's `move_meta` CSV doesn't cover yet
 - **Output**: `Pkmds.Rcl/wwwroot/data/`
 
 ```sh
+# Without Showdown (PokeAPI data only)
 dotnet run tools/generate-descriptions.cs -- --pokeapi ~/Code/codemonkey85/pokeapi
+
+# With Showdown supplement (recommended — fills Gen 8+ move secondary effects)
+dotnet run tools/generate-descriptions.cs -- --pokeapi ~/Code/codemonkey85/pokeapi --showdown ~/Code/pokemon-showdown
 ```
 
 ### `tools/generate-tm-data.cs`
