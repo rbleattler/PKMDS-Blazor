@@ -791,6 +791,21 @@ JsonObject GenerateMoveInfo(string csvDir, string? showdownPath = null)
                 metaObj["statChanges"] = changesArr;
             }
 
+            // Let Showdown refine the ailment name when PokeAPI is too coarse.
+            // e.g. PokeAPI uses ailment 5 ("Poison") for both psn and tox; Showdown distinguishes them.
+            if (metaObj.ContainsKey("ailmentId")
+                && int.TryParse(moveId, out var refineMoveId)
+                && showdownMoves.TryGetValue(refineMoveId, out var sdRefine))
+            {
+                var sdStatus = sdRefine.TopLevelStatus
+                    ?? sdRefine.Secondaries.Select(fx => fx.Status).FirstOrDefault(s => s is not null);
+                if (sdStatus is not null)
+                {
+                    var (_, refinedName) = ShowdownAilment(sdStatus);
+                    metaObj["ailmentName"] = refinedName;
+                }
+            }
+
             if (metaObj.Count > 0)
                 entry["meta"] = metaObj;
         }
