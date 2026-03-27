@@ -113,4 +113,7 @@ public partial class BasePkmdsComponent
     /// <summary>Returns true if the flag should be shown for the given save-file generation.</summary>
     protected static bool IsFlagRelevant(string flag, int saveGeneration) =>
         !FlagMinGeneration.TryGetValue(flag, out var minGen) || saveGeneration >= minGen;
+
+    protected static string FormatPriority(int priority) =>
+        priority > 0 ? $"+{priority}" : priority.ToString();
 }

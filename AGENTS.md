@@ -64,6 +64,38 @@ This app depends heavily on [PKHeX.Core](https://github.com/kwsch/PKHeX). When i
 
 If you encounter bugs or limitations in PKHeX.Core while working on an issue or PR, note them in a code comment at the relevant site and report them on the GitHub issue or PR you are working on.
 
+## Data generation tools
+
+Static JSON data files consumed by `DescriptionService` are generated from external sources using .NET 10 file-based apps in `tools/`. Run them whenever the upstream data changes.
+
+### `tools/generate-descriptions.cs`
+
+Generates `ability-info.json`, `move-info.json`, and `item-info.json` from PokeAPI CSV data.
+
+- **Source**: PokeAPI repo (CSV files under `data/v2/csv/`)
+- **Output**: `Pkmds.Rcl/wwwroot/data/`
+
+```sh
+dotnet run tools/generate-descriptions.cs -- --pokeapi ~/Code/codemonkey85/pokeapi
+```
+
+### `tools/generate-tm-data.cs`
+
+Generates `tm-data.json` from the Bulbapedia "List of TMs" page. Also merges Sword/Shield TR data (TR00–TR99) from hardcoded PKHeX.Core move IDs. Requires `move-info.json` to already exist (run `generate-descriptions.cs` first).
+
+- **Source**: Fetched directly from https://bulbapedia.bulbagarden.net/wiki/List_of_TMs (or supply a saved HTML file with `--input`)
+- **Output**: `Pkmds.Rcl/wwwroot/data/tm-data.json`
+
+```sh
+# Fetch live from Bulbapedia (default)
+dotnet run tools/generate-tm-data.cs
+
+# Use a previously saved HTML file
+dotnet run tools/generate-tm-data.cs -- --input "path/to/List of TMs - Bulbapedia.html"
+```
+
+Both scripts default output to `Pkmds.Rcl/wwwroot/data/` by walking up from the working directory to find the repo root. Pass `--output /path` to override.
+
 ## Notes
 
 - Respect the existing code style. Reference `.editorconfig` for formatting rules; Debug builds treat warnings as errors.

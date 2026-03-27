@@ -47,7 +47,8 @@ public sealed class DescriptionService(HttpClient http, ILogger<DescriptionServi
             epoch?.Accuracy,
             description,
             entry.Target ?? string.Empty,
-            entry.Flags ?? []);
+            entry.Flags ?? [],
+            entry.Priority);
     }
 
     public async Task<AbilitySummary?> GetAbilityInfoAsync(int abilityId, GameVersion version)
@@ -312,7 +313,8 @@ public sealed class DescriptionService(HttpClient http, ILogger<DescriptionServi
         string? Target,
         List<string>? Flags,
         List<JsonMoveStatEpoch> Stats,
-        Dictionary<string, string>? Flavor);
+        Dictionary<string, string>? Flavor,
+        int Priority = 0);
 
     private sealed record JsonMoveStatEpoch(
         int FromVersionGroup,

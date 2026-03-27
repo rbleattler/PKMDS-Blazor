@@ -11,7 +11,8 @@ public sealed record MoveSummary(
     int? Accuracy,
     string Description,
     string Target,
-    IReadOnlyList<string> Flags);
+    IReadOnlyList<string> Flags,
+    int Priority = 0);
 
 /// <summary>Result from an ability description lookup.</summary>
 public sealed record AbilitySummary(
