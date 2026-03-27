@@ -1032,6 +1032,19 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
             pkm = EntityConverter.ConvertToType(pkm, expectedType, out _);
         }
 
+        // PKHeX's string encoding can silently produce an empty OT name when the save's
+        // character encoding doesn't round-trip cleanly (e.g. Japanese Gen 3 saves where
+        // StringConverter3 stops encoding at the first unrecognised character).
+        // For non-trade encounters the OT should always be the player's own trainer name,
+        // so fall back to the save file directly if the generated PKM has no OT.
+        if (pkm is not null && string.IsNullOrEmpty(pkm.OriginalTrainerName)
+            && encounter is not IFixedTrainer
+            && !string.IsNullOrEmpty(sav.OT))
+        {
+            pkm.OriginalTrainerName = sav.OT;
+            pkm.OriginalTrainerGender = sav.Gender;
+        }
+
         return pkm;
     }
 
