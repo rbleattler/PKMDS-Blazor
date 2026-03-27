@@ -54,7 +54,7 @@ for (var i = 0; i < args.Length; i++)
 
 if (pokeapiArg is null)
 {
-    Console.Error.WriteLine("Usage: dotnet run generate-descriptions.cs -- --pokeapi /path/to/pokeapi [--showdown /path/to/pokemon-showdown] [--output /path/to/output]");
+    Console.Error.WriteLine("Usage: dotnet run tools/generate-descriptions.cs -- --pokeapi /path/to/pokeapi [--showdown /path/to/pokemon-showdown] [--output /path/to/output]");
     return 1;
 }
 
@@ -205,7 +205,7 @@ JsonObject ToJsonObject(Dictionary<string, string> dict)
 // Only the fields that map to our JSON meta model are extracted.
 //
 // Handles:
-//   secondary: { chance, status, volatileStatus, boosts }
+//   secondary: { chance, status, boosts }  — volatileStatus only checked for 'flinch'
 //   secondaries: [{ ... }, { ... }]
 //   drain: [n, d]       recoil: [n, d]     heal: [n, d]
 //   multihit: n         multihit: [min, max]
@@ -773,13 +773,13 @@ JsonObject GenerateMoveInfo(string csvDir, string? showdownPath = null)
 
             // Drain / recoil
             if (sd.Drain.HasValue)
-                metaObj["drain"] = (int)Math.Round(sd.Drain.Value.N * 100.0 / sd.Drain.Value.D);
+                metaObj["drain"] = (int)Math.Round(sd.Drain.Value.N * 100.0 / sd.Drain.Value.D, MidpointRounding.AwayFromZero);
             else if (sd.Recoil.HasValue)
-                metaObj["drain"] = -(int)Math.Round(sd.Recoil.Value.N * 100.0 / sd.Recoil.Value.D);
+                metaObj["drain"] = -(int)Math.Round(sd.Recoil.Value.N * 100.0 / sd.Recoil.Value.D, MidpointRounding.AwayFromZero);
 
             // Self-healing (Recover, Roost, etc.)
             if (sd.Heal.HasValue)
-                metaObj["healing"] = (int)Math.Round(sd.Heal.Value.N * 100.0 / sd.Heal.Value.D);
+                metaObj["healing"] = (int)Math.Round(sd.Heal.Value.N * 100.0 / sd.Heal.Value.D, MidpointRounding.AwayFromZero);
 
             // Multi-hit
             if (sd.MultihitFixed.HasValue)
