@@ -14,34 +14,42 @@
                     PID Generator
                 </MudText>
 
+                @if (IsGen345)
+                {
+                    <MudStack Row
+                              Wrap="@Wrap.Wrap"
+                              Spacing="2"
+                              Class="mb-2">
+                        <MudCheckBox @bind-Value="@KeepNature"
+                                     Label="Keep nature"
+                                     Color="@Color.Primary" />
+                        @if (Pokemon.PersonalInfo.IsDualGender)
+                        {
+                            <MudCheckBox @bind-Value="@KeepGender"
+                                         Label="Keep gender"
+                                         Color="@Color.Primary" />
+                        }
+                        <MudCheckBox @bind-Value="@AvoidShiny"
+                                     Label="Avoid shiny"
+                                     Color="@Color.Primary" />
+                    </MudStack>
+                }
+
                 <MudStack Row
                           Wrap="@Wrap.Wrap"
                           Spacing="1"
                           Class="mb-2">
 
                     <MudButton Variant="@Variant.Outlined"
-                               OnClick="@RerollPid"
+                               OnClick="@GeneratePid"
                                StartIcon="@Icons.Material.Filled.Refresh">
-                        Reroll PID
+                        Generate PID
                     </MudButton>
 
                     <MudButton Variant="@Variant.Outlined"
                                OnClick="@MakeShinyPid"
                                StartIcon="@Icons.Material.Filled.Star">
                         Make Shiny PID
-                    </MudButton>
-
-                    <MudButton Variant="@Variant.Outlined"
-                               OnClick="@SetGenderLockedPid"
-                               StartIcon="@Icons.Material.Filled.People"
-                               Disabled="@(!Pokemon.PersonalInfo.IsDualGender)">
-                        Gender-Locked PID
-                    </MudButton>
-
-                    <MudButton Variant="@Variant.Outlined"
-                               OnClick="@SetNatureLockedPid"
-                               StartIcon="@Icons.Material.Filled.Psychology">
-                        Nature-Locked PID
                     </MudButton>
 
                 </MudStack>
