@@ -16,6 +16,8 @@ public partial class BugReportDialog
 
     private bool IsEmailValid => !string.IsNullOrWhiteSpace(email) && EmailValidator.IsValid(email);
 
+    private string? submitError;
+
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; } = null!;
 
@@ -27,6 +29,14 @@ public partial class BugReportDialog
 
     private void Cancel() => MudDialog.Close(DialogResult.Cancel());
 
-    private void Submit() =>
+    private void Submit()
+    {
+        if (description.Length < MinDescriptionLength || !IsEmailValid || string.IsNullOrWhiteSpace(name))
+        {
+            submitError = "Please provide a valid email address and name before submitting.";
+            return;
+        }
+
         MudDialog.Close(DialogResult.Ok(new BugReportData(description, email, name, attachSaveFile)));
+    }
 }

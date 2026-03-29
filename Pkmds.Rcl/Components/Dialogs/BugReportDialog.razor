@@ -47,6 +47,13 @@
                        Label="Attach current save file"
                        Disabled="@(!HasSaveFile)"
                        Color="@Color.Primary"/>
+            @if (submitError is not null)
+            {
+                <MudAlert Severity="@Severity.Error"
+                          Dense="true">
+                    @submitError
+                </MudAlert>
+            }
             <MudText Typo="@Typo.caption"
                      Color="@Color.Secondary">
                 Reports are sent to our error tracking service to help improve the app.
