@@ -141,12 +141,8 @@ public partial class PidEcDialog
         RefreshService.Refresh();
     }
 
-    private static uint NextRandomUInt32()
-    {
-        var bytes = new byte[4];
-        Random.Shared.NextBytes(bytes);
-        return BitConverter.ToUInt32(bytes);
-    }
+    private static uint NextRandomUInt32() =>
+        (uint)Random.Shared.NextInt64(uint.MaxValue + 1L);
 
     private void Close() => MudDialog?.Close();
 }

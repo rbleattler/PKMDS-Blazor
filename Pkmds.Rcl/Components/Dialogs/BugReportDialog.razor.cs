@@ -31,7 +31,13 @@ public partial class BugReportDialog
 
     private void Submit()
     {
-        if (description.Length < MinDescriptionLength || !IsEmailValid || string.IsNullOrWhiteSpace(name))
+        if (description.Length < MinDescriptionLength)
+        {
+            submitError = $"Please provide a more detailed description (at least {MinDescriptionLength} characters).";
+            return;
+        }
+
+        if (!IsEmailValid || string.IsNullOrWhiteSpace(name))
         {
             submitError = "Please provide a valid email address and name before submitting.";
             return;

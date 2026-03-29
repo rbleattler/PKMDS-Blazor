@@ -14,12 +14,12 @@
                     PID Generator
                 </MudText>
 
-                @if (IsGen345)
-                {
-                    <MudStack Row
-                              Wrap="@Wrap.Wrap"
-                              Spacing="2"
-                              Class="mb-2">
+                <MudStack Row
+                          Wrap="@Wrap.Wrap"
+                          Spacing="2"
+                          Class="mb-2">
+                    @if (IsGen345)
+                    {
                         <MudCheckBox @bind-Value="@KeepNature"
                                      Label="Keep nature"
                                      Color="@Color.Primary" />
@@ -29,11 +29,11 @@
                                          Label="Keep gender"
                                          Color="@Color.Primary" />
                         }
-                        <MudCheckBox @bind-Value="@AvoidShiny"
-                                     Label="Avoid shiny"
-                                     Color="@Color.Primary" />
-                    </MudStack>
-                }
+                    }
+                    <MudCheckBox @bind-Value="@AvoidShiny"
+                                 Label="Avoid shiny"
+                                 Color="@Color.Primary" />
+                </MudStack>
 
                 <MudStack Row
                           Wrap="@Wrap.Wrap"
