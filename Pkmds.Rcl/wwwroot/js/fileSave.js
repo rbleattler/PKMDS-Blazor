@@ -89,8 +89,12 @@ window.showFilePickerAndWrite = async function (fileName, byteArray, extension, 
         }
 
         // Chrome Android may have partial / flaky support for File System Access API.
+        // iOS (all browsers) uses WebKit, which may expose showSaveFilePicker but has
+        // incomplete support for createWritable() — always use the anchor fallback on iOS.
         const supportsFS = !!window.showSaveFilePicker;
-        if (!supportsFS || /Android/i.test(navigator.userAgent)) {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        if (!supportsFS || /Android/i.test(navigator.userAgent) || isIOS) {
             console.warn('[showFilePickerAndWrite] Falling back to anchor download for this platform.');
 
             const uint8 = byteArray instanceof Uint8Array ? byteArray : new Uint8Array(byteArray);
