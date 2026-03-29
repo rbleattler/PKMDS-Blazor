@@ -13,25 +13,52 @@ public partial class PidEcDialog
 
     private Shiny SelectedShinyType { get; set; } = Shiny.AlwaysStar;
 
+    private bool KeepNature { get; set; } = true;
+
+    private bool KeepGender { get; set; } = true;
+
+    private bool AvoidShiny { get; set; } = true;
+
     private int SaveGeneration => AppState.SaveFile?.Generation ?? 0;
 
-    private void RerollPid()
+    private bool IsGen345 => SaveGeneration is 3 or 4 or 5;
+
+    private void GeneratePid()
     {
         if (Pokemon is null)
         {
             return;
         }
 
-        var pid = EntityPID.GetRandomPID(
-            Random.Shared,
-            Pokemon.Species,
-            Pokemon.Gender,
-            Pokemon.Version,
-            Pokemon.Nature,
-            Pokemon.Form,
-            Pokemon.PID);
+        var desiredNature = (byte)Pokemon.Nature;
+        var genderRatio = Pokemon.PersonalInfo.Gender;
+        var desiredGender = Pokemon.Gender;
+        var isDualGender = Pokemon.PersonalInfo.IsDualGender;
 
-        Pokemon.PID = pid;
+        // For Gen 3–5, the ability slot is encoded in the PID (bit 0 for Gen 3/4, bit 16
+        // for Gen 5). Preserve it so randomizing the PID does not silently change the
+        // Pokémon's ability. See EntityPID.GetRandomPID in PKHeX.Core for reference.
+        uint abilityBitMask = SaveGeneration switch
+        {
+            3 or 4 => 0x0000_0001u,
+            5 => 0x0001_0000u,
+            _ => 0u,
+        };
+        uint desiredAbilityBit = Pokemon.PID & abilityBitMask;
+
+        uint pid;
+        do
+        {
+            pid = NextRandomUInt32();
+            Pokemon.PID = pid; // needed to evaluate IsShiny
+        }
+        while (
+            (abilityBitMask != 0 && (pid & abilityBitMask) != desiredAbilityBit) ||
+            (IsGen345 && KeepNature && pid % 25 != desiredNature) ||
+            (IsGen345 && KeepGender && isDualGender && EntityGender.GetFromPIDAndRatio(pid, genderRatio) != desiredGender) ||
+            (AvoidShiny && Pokemon.IsShiny)
+        );
+
         AppService.LoadPokemonStats(Pokemon);
         RefreshService.Refresh();
     }
@@ -47,30 +74,6 @@ public partial class PidEcDialog
         RefreshService.Refresh();
     }
 
-    private void SetGenderLockedPid()
-    {
-        if (Pokemon is null)
-        {
-            return;
-        }
-
-        Pokemon.SetPIDGender(Pokemon.Gender);
-        AppService.LoadPokemonStats(Pokemon);
-        RefreshService.Refresh();
-    }
-
-    private void SetNatureLockedPid()
-    {
-        if (Pokemon is null)
-        {
-            return;
-        }
-
-        Pokemon.SetPIDNature(Pokemon.Nature);
-        AppService.LoadPokemonStats(Pokemon);
-        RefreshService.Refresh();
-    }
-
     private void GenerateWithMethod()
     {
         if (Pokemon is null)
@@ -78,8 +81,26 @@ public partial class PidEcDialog
             return;
         }
 
-        var seed = (uint)Random.Shared.Next();
-        var pid = ClassicEraRNG.GetSequentialPID(ref seed);
+        var desiredNature = (byte)Pokemon.Nature;
+        var genderRatio = Pokemon.PersonalInfo.Gender;
+        var desiredGender = Pokemon.Gender;
+        var isDualGender = Pokemon.PersonalInfo.IsDualGender;
+
+        // Loop until we find a seed whose PID satisfies all checked constraints.
+        // For Gen 3–5, both nature and gender are encoded in the PID, so a random
+        // PID will only match by chance — this avoids the user having to retry manually.
+        uint seed, pid;
+        do
+        {
+            seed = NextRandomUInt32();
+            pid = ClassicEraRNG.GetSequentialPID(ref seed);
+            Pokemon.PID = pid; // needed to evaluate IsShiny
+        }
+        while (
+            (KeepNature && pid % 25 != desiredNature) ||
+            (KeepGender && isDualGender && EntityGender.GetFromPIDAndRatio(pid, genderRatio) != desiredGender) ||
+            (AvoidShiny && Pokemon.IsShiny)
+        );
 
         uint ivs;
         switch (SelectedMethod)
@@ -101,7 +122,6 @@ public partial class PidEcDialog
                 return;
         }
 
-        Pokemon.PID = pid;
         Pokemon.SetIVs(ivs);
         AppService.LoadPokemonStats(Pokemon);
         RefreshService.Refresh();
@@ -114,6 +134,9 @@ public partial class PidEcDialog
             return;
         }
 
+        // Note: EC % 6 determines the Pokémon's characteristic (e.g. "Often dozes off").
+        // If preserving the characteristic ever becomes a requirement, loop until the new
+        // EC satisfies newEc % 6 == oldEc % 6 before calling SetRandomEC.
         Pokemon.SetRandomEC();
         AppService.LoadPokemonStats(Pokemon);
         RefreshService.Refresh();
@@ -129,6 +152,9 @@ public partial class PidEcDialog
         Pokemon.SetShiny(SelectedShinyType);
         RefreshService.Refresh();
     }
+
+    private static uint NextRandomUInt32() =>
+        (uint)Random.Shared.NextInt64(uint.MaxValue + 1L);
 
     private void Close() => MudDialog?.Close();
 }
