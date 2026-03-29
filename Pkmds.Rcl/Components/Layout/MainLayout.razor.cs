@@ -754,6 +754,7 @@ public partial class MainLayout : IDisposable
         catch (JSException ex)
         {
             Logger.LogError(ex, "Error writing file using File System Access API: {FileName}", fileName);
+            Snackbar.Add("Export failed. Please try again or use a different browser.", Severity.Error);
         }
     }
 
