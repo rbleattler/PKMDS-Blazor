@@ -8,7 +8,7 @@ on:
   issues:
     types: [opened]
   schedule:
-    - cron: '0 13 * * 1'  # Mondays at 9 AM Eastern (EDT)
+    - cron: '0 13 * * 1'  # Mondays at 13:00 UTC (9 AM EDT / 8 AM EST)
   workflow_dispatch:
 
 jobs:
@@ -31,6 +31,9 @@ jobs:
 
   triage:
     if: github.event_name == 'issues' && github.event.action == 'opened'
+    permissions:
+      contents: read
+      issues: write
     runs-on: ubuntu-latest
     steps:
       - uses: anthropics/claude-code-action@v1

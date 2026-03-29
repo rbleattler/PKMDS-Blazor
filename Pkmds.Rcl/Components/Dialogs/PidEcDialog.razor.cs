@@ -21,7 +21,7 @@ public partial class PidEcDialog
 
     private int SaveGeneration => AppState.SaveFile?.Generation ?? 0;
 
-    private bool IsGen345 => Pokemon?.Generation is 3 or 4 or 5;
+    private bool IsGen345 => SaveGeneration is 3 or 4 or 5;
 
     private void GeneratePid()
     {
@@ -35,6 +35,17 @@ public partial class PidEcDialog
         var desiredGender = Pokemon.Gender;
         var isDualGender = Pokemon.PersonalInfo.IsDualGender;
 
+        // For Gen 3–5, the ability slot is encoded in the PID (bit 0 for Gen 3/4, bit 16
+        // for Gen 5). Preserve it so randomizing the PID does not silently change the
+        // Pokémon's ability. See EntityPID.GetRandomPID in PKHeX.Core for reference.
+        uint abilityBitMask = SaveGeneration switch
+        {
+            3 or 4 => 0x0000_0001u,
+            5 => 0x0001_0000u,
+            _ => 0u,
+        };
+        uint desiredAbilityBit = Pokemon.PID & abilityBitMask;
+
         uint pid;
         do
         {
@@ -42,6 +53,7 @@ public partial class PidEcDialog
             Pokemon.PID = pid; // needed to evaluate IsShiny
         }
         while (
+            (abilityBitMask != 0 && (pid & abilityBitMask) != desiredAbilityBit) ||
             (IsGen345 && KeepNature && pid % 25 != desiredNature) ||
             (IsGen345 && KeepGender && isDualGender && EntityGender.GetFromPIDAndRatio(pid, genderRatio) != desiredGender) ||
             (AvoidShiny && Pokemon.IsShiny)
