@@ -5,22 +5,23 @@ namespace Pkmds.Core.Utilities;
 
 /// <summary>
 /// Helpers for importing and exporting 3DS save files in the Manic EMU
-/// <c>.3ds.sav</c> ZIP format.
+/// <c>.3ds.sav</c> / <c>.3ds.save</c> ZIP format.
 /// </summary>
 /// <remarks>
-/// Manic EMU exports 3DS saves as a ZIP archive named <c>GameTitle.3ds.sav</c>.
+/// Manic EMU exports 3DS saves as a ZIP archive. The filename extension varies by
+/// platform: most versions use <c>GameTitle.3ds.sav</c>; iOS uses <c>GameTitle.3ds.save</c>.
 /// The ZIP contains the full <c>sdmc/</c> directory tree from Citra's virtual SD card,
 /// e.g. <c>sdmc/Nintendo 3DS/…/title/00040000/00055d00/data/00000001/&lt;savefile&gt;</c>.
 /// The actual PKHeX-compatible save bytes are stored as a single binary file entry
 /// inside that directory structure.
 /// To round-trip a save through PKMDS:
 /// <list type="number">
-/// <item>User exports <c>.3ds.sav</c> from Manic EMU.</item>
+/// <item>User exports <c>.3ds.sav</c> or <c>.3ds.save</c> from Manic EMU.</item>
 /// <item>PKMDS detects the ZIP, finds the save entry, and loads it.</item>
 /// <item>User edits the save in PKMDS.</item>
 /// <item>
 /// PKMDS rebuilds the ZIP with the edited save bytes and offers it for download
-/// as <c>.3ds.sav</c> so Manic EMU can import it directly.
+/// using the same compound extension as the original so Manic EMU can import it directly.
 /// </item>
 /// </list>
 /// </remarks>
@@ -219,7 +220,45 @@ public static class ManicEmuSaveHelper
     }
 
     /// <summary>
-    /// Metadata required to rebuild a <c>.3ds.sav</c> ZIP after the save has been edited.
+    /// Computes the export filename and compound extension for a Manic EMU save archive,
+    /// preserving the original compound extension for round-trip compatibility.
+    /// </summary>
+    /// <param name="originalName">
+    /// Original filename of the loaded archive (may be <see langword="null" />).
+    /// </param>
+    /// <returns>
+    /// A tuple of the full export filename and its compound extension.
+    /// For example, <c>("AlphaSapphire.3ds.save", ".3ds.save")</c> for an iOS archive
+    /// or <c>("AlphaSapphire.3ds.sav", ".3ds.sav")</c> for other platforms.
+    /// </returns>
+    public static (string ExportName, string CompoundExtension) GetExportFileName(string? originalName)
+    {
+        const string savExt = ".3ds.sav";
+        const string saveExt = ".3ds.save";
+
+        if (originalName is null)
+            return ("save" + savExt, savExt);
+
+        // iOS Manic EMU uses .3ds.save; check this first since it is the more specific suffix.
+        if (originalName.EndsWith(saveExt, StringComparison.OrdinalIgnoreCase))
+        {
+            var stem = originalName[..^saveExt.Length];
+            return ((stem.Length > 0 ? stem : "save") + saveExt, saveExt);
+        }
+
+        if (originalName.EndsWith(savExt, StringComparison.OrdinalIgnoreCase))
+        {
+            var stem = originalName[..^savExt.Length];
+            return ((stem.Length > 0 ? stem : "save") + savExt, savExt);
+        }
+
+        // Unknown/no compound extension — strip the last extension and default to .3ds.sav.
+        var fallbackStem = Path.GetFileNameWithoutExtension(originalName);
+        return ((fallbackStem.Length > 0 ? fallbackStem : "save") + savExt, savExt);
+    }
+
+    /// <summary>
+    /// Metadata required to rebuild a <c>.3ds.sav</c> / <c>.3ds.save</c> ZIP after the save has been edited.
     /// </summary>
     public sealed record ManicEmuSaveContext(byte[] OriginalZipBytes, string SaveEntryPath);
 }
