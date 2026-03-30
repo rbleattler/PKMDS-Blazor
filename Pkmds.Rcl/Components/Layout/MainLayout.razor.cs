@@ -210,7 +210,7 @@ public partial class MainLayout : IDisposable
     {
         const string message = "Choose a save file";
         const string manicEmuHint =
-            "Tip: If you're using Manic EMU, upload the .3ds.sav export directly " +
+            "Tip: If you're using Manic EMU, upload the .3ds.sav or .3ds.save export directly " +
             "for seamless round-trip import support.";
 
         var dialogParameters = new DialogParameters { { nameof(FileUploadDialog.Message), message }, { nameof(FileUploadDialog.HintText), manicEmuHint } };
@@ -282,7 +282,7 @@ public partial class MainLayout : IDisposable
             else if (ManicEmuSaveHelper.TryExtractSaveFromZip(data, selectedFile.Name, out saveFile, out var manicContext))
             {
                 manicEmuSaveContext = manicContext;
-                Logger.LogInformation("Loaded save from Manic EMU .3ds.sav archive; entry: {EntryPath}", manicContext.SaveEntryPath);
+                Logger.LogInformation("Loaded save from Manic EMU .3ds.sav/.3ds.save archive; entry: {EntryPath}", manicContext.SaveEntryPath);
                 FinishLoadingSaveFile(saveFile);
             }
             else
