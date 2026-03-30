@@ -141,7 +141,7 @@ public class ManicEmuSaveHelperTests
         saveFile.Should().NotBeNull();
         saveFile.Should().BeOfType<SAV7SM>();
         ctx.Should().NotBeNull();
-        ctx!.SaveEntryPath.Should().Be(saveEntryPath);
+        ctx.SaveEntryPath.Should().Be(saveEntryPath);
     }
 
     [Fact]
@@ -193,14 +193,14 @@ public class ManicEmuSaveHelperTests
 
         var saveEntry = archive.GetEntry(saveEntryPath);
         saveEntry.Should().NotBeNull();
-        using var saveStream = saveEntry!.Open();
+        using var saveStream = saveEntry.Open();
         var readBack = new byte[newSaveBytes.Length];
         saveStream.ReadExactly(readBack);
         readBack.Should().Equal(newSaveBytes);
 
         var extraEntry = archive.GetEntry(extraEntryPath);
         extraEntry.Should().NotBeNull();
-        using var extraStream = extraEntry!.Open();
+        using var extraStream = extraEntry.Open();
         var extraReadBack = new byte[extraBytes.Length];
         extraStream.ReadExactly(extraReadBack);
         extraReadBack.Should().Equal(extraBytes);
@@ -219,7 +219,7 @@ public class ManicEmuSaveHelperTests
     [Theory]
     [InlineData("AlphaSapphire.3ds.sav", "AlphaSapphire.3ds.sav", ".3ds.sav")]
     [InlineData("ALPHASAPPHIRE.3DS.SAV", "ALPHASAPPHIRE.3ds.sav", ".3ds.sav")] // case-insensitive strip
-    [InlineData(".3ds.sav", "save.3ds.sav", ".3ds.sav")]                         // empty stem fallback
+    [InlineData(".3ds.sav", "save.3ds.sav", ".3ds.sav")] // empty stem fallback
     public void GetExportFileName_DotSav_PreservesSavExtension(string input, string expectedName, string expectedExt)
     {
         var (name, ext) = ManicEmuSaveHelper.GetExportFileName(input);
@@ -230,7 +230,7 @@ public class ManicEmuSaveHelperTests
     [Theory]
     [InlineData("AlphaSapphire.3ds.save", "AlphaSapphire.3ds.save", ".3ds.save")]
     [InlineData("ALPHASAPPHIRE.3DS.SAVE", "ALPHASAPPHIRE.3ds.save", ".3ds.save")] // case-insensitive strip
-    [InlineData(".3ds.save", "save.3ds.save", ".3ds.save")]                         // empty stem fallback
+    [InlineData(".3ds.save", "save.3ds.save", ".3ds.save")] // empty stem fallback
     public void GetExportFileName_DotSave_PreservesSaveExtension(string input, string expectedName, string expectedExt)
     {
         var (name, ext) = ManicEmuSaveHelper.GetExportFileName(input);
@@ -285,6 +285,6 @@ public class ManicEmuSaveHelperTests
         ManicEmuSaveHelper.TryExtractSaveFromZip(rebuilt, "moon.sav", out var reExtracted, out _).Should().BeTrue();
         reExtracted.Should().NotBeNull();
         reExtracted.Should().BeOfType<SAV7SM>();
-        reExtracted!.Write().Length.Should().Be(saveBytes.Length);
+        reExtracted.Write().Length.Should().Be(saveBytes.Length);
     }
 }

@@ -30,15 +30,16 @@ public class ContestStatsTests
     public void ContestStats_PK3_CanBeSetAndRead()
     {
         // Arrange
-        var pk3 = new PK3();
-
-        // Act
-        pk3.ContestCool = 100;
-        pk3.ContestBeauty = 150;
-        pk3.ContestCute = 200;
-        pk3.ContestSmart = 50;
-        pk3.ContestTough = 75;
-        pk3.ContestSheen = 255;
+        var pk3 = new PK3
+        {
+            // Act
+            ContestCool = 100,
+            ContestBeauty = 150,
+            ContestCute = 200,
+            ContestSmart = 50,
+            ContestTough = 75,
+            ContestSheen = 255
+        };
 
         // Assert
         pk3.ContestCool.Should().Be(100);
@@ -53,15 +54,16 @@ public class ContestStatsTests
     public void ContestStats_PK4_CanBeSetAndRead()
     {
         // Arrange
-        var pk4 = new PK4();
-
-        // Act
-        pk4.ContestCool = 200;
-        pk4.ContestBeauty = 200;
-        pk4.ContestCute = 200;
-        pk4.ContestSmart = 200;
-        pk4.ContestTough = 200;
-        pk4.ContestSheen = 200;
+        var pk4 = new PK4
+        {
+            // Act
+            ContestCool = 200,
+            ContestBeauty = 200,
+            ContestCute = 200,
+            ContestSmart = 200,
+            ContestTough = 200,
+            ContestSheen = 200
+        };
 
         // Assert
         pk4.ContestCool.Should().Be(200);
@@ -76,15 +78,16 @@ public class ContestStatsTests
     public void ContestStats_PB8_CanBeSetAndRead()
     {
         // Arrange
-        var pb8 = new PB8();
-
-        // Act
-        pb8.ContestCool = 255;
-        pb8.ContestBeauty = 255;
-        pb8.ContestCute = 255;
-        pb8.ContestSmart = 255;
-        pb8.ContestTough = 255;
-        pb8.ContestSheen = 255;
+        var pb8 = new PB8
+        {
+            // Act
+            ContestCool = 255,
+            ContestBeauty = 255,
+            ContestCute = 255,
+            ContestSmart = 255,
+            ContestTough = 255,
+            ContestSheen = 255
+        };
 
         // Assert
         pb8.ContestCool.Should().Be(255);

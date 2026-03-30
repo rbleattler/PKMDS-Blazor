@@ -214,7 +214,7 @@ public class EvolveTests
         public int? PinnedBoxNumber { get; set; }
         public bool ShowProgressIndicator { get; set; }
         public string AppVersion => "Test";
-        public DateTime? AppBuildDate { get; }
+        public DateTime? AppBuildDate => null;
         public bool SelectedSlotsAreValid => true;
         public bool IsHaXEnabled { get; set; }
         public SpriteStyle SpriteStyle { get; set; }

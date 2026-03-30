@@ -11,7 +11,7 @@ public class EncounterDatabaseTests
 
     // ── Helpers ───────────────────────────────────────────────────────────
 
-    private static (AppService service, SaveFile saveFile) CreateServiceFromFile(string fileName)
+    private static AppService CreateServiceFromFile(string fileName)
     {
         var filePath = Path.Combine(TestFilesPath, fileName);
         var data = File.ReadAllBytes(filePath);
@@ -19,7 +19,7 @@ public class EncounterDatabaseTests
         LocalizeUtil.InitializeStrings(GameLanguage.DefaultLanguage, saveFile);
         var appState = new TestAppState { SaveFile = saveFile };
         var service = new AppService(appState, new TestRefreshService());
-        return (service, saveFile!);
+        return service;
     }
 
     // ── SearchEncounters ──────────────────────────────────────────────────
@@ -28,7 +28,7 @@ public class EncounterDatabaseTests
     public void SearchEncounters_NullSpecies_ReturnsEmpty()
     {
         // Arrange
-        var (service, _) = CreateServiceFromFile("POKEMON RED-0.sav");
+        var service = CreateServiceFromFile("POKEMON RED-0.sav");
 
         // Act — no species specified
         var results = service.SearchEncounters(new EncounterSearchFilter()).ToList();
@@ -41,7 +41,7 @@ public class EncounterDatabaseTests
     public void SearchEncounters_ValidSpecies_ReturnsAtLeastOneEncounter()
     {
         // Arrange — Pikachu (025) exists as a wild encounter in Gen 1 Red/Blue
-        var (service, _) = CreateServiceFromFile("POKEMON RED-0.sav");
+        var service = CreateServiceFromFile("POKEMON RED-0.sav");
 
         // Act
         var results = service
@@ -57,7 +57,7 @@ public class EncounterDatabaseTests
     public void SearchEncounters_LevelFilter_ExcludesOutOfRangeEncounters()
     {
         // Arrange
-        var (service, _) = CreateServiceFromFile("POKEMON RED-0.sav");
+        var service = CreateServiceFromFile("POKEMON RED-0.sav");
         const byte minLevel = 20;
         const byte maxLevel = 30;
 
@@ -80,7 +80,7 @@ public class EncounterDatabaseTests
     public void SearchEncounters_ShinyLockedFilter_ReturnsOnlyMatchingEncounters()
     {
         // Arrange — use a Gen 8+ save which has shiny-locked legendaries
-        var (service, _) = CreateServiceFromFile("Test-Save-Shield.sav");
+        var service = CreateServiceFromFile("Test-Save-Shield.sav");
 
         // Act
         var lockedResults = service
@@ -104,7 +104,7 @@ public class EncounterDatabaseTests
     public void SearchEncounters_TypeGroupFilter_ReturnsOnlyMatchingType()
     {
         // Arrange — Red has wild encounters for many Pokémon
-        var (service, _) = CreateServiceFromFile("POKEMON RED-0.sav");
+        var service = CreateServiceFromFile("POKEMON RED-0.sav");
 
         // Act
         var wildOnly = service
@@ -120,7 +120,7 @@ public class EncounterDatabaseTests
     public void SearchEncounters_VersionFilter_ReturnsOnlySpecifiedVersionEncounters()
     {
         // Arrange
-        var (service, _) = CreateServiceFromFile("POKEMON RED-0.sav");
+        var service = CreateServiceFromFile("POKEMON RED-0.sav");
 
         // Act
         var redOnly = service
@@ -138,7 +138,7 @@ public class EncounterDatabaseTests
     public void GeneratePokemonFromEncounter_WildEncounter_ReturnsLegalPokemon()
     {
         // Arrange — find a wild Pikachu encounter in Red
-        var (service, _) = CreateServiceFromFile("POKEMON RED-0.sav");
+        var service = CreateServiceFromFile("POKEMON RED-0.sav");
         var wildEncounter = service
             .SearchEncounters(new EncounterSearchFilter { Species = (ushort)Species.Pikachu, EncounterGroup = EncounterTypeGroup.Slot })
             .FirstOrDefault();
@@ -146,18 +146,18 @@ public class EncounterDatabaseTests
         wildEncounter.Should().NotBeNull("there must be at least one wild Pikachu encounter in Gen 1");
 
         // Act
-        var pkm = service.GeneratePokemonFromEncounter(wildEncounter!.Encounter);
+        var pkm = service.GeneratePokemonFromEncounter(wildEncounter.Encounter);
 
         // Assert
         pkm.Should().NotBeNull("a legal Pokémon should be generated from a valid encounter");
-        new LegalityAnalysis(pkm!).Valid.Should().BeTrue("the generated Pokémon must be legal");
+        new LegalityAnalysis(pkm).Valid.Should().BeTrue("the generated Pokémon must be legal");
     }
 
     [Fact]
     public void GeneratePokemonFromEncounter_StaticEncounter_ReturnsLegalPokemon()
     {
         // Arrange — find a static encounter (e.g., starter or gift Pokémon) in a Gen 5 save
-        var (service, _) = CreateServiceFromFile("Black - Full Completion.sav");
+        var service = CreateServiceFromFile("Black - Full Completion.sav");
         var staticEncounter = service
             .SearchEncounters(new EncounterSearchFilter { Species = (ushort)Species.Victini, EncounterGroup = EncounterTypeGroup.Static })
             .FirstOrDefault();
@@ -165,18 +165,18 @@ public class EncounterDatabaseTests
         staticEncounter.Should().NotBeNull("Victini has a static encounter in Gen 5 Black");
 
         // Act
-        var pkm = service.GeneratePokemonFromEncounter(staticEncounter!.Encounter);
+        var pkm = service.GeneratePokemonFromEncounter(staticEncounter.Encounter);
 
         // Assert
         pkm.Should().NotBeNull();
-        new LegalityAnalysis(pkm!).Valid.Should().BeTrue();
+        new LegalityAnalysis(pkm).Valid.Should().BeTrue();
     }
 
     [Fact]
     public void SearchEncounters_ResultsHaveExpectedFields()
     {
         // Arrange
-        var (service, _) = CreateServiceFromFile("POKEMON RED-0.sav");
+        var service = CreateServiceFromFile("POKEMON RED-0.sav");
 
         // Act
         var results = service
@@ -209,7 +209,7 @@ public class EncounterDatabaseTests
         public int? SelectedPartySlotNumber { get; set; }
         public bool ShowProgressIndicator { get; set; }
         public string AppVersion => "Test";
-        public DateTime? AppBuildDate { get; }
+        public DateTime? AppBuildDate => null;
         public int? PinnedBoxNumber { get; set; }
         public bool SelectedSlotsAreValid => true;
         public bool IsHaXEnabled { get; set; }

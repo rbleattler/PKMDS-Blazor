@@ -151,7 +151,7 @@ public class ExtensionTests
         var saveData = File.ReadAllBytes(filePath);
         SaveUtil.TryGetSaveFile(saveData, out var saveFile, "x.sav").Should().BeTrue();
         saveFile.Should().NotBeNull();
-        var pkm = saveFile!.PartyData[0];
+        var pkm = saveFile.PartyData[0];
 
         // Act
         var hasRelearnMoves = pkm.HasRelearnMoves();
@@ -183,7 +183,7 @@ public class ExtensionTests
         var saveData = File.ReadAllBytes(filePath);
         SaveUtil.TryGetSaveFile(saveData, out var saveFile, "x.sav").Should().BeTrue();
         saveFile.Should().NotBeNull();
-        var pkm = saveFile!.PartyData[0];
+        var pkm = saveFile.PartyData[0];
 
         // Act
         var relearnMove = pkm.GetRelearnMove(0);
@@ -200,7 +200,7 @@ public class ExtensionTests
         var saveData = File.ReadAllBytes(filePath);
         SaveUtil.TryGetSaveFile(saveData, out var saveFile, "x.sav").Should().BeTrue();
         saveFile.Should().NotBeNull();
-        var pkm = saveFile!.PartyData[0];
+        var pkm = saveFile.PartyData[0];
         const ushort testMove = 1; // Pound
 
         // Act
@@ -219,7 +219,7 @@ public class ExtensionTests
         var saveData = File.ReadAllBytes(filePath);
         SaveUtil.TryGetSaveFile(saveData, out var saveFile, "x.sav").Should().BeTrue();
         saveFile.Should().NotBeNull();
-        var pkm = saveFile!.PartyData[0];
+        var pkm = saveFile.PartyData[0];
 
         // Act
         var relearnMoves = pkm.GetRelearnMoves();

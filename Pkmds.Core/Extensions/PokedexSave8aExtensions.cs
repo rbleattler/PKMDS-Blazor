@@ -19,15 +19,10 @@ public static class PokedexSave8AExtensions
     private static readonly FieldInfo? SSaveDataField =
         typeof(PokedexSave8a).GetField("SaveData", BindingFlags.NonPublic | BindingFlags.Instance);
 
-    private static PokedexSaveResearchEntry? GetResearchEntry(PokedexSave8a dex, ushort species)
-    {
-        if (SSaveDataField?.GetValue(dex) is not PokedexSaveData saveData)
-        {
-            return null;
-        }
-
-        return saveData.GetResearchEntry(species);
-    }
+    private static PokedexSaveResearchEntry? GetResearchEntry(PokedexSave8a dex, ushort species) =>
+        SSaveDataField?.GetValue(dex) is not PokedexSaveData saveData
+            ? null
+            : saveData.GetResearchEntry(species);
 
     extension(PokedexSave8a dex)
     {
@@ -49,13 +44,9 @@ public static class PokedexSave8AExtensions
             {
                 dex.GetResearchTaskLevel(species, i, out _, out var curValue, out _);
                 var task = tasks[i];
-                foreach (var threshold in task.TaskThresholds)
-                {
-                    if (curValue >= threshold)
-                    {
-                        total += task.PointsSingle + task.PointsBonus;
-                    }
-                }
+                total += task.TaskThresholds
+                    .Where(threshold => curValue >= threshold)
+                    .Sum(_ => task.PointsSingle + task.PointsBonus);
             }
 
             return Math.Min(total, PokedexConstants8a.MaxPokedexResearchPoints);

@@ -98,7 +98,7 @@ public class BoxManagementTests
         public int? SelectedPartySlotNumber { get; set; }
         public bool ShowProgressIndicator { get; set; }
         public string AppVersion => "Test";
-        public DateTime? AppBuildDate { get; }
+        public DateTime? AppBuildDate => null;
         public int? PinnedBoxNumber { get; set; }
         public bool SelectedSlotsAreValid => true;
         public bool IsHaXEnabled { get; set; }
@@ -107,7 +107,7 @@ public class BoxManagementTests
 
     private class TestRefreshService : IRefreshService
     {
-        public int RefreshCount { get; private set; }
+        private int RefreshCount { get; set; }
         public int RefreshBoxStateCount { get; private set; }
         private int RefreshPartyStateCount { get; set; }
         private int RefreshBoxAndPartyStateCount { get; set; }
