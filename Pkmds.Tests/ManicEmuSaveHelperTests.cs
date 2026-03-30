@@ -206,6 +206,47 @@ public class ManicEmuSaveHelperTests
         extraReadBack.Should().Equal(extraBytes);
     }
 
+    // ── GetExportFileName ─────────────────────────────────────────────────
+
+    [Fact]
+    public void GetExportFileName_NullOriginalName_ReturnsSavSuffix()
+    {
+        var (name, ext) = ManicEmuSaveHelper.GetExportFileName(null);
+        ext.Should().Be(".3ds.sav");
+        name.Should().Be("save.3ds.sav");
+    }
+
+    [Theory]
+    [InlineData("AlphaSapphire.3ds.sav", "AlphaSapphire.3ds.sav", ".3ds.sav")]
+    [InlineData("ALPHASAPPHIRE.3DS.SAV", "ALPHASAPPHIRE.3ds.sav", ".3ds.sav")] // case-insensitive strip
+    [InlineData(".3ds.sav", "save.3ds.sav", ".3ds.sav")]                         // empty stem fallback
+    public void GetExportFileName_DotSav_PreservesSavExtension(string input, string expectedName, string expectedExt)
+    {
+        var (name, ext) = ManicEmuSaveHelper.GetExportFileName(input);
+        name.Should().Be(expectedName);
+        ext.Should().Be(expectedExt);
+    }
+
+    [Theory]
+    [InlineData("AlphaSapphire.3ds.save", "AlphaSapphire.3ds.save", ".3ds.save")]
+    [InlineData("ALPHASAPPHIRE.3DS.SAVE", "ALPHASAPPHIRE.3ds.save", ".3ds.save")] // case-insensitive strip
+    [InlineData(".3ds.save", "save.3ds.save", ".3ds.save")]                         // empty stem fallback
+    public void GetExportFileName_DotSave_PreservesSaveExtension(string input, string expectedName, string expectedExt)
+    {
+        var (name, ext) = ManicEmuSaveHelper.GetExportFileName(input);
+        name.Should().Be(expectedName);
+        ext.Should().Be(expectedExt);
+    }
+
+    [Fact]
+    public void GetExportFileName_UnknownExtension_DefaultsToSav()
+    {
+        // An unknown extension should strip the last extension and default to .3ds.sav.
+        var (name, ext) = ManicEmuSaveHelper.GetExportFileName("game.unknown");
+        ext.Should().Be(".3ds.sav");
+        name.Should().Be("game.3ds.sav");
+    }
+
     [Fact]
     public void RebuildZip_OversizedNonSaveEntry_ThrowsInvalidDataException()
     {

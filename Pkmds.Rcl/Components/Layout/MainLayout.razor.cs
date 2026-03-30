@@ -210,7 +210,7 @@ public partial class MainLayout : IDisposable
     {
         const string message = "Choose a save file";
         const string manicEmuHint =
-            "Tip: If you're using Manic EMU, upload the .3ds.sav export directly " +
+            "Tip: If you're using Manic EMU, upload the .3ds.sav or .3ds.save export directly " +
             "for seamless round-trip import support.";
 
         var dialogParameters = new DialogParameters { { nameof(FileUploadDialog.Message), message }, { nameof(FileUploadDialog.HintText), manicEmuHint } };
@@ -282,7 +282,7 @@ public partial class MainLayout : IDisposable
             else if (ManicEmuSaveHelper.TryExtractSaveFromZip(data, selectedFile.Name, out saveFile, out var manicContext))
             {
                 manicEmuSaveContext = manicContext;
-                Logger.LogInformation("Loaded save from Manic EMU .3ds.sav archive; entry: {EntryPath}", manicContext.SaveEntryPath);
+                Logger.LogInformation("Loaded save from Manic EMU .3ds.sav/.3ds.save archive; entry: {EntryPath}", manicContext.SaveEntryPath);
                 FinishLoadingSaveFile(saveFile);
             }
             else
@@ -375,18 +375,14 @@ public partial class MainLayout : IDisposable
         // user can import it directly back into Manic EMU without any manual repacking.
         if (manicEmuSaveContext is not null)
         {
-            // Build the export filename: strip any existing extension (including the
-            // compound .3ds.sav) so we never produce double-extension names like foo.sav.3ds.sav.
-            var stem = originalName is null
-                ? "save"
-                : originalName.EndsWith(".3ds.sav", StringComparison.OrdinalIgnoreCase)
-                    ? originalName[..^".3ds.sav".Length]
-                    : Path.GetFileNameWithoutExtension(originalName);
-            var exportName = stem + ".3ds.sav";
-            Logger.LogDebug("Exporting save as Manic EMU .3ds.sav: {FileName}", exportName);
+            // Determine the export filename and compound extension, preserving the
+            // original Manic EMU extension (.3ds.save on iOS, .3ds.sav elsewhere) so
+            // the rebuilt ZIP can be imported directly without renaming.
+            var (exportName, compoundExt) = ManicEmuSaveHelper.GetExportFileName(originalName);
+            Logger.LogDebug("Exporting save as Manic EMU {Extension}: {FileName}", compoundExt, exportName);
 
             var zipBytes = ManicEmuSaveHelper.RebuildZip(manicEmuSaveContext, rawSaveBytes);
-            await WriteFile(zipBytes, exportName, ".3ds.sav", "Save File");
+            await WriteFile(zipBytes, exportName, compoundExt, "Save File");
         }
         // Only default to "save.sav" if we have no original filename at all
         else if (string.IsNullOrWhiteSpace(originalName))
