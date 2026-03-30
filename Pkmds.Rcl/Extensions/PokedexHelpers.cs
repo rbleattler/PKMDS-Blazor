@@ -28,14 +28,11 @@ internal static class PokedexHelpers
                 return true;
             }
 
-            if (sv.SaveRevision >= 1 && pi.DexKitakami != 0)
+            switch (sv.SaveRevision)
             {
-                return true;
-            }
-
-            if (sv.SaveRevision >= 2 && pi.DexBlueberry != 0)
-            {
-                return true;
+                case >= 1 when pi.DexKitakami != 0:
+                case >= 2 when pi.DexBlueberry != 0:
+                    return true;
             }
         }
 

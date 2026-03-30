@@ -1037,13 +1037,15 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         // StringConverter3 stops encoding at the first unrecognised character).
         // For non-trade encounters the OT should always be the player's own trainer name,
         // so fall back to the save file directly if the generated PKM has no OT.
-        if (pkm is not null && string.IsNullOrEmpty(pkm.OriginalTrainerName)
-            && encounter is not IFixedTrainer
-            && !string.IsNullOrEmpty(sav.OT))
+        if (pkm is null || !string.IsNullOrEmpty(pkm.OriginalTrainerName)
+                        || encounter is IFixedTrainer
+                        || string.IsNullOrEmpty(sav.OT))
         {
-            pkm.OriginalTrainerName = sav.OT;
-            pkm.OriginalTrainerGender = sav.Gender;
+            return pkm;
         }
+
+        pkm.OriginalTrainerName = sav.OT;
+        pkm.OriginalTrainerGender = sav.Gender;
 
         return pkm;
     }
@@ -1097,12 +1099,14 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         {
             for (var slot = 0; slot < sav.BoxSlotCount; slot++)
             {
-                if (sav.GetBoxSlotAtIndex(box, slot).Species == 0)
+                if (sav.GetBoxSlotAtIndex(box, slot).Species != 0)
                 {
-                    sav.SetBoxSlotAtIndex(pkm, box, slot);
-                    RefreshService.RefreshBoxState();
-                    return true;
+                    continue;
                 }
+
+                sav.SetBoxSlotAtIndex(pkm, box, slot);
+                RefreshService.RefreshBoxState();
+                return true;
             }
         }
 
@@ -1132,7 +1136,7 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
     /// non-null/non-empty criterion in <paramref name="f" />.
     /// Cheap equality checks run first; expensive legality analysis runs last.
     /// </summary>
-    private bool Matches(PKM pkm, AdvancedSearchFilter f)
+    private static bool Matches(PKM pkm, AdvancedSearchFilter f)
     {
         // ── Basic ─────────────────────────────────────────────────────────
 
@@ -1333,13 +1337,11 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         if (f.RequiredRibbons.Count > 0)
         {
             var pkmType = pkm.GetType();
-            foreach (var ribbonName in f.RequiredRibbons)
+            if (f.RequiredRibbons
+                .Select(ribbonName => pkmType.GetProperty(ribbonName))
+                .Any(prop => prop?.GetValue(pkm) is not true))
             {
-                var prop = pkmType.GetProperty(ribbonName);
-                if (prop?.GetValue(pkm) is not true)
-                {
-                    return false;
-                }
+                return false;
             }
         }
 
@@ -1351,12 +1353,7 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         }
 
         var isLegal = new LegalityAnalysis(pkm).Valid;
-        if (isLegal != f.IsLegal.Value)
-        {
-            return false;
-        }
-
-        return true;
+        return isLegal == f.IsLegal.Value;
     }
 
     private void HandleNullOrEmptyPokemon()
@@ -1485,12 +1482,9 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
             return EncounterTypeGroup.Slot;
         }
 
-        if (name.Contains("Trade", StringComparison.OrdinalIgnoreCase))
-        {
-            return EncounterTypeGroup.Trade;
-        }
-
-        return EncounterTypeGroup.Static;
+        return name.Contains("Trade", StringComparison.OrdinalIgnoreCase)
+            ? EncounterTypeGroup.Trade
+            : EncounterTypeGroup.Static;
     }
 
     private static string GetEncounterTypeName(IEncounterable enc) => GetEncounterTypeGroup(enc) switch

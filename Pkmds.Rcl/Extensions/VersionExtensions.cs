@@ -15,15 +15,10 @@ public static class VersionExtensions
         /// </summary>
         /// <returns>A formatted version string (e.g., "2026.01.2709.4912").</returns>
         /// <exception cref="ArgumentNullException">Thrown if version is null.</exception>
-        public string ToVersionString()
-        {
-            if (version is null)
-            {
-                throw new ArgumentNullException(nameof(version));
-            }
-
-            return $"{version.Major}.{version.Minor:D2}.{version.Build:D4}.{version.Revision:D4}";
-        }
+        public string ToVersionString() =>
+            version is null
+                ? throw new ArgumentNullException(nameof(version))
+                : $"{version.Major}.{version.Minor:D2}.{version.Build:D4}.{version.Revision:D4}";
 
         /// <summary>
         /// Converts a Version to a DateTime object. The components are encoded as:

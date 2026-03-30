@@ -26,7 +26,7 @@ public partial class EvolvePickerDialog
         }
     }
 
-    private string GetSpeciesName(ushort species) =>
+    private static string GetSpeciesName(ushort species) =>
         species < GameInfo.Strings.specieslist.Length
             ? GameInfo.Strings.specieslist[species]
             : species.ToString();
@@ -200,7 +200,7 @@ public partial class EvolvePickerDialog
             : $"item #{itemId}";
     }
 
-    private string GetMoveName(ushort moveId) =>
+    private static string GetMoveName(ushort moveId) =>
         moveId < GameInfo.Strings.movelist.Length
             ? GameInfo.Strings.movelist[moveId]
             : $"move #{moveId}";

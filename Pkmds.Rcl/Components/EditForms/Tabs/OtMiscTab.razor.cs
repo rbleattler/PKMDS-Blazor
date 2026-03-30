@@ -226,7 +226,7 @@ public partial class OtMiscTab : IDisposable
         htMemory.HandlingTrainerMemoryVariable = 0;
     }
 
-    private void ClearGeoData(IGeoTrack geoTrack) =>
+    private static void ClearGeoData(IGeoTrack geoTrack) =>
         geoTrack.ClearGeoLocationData();
 
     private static byte GetGeoCountry(IGeoTrack geo, int slot) => slot switch

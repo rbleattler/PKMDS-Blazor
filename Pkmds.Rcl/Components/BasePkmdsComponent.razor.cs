@@ -36,7 +36,7 @@ public partial class BasePkmdsComponent
     /// Minimum save-file generation in which a flag's associated mechanic exists.
     /// Flags not listed here are relevant in all generations.
     /// </summary>
-    protected static readonly IReadOnlyDictionary<string, int> FlagMinGeneration =
+    private static readonly IReadOnlyDictionary<string, int> FlagMinGeneration =
         new Dictionary<string, int>
         {
             ["reflectable"] = 3, // Magic Coat — Gen 3
@@ -115,5 +115,7 @@ public partial class BasePkmdsComponent
         !FlagMinGeneration.TryGetValue(flag, out var minGen) || saveGeneration >= minGen;
 
     protected static string FormatPriority(int priority) =>
-        priority > 0 ? $"+{priority}" : priority.ToString();
+        priority > 0
+            ? $"+{priority}"
+            : priority.ToString();
 }

@@ -59,19 +59,13 @@ public partial class MoveShopDialog
     private void TogglePurchasedFlag(int index, bool value)
     {
         var moveShopMove = MoveShopMoves.FirstOrDefault(m => m.Index == index);
-        if (moveShopMove != null)
-        {
-            moveShopMove.IsPurchased = value;
-        }
+        moveShopMove?.IsPurchased = value;
     }
 
     private void ToggleMasteredFlag(int index, bool value)
     {
         var moveShopMove = MoveShopMoves.FirstOrDefault(m => m.Index == index);
-        if (moveShopMove != null)
-        {
-            moveShopMove.IsMastered = value;
-        }
+        moveShopMove?.IsMastered = value;
     }
 
     private void GiveAll()

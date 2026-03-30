@@ -136,7 +136,7 @@ public partial class PokemonSlotComponent : IDisposable
     }
 
     // ReSharper disable once UnusedMember.Local
-    private void OnHighResSpriteError()
+    private static void OnHighResSpriteError()
     {
         /* keep showing the bundled sprite — _highResLoaded is already false */
     }
@@ -286,21 +286,25 @@ public partial class PokemonSlotComponent : IDisposable
     private void HandleDragEnter(DragEventArgs e)
     {
         // Show visual feedback when an external file is dragged over the slot
-        if (!DragDropService.IsDragging &&
-            e.DataTransfer.Types.Any(t => t.Equals("Files", StringComparison.OrdinalIgnoreCase)))
+        if (DragDropService.IsDragging ||
+            !e.DataTransfer.Types.Any(t => t.Equals("Files", StringComparison.OrdinalIgnoreCase)))
         {
-            isDragOverWithExternalFile = true;
-            StateHasChanged();
+            return;
         }
+
+        isDragOverWithExternalFile = true;
+        StateHasChanged();
     }
 
     private void HandleDragLeave(DragEventArgs e)
     {
-        if (isDragOverWithExternalFile)
+        if (!isDragOverWithExternalFile)
         {
-            isDragOverWithExternalFile = false;
-            StateHasChanged();
+            return;
         }
+
+        isDragOverWithExternalFile = false;
+        StateHasChanged();
     }
 
     private async Task HandleDrop(DragEventArgs e)

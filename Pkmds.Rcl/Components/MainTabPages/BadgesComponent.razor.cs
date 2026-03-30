@@ -164,7 +164,7 @@ public partial class BadgesComponent : IDisposable
                 break;
 
             case EntityContext.Gen7b when saveFile is SAV7b:
-                // TODO: Figure out why this isn't available
+                // https://github.com/codemonkey85/PKMDS-Blazor/issues/59
                 //sav7b.Badges = ToggleBadge(sav7b.Badges, badgeIndex);
                 break;
 
@@ -178,7 +178,7 @@ public partial class BadgesComponent : IDisposable
                 break;
 
             case EntityContext.Gen9 when saveFile is SAV9SV:
-                // TODO: Figure out why this isn't available
+                // https://github.com/codemonkey85/PKMDS-Blazor/issues/60
                 //sav9sv.Badges = ToggleBadge(sav9sv.Badges, badgeIndex);
                 break;
         }

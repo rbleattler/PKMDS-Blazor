@@ -57,10 +57,7 @@ public partial class RelearnFlagsDialog
     private void ToggleTrFlag(int index, bool value)
     {
         var trMove = TrMoves.FirstOrDefault(m => m.Index == index);
-        if (trMove != null)
-        {
-            trMove.IsLearned = value;
-        }
+        trMove?.IsLearned = value;
     }
 
     private void GiveAll()
