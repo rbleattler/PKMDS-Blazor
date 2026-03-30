@@ -85,7 +85,7 @@ jobs:
       - uses: anthropics/claude-code-action@v1.0.82
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          allowed_tools: "Bash"
+          claude_args: "--allowedTools Bash"
           prompt: |
             You are generating a weekly changelog for PKMDS, a Pokémon save file editor at https://github.com/codemonkey85/PKMDS-Blazor.
 
