@@ -121,9 +121,7 @@ public class RibbonEditorTests
     public void GetAllRibbonInfo_ReflectsRibbonStateFromPKM()
     {
         // Arrange
-        var pk9 = new PK9();
-        pk9.RibbonChampionKalos = true;
-        pk9.RibbonMarkLunchtime = true;
+        var pk9 = new PK9 { RibbonChampionKalos = true, RibbonMarkLunchtime = true };
 
         // Act
         var allRibbons = RibbonHelper.GetAllRibbonInfo(pk9);

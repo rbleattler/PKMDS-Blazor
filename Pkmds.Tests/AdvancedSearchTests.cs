@@ -76,11 +76,13 @@ public class AdvancedSearchTests
         for (var i = 0; i < saveFile.PartyCount; i++)
         {
             var pkm = saveFile.GetPartySlotAtIndex(i);
-            if (pkm.Species > 0)
+            if (pkm.Species <= 0)
             {
-                targetSpecies = pkm.Species;
-                break;
+                continue;
             }
+
+            targetSpecies = pkm.Species;
+            break;
         }
 
         targetSpecies.Should().BeGreaterThan(0, "there should be at least one party Pokémon");
@@ -156,7 +158,7 @@ public class AdvancedSearchTests
     public void SearchPokemon_LevelRange_FiltersCorrectly()
     {
         // Arrange
-        var (service, saveFile) = CreateServiceFromFile("Black - Full Completion.sav");
+        var (service, _) = CreateServiceFromFile("Black - Full Completion.sav");
 
         const byte minLevel = 50;
         const byte maxLevel = 60;
@@ -178,7 +180,7 @@ public class AdvancedSearchTests
     public void SearchPokemon_LegalFilter_ReturnsMixedResults()
     {
         // Arrange
-        var (service, saveFile) = CreateServiceFromFile("Black - Full Completion.sav");
+        var (service, _) = CreateServiceFromFile("Black - Full Completion.sav");
 
         // Act
         var all = service.SearchPokemon(new AdvancedSearchFilter()).ToList();
@@ -235,7 +237,7 @@ public class AdvancedSearchTests
         public int? SelectedPartySlotNumber { get; set; }
         public bool ShowProgressIndicator { get; set; }
         public string AppVersion => "Test";
-        public DateTime? AppBuildDate { get; }
+        public DateTime? AppBuildDate => null;
         public int? PinnedBoxNumber { get; set; }
         public bool SelectedSlotsAreValid => true;
         public bool IsHaXEnabled { get; set; }

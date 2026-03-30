@@ -102,6 +102,8 @@ public static class SaveFileNameDisplay
         SP => "Shining Pearl",
         SL => "Scarlet",
         VL => "Violet",
+        ZA => "Legends: Z-A",
+        CP => "Champions",
         StadiumJ => "Stadium (J)",
         Stadium => "Stadium",
         Stadium2 => "Stadium 2",

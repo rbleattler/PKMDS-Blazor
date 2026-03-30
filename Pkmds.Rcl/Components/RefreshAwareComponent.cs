@@ -85,6 +85,5 @@ public enum RefreshEvents
     AppState = 1 << 0,
     BoxState = 1 << 1,
     PartyState = 1 << 2,
-    BoxAndParty = BoxState | PartyState,
     All = AppState | BoxState | PartyState
 }

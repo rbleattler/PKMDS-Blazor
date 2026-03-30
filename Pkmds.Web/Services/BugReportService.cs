@@ -12,7 +12,7 @@ public class BugReportService(IAppState appState) : IBugReportService
 
     public IDisposable AttachRawFileToScope(byte[] data, string fileName)
     {
-        if (data.Length == 0 || data.Length > MaxAttachmentBytes)
+        if (data.Length is 0 or > MaxAttachmentBytes)
         {
             return NoOpDisposable.Instance;
         }

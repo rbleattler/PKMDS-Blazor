@@ -38,25 +38,24 @@ public partial class PidEcDialog
         // For Gen 3–5, the ability slot is encoded in the PID (bit 0 for Gen 3/4, bit 16
         // for Gen 5). Preserve it so randomizing the PID does not silently change the
         // Pokémon's ability. See EntityPID.GetRandomPID in PKHeX.Core for reference.
-        uint abilityBitMask = SaveGeneration switch
+        var abilityBitMask = SaveGeneration switch
         {
             3 or 4 => 0x0000_0001u,
             5 => 0x0001_0000u,
-            _ => 0u,
+            _ => 0u
         };
-        uint desiredAbilityBit = Pokemon.PID & abilityBitMask;
+        var desiredAbilityBit = Pokemon.PID & abilityBitMask;
 
         uint pid;
         do
         {
             pid = NextRandomUInt32();
             Pokemon.PID = pid; // needed to evaluate IsShiny
-        }
-        while (
-            (abilityBitMask != 0 && (pid & abilityBitMask) != desiredAbilityBit) ||
-            (IsGen345 && KeepNature && pid % 25 != desiredNature) ||
-            (IsGen345 && KeepGender && isDualGender && EntityGender.GetFromPIDAndRatio(pid, genderRatio) != desiredGender) ||
-            (AvoidShiny && Pokemon.IsShiny)
+        } while (
+            abilityBitMask != 0 && (pid & abilityBitMask) != desiredAbilityBit ||
+            IsGen345 && KeepNature && pid % 25 != desiredNature ||
+            IsGen345 && KeepGender && isDualGender && EntityGender.GetFromPIDAndRatio(pid, genderRatio) != desiredGender ||
+            AvoidShiny && Pokemon.IsShiny
         );
 
         AppService.LoadPokemonStats(Pokemon);
@@ -95,11 +94,10 @@ public partial class PidEcDialog
             seed = NextRandomUInt32();
             pid = ClassicEraRNG.GetSequentialPID(ref seed);
             Pokemon.PID = pid; // needed to evaluate IsShiny
-        }
-        while (
-            (KeepNature && pid % 25 != desiredNature) ||
-            (KeepGender && isDualGender && EntityGender.GetFromPIDAndRatio(pid, genderRatio) != desiredGender) ||
-            (AvoidShiny && Pokemon.IsShiny)
+        } while (
+            KeepNature && pid % 25 != desiredNature ||
+            KeepGender && isDualGender && EntityGender.GetFromPIDAndRatio(pid, genderRatio) != desiredGender ||
+            AvoidShiny && Pokemon.IsShiny
         );
 
         uint ivs;

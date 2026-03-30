@@ -346,7 +346,7 @@ public class AppServiceTests
         saveFile.Should().BeOfType<SAV7b>();
 
         // Fill all slots, then clear box 0 slot 0 — flat index 0 is the known first empty slot
-        for (var box = 0; box < saveFile!.BoxCount; box++)
+        for (var box = 0; box < saveFile.BoxCount; box++)
         {
             for (var slot = 0; slot < saveFile.BoxSlotCount; slot++)
             {
@@ -384,7 +384,7 @@ public class AppServiceTests
         public int? SelectedPartySlotNumber { get; set; }
         public bool ShowProgressIndicator { get; set; }
         public string AppVersion => "Test";
-        public DateTime? AppBuildDate { get; }
+        public DateTime? AppBuildDate => null;
         public int? PinnedBoxNumber { get; set; }
         public bool SelectedSlotsAreValid => true;
         public bool IsHaXEnabled { get; set; }

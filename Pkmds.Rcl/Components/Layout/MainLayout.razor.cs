@@ -248,7 +248,6 @@ public partial class MainLayout : IDisposable
             fileExtension.Equals(".savestate", StringComparison.OrdinalIgnoreCase))
         {
             Logger.LogWarning("User attempted to load a save state: {FileName}", selectedFile.Name);
-            AppState.ShowProgressIndicator = false;
             await DialogService.ShowMessageBoxAsync("Wrong file type",
                 "This looks like an emulator save state, not a save file. " +
                 "Save states are internal emulator snapshots and cannot be edited here. " +
@@ -295,6 +294,7 @@ public partial class MainLayout : IDisposable
                 const string message =
                     "The selected save file is invalid. If this save file came from a ROM hack, it is not supported. Otherwise, try saving in-game and re-exporting / re-uploading the save file.";
                 await DialogService.ShowMessageBoxAsync("Error", message);
+                AppState.ShowProgressIndicator = false;
                 return;
             }
         }
@@ -307,16 +307,14 @@ public partial class MainLayout : IDisposable
 
             await DialogService.ShowMessageBoxAsync("Error", $"{ex.Message}{Environment.NewLine}{ex.StackTrace}");
         }
-        finally
-        {
-            AppState.ShowProgressIndicator = false;
-        }
 
         if (AppState.SaveFile is null)
         {
+            AppState.ShowProgressIndicator = false;
             return;
         }
 
+        AppState.ShowProgressIndicator = false;
         RefreshService.RefreshBoxAndPartyState();
     }
 

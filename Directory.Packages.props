@@ -14,7 +14,7 @@
         <PackageVersion Include="Microsoft.JSInterop.WebAssembly" Version="10.0.3"/>
         <PackageVersion Include="MudBlazor" Version="9.2.0"/>
         <PackageVersion Include="PKHeX.Core" Version="26.3.20"/>
-        <PackageVersion Include="Sentry.AspNetCore.Blazor.WebAssembly" Version="6.2.0"/>
+        <PackageVersion Include="Sentry.AspNetCore.Blazor.WebAssembly" Version="6.3.0"/>
         <PackageVersion Include="Serilog.Extensions.Logging" Version="10.0.0"/>
         <PackageVersion Include="Serilog.Sinks.BrowserConsole" Version="8.0.0"/>
         <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5"/>

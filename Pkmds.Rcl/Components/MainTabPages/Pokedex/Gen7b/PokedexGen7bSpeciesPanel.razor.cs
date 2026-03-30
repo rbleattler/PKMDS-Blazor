@@ -1,5 +1,6 @@
 namespace Pkmds.Rcl.Components.MainTabPages.Pokedex.Gen7b;
 
+// ReSharper disable once InconsistentNaming
 public partial class PokedexGen7bSpeciesPanel
 {
     private static readonly (string Label, int Region)[] SeenRegions =

@@ -53,10 +53,7 @@ public partial class PlusFlagsDialog
     private void TogglePlusFlag(int index, bool value)
     {
         var plusMove = PlusMoves.FirstOrDefault(m => m.Index == index);
-        if (plusMove != null)
-        {
-            plusMove.IsPlus = value;
-        }
+        plusMove?.IsPlus = value;
     }
 
     private void GiveAll()

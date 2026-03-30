@@ -104,7 +104,7 @@ public static class ManicEmuSaveHelper
                     break;
                 }
 
-                if (entry.Length == 0 || entry.Length > MaxUncompressedEntrySize)
+                if (entry.Length is 0 or > MaxUncompressedEntrySize)
                 {
                     continue;
                 }
@@ -237,24 +237,32 @@ public static class ManicEmuSaveHelper
         const string saveExt = ".3ds.save";
 
         if (originalName is null)
+        {
             return ("save" + savExt, savExt);
+        }
 
         // iOS Manic EMU uses .3ds.save; check this first since it is the more specific suffix.
         if (originalName.EndsWith(saveExt, StringComparison.OrdinalIgnoreCase))
         {
             var stem = originalName[..^saveExt.Length];
-            return ((stem.Length > 0 ? stem : "save") + saveExt, saveExt);
+            return ((stem.Length > 0
+                ? stem
+                : "save") + saveExt, saveExt);
         }
 
         if (originalName.EndsWith(savExt, StringComparison.OrdinalIgnoreCase))
         {
             var stem = originalName[..^savExt.Length];
-            return ((stem.Length > 0 ? stem : "save") + savExt, savExt);
+            return ((stem.Length > 0
+                ? stem
+                : "save") + savExt, savExt);
         }
 
         // Unknown/no compound extension — strip the last extension and default to .3ds.sav.
         var fallbackStem = Path.GetFileNameWithoutExtension(originalName);
-        return ((fallbackStem.Length > 0 ? fallbackStem : "save") + savExt, savExt);
+        return ((fallbackStem.Length > 0
+            ? fallbackStem
+            : "save") + savExt, savExt);
     }
 
     /// <summary>

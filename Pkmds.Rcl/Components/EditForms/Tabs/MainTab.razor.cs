@@ -225,11 +225,6 @@ public partial class MainTab : IDisposable
         var pi = Pokemon.PersonalInfo;
         var names = GameInfo.Strings.Ability;
 
-        static string GetAbilityName(int abilityId, IReadOnlyList<string> names) =>
-            abilityId == 0 || (uint)abilityId >= (uint)names.Count
-                ? "None"
-                : names[abilityId];
-
         List<ComboItem> items = [];
         for (var i = 0; i < pi.AbilityCount; i++)
         {
@@ -239,6 +234,11 @@ public partial class MainTab : IDisposable
         }
 
         return items;
+
+        static string GetAbilityName(int abilityId, IReadOnlyList<string> names) =>
+            abilityId == 0 || (uint)abilityId >= (uint)names.Count
+                ? "None"
+                : names[abilityId];
     }
 
     private void SetAbilitySlot(int slotIndex)
@@ -273,7 +273,7 @@ public partial class MainTab : IDisposable
         return new ComboItem(name, id);
     }
 
-    private Task<IEnumerable<ComboItem>> SearchAllAbilities(string searchString, CancellationToken _)
+    private static Task<IEnumerable<ComboItem>> SearchAllAbilities(string searchString, CancellationToken _)
     {
         var names = GameInfo.Strings.Ability;
         IEnumerable<ComboItem> results;

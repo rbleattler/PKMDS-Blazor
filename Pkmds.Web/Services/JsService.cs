@@ -24,8 +24,8 @@ public class JsService(IJSRuntime js)
     /// <param name="mode">The cipher mode (ECB or CBC).</param>
     public void EncryptAes(ReadOnlySpan<byte> origin, Span<byte> destination, ReadOnlySpan<byte> key, CipherMode mode)
     {
-        var originHex = BitConverter.ToString(origin.ToArray()).Replace("-", string.Empty);
-        var keyHex = BitConverter.ToString(key.ToArray()).Replace("-", string.Empty);
+        var originHex = Convert.ToHexString(origin.ToArray());
+        var keyHex = Convert.ToHexString(key.ToArray());
 
         var encryptedHex = SyncJs.Invoke<string>("encryptAes", keyHex, originHex, mode.ToString().ToLowerInvariant());
 
@@ -42,8 +42,8 @@ public class JsService(IJSRuntime js)
     /// <param name="mode">The cipher mode (ECB or CBC).</param>
     public void DecryptAes(ReadOnlySpan<byte> origin, Span<byte> destination, ReadOnlySpan<byte> key, CipherMode mode)
     {
-        var originHex = BitConverter.ToString(origin.ToArray()).Replace("-", string.Empty);
-        var keyHex = BitConverter.ToString(key.ToArray()).Replace("-", string.Empty);
+        var originHex = Convert.ToHexString(origin.ToArray());
+        var keyHex = Convert.ToHexString(key.ToArray());
 
         var decryptedHex = SyncJs.Invoke<string>("decryptAes", keyHex, originHex, mode.ToString().ToLowerInvariant());
 
@@ -74,7 +74,7 @@ public class JsService(IJSRuntime js)
     /// <returns>The MD5 hash as a byte array (16 bytes).</returns>
     public byte[] Md5Hash(byte[] toArray)
     {
-        var toBeHashedHexString = BitConverter.ToString(toArray.ToArray()).Replace("-", string.Empty);
+        var toBeHashedHexString = Convert.ToHexString(toArray.ToArray());
         var hashedHexString = SyncJs.Invoke<string>("md5Hash", toBeHashedHexString);
         return ConvertHexStringToByteArray(hashedHexString);
     }

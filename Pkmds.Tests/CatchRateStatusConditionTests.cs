@@ -9,10 +9,11 @@ public class CatchRateStatusConditionTests
     public void PK1_CatchRate_CanBeSetAndRead()
     {
         // Arrange
-        var pk1 = new PK1();
-
-        // Act
-        pk1.CatchRate = 45;
+        var pk1 = new PK1
+        {
+            // Act
+            CatchRate = 45
+        };
 
         // Assert
         pk1.CatchRate.Should().Be(45);
@@ -22,10 +23,12 @@ public class CatchRateStatusConditionTests
     public void PK1_CatchRate_SupportsFullByteRange()
     {
         // Arrange
-        var pk1 = new PK1();
+        var pk1 = new PK1
+        {
+            // Act & Assert
+            CatchRate = byte.MinValue
+        };
 
-        // Act & Assert
-        pk1.CatchRate = byte.MinValue;
         pk1.CatchRate.Should().Be(byte.MinValue);
 
         pk1.CatchRate = byte.MaxValue;
@@ -59,10 +62,11 @@ public class CatchRateStatusConditionTests
     public void PK1_StatusCondition_CanBeSetAndRead(StatusCondition condition)
     {
         // Arrange
-        var pk1 = new PK1();
-
-        // Act
-        pk1.Status_Condition = (int)condition;
+        var pk1 = new PK1
+        {
+            // Act
+            Status_Condition = (int)condition
+        };
 
         // Assert
         pk1.Status_Condition.Should().Be((int)condition);
@@ -95,10 +99,11 @@ public class CatchRateStatusConditionTests
     public void PK2_StatusCondition_CanBeSetAndRead(StatusCondition condition)
     {
         // Arrange
-        var pk2 = new PK2();
-
-        // Act
-        pk2.Status_Condition = (int)condition;
+        var pk2 = new PK2
+        {
+            // Act
+            Status_Condition = (int)condition
+        };
 
         // Assert
         pk2.Status_Condition.Should().Be((int)condition);
