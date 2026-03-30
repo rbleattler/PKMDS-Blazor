@@ -68,7 +68,7 @@ Runtime wiring (Web)
 
 ## PKHeX.Core
 
-This app depends heavily on [PKHeX.Core](https://github.com/kwsch/PKHeX). When implementing features, use the PKHeX WinForms app as a reference for how to leverage PKHeX.Core — both for UI/UX patterns and for understanding the correct API usage. The first place you should look when referencing PKHeX is `~/Code/codemonkey85/PKHeX` (macOS) or `C:\Code\codemonkey85\PKHeX` (Windows), which contains the PKHeX WinForms app source code. The `PKHeX.Core` project within that solution is the library we consume here, and the WinForms app is a separate project that references it. The PKHeX WinForms app is a great reference for how to use PKHeX.Core effectively, as it demonstrates real-world usage of the library's APIs in a production application. If you can't find the source there, the PKHeX Wiki and source code are also valuable resources for understanding how to work with PKHeX.Core.
+This app depends heavily on [PKHeX.Core](https://github.com/kwsch/PKHeX). When implementing features, use the PKHeX WinForms app as a reference for how to leverage PKHeX.Core — both for UI/UX patterns and for understanding the correct API usage. The first place you should look when referencing PKHeX is `~/Code/codemonkey85/PKHeX` (macOS) or `C:\Code\PKHeX` (Windows), which contains the PKHeX WinForms app source code. The `PKHeX.Core` project within that solution is the library we consume here, and the WinForms app is a separate project that references it. The PKHeX WinForms app is a great reference for how to use PKHeX.Core effectively, as it demonstrates real-world usage of the library's APIs in a production application. If you can't find the source there, the PKHeX Wiki and source code are also valuable resources for understanding how to work with PKHeX.Core.
 
 If you encounter bugs or limitations in PKHeX.Core while working on an issue or PR, note them in a code comment at the relevant site and report them on the GitHub issue or PR you are working on.
 
@@ -99,13 +99,13 @@ Generates `ability-info.json`, `move-info.json`, and `item-info.json` from PokeA
 # macOS:
 dotnet run tools/generate-descriptions.cs -- --pokeapi ~/Code/codemonkey85/pokeapi
 # Windows:
-dotnet run tools/generate-descriptions.cs -- --pokeapi C:\Code\codemonkey85\pokeapi
+dotnet run tools/generate-descriptions.cs -- --pokeapi C:\Code\pokeapi
 
 # With Showdown supplement (recommended — fills Gen 8+ move secondary effects)
 # macOS:
-dotnet run tools/generate-descriptions.cs -- --pokeapi ~/Code/codemonkey85/pokeapi --showdown ~/Code/pokemon-showdown
+dotnet run tools/generate-descriptions.cs -- --pokeapi ~/Code/codemonkey85/pokeapi --showdown ~/Code/codemonkey85/pokemon-showdown
 # Windows:
-dotnet run tools/generate-descriptions.cs -- --pokeapi C:\Code\codemonkey85\pokeapi --showdown C:\Code\pokemon-showdown
+dotnet run tools/generate-descriptions.cs -- --pokeapi C:\Code\pokeapi --showdown C:\Code\pokemon-showdown
 ```
 
 ### `tools/generate-tm-data.cs`
@@ -137,10 +137,10 @@ Both scripts default output to `Pkmds.Rcl/wwwroot/data/` by walking up from the 
 
 Prefer reading local source over fetching from GitHub or relying solely on docs:
 
-- **PKHeX**: macOS `~/Code/codemonkey85/PKHeX`, Windows `C:\Code\codemonkey85\PKHeX`
-- **MudBlazor**: macOS `~/Code/MudBlazor`, Windows `C:\Code\MudBlazor`
-- **Pokémon Showdown**: macOS `~/Code/pokemon-showdown`, Windows `C:\Code\pokemon-showdown`
-- **PokeAPI**: macOS `~/Code/codemonkey85/pokeapi`, Windows `C:\Code\codemonkey85\pokeapi`
+- **PKHeX**: macOS `~/Code/codemonkey85/PKHeX`, Windows `C:\Code\PKHeX`
+- **MudBlazor**: macOS `~/Code/codemonkey85/MudBlazor`, Windows `C:\Code\MudBlazor`
+- **Pokémon Showdown**: macOS `~/Code/codemonkey85/pokemon-showdown`, Windows `C:\Code\pokemon-showdown`
+- **PokeAPI**: macOS `~/Code/codemonkey85/pokeapi`, Windows `C:\Code\pokeapi`
 
 ## Workflow
 
