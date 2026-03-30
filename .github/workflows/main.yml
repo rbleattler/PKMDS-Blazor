@@ -82,7 +82,7 @@ jobs:
           replacements: '%%SENTRY_DSN%%=${{ secrets.SENTRY_DSN }}'
 
       - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5.0.0
+        uses: actions/configure-pages@v6.0.0
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4.0.0
