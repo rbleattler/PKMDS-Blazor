@@ -131,4 +131,4 @@ jobs:
             Post the discussion URL as a final output message.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.DISCUSSION_TOKEN }}
