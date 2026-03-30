@@ -109,11 +109,16 @@ jobs:
             Step 5: Find the "Change Log" discussion category ID by running:
               gh api graphql -f query='{ repository(owner: "codemonkey85", name: "PKMDS-Blazor") { discussionCategories(first: 20) { nodes { id name } } } }'
 
-            Step 6: Create a new discussion using the category ID from step 5:
-              gh api graphql -f query='mutation { createDiscussion(input: { repositoryId: "REPO_ID", categoryId: "CATEGORY_ID", title: "TITLE", body: "BODY" }) { discussion { url } } }'
-
             To get the repository ID, run:
               gh api graphql -f query='{ repository(owner: "codemonkey85", name: "PKMDS-Blazor") { id } }'
+
+            Step 6: Create a new discussion using GraphQL variables so the body is passed cleanly:
+              gh api graphql \
+                -f query='mutation($repositoryId: ID!, $categoryId: ID!, $title: String!, $body: String!) { createDiscussion(input: { repositoryId: $repositoryId, categoryId: $categoryId, title: $title, body: $body }) { discussion { url } } }' \
+                -f repositoryId="REPO_ID" \
+                -f categoryId="CATEGORY_ID" \
+                -f title="TITLE" \
+                -f body="BODY"
 
             Post the discussion URL as a final output message.
         env:
