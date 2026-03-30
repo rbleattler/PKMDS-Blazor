@@ -35,6 +35,14 @@ Publish locally (static site)
 - `New-Item -ItemType File release/wwwroot/.nojekyll -Force | Out-Null`
 - Deployable output: `release/wwwroot/`.
 
+## Architecture overview
+
+- Single route `/`; all UI lives inside `SaveFileComponent` as a `MudTabs`-based layout.
+- `RefreshAwareComponent` base class (in `Pkmds.Rcl`) auto-subscribes to `IRefreshService.OnAppStateChanged` — prefer it over `ComponentBase` for any component that reacts to save-file state changes.
+- `GlobalUsings.cs` in `Pkmds.Rcl` imports: `MudBlazor`, `PKHeX.Core`, `Pkmds.Rcl.Components`, `Pkmds.Rcl.Services`, and aliases `Severity = MudBlazor.Severity` (avoids ambiguity with PKHeX's own `Severity`).
+- New tabs: add a `<MudTabPanel>` entry in `SaveFileComponent.razor`; put the tab component under `Pkmds.Rcl/Components/MainTabPages/`; use namespace `Pkmds.Rcl.Components.MainTabPages` in the code-behind.
+- Tab navigation: bind `@bind-ActivePanelIndex` on `MudTabs` and pass an `EventCallback` parameter to child tabs that need to trigger navigation.
+
 ## Project layout and build
 
 - `Directory.Build.props`: sets global `TargetFramework` to `net10.0`, repo metadata, nullable + implicit usings, and `TreatWarningsAsErrors` in Debug.
@@ -60,9 +68,19 @@ Runtime wiring (Web)
 
 ## PKHeX.Core
 
-This app depends heavily on [PKHeX.Core](https://github.com/kwsch/PKHeX). When implementing features, use the PKHeX WinForms app as a reference for how to leverage PKHeX.Core — both for UI/UX patterns and for understanding the correct API usage. The first place you should look when referencing PKHeX is ../PKHeX/ (or probably ~/Code/PKHeX), which contains the PKHeX WinForms app source code. The `PKHeX.Core` project within that solution is the library we consume here, and the WinForms app is a separate project that references it. The PKHeX WinForms app is a great reference for how to use PKHeX.Core effectively, as it demonstrates real-world usage of the library's APIs in a production application. If you can't find the source there, the PKHeX Wiki and source code are also valuable resources for understanding how to work with PKHeX.Core.
+This app depends heavily on [PKHeX.Core](https://github.com/kwsch/PKHeX). When implementing features, use the PKHeX WinForms app as a reference for how to leverage PKHeX.Core — both for UI/UX patterns and for understanding the correct API usage. The first place you should look when referencing PKHeX is `~/Code/codemonkey85/PKHeX` (macOS) or `C:\Code\PKHeX` (Windows), which contains the PKHeX WinForms app source code. The `PKHeX.Core` project within that solution is the library we consume here, and the WinForms app is a separate project that references it. The PKHeX WinForms app is a great reference for how to use PKHeX.Core effectively, as it demonstrates real-world usage of the library's APIs in a production application. If you can't find the source there, the PKHeX Wiki and source code are also valuable resources for understanding how to work with PKHeX.Core.
 
 If you encounter bugs or limitations in PKHeX.Core while working on an issue or PR, note them in a code comment at the relevant site and report them on the GitHub issue or PR you are working on.
+
+### PKHeX.Core API notes
+
+- `CheckResult` is a **struct** (value type) — never use `FirstOrDefault()` or other null-returning LINQ on collections of it.
+- Spelling: `result.Judgement` (British English), not `Judgment`.
+- Human-readable legality messages: `var ctx = LegalityLocalizationContext.Create(la); ctx.Humanize(in result, verbose: false)`.
+- Box iteration: `saveFile.BoxCount`, `saveFile.BoxSlotCount`, `saveFile.GetBoxSlotAtIndex(box, slot)`.
+- Party iteration: `saveFile.PartyCount`, `saveFile.GetPartySlotAtIndex(i)`.
+- `ParseSettings.ActiveTrainer` is internal and set by `InitFromSaveFileData(sav)` — this enables the handler check in `HistoryVerifier.VerifyHandlerState`.
+- `ParseSettings.AllowGBCartEra` is set by `InitFromSaveFileData` — `true` for physical Gen 1/2 saves (enables GB era events), `false` for VC saves. Do **not** override it globally to `false`; that breaks legitimate events (e.g. Nintendo Event Mew, GS Ball Celebi) on physical cartridge saves.
 
 ## Data generation tools
 
@@ -78,10 +96,16 @@ Generates `ability-info.json`, `move-info.json`, and `item-info.json` from PokeA
 
 ```sh
 # Without Showdown (PokeAPI data only)
+# macOS:
 dotnet run tools/generate-descriptions.cs -- --pokeapi ~/Code/codemonkey85/pokeapi
+# Windows:
+dotnet run tools/generate-descriptions.cs -- --pokeapi C:\Code\pokeapi
 
 # With Showdown supplement (recommended — fills Gen 8+ move secondary effects)
-dotnet run tools/generate-descriptions.cs -- --pokeapi ~/Code/codemonkey85/pokeapi --showdown ~/Code/pokemon-showdown
+# macOS:
+dotnet run tools/generate-descriptions.cs -- --pokeapi ~/Code/codemonkey85/pokeapi --showdown ~/Code/codemonkey85/pokemon-showdown
+# Windows:
+dotnet run tools/generate-descriptions.cs -- --pokeapi C:\Code\pokeapi --showdown C:\Code\pokemon-showdown
 ```
 
 ### `tools/generate-tm-data.cs`
@@ -100,6 +124,32 @@ dotnet run tools/generate-tm-data.cs -- --input "path/to/List of TMs - Bulbapedi
 ```
 
 Both scripts default output to `Pkmds.Rcl/wwwroot/data/` by walking up from the working directory to find the repo root. Pass `--output /path` to override.
+
+## MudBlazor and Razor gotchas
+
+- `ComboItem` (PKHeX) is a **sealed record** (reference type). Using `ComboItem?` in a Razor `@bind-Value` triggers CS8669 in the Razor-generated code — use `int?` with `.Value` for select bindings instead.
+- `MudExpansionPanel` in MudBlazor 9 has no `IsInitiallyExpanded` or `IsExpanded` parameters (triggers MUD0002 analyzer error) — omit them; panels start collapsed by default.
+- Razor integer literals in attributes must be parenthesised: `Value="@((int?)0)"`, not `Value="@0"`.
+- Nullable reference type casts in Razor: `(string?)null` triggers CS8669 — use `default(string)` instead.
+- `MudTable` `RowStyleFunc` signature is `Func<T, int, string>` (item + row index), not `Func<T, string>`.
+
+## Local source references
+
+Prefer reading local source over fetching from GitHub or relying solely on docs:
+
+- **PKHeX**: macOS `~/Code/codemonkey85/PKHeX`, Windows `C:\Code\PKHeX`
+- **MudBlazor**: macOS `~/Code/codemonkey85/MudBlazor`, Windows `C:\Code\MudBlazor`
+- **Pokémon Showdown**: macOS `~/Code/codemonkey85/pokemon-showdown`, Windows `C:\Code\pokemon-showdown`
+- **PokeAPI**: macOS `~/Code/codemonkey85/pokeapi`, Windows `C:\Code\pokeapi`
+
+## Workflow
+
+- **Tests**: Do not run `dotnet test` locally — leave it to the CI GitHub Actions workflow (`.github/workflows/buildandtest.yml`). Run only `dotnet format` and `dotnet build -c Debug` to verify changes locally.
+- **PR review feedback**: (1) Review all comments and plan the response; (2) reply to each individual comment on the PR explaining what you're doing and why; (3) make code changes, commit, and push; (4) mark all addressed comments as resolved on the PR.
+
+## Known upstream issues
+
+- **MudBlazor bag virtualization** (`BagTab`): `MudDataGrid` `Virtualize="true"` is intentionally disabled due to a MudBlazor bug — `DataGridVirtualizeRow` passes `SpacerElement="div"` inside `<tbody>`, which CSS collapses to 0 px, causing rows to jump on scroll. A fix has been submitted upstream (MudBlazor/MudBlazor#12799). Once it is merged and released: bump the MudBlazor version in `Directory.Packages.props`, then re-enable `Virtualize="true"` on the bag `MudDataGrid`.
 
 ## Notes
 

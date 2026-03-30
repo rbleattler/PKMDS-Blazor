@@ -731,12 +731,14 @@ JsonObject GenerateMoveInfo(string csvDir, string? showdownPath = null)
         move.TryGetValue("target_id", out var targetId);
         move.TryGetValue("identifier", out var moveIdentifier);
         var moveFlags = flagsByMove.TryGetValue(moveId, out var flags) ? new List<string>(flags) : [];
-        // For moves absent from PokeAPI's move_flag_map, supplement from Showdown.
-        if (moveFlags.Count == 0
-            && int.TryParse(moveId, out var flagMoveIdInt)
+        // Supplement flags from Showdown: adds any flags Showdown knows about that PokeAPI is missing.
+        // PokeAPI's move_flag_map can be incomplete for newer moves (e.g. only wind, missing protect/mirror).
+        if (int.TryParse(moveId, out var flagMoveIdInt)
             && showdownMoves.TryGetValue(flagMoveIdInt, out var sdForFlags)
             && sdForFlags.Flags.Count > 0)
-            moveFlags.AddRange(sdForFlags.Flags);
+            foreach (var f in sdForFlags.Flags)
+                if (!moveFlags.Contains(f))
+                    moveFlags.Add(f);
         if (moveIdentifier is not null && windMoveIdentifiers.Contains(moveIdentifier) && !moveFlags.Contains("wind"))
             moveFlags.Add("wind");
         if (moveIdentifier is not null && slicingMoveIdentifiers.Contains(moveIdentifier) && !moveFlags.Contains("slicing"))
