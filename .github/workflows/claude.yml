@@ -115,20 +115,22 @@ jobs:
             Step 4: Determine today's date and format it as "Week of Month D, YYYY" (e.g. "Week of March 24, 2025") for the discussion title.
 
             Step 5: Find the "Change Log" discussion category ID by running:
-              gh api graphql -f query='{ repository(owner: "codemonkey85", name: "PKMDS-Blazor") { discussionCategories(first: 20) { nodes { id name } } } }'
+              GH_TOKEN=$PKMDS_DISCUSSION_TOKEN gh api graphql -f query='{ repository(owner: "codemonkey85", name: "PKMDS-Blazor") { discussionCategories(first: 20) { nodes { id name } } } }'
 
             To get the repository ID, run:
-              gh api graphql -f query='{ repository(owner: "codemonkey85", name: "PKMDS-Blazor") { id } }'
+              GH_TOKEN=$PKMDS_DISCUSSION_TOKEN gh api graphql -f query='{ repository(owner: "codemonkey85", name: "PKMDS-Blazor") { id } }'
 
-            Step 6: Create a new discussion using GraphQL variables so the body is passed cleanly:
-              gh api graphql \
+            Step 6: Create a new discussion using GraphQL variables so the body is passed cleanly.
+            Write the body to a temp file first, then pass it via a shell variable to avoid quoting issues:
+              printf '%s' "BODY_CONTENT" > /tmp/changelog_body.txt
+              GH_TOKEN=$PKMDS_DISCUSSION_TOKEN gh api graphql \
                 -f query='mutation($repositoryId: ID!, $categoryId: ID!, $title: String!, $body: String!) { createDiscussion(input: { repositoryId: $repositoryId, categoryId: $categoryId, title: $title, body: $body }) { discussion { url } } }' \
                 -f repositoryId="REPO_ID" \
                 -f categoryId="CATEGORY_ID" \
                 -f title="TITLE" \
-                -f body="BODY"
+                -F body=@/tmp/changelog_body.txt
 
             Post the discussion URL as a final output message.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_TOKEN: ${{ secrets.DISCUSSION_TOKEN }}
+          PKMDS_DISCUSSION_TOKEN: ${{ secrets.DISCUSSION_TOKEN }}
