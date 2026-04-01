@@ -3,26 +3,17 @@ using Octokit;
 
 namespace Pkmds.Functions.Services;
 
-public class GitHubService : IGitHubService
+public class GitHubService(IConfiguration configuration) : IGitHubService
 {
-    private readonly GitHubClient _client;
-    private readonly string _owner;
-    private readonly string _repo;
-
-    public GitHubService(IConfiguration configuration)
+    private readonly string _owner = configuration["GitHubOwner"]
+        ?? throw new InvalidOperationException("GitHubOwner configuration is required.");
+    private readonly string _repo = configuration["GitHubRepo"]
+        ?? throw new InvalidOperationException("GitHubRepo configuration is required.");
+    private readonly GitHubClient _client = new GitHubClient(new ProductHeaderValue("pkmds-bug-reporter"))
     {
-        var pat = configuration["GitHubPat"]
-            ?? throw new InvalidOperationException("GitHubPat configuration is required.");
-        _owner = configuration["GitHubOwner"]
-            ?? throw new InvalidOperationException("GitHubOwner configuration is required.");
-        _repo = configuration["GitHubRepo"]
-            ?? throw new InvalidOperationException("GitHubRepo configuration is required.");
-
-        _client = new GitHubClient(new ProductHeaderValue("pkmds-bug-reporter"))
-        {
-            Credentials = new Credentials(pat),
-        };
-    }
+        Credentials = new Credentials(
+            configuration["GitHubPat"] ?? throw new InvalidOperationException("GitHubPat configuration is required.")),
+    };
 
     public async Task<(int IssueNumber, string IssueUrl)> CreateIssueAsync(
         string title,

@@ -4,22 +4,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Pkmds.Functions.Services;
 
-public class BlobService : IBlobService
+public class BlobService(IConfiguration configuration, ILogger<BlobService> logger) : IBlobService
 {
-    private readonly BlobContainerClient _containerClient;
-    private readonly ILogger<BlobService> _logger;
-
-    public BlobService(IConfiguration configuration, ILogger<BlobService> logger)
-    {
-        _logger = logger;
-        var connectionString = configuration["AzureStorageConnectionString"]
-            ?? throw new InvalidOperationException("AzureStorageConnectionString configuration is required.");
-        var containerName = configuration["BlobContainerName"] ?? "bug-reports";
-
-        var serviceClient = new BlobServiceClient(connectionString);
-        _containerClient = serviceClient.GetBlobContainerClient(containerName);
-        _containerClient.CreateIfNotExists();
-    }
+    private readonly BlobContainerClient _containerClient = CreateContainerClient(configuration);
 
     public async Task UploadAsync(
         int issueNumber,
@@ -30,7 +17,7 @@ public class BlobService : IBlobService
         var blobName = $"{issueNumber}/{fileName}";
         var blobClient = _containerClient.GetBlobClient(blobName);
         await blobClient.UploadAsync(data, overwrite: true, cancellationToken: cancellationToken);
-        _logger.LogInformation("Uploaded blob {BlobName} for issue #{IssueNumber}", blobName, issueNumber);
+        logger.LogInformation("Uploaded blob {BlobName} for issue #{IssueNumber}", blobName, issueNumber);
     }
 
     public async Task DeleteIssueFilesAsync(
@@ -47,6 +34,16 @@ public class BlobService : IBlobService
             deleted++;
         }
 
-        _logger.LogInformation("Deleted {Count} blob(s) for issue #{IssueNumber}", deleted, issueNumber);
+        logger.LogInformation("Deleted {Count} blob(s) for issue #{IssueNumber}", deleted, issueNumber);
+    }
+
+    private static BlobContainerClient CreateContainerClient(IConfiguration configuration)
+    {
+        var connectionString = configuration["AzureStorageConnectionString"]
+            ?? throw new InvalidOperationException("AzureStorageConnectionString configuration is required.");
+        var containerName = configuration["BlobContainerName"] ?? "bug-reports";
+        var containerClient = new BlobServiceClient(connectionString).GetBlobContainerClient(containerName);
+        containerClient.CreateIfNotExists();
+        return containerClient;
     }
 }
