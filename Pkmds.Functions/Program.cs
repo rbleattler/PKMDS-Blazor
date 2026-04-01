@@ -1,9 +1,3 @@
-using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.Functions.Worker.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Pkmds.Functions.Services;
-
 var builder = FunctionsApplication.CreateBuilder(args);
 
 builder.ConfigureFunctionsWebApplication();
@@ -23,8 +17,8 @@ builder.Services
                     // UAT: Azure Static Web Apps preview URLs (PR number changes per PR)
                     // Dev: localhost (any port)
                     return host == "codemonkey85.github.io"
-                        || host.EndsWith(".azurestaticapps.net")
-                        || host == "localhost";
+                           || host.EndsWith(".azurestaticapps.net")
+                           || host == "localhost";
                 })
                 .AllowAnyMethod()
                 .AllowAnyHeader();

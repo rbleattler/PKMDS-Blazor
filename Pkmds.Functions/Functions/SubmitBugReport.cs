@@ -1,10 +1,3 @@
-using System.Text;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.Logging;
-using Pkmds.Functions.Services;
-
 namespace Pkmds.Functions.Functions;
 
 public class SubmitBugReport(IGitHubService gitHubService, IBlobService blobService, ILogger<SubmitBugReport> logger)
@@ -57,11 +50,19 @@ public class SubmitBugReport(IGitHubService gitHubService, IBlobService blobServ
         {
             saveFileSection.Append("\n\n## Save File\n");
             if (!string.IsNullOrWhiteSpace(saveFileName))
+            {
                 saveFileSection.Append($"\n- **File:** `{saveFileName}`");
+            }
+
             if (!string.IsNullOrWhiteSpace(saveGameName))
+            {
                 saveFileSection.Append($"\n- **Game:** {saveGameName}");
+            }
+
             if (!string.IsNullOrWhiteSpace(saveRevision))
+            {
                 saveFileSection.Append($"\n- **Revision:** {saveRevision}");
+            }
         }
 
         var issueBody =
@@ -81,14 +82,15 @@ public class SubmitBugReport(IGitHubService gitHubService, IBlobService blobServ
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to create GitHub issue");
-            return new ObjectResult(new { error = "Failed to create GitHub issue. Please try again later." })
-            {
-                StatusCode = StatusCodes.Status502BadGateway,
-            };
+            return new ObjectResult(new { error = "Failed to create GitHub issue. Please try again later." }) { StatusCode = StatusCodes.Status502BadGateway };
         }
 
         var saveFile = form.Files["saveFile"];
-        if (saveFile is { Length: > 0 })
+        if (saveFile is not { Length: > 0 })
+        {
+            return new ObjectResult(new { issueNumber, issueUrl }) { StatusCode = StatusCodes.Status201Created };
+        }
+
         {
             if (saveFile.Length > MaxSaveFileSizeBytes)
             {
@@ -124,11 +126,10 @@ public class SubmitBugReport(IGitHubService gitHubService, IBlobService blobServ
     {
         var name = Path.GetFileName(fileName);
         var invalid = Path.GetInvalidFileNameChars();
-        foreach (var c in invalid)
-        {
-            name = name.Replace(c, '_');
-        }
+        name = invalid.Aggregate(name, (current, c) => current.Replace(c, '_'));
 
-        return string.IsNullOrWhiteSpace(name) ? "save.bin" : name;
+        return string.IsNullOrWhiteSpace(name)
+            ? "save.bin"
+            : name;
     }
 }

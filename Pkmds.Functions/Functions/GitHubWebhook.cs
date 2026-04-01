@@ -1,14 +1,3 @@
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.Json;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Pkmds.Functions.Models;
-using Pkmds.Functions.Services;
-
 namespace Pkmds.Functions.Functions;
 
 public class GitHubWebhook(IBlobService blobService, IConfiguration configuration, ILogger<GitHubWebhook> logger)
@@ -49,7 +38,11 @@ public class GitHubWebhook(IBlobService blobService, IConfiguration configuratio
             return new BadRequestObjectResult(new { error = "Invalid payload." });
         }
 
-        if (payload?.Action == "closed")
+        if (payload?.Action != "closed")
+        {
+            return new OkResult();
+        }
+
         {
             logger.LogInformation("GitHub issue #{IssueNumber} closed — cleaning up blobs", payload.Issue.Number);
             try

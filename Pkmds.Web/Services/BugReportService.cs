@@ -1,6 +1,5 @@
 using System.Net.Http.Json;
 using System.Text.Json;
-using Microsoft.Extensions.Configuration;
 
 namespace Pkmds.Web.Services;
 
@@ -25,9 +24,14 @@ public class BugReportService(IConfiguration configuration, HttpClient httpClien
             content.Add(new StringContent(request.UserAgent), "userAgent");
 
             if (request.SaveGameName is not null)
+            {
                 content.Add(new StringContent(request.SaveGameName), "saveGameName");
+            }
+
             if (request.SaveRevision is not null)
+            {
                 content.Add(new StringContent(request.SaveRevision), "saveRevision");
+            }
 
             if (request.SaveFileBytes is { Length: > 0 } saveBytes && request.SaveFileName is not null)
             {
@@ -39,17 +43,17 @@ public class BugReportService(IConfiguration configuration, HttpClient httpClien
             if (response.IsSuccessStatusCode)
             {
                 var json = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: cancellationToken);
-                var issueUrl = json.TryGetProperty("issueUrl", out var urlElement) ? urlElement.GetString() : null;
+                var issueUrl = json.TryGetProperty("issueUrl", out var urlElement)
+                    ? urlElement.GetString()
+                    : null;
                 return new BugReportResult(true, IssueUrl: issueUrl);
             }
-            else
-            {
-                var errorJson = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: cancellationToken);
-                var errorMessage = errorJson.TryGetProperty("error", out var errorElement)
-                    ? errorElement.GetString()
-                    : $"Submission failed with status {(int)response.StatusCode}.";
-                return new BugReportResult(false, ErrorMessage: errorMessage);
-            }
+
+            var errorJson = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: cancellationToken);
+            var errorMessage = errorJson.TryGetProperty("error", out var errorElement)
+                ? errorElement.GetString()
+                : $"Submission failed with status {(int)response.StatusCode}.";
+            return new BugReportResult(false, ErrorMessage: errorMessage);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
