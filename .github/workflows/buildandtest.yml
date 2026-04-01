@@ -43,5 +43,8 @@ jobs:
       - name: Build Web
         run: dotnet build Pkmds.Web/Pkmds.Web.csproj --configuration Release --no-restore
 
+      - name: Build Functions
+        run: dotnet build Pkmds.Functions/Pkmds.Functions.csproj --configuration Release
+
       - name: Run tests
         run: dotnet test --configuration Release --no-build

@@ -75,11 +75,11 @@ jobs:
           files: 'release/wwwroot/service-worker.published.js'
           replacements: '%%CACHE_VERSION%%=${{ github.run_id }}'
 
-      - name: Set Sentry DSN
+      - name: Set Function App URL
         uses: datamonsters/replace-action@v2
         with:
           files: 'release/wwwroot/appsettings.json'
-          replacements: '%%SENTRY_DSN%%=${{ secrets.SENTRY_DSN }}'
+          replacements: '%%FUNCTION_APP_URL%%=${{ secrets.FUNCTION_APP_URL }}'
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v6.0.0

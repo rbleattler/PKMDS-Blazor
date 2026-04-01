@@ -2,7 +2,10 @@
 @using MudBlazor
 @using Pkmds.Rcl.Components.Layout
 @using Pkmds.Rcl.Components.Pages
+@using Pkmds.Rcl.Components.Dialogs
 @inject IJSRuntime JsRuntime
+@inject IDialogService DialogService
+@inject IAppState AppState
 
 <ErrorBoundary @ref="errorBoundary">
     <ChildContent>
@@ -20,15 +23,29 @@
         <MudContainer MaxWidth="MaxWidth.Small"
                       Class="mt-8">
             <MudAlert Severity="Severity.Error"
-                      Variant="Variant.Filled">
+                      Variant="Variant.Filled"
+                      Class="mb-4">
                 An unexpected error occurred.
             </MudAlert>
-            <MudButton OnClick="@(() => errorBoundary?.Recover())"
-                       Variant="Variant.Filled"
-                       Color="Color.Primary"
-                       Class="mt-4">
-                Try Again
-            </MudButton>
+            <MudText Typo="Typo.body2"
+                     Class="mb-4"
+                     Style="word-break: break-word; font-family: monospace;">
+                @exception?.GetType().Name: @exception?.Message
+            </MudText>
+            <MudStack Row
+                      Spacing="2">
+                <MudButton OnClick="@(() => errorBoundary?.Recover())"
+                           Variant="Variant.Outlined"
+                           Color="Color.Default">
+                    Try Again
+                </MudButton>
+                <MudButton OnClick="@(() => ShowCrashReportDialog(exception))"
+                           Variant="Variant.Filled"
+                           Color="Color.Error"
+                           StartIcon="@Icons.Material.Filled.BugReport">
+                    Report this bug
+                </MudButton>
+            </MudStack>
         </MudContainer>
     </ErrorContent>
 </ErrorBoundary>

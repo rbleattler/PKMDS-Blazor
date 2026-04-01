@@ -155,6 +155,23 @@ public partial class MainLayout : IDisposable
 
     private void DrawerToggle() => AppService.ToggleDrawer();
 
+    private async Task ShowBugReportDialog()
+    {
+        var parameters = new DialogParameters
+        {
+            { nameof(BugReportDialog.HasSaveFile), AppState.SaveFile is not null },
+            { nameof(BugReportDialog.AppVersion), AppState.AppVersion ?? string.Empty },
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<BugReportDialog>("Report a Bug", parameters, options);
+        var result = await dialog.Result;
+        if (result is { Data: string issueUrl })
+        {
+            Snackbar.Add($"Bug report submitted! <a href=\"{issueUrl}\" target=\"_blank\">View issue</a>",
+                Severity.Success);
+        }
+    }
+
     private async Task ShowSettingsDialog()
     {
         var parameters =

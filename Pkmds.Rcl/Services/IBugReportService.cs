@@ -1,14 +1,18 @@
 namespace Pkmds.Rcl.Services;
 
+public sealed record BugReportRequest(
+    string Name,
+    string Email,
+    string Description,
+    string AppVersion,
+    string UserAgent,
+    byte[]? SaveFileBytes = null,
+    string? SaveFileName = null,
+    Exception? CapturedException = null);
+
+public sealed record BugReportResult(bool Success, string? IssueUrl = null, string? ErrorMessage = null);
+
 public interface IBugReportService
 {
-    Task SubmitBugReportAsync(string description, string email, string name, bool attachSaveFile = false);
-
-    /// <summary>
-    /// Pushes a new Sentry scope with the raw file bytes attached. The attachment is
-    /// automatically removed when the returned <see cref="IDisposable" /> is disposed,
-    /// preventing it from leaking into unrelated events.
-    /// </summary>
-    /// <returns>A disposable scope that should wrap the error logging call.</returns>
-    IDisposable AttachRawFileToScope(byte[] data, string fileName);
+    Task<BugReportResult> SubmitBugReportAsync(BugReportRequest request, CancellationToken cancellationToken = default);
 }

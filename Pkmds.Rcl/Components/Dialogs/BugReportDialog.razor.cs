@@ -2,13 +2,12 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Pkmds.Rcl.Components.Dialogs;
 
-public record BugReportData(string Description, string Email, string Name, bool AttachSaveFile);
-
 public partial class BugReportDialog
 {
     private const int MinDescriptionLength = 30;
     private static readonly EmailAddressAttribute EmailValidator = new();
     private bool attachSaveFile;
+    private bool isSubmitting;
 
     private string description = string.Empty;
     private string email = string.Empty;
@@ -24,14 +23,33 @@ public partial class BugReportDialog
     [Parameter]
     public bool HasSaveFile { get; set; }
 
-    protected override void OnInitialized() =>
+    [Parameter]
+    public string AppVersion { get; set; } = string.Empty;
+
+    [Parameter]
+    public Exception? CapturedException { get; set; }
+
+    [Inject]
+    private IBugReportService BugReportService { get; set; } = null!;
+
+    protected override void OnInitialized()
+    {
         attachSaveFile = HasSaveFile;
+
+        if (CapturedException is not null)
+        {
+            description =
+                $"[Crash] {CapturedException.GetType().Name}: {CapturedException.Message}" +
+                $"\n\nStack trace:\n{CapturedException.StackTrace}" +
+                "\n\n--- Additional details ---\nPlease describe what you were doing when this crash occurred:\n\n";
+        }
+    }
 
     private void Cancel() => MudDialog.Close(DialogResult.Cancel());
 
-    private void Submit()
+    private async Task Submit()
     {
-        if (description.Length < MinDescriptionLength)
+        if (CapturedException is null && description.Length < MinDescriptionLength)
         {
             submitError = $"Please provide a more detailed description (at least {MinDescriptionLength} characters).";
             return;
@@ -43,6 +61,38 @@ public partial class BugReportDialog
             return;
         }
 
-        MudDialog.Close(DialogResult.Ok(new BugReportData(description, email, name, attachSaveFile)));
+        isSubmitting = true;
+        submitError = null;
+        StateHasChanged();
+
+        try
+        {
+            byte[]? saveBytes = null;
+            string? saveFileName = null;
+            if (attachSaveFile && AppState.SaveFile is { } sf)
+            {
+                saveBytes = sf.Write().ToArray();
+                saveFileName = "save.bin";
+            }
+
+            var userAgent = await JSRuntime.InvokeAsync<string>("eval", "navigator.userAgent");
+            var request = new BugReportRequest(name, email, description, AppVersion, userAgent,
+                saveBytes, saveFileName, CapturedException);
+            var result = await BugReportService.SubmitBugReportAsync(request);
+
+            if (result.Success)
+            {
+                MudDialog.Close(DialogResult.Ok(result.IssueUrl));
+            }
+            else
+            {
+                submitError = result.ErrorMessage ?? "Submission failed. Please try again.";
+            }
+        }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
+        }
     }
 }
