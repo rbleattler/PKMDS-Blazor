@@ -24,6 +24,12 @@ public interface IAppState
     SaveFile? SaveFile { get; set; }
 
     /// <summary>
+    /// Gets or sets the original file name of the loaded save file as provided by the user.
+    /// This is null when no save file is loaded.
+    /// </summary>
+    string? SaveFileName { get; set; }
+
+    /// <summary>
     /// Gets the box editor interface for the current save file.
     /// This provides access to box manipulation operations.
     /// </summary>

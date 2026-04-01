@@ -37,9 +37,15 @@ public record AppState : IAppState
                 ? new(SaveFile)
                 : null;
 
+            if (SaveFile is null)
+                SaveFileName = null;
+
             PinnedBoxNumber = null;
         }
     }
+
+    /// <inheritdoc />
+    public string? SaveFileName { get; set; }
 
     /// <inheritdoc />
     public BoxEdit? BoxEdit { get; private set; }

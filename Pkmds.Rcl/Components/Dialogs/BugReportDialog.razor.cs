@@ -72,7 +72,7 @@ public partial class BugReportDialog
             if (attachSaveFile && AppState.SaveFile is { } sf)
             {
                 saveBytes = sf.Write().ToArray();
-                saveFileName = sf.Metadata.FileName ?? "save.bin";
+                saveFileName = AppState.SaveFileName ?? "save.bin";
             }
 
             var userAgent = await JSRuntime.InvokeAsync<string>("eval", "navigator.userAgent");

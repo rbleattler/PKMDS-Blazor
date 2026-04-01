@@ -275,7 +275,7 @@ public partial class MainLayout : IDisposable
             if (SaveUtil.TryGetSaveFile(data, out var saveFile, selectedFile.Name))
             {
                 manicEmuSaveContext = null;
-                FinishLoadingSaveFile(saveFile);
+                FinishLoadingSaveFile(saveFile, selectedFile.Name);
             }
             // If that fails, check whether this is a Manic EMU .3ds.sav ZIP archive.
             // Manic EMU packages 3DS saves as a ZIP containing sdmc/… directory paths.
@@ -283,7 +283,7 @@ public partial class MainLayout : IDisposable
             {
                 manicEmuSaveContext = manicContext;
                 Logger.LogInformation("Loaded save from Manic EMU .3ds.sav/.3ds.save archive; entry: {EntryPath}", manicContext.SaveEntryPath);
-                FinishLoadingSaveFile(saveFile);
+                FinishLoadingSaveFile(saveFile, selectedFile.Name);
             }
             else
             {
@@ -312,7 +312,7 @@ public partial class MainLayout : IDisposable
         RefreshService.RefreshBoxAndPartyState();
     }
 
-    private void FinishLoadingSaveFile(SaveFile saveFile)
+    private void FinishLoadingSaveFile(SaveFile saveFile, string? fileName = null)
     {
         // Call InitFromSaveFileData to set ParseSettings.ActiveTrainer to the loaded save file.
         // This enables per-Pokémon handler state validation in HistoryVerifier.VerifyHandlerState,
@@ -328,6 +328,7 @@ public partial class MainLayout : IDisposable
         // as doing so breaks legitimate GB era events on real physical cartridge saves.
         ParseSettings.InitFromSaveFileData(saveFile);
         AppState.SaveFile = saveFile;
+        AppState.SaveFileName = fileName;
         AppState.BoxEdit?.LoadBox(saveFile.CurrentBox);
         Logger.LogInformation("Successfully loaded save file: {SaveType}, Generation: {Generation}",
             saveFile.GetType().Name, saveFile.Generation);
