@@ -141,6 +141,13 @@
                        FullWidth>
                 Settings
             </MudButton>
+            <MudButton OnClick="@ShowBugReportDialog"
+                       StartIcon="@Icons.Material.Filled.BugReport"
+                       Variant="@Variant.Filled"
+                       Color="@Color.Warning"
+                       FullWidth>
+                Report a Bug
+            </MudButton>
             @if (IsUpdateAvailable)
             {
                 <MudButton OnClick="@ReloadApp"

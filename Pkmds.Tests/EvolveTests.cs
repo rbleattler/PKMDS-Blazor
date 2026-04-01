@@ -212,6 +212,7 @@ public class EvolveTests
         public int? SelectedBoxSlotNumber { get; set; }
         public int? SelectedPartySlotNumber { get; set; }
         public int? PinnedBoxNumber { get; set; }
+        public string? SaveFileName { get; set; }
         public bool ShowProgressIndicator { get; set; }
         public string AppVersion => "Test";
         public DateTime? AppBuildDate => null;

@@ -75,11 +75,6 @@ jobs:
           files: 'release/wwwroot/service-worker.published.js'
           replacements: '%%CACHE_VERSION%%=${{ github.run_id }}'
 
-      - name: Set Sentry DSN
-        uses: datamonsters/replace-action@v2
-        with:
-          files: 'release/wwwroot/appsettings.json'
-          replacements: '%%SENTRY_DSN%%=${{ secrets.SENTRY_DSN }}'
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v6.0.0
@@ -92,3 +87,33 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5.0.0
+
+  deploy_functions:
+    name: Deploy Azure Functions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5.2.0
+        with:
+          global-json-file: ./global.json
+
+      - name: Publish Functions
+        run: dotnet publish Pkmds.Functions/Pkmds.Functions.csproj -c Release -o functions-publish --nologo
+
+      - name: Zip publish output
+        run: cd functions-publish && zip -r ../functions.zip .
+
+      - name: Azure login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure Functions
+        run: |
+          az functionapp deployment source config-zip \
+            --name pkmds-functions \
+            --resource-group pkmds-bug-reports \
+            --src functions.zip

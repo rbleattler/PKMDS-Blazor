@@ -6,13 +6,21 @@
             <MudIcon Icon="@Icons.Material.Filled.BugReport"
                      Class="mr-2"
                      Style="vertical-align: middle;"/>
-            Report a Bug
+            @(CapturedException is not null ? "Report this crash" : "Report a Bug")
         </MudText>
     </TitleContent>
     <DialogContent>
         <MudStack Spacing="3"
                   Class="pa-2">
-            @if (!HasSaveFile)
+            @if (CapturedException is not null)
+            {
+                <MudAlert Severity="@Severity.Warning"
+                          Dense="true">
+                    A crash was detected. The error details have been pre-filled below. Please add your name,
+                    email, and any additional context about what you were doing before the crash.
+                </MudAlert>
+            }
+            else if (!HasSaveFile)
             {
                 <MudAlert Severity="@Severity.Info"
                           Dense="true">
@@ -23,11 +31,11 @@
             }
             <MudTextField @bind-Value="@description"
                           Label="What went wrong?"
-                          Lines="5"
-                          Required
+                          Lines="@(CapturedException is not null ? 10 : 5)"
+                          Required="@(CapturedException is null)"
                           Placeholder="Describe the issue in detail. Include: what you were doing, what happened, and what you expected to happen. Mention the game title and any specific Pokémon or field involved."
-                          HelperText="@($"Minimum {MinDescriptionLength} characters. {description.Length} entered.")"
-                          Validation="@((string v) => (v?.Length ?? 0) >= MinDescriptionLength
+                          HelperText="@(CapturedException is null ? $"Minimum {MinDescriptionLength} characters. {description.Length} entered." : "Crash details pre-filled. Add any extra context below the divider.")"
+                          Validation="@((string v) => CapturedException is not null || (v?.Length ?? 0) >= MinDescriptionLength
                                           ? null
                                           : $"Please provide at least {MinDescriptionLength} characters of detail.")"
                           Variant="@Variant.Outlined"/>
@@ -56,24 +64,35 @@
             }
             <MudText Typo="@Typo.caption"
                      Color="@Color.Secondary">
-                Reports are sent to our error tracking service to help improve the app.
+                Reports are submitted as GitHub issues to help improve the app.
                 @if (HasSaveFile)
                 {
-                    @:Your current save file will be included to help diagnose the issue.
+                    @:Your current save file can be attached to help diagnose the issue.
                 }
             </MudText>
         </MudStack>
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="@Cancel"
-                   Variant="@Variant.Text">
+                   Variant="@Variant.Text"
+                   Disabled="@isSubmitting">
             Cancel
         </MudButton>
         <MudButton OnClick="@Submit"
                    Color="@Color.Primary"
                    Variant="@Variant.Filled"
-                   Disabled="@(description.Length < MinDescriptionLength || !IsEmailValid || string.IsNullOrWhiteSpace(name))">
-            Submit Report
+                   Disabled="@(isSubmitting || (CapturedException is null && description.Length < MinDescriptionLength) || !IsEmailValid || string.IsNullOrWhiteSpace(name))">
+            @if (isSubmitting)
+            {
+                <MudProgressCircular Size="@Size.Small"
+                                     Indeterminate
+                                     Class="mr-2"/>
+                @:Submitting…
+            }
+            else
+            {
+                @:Submit Report
+            }
         </MudButton>
     </DialogActions>
 </MudDialog>
