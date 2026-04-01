@@ -1,4 +1,6 @@
 using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
+using Azure.Storage.Sas;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -7,8 +9,6 @@ namespace Pkmds.Functions.Services;
 public class BlobService(IConfiguration configuration, ILogger<BlobService> logger) : IBlobService
 {
     private readonly BlobContainerClient _containerClient = CreateContainerClient(configuration);
-
-    public string? PortalContainerUrl { get; } = configuration["AzureBlobPortalContainerUrl"];
 
     public async Task UploadAsync(
         int issueNumber,
@@ -20,6 +20,23 @@ public class BlobService(IConfiguration configuration, ILogger<BlobService> logg
         var blobClient = _containerClient.GetBlobClient(blobName);
         await blobClient.UploadAsync(data, overwrite: true, cancellationToken: cancellationToken);
         logger.LogInformation("Uploaded blob {BlobName} for issue #{IssueNumber}", blobName, issueNumber);
+    }
+
+    public Uri? GetSasUrl(int issueNumber, string fileName, TimeSpan expiry)
+    {
+        var blobName = $"{issueNumber}/{fileName}";
+        var blobClient = _containerClient.GetBlobClient(blobName);
+        if (!blobClient.CanGenerateSasUri)
+            return null;
+        var sasBuilder = new BlobSasBuilder
+        {
+            BlobContainerName = _containerClient.Name,
+            BlobName = blobName,
+            Resource = "b",
+            ExpiresOn = DateTimeOffset.UtcNow.Add(expiry),
+        };
+        sasBuilder.SetPermissions(BlobSasPermissions.Read);
+        return blobClient.GenerateSasUri(sasBuilder);
     }
 
     public async Task DeleteIssueFilesAsync(
