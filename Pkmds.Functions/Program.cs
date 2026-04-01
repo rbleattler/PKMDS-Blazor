@@ -9,8 +9,6 @@ var builder = FunctionsApplication.CreateBuilder(args);
 builder.ConfigureFunctionsWebApplication();
 
 builder.Services
-    .AddApplicationInsightsTelemetryWorkerService()
-    .ConfigureFunctionsApplicationInsights()
     .AddSingleton<IGitHubService, GitHubService>()
     .AddSingleton<IBlobService, BlobService>()
     .AddCors(options =>
