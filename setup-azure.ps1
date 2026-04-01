@@ -137,7 +137,7 @@ az functionapp create `
     --storage-account $StorageAccount `
     --consumption-plan-location $Location `
     --runtime dotnet-isolated `
-    --runtime-version 9 `
+    --runtime-version 10 `
     --functions-version 4 `
     --os-type Windows `
     --output none

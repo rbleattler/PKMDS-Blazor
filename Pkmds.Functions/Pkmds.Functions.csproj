@@ -1,8 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <!-- Override the global net10.0 — Azure Functions v4 supports net9.0 -->
-        <TargetFramework>net9.0</TargetFramework>
         <AzureFunctionsVersion>v4</AzureFunctionsVersion>
         <OutputType>Exe</OutputType>
         <RootNamespace>Pkmds.Functions</RootNamespace>
