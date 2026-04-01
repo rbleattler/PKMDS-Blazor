@@ -130,7 +130,7 @@ Write-Done "Got storage connection string"
 
 # ── Functions App ──────────────────────────────────────────────────────────────
 
-Write-Step "Creating Function App '$FunctionsApp' (Consumption plan, .NET 9 isolated)"
+Write-Step "Creating Function App '$FunctionsApp' (Consumption plan, .NET 10 isolated)"
 az functionapp create `
     --name $FunctionsApp `
     --resource-group $ResourceGroup `
