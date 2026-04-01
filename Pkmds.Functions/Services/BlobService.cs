@@ -8,6 +8,8 @@ public class BlobService(IConfiguration configuration, ILogger<BlobService> logg
 {
     private readonly BlobContainerClient _containerClient = CreateContainerClient(configuration);
 
+    public string? PortalContainerUrl { get; } = configuration["AzureBlobPortalContainerUrl"];
+
     public async Task UploadAsync(
         int issueNumber,
         string fileName,

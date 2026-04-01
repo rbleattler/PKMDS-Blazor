@@ -167,8 +167,9 @@ public partial class MainLayout : IDisposable
         var result = await dialog.Result;
         if (result is { Data: string issueUrl })
         {
-            Snackbar.Add($"Bug report submitted! <a href=\"{issueUrl}\" target=\"_blank\">View issue</a>",
-                Severity.Success);
+            Snackbar.Add(new MarkupString($"Bug report submitted! <a href=\"{issueUrl}\" target=\"_blank\">View issue</a>"),
+                Severity.Success,
+                options => options.RequireInteraction = true);
         }
     }
 
