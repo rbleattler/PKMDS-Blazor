@@ -50,21 +50,6 @@ jobs:
           files: 'release/wwwroot/service-worker.published.js'
           replacements: '%%CACHE_VERSION%%=${{ github.run_id }}'
 
-      - name: Set Function App URL
-        env:
-          FUNCTION_APP_URL: ${{ secrets.FUNCTION_APP_URL }}
-        run: |
-          if [ -z "${FUNCTION_APP_URL}" ]; then
-            echo "::error::FUNCTION_APP_URL secret is empty or not set"
-            exit 1
-          fi
-          sed -i "s|%%FUNCTION_APP_URL%%|${FUNCTION_APP_URL}|g" release/wwwroot/appsettings.json
-          echo "appsettings.json after replacement:"
-          cat release/wwwroot/appsettings.json
-          if grep -q '%%FUNCTION_APP_URL%%' release/wwwroot/appsettings.json; then
-            echo "::error::Placeholder %%FUNCTION_APP_URL%% was not replaced — check that the FUNCTION_APP_URL secret is set to the actual Azure Functions URL, not the placeholder itself"
-            exit 1
-          fi
 
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1

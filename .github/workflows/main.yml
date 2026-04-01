@@ -75,10 +75,6 @@ jobs:
           files: 'release/wwwroot/service-worker.published.js'
           replacements: '%%CACHE_VERSION%%=${{ github.run_id }}'
 
-      - name: Set Function App URL
-        env:
-          FUNCTION_APP_URL: ${{ secrets.FUNCTION_APP_URL }}
-        run: sed -i "s|%%FUNCTION_APP_URL%%|${FUNCTION_APP_URL}|g" release/wwwroot/appsettings.json
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v6.0.0
