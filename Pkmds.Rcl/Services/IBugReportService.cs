@@ -8,6 +8,8 @@ public sealed record BugReportRequest(
     string UserAgent,
     byte[]? SaveFileBytes = null,
     string? SaveFileName = null,
+    string? SaveGameName = null,
+    string? SaveRevision = null,
     Exception? CapturedException = null);
 
 public sealed record BugReportResult(bool Success, string? IssueUrl = null, string? ErrorMessage = null);

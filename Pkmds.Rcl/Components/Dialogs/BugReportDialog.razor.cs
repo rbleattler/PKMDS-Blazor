@@ -69,15 +69,22 @@ public partial class BugReportDialog
         {
             byte[]? saveBytes = null;
             string? saveFileName = null;
-            if (attachSaveFile && AppState.SaveFile is { } sf)
+            string? saveGameName = null;
+            string? saveRevision = null;
+            if (AppState.SaveFile is { } sf)
             {
-                saveBytes = sf.Write().ToArray();
-                saveFileName = AppState.SaveFileName ?? "save.bin";
+                saveGameName = SaveFileNameDisplay.FriendlyGameName(sf.Version);
+                saveRevision = (sf as ISaveFileRevision)?.SaveRevisionString;
+                if (attachSaveFile)
+                {
+                    saveBytes = sf.Write().ToArray();
+                    saveFileName = AppState.SaveFileName ?? "save.bin";
+                }
             }
 
             var userAgent = await JSRuntime.InvokeAsync<string>("eval", "navigator.userAgent");
             var request = new BugReportRequest(name, email, description, AppVersion, userAgent,
-                saveBytes, saveFileName, CapturedException);
+                saveBytes, saveFileName, saveGameName, saveRevision, CapturedException);
             var result = await BugReportService.SubmitBugReportAsync(request);
 
             if (result.Success)

@@ -24,6 +24,11 @@ public class BugReportService(IConfiguration configuration, HttpClient httpClien
             content.Add(new StringContent(request.AppVersion), "appVersion");
             content.Add(new StringContent(request.UserAgent), "userAgent");
 
+            if (request.SaveGameName is not null)
+                content.Add(new StringContent(request.SaveGameName), "saveGameName");
+            if (request.SaveRevision is not null)
+                content.Add(new StringContent(request.SaveRevision), "saveRevision");
+
             if (request.SaveFileBytes is { Length: > 0 } saveBytes && request.SaveFileName is not null)
             {
                 content.Add(new ByteArrayContent(saveBytes), "saveFile", request.SaveFileName);

@@ -1,3 +1,4 @@
+using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
@@ -37,6 +38,9 @@ public class SubmitBugReport(IGitHubService gitHubService, IBlobService blobServ
         var description = form["description"].ToString().Trim();
         var appVersion = form["appVersion"].ToString().Trim();
         var userAgent = form["userAgent"].ToString().Trim();
+        var saveGameName = form["saveGameName"].ToString().Trim();
+        var saveRevision = form["saveRevision"].ToString().Trim();
+        var saveFileName = form["saveFileName"].ToString().Trim();
 
         if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(description))
         {
@@ -48,11 +52,24 @@ public class SubmitBugReport(IGitHubService gitHubService, IBlobService blobServ
             : description;
         var issueTitle = $"[Bug] {shortTitle}";
 
+        var saveFileSection = new StringBuilder();
+        if (!string.IsNullOrWhiteSpace(saveGameName) || !string.IsNullOrWhiteSpace(saveFileName))
+        {
+            saveFileSection.Append("\n\n## Save File\n");
+            if (!string.IsNullOrWhiteSpace(saveFileName))
+                saveFileSection.Append($"\n- **File:** `{saveFileName}`");
+            if (!string.IsNullOrWhiteSpace(saveGameName))
+                saveFileSection.Append($"\n- **Game:** {saveGameName}");
+            if (!string.IsNullOrWhiteSpace(saveRevision))
+                saveFileSection.Append($"\n- **Revision:** {saveRevision}");
+        }
+
         var issueBody =
             $"**Reporter:** {name} ({email})\n" +
             $"**App version:** {appVersion}\n" +
-            $"**User agent:** {userAgent}\n\n" +
-            $"## Description\n\n{description}";
+            $"**User agent:** {userAgent}" +
+            saveFileSection +
+            $"\n\n## Description\n\n{description}";
 
         int issueNumber;
         string issueUrl;
