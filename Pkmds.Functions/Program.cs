@@ -18,10 +18,16 @@ builder.Services
         options.AddDefaultPolicy(policy =>
         {
             policy
-                .WithOrigins(
-                    "https://codemonkey85.github.io",
-                    "http://localhost:5283",
-                    "https://localhost:7267")
+                .SetIsOriginAllowed(origin =>
+                {
+                    var host = new Uri(origin).Host;
+                    // Production: GitHub Pages
+                    // UAT: Azure Static Web Apps preview URLs (PR number changes per PR)
+                    // Dev: localhost (any port)
+                    return host == "codemonkey85.github.io"
+                        || host.EndsWith(".azurestaticapps.net")
+                        || host == "localhost";
+                })
                 .AllowAnyMethod()
                 .AllowAnyHeader();
         });

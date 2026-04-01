@@ -196,14 +196,16 @@ Write-Done "Application settings saved"
 # ── CORS ───────────────────────────────────────────────────────────────────────
 
 Write-Step "Configuring CORS"
-foreach ($origin in @("https://codemonkey85.github.io", "http://localhost:5283", "https://localhost:7267")) {
-    az functionapp cors add `
-        --name $FunctionsApp `
-        --resource-group $ResourceGroup `
-        --allowed-origins $origin `
-        --output none
-    Write-Done "Allowed origin: $origin"
-}
+# Platform-level CORS only supports exact origins (no wildcards for subdomains).
+# UAT preview URLs (*.azurestaticapps.net) and localhost are handled by the
+# code-level CORS middleware in Program.cs via SetIsOriginAllowed.
+# Here we register only the stable production origin at the platform level.
+az functionapp cors add `
+    --name $FunctionsApp `
+    --resource-group $ResourceGroup `
+    --allowed-origins "https://codemonkey85.github.io" `
+    --output none
+Write-Done "Allowed origin: https://codemonkey85.github.io"
 
 # ── Build & Deploy ─────────────────────────────────────────────────────────────
 
