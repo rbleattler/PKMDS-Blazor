@@ -1,5 +1,4 @@
 using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Models;
 using Azure.Storage.Sas;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -22,7 +21,7 @@ public class BlobService(IConfiguration configuration, ILogger<BlobService> logg
         logger.LogInformation("Uploaded blob {BlobName} for issue #{IssueNumber}", blobName, issueNumber);
     }
 
-    public Uri? GetSasUrl(int issueNumber, string fileName, TimeSpan expiry)
+    public string? GetSasUrl(int issueNumber, string fileName, TimeSpan expiry)
     {
         var blobName = $"{issueNumber}/{fileName}";
         var blobClient = _containerClient.GetBlobClient(blobName);
@@ -36,7 +35,8 @@ public class BlobService(IConfiguration configuration, ILogger<BlobService> logg
             ExpiresOn = DateTimeOffset.UtcNow.Add(expiry),
         };
         sasBuilder.SetPermissions(BlobSasPermissions.Read);
-        return blobClient.GenerateSasUri(sasBuilder);
+        // Use AbsoluteUri (percent-encoded) — ToString() leaves spaces unencoded, breaking Markdown links
+        return blobClient.GenerateSasUri(sasBuilder).AbsoluteUri;
     }
 
     public async Task DeleteIssueFilesAsync(
