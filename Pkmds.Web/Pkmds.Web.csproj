@@ -30,7 +30,6 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly"/>
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" PrivateAssets="all"/>
-        <PackageReference Include="Sentry.AspNetCore.Blazor.WebAssembly"/>
     </ItemGroup>
 
     <ItemGroup>

@@ -17,14 +17,11 @@
         </Router>
     </ChildContent>
     <ErrorContent Context="exception">
-        @{
-            CaptureExceptionOnce(exception);
-        }
         <MudContainer MaxWidth="MaxWidth.Small"
                       Class="mt-8">
             <MudAlert Severity="Severity.Error"
                       Variant="Variant.Filled">
-                An unexpected error occurred. The error has been reported automatically.
+                An unexpected error occurred.
             </MudAlert>
             <MudButton OnClick="@(() => errorBoundary?.Recover())"
                        Variant="Variant.Filled"

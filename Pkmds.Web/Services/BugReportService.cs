@@ -1,67 +1,18 @@
 namespace Pkmds.Web.Services;
 
-sealed file class NoOpDisposable : IDisposable
+// Bug reporting is currently disabled — Sentry trial ended.
+// To re-enable: restore Sentry SDK, update this implementation, add @inject IBugReportService
+// back to Pkmds.Rcl/_Imports.razor, and re-add the "Report a Bug" button in MainLayout.razor.
+public class BugReportService : IBugReportService
 {
-    public static readonly NoOpDisposable Instance = new();
-    public void Dispose() { }
-}
+    public IDisposable AttachRawFileToScope(byte[] data, string fileName) => NullDisposable.Instance;
 
-public class BugReportService(IAppState appState) : IBugReportService
-{
-    private const int MaxAttachmentBytes = 10 * 1024 * 1024; // 10 MiB, matches Program.cs
+    public Task SubmitBugReportAsync(string description, string email, string name, bool attachSaveFile = false) =>
+        Task.CompletedTask;
 
-    public IDisposable AttachRawFileToScope(byte[] data, string fileName)
+    private sealed class NullDisposable : IDisposable
     {
-        if (data.Length is 0 or > MaxAttachmentBytes)
-        {
-            return NoOpDisposable.Instance;
-        }
-
-        // Sanitize filename: keep only the last segment and replace problematic characters.
-        var sanitized = Path.GetFileName(fileName);
-        if (string.IsNullOrWhiteSpace(sanitized))
-        {
-            sanitized = "unknown-save-file";
-        }
-
-        var scope = SentrySdk.PushScope();
-        SentrySdk.ConfigureScope(s => s.AddAttachment(data, sanitized));
-        return scope;
-    }
-
-    public async Task SubmitBugReportAsync(string description, string email, string name, bool attachSaveFile = false)
-    {
-        using var _ = SentrySdk.PushScope();
-
-        SentrySdk.ConfigureScope(scope =>
-        {
-            scope.SetTag("report_type", "user_bug_report");
-            scope.SetTag("app_version", appState.AppVersion ?? "unknown");
-            scope.SetTag("pkhex_version", IAppState.PkhexVersion ?? "unknown");
-            scope.SetTag("hax_enabled", appState.IsHaXEnabled.ToString());
-            scope.SetTag("app_language", appState.CurrentLanguage);
-
-            if (appState.SaveFile is { } saveFile)
-            {
-                scope.SetTag("save_type", saveFile.GetType().Name);
-                scope.SetTag("game_version", saveFile.Version.ToString());
-            }
-
-            if (!attachSaveFile || appState.SaveFile is not { } saveFileToAttach)
-            {
-                return;
-            }
-
-            var saveData = saveFileToAttach.Write().ToArray();
-            var fileName = $"savefile.{saveFileToAttach.Extension}";
-            scope.AddAttachment(saveData, fileName);
-        });
-
-        var sentryEvent = new SentryEvent { Message = description };
-        var eventId = SentrySdk.CaptureEvent(sentryEvent);
-        SentrySdk.CaptureFeedback(description, email, name, associatedEventId: eventId);
-
-        // Flush events to ensure they're sent before returning
-        await SentrySdk.FlushAsync(TimeSpan.FromSeconds(5));
+        public static readonly NullDisposable Instance = new();
+        public void Dispose() { }
     }
 }
