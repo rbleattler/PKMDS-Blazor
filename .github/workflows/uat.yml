@@ -10,10 +10,14 @@ on:
       - "**.md"
       - "**.ps1"
       - ".editorconfig"
-      - "TestFiles/*"
+      - "TestFiles/**"
+      - "Pkmds.Tests/**"
+      - "tools/**"
       - "**/*.gitignore"
       - "**/*.gitattributes"
       - "**/*.yml"
+      - "**/*.DotSettings.user"
+      - "*.slnx"
 
 jobs:
   build_and_deploy:

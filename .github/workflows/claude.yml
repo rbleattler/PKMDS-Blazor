@@ -95,12 +95,20 @@ jobs:
           prompt: |
             You are generating a weekly changelog for PKMDS, a Pokémon save file editor at https://github.com/codemonkey85/PKMDS-Blazor.
 
-            Step 1: Run this command to get the commits from the past 7 days (excluding merges):
-              git log --since="7 days ago" --no-merges --pretty=format:"%s"
+            Step 1: Find the date of the most recent "Change Log" discussion. First get the category ID:
+              GH_TOKEN=$PKMDS_DISCUSSION_TOKEN gh api graphql -f query='{ repository(owner: "codemonkey85", name: "PKMDS-Blazor") { discussionCategories(first: 20) { nodes { id name } } } }'
 
-            Step 2: If there are no commits, stop — do not create a discussion.
+            Find the ID for the category named "Change Log", then fetch the most recent discussion in that category:
+              GH_TOKEN=$PKMDS_DISCUSSION_TOKEN gh api graphql -f query='{ repository(owner: "codemonkey85", name: "PKMDS-Blazor") { discussions(first: 1, categoryId: "<CHANGE_LOG_CATEGORY_ID>", orderBy: {field: CREATED_AT, direction: DESC}) { nodes { createdAt title } } } }'
 
-            Step 3: Write a short, friendly changelog aimed at end users (not developers). Focus on what changed for them:
+            If a discussion is found, extract its `createdAt` timestamp (ISO 8601) and use it as the `--since` value in Step 2. If no discussion is found, fall back to `--since="7 days ago"`.
+
+            Step 2: Run this command to get commits since the last changelog entry (excluding merges):
+              git log --since="<DATE_FROM_STEP_1>" --no-merges --pretty=format:"%s"
+
+            Step 3: If there are no commits, stop — do not create a discussion.
+
+            Step 4: Write a short, friendly changelog aimed at end users (not developers). Focus on what changed for them:
             - New features or tools
             - Bug fixes and improvements
             - Anything that affects how they use the app
@@ -111,15 +119,15 @@ jobs:
 
             Format the body as Markdown. Start with a brief intro line, then a bulleted list of changes.
 
-            Step 4: Determine today's date and format it as "Week of Month D, YYYY" (e.g. "Week of March 24, 2025") for the discussion title.
+            Step 5: Determine today's date and format it as "Week of Month D, YYYY" (e.g. "Week of March 24, 2025") for the discussion title.
 
-            Step 5: Find the "Change Log" discussion category ID by running:
+            Step 6: Find the "Change Log" discussion category ID by running:
               GH_TOKEN=$PKMDS_DISCUSSION_TOKEN gh api graphql -f query='{ repository(owner: "codemonkey85", name: "PKMDS-Blazor") { discussionCategories(first: 20) { nodes { id name } } } }'
 
             To get the repository ID, run:
               GH_TOKEN=$PKMDS_DISCUSSION_TOKEN gh api graphql -f query='{ repository(owner: "codemonkey85", name: "PKMDS-Blazor") { id } }'
 
-            Step 6: Create a new discussion using GraphQL variables so the body is passed cleanly.
+            Step 7: Create a new discussion using GraphQL variables so the body is passed cleanly.
             Write the body to a temp file first, then pass it via a shell variable to avoid quoting issues:
               printf '%s' "BODY_CONTENT" > /tmp/changelog_body.txt
               GH_TOKEN=$PKMDS_DISCUSSION_TOKEN gh api graphql \
