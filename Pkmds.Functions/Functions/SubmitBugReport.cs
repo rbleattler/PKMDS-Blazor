@@ -86,7 +86,9 @@ public class SubmitBugReport(IGitHubService gitHubService, IBlobService blobServ
                     await using var stream = saveFile.OpenReadStream();
                     await blobService.UploadAsync(issueNumber, safeFileName, stream, cancellationToken);
                     var blobPath = $"{issueNumber}/{safeFileName}";
-                    var portalUrl = blobService.PortalContainerUrl;
+                    var portalUrl = blobService.PortalContainerUrl is { } baseUrl
+                        ? $"{baseUrl}/path/{issueNumber}"
+                        : null;
                     var comment = portalUrl is not null
                         ? $"📎 Save file attached: [View in Azure Portal]({portalUrl}) — blob path: `{blobPath}`"
                         : $"📎 Save file attached at blob path: `{blobPath}`";
