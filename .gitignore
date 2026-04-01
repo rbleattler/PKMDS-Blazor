@@ -363,3 +363,6 @@ Pkmds.Rcl/bin/sha256sums.txt
 
 # Azure Functions local settings (contains secrets)
 **/local.settings.json
+
+# Azure zip deploy staging directory
+.azure-deploy/
