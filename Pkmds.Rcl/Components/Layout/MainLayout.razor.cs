@@ -189,23 +189,6 @@ public partial class MainLayout : IDisposable
         }
     }
 
-    private async Task ShowBugReportDialog()
-    {
-        var parameters = new DialogParameters { { nameof(BugReportDialog.HasSaveFile), AppState.SaveFile is not null } };
-
-        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
-
-        var dialog = await DialogService.ShowAsync<BugReportDialog>("Report a Bug", parameters, options);
-        var result = await dialog.Result;
-
-        if (result is { Data: BugReportData report })
-        {
-            await BugReportService.SubmitBugReportAsync(
-                report.Description, report.Email, report.Name, report.AttachSaveFile);
-            Snackbar.Add("Bug report submitted. Thank you!", Severity.Success);
-        }
-    }
-
     private async Task ShowLoadSaveFileDialog()
     {
         const string message = "Choose a save file";
@@ -286,10 +269,7 @@ public partial class MainLayout : IDisposable
             }
             else
             {
-                using (BugReportService.AttachRawFileToScope(data, selectedFile.Name))
-                {
-                    Logger.LogError("Failed to load save file: {FileName} - Invalid save file format", selectedFile.Name);
-                }
+                Logger.LogError("Failed to load save file: {FileName} - Invalid save file format", selectedFile.Name);
 
                 const string message =
                     "The selected save file is invalid. If this save file came from a ROM hack, it is not supported. Otherwise, try saving in-game and re-exporting / re-uploading the save file.";
@@ -300,11 +280,7 @@ public partial class MainLayout : IDisposable
         }
         catch (Exception ex)
         {
-            using (BugReportService.AttachRawFileToScope(data, selectedFile.Name))
-            {
-                Logger.LogError(ex, "Error loading save file: {FileName}", selectedFile.Name);
-            }
-
+            Logger.LogError(ex, "Error loading save file: {FileName}", selectedFile.Name);
             await DialogService.ShowMessageBoxAsync("Error", $"{ex.Message}{Environment.NewLine}{ex.StackTrace}");
         }
 
