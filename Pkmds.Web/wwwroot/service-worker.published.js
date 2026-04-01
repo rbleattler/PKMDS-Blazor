@@ -20,7 +20,7 @@ const CACHE_VERSION = '%%CACHE_VERSION%%'
 const cacheName = `${cacheNamePrefix}${self.assetsManifest.version}${CACHE_VERSION}`;
 
 const offlineAssetsInclude = [/\.dll$/, /\.pdb$/, /\.wasm/, /\.html/, /\.js$/, /\.json$/, /\.css$/, /\.woff$/, /\.png$/, /\.jpe?g$/, /\.gif$/, /\.ico$/, /\.blat$/, /\.dat$/];
-const offlineAssetsExclude = [/^service-worker\.js$/];
+const offlineAssetsExclude = [/^service-worker\.js$/, /^appsettings.*\.json$/, /^staticwebapp\.config\.json$/];
 
 // Replace with your base path if you are hosting on a subfolder. Ensure there is a trailing '/'.
 const base = "/";
