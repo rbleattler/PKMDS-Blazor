@@ -125,8 +125,12 @@ window.showFilePickerAndWrite = async function (fileName, byteArray, extension, 
                 : fileName + ext
         };
 
-        // Only add types if we have an extension
-        if (ext) {
+        // Only add types if we have a valid simple extension.
+        // Chrome's showSaveFilePicker rejects extensions that contain spaces or other
+        // non-alphanumeric characters (e.g. '.sav 2'), so skip types in that case.
+        // The suggestedName still carries the full original filename.
+        const isValidExtForPicker = ext && /^\.[a-zA-Z0-9]+$/.test(ext);
+        if (isValidExtForPicker) {
             opts.types = [{
                 description: description || 'File',
                 accept: {
