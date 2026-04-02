@@ -2,6 +2,7 @@
 global using System.Text;
 global using System.Text.Json;
 global using Azure.Storage.Blobs;
+global using Azure.Storage.Blobs.Models;
 global using Azure.Storage.Sas;
 global using Microsoft.AspNetCore.Http;
 global using Microsoft.AspNetCore.Mvc;
