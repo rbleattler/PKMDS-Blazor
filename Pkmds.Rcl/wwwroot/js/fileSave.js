@@ -118,18 +118,20 @@ window.showFilePickerAndWrite = async function (fileName, byteArray, extension, 
             return;
         }
 
-        // Build options for File System Access API
-        const opts = {
-            suggestedName: (ext && fileName.toLowerCase().endsWith(ext.toLowerCase()))
-                ? fileName
-                : fileName + ext
-        };
-
         // Only add types if we have a valid simple extension.
         // Chrome's showSaveFilePicker rejects extensions that contain spaces or other
         // non-alphanumeric characters (e.g. '.sav 2'), so skip types in that case.
-        // The suggestedName still carries the full original filename.
+        // Also omit the invalid extension from suggestedName — Chrome blanks the filename
+        // field entirely if suggestedName contains spaces or other disallowed characters.
         const isValidExtForPicker = ext && /^\.[a-zA-Z0-9]+$/.test(ext);
+
+        // Build options for File System Access API
+        const opts = {
+            suggestedName: isValidExtForPicker
+                ? ((fileName.toLowerCase().endsWith(ext.toLowerCase())) ? fileName : fileName + ext)
+                : fileName
+        };
+
         if (isValidExtForPicker) {
             opts.types = [{
                 description: description || 'File',
