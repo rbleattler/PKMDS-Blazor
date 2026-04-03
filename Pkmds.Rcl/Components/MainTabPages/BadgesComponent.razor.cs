@@ -92,6 +92,10 @@ public partial class BadgesComponent : IDisposable
 
             case EntityContext.Gen7b when saveFile is SAV7b:
                 // https://github.com/codemonkey85/PKMDS-Blazor/issues/59
+                // LGPE has gym clear system flags s0012–s0019 (FSYS_GYM_CLEAR_ROCK through
+                // FSYS_GYM_CLEAR_GROUND) in EventWork7b, but PKHeX exposes no badge UI for
+                // this game. Those flags may be gym-defeat state rather than badge possession,
+                // and additional flags may be required. Do not use until confirmed.
                 //badgeFlagInt = sav7b.Badges;
                 break;
 
@@ -101,6 +105,11 @@ public partial class BadgesComponent : IDisposable
 
             case EntityContext.Gen9 when saveFile is SAV9SV:
                 // https://github.com/codemonkey85/PKMDS-Blazor/issues/60
+                // SV has FSYS_YMAP_SCENARIO_GYM_CLEAR_* SCBlock flags per gym, but the YMAP
+                // prefix indicates these drive overworld map display state, not badge possession.
+                // PKHeX exposes no badge UI for this game and these flags are unused by any
+                // PKHeX save logic. Additional flags (or a dedicated badge bitmask) may be
+                // required. Do not use until confirmed.
                 //badgeFlagInt = sav9sv.Badges;
                 break;
         }
@@ -165,7 +174,7 @@ public partial class BadgesComponent : IDisposable
 
             case EntityContext.Gen7b when saveFile is SAV7b:
                 // https://github.com/codemonkey85/PKMDS-Blazor/issues/59
-                //sav7b.Badges = ToggleBadge(sav7b.Badges, badgeIndex);
+                // See GetSaveFileBadgesValue for investigation notes.
                 break;
 
             case EntityContext.Gen8 when saveFile is SAV8SWSH sav8swsh:
@@ -179,7 +188,7 @@ public partial class BadgesComponent : IDisposable
 
             case EntityContext.Gen9 when saveFile is SAV9SV:
                 // https://github.com/codemonkey85/PKMDS-Blazor/issues/60
-                //sav9sv.Badges = ToggleBadge(sav9sv.Badges, badgeIndex);
+                // See GetSaveFileBadgesValue for investigation notes.
                 break;
         }
 
