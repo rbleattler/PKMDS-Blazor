@@ -12,7 +12,7 @@ public class BlobService(IConfiguration configuration, ILogger<BlobService> logg
     {
         var blobName = $"{issueNumber}/{fileName}";
         var blobClient = containerClient.GetBlobClient(blobName);
-        await blobClient.UploadAsync(data, overwrite: true, cancellationToken: cancellationToken);
+        await blobClient.UploadAsync(data, true, cancellationToken);
         logger.LogInformation("Uploaded blob {BlobName} for issue #{IssueNumber}", blobName, issueNumber);
     }
 
@@ -25,7 +25,13 @@ public class BlobService(IConfiguration configuration, ILogger<BlobService> logg
             return null;
         }
 
-        var sasBuilder = new BlobSasBuilder { BlobContainerName = containerClient.Name, BlobName = blobName, Resource = "b", ExpiresOn = DateTimeOffset.UtcNow.Add(expiry) };
+        var sasBuilder = new BlobSasBuilder
+        {
+            BlobContainerName = containerClient.Name,
+            BlobName = blobName,
+            Resource = "b",
+            ExpiresOn = DateTimeOffset.UtcNow.Add(expiry)
+        };
         sasBuilder.SetPermissions(BlobSasPermissions.Read);
         // Use AbsoluteUri (percent-encoded) — ToString() leaves spaces unencoded, breaking Markdown links
         return blobClient.GenerateSasUri(sasBuilder).AbsoluteUri;
@@ -38,7 +44,8 @@ public class BlobService(IConfiguration configuration, ILogger<BlobService> logg
         var prefix = $"{issueNumber}/";
         var deleted = 0;
 
-        await foreach (var blob in containerClient.GetBlobsAsync(prefix: prefix, cancellationToken: cancellationToken))
+        await foreach (var blob in containerClient.GetBlobsAsync(BlobTraits.None, BlobStates.None, prefix,
+                           cancellationToken))
         {
             var blobClient = containerClient.GetBlobClient(blob.Name);
             await blobClient.DeleteIfExistsAsync(cancellationToken: cancellationToken);
@@ -51,7 +58,8 @@ public class BlobService(IConfiguration configuration, ILogger<BlobService> logg
     private static BlobContainerClient CreateContainerClient(IConfiguration configuration)
     {
         var connectionString = configuration["AzureStorageConnectionString"]
-                               ?? throw new InvalidOperationException("AzureStorageConnectionString configuration is required.");
+                               ?? throw new InvalidOperationException(
+                                   "AzureStorageConnectionString configuration is required.");
         var containerName = configuration["BlobContainerName"] ?? "bug-reports";
         var containerClient = new BlobServiceClient(connectionString).GetBlobContainerClient(containerName);
         containerClient.CreateIfNotExists();
