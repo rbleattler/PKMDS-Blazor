@@ -61,7 +61,11 @@ public sealed class BatchEditorService(
                     if (result == ModifyResult.Modified)
                     {
                         var after = TryGetPropertyValue(editor, clone, cmd.PropertyName);
-                        changes.Add($"{cmd.PropertyName}: {before} → {after}");
+                        // Only record if the value actually changed
+                        if (before != after)
+                        {
+                            changes.Add($"{cmd.PropertyName}: {before} → {after}");
+                        }
                     }
                 }
             }
