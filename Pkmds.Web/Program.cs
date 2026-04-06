@@ -44,7 +44,8 @@ services
     .AddSingleton<BlazorAesProvider>()
     .AddSingleton<BlazorMd5Provider>()
     .AddSingleton<IBugReportService, BugReportService>()
-    .AddSingleton<IDescriptionService, DescriptionService>();
+    .AddSingleton<IDescriptionService, DescriptionService>()
+    .AddSingleton<IBatchEditorService, BatchEditorService>();
 
 var app = builder.Build();
 
