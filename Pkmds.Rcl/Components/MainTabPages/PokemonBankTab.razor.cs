@@ -1,0 +1,390 @@
+namespace Pkmds.Rcl.Components.MainTabPages;
+
+public partial class PokemonBankTab : RefreshAwareComponent
+{
+    private const string BackupReminderDismissedKey = "pkmds.bank.backup-reminder-dismissed";
+
+    private static readonly int[] pageSizes = [20, 50, 100];
+
+    private List<BankEntry> entries = [];
+    private List<BankEntry> filteredEntries = [];
+    private List<BankEntry> paginatedEntries = [];
+    private readonly HashSet<long> selectedIds = [];
+
+    private IBrowserFile? importFile;
+    private bool isLoading = true;
+    private bool isBusy;
+    private bool showBackupReminder;
+    private int currentPage = 1;
+    private int pageSize = 20;
+
+    private string searchText = string.Empty;
+    private bool shinyOnly;
+    private string tagFilter = string.Empty;
+
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling((double)filteredEntries.Count / pageSize));
+
+    [Inject]
+    private IBankService BankService { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        var dismissed = await JSRuntime.InvokeAsync<string?>("localStorage.getItem", BackupReminderDismissedKey);
+        showBackupReminder = dismissed is null;
+
+        await ReloadAsync();
+    }
+
+    private async Task DismissBackupReminderAsync()
+    {
+        showBackupReminder = false;
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", BackupReminderDismissedKey, "1");
+    }
+
+    private async Task ReloadAsync()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        entries = [.. await BankService.GetAllAsync()];
+
+        isLoading = false;
+        ApplyFilter();
+    }
+
+    private void ApplyFilter()
+    {
+        IEnumerable<BankEntry> filtered = entries;
+
+        if (!string.IsNullOrWhiteSpace(searchText))
+        {
+            filtered = filtered.Where(e =>
+                e.SpeciesName.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                e.Pokemon.Nickname.Contains(searchText, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (shinyOnly)
+        {
+            filtered = filtered.Where(e => e.Pokemon.IsShiny);
+        }
+
+        if (!string.IsNullOrWhiteSpace(tagFilter))
+        {
+            filtered = filtered.Where(e =>
+                e.Tag?.Contains(tagFilter, StringComparison.OrdinalIgnoreCase) == true);
+        }
+
+        filteredEntries = [.. filtered];
+        currentPage = 1;
+        UpdatePagination();
+    }
+
+    private void UpdatePagination() =>
+        paginatedEntries =
+        [
+            .. filteredEntries
+                .Skip((currentPage - 1) * pageSize)
+                .Take(pageSize)
+        ];
+
+    private void OnPageSizeChanged()
+    {
+        currentPage = 1;
+        UpdatePagination();
+    }
+
+    private void ToggleSelect(long id, bool selected)
+    {
+        if (selected)
+        {
+            selectedIds.Add(id);
+        }
+        else
+        {
+            selectedIds.Remove(id);
+        }
+    }
+
+    // ── Import from save ──────────────────────────────────────────────────
+
+    private async Task ImportFromSaveAsync()
+    {
+        if (AppState.SaveFile is not { } saveFile)
+        {
+            return;
+        }
+
+        isBusy = true;
+        StateHasChanged();
+
+        // Collect all non-empty party + box Pokémon.
+        var allPokemon = new List<PKM>();
+
+        for (var i = 0; i < saveFile.PartyCount; i++)
+        {
+            var pkm = saveFile.GetPartySlotAtIndex(i);
+            if (pkm.Species != 0)
+            {
+                allPokemon.Add(pkm);
+            }
+        }
+
+        for (var box = 0; box < saveFile.BoxCount; box++)
+        {
+            for (var slot = 0; slot < saveFile.BoxSlotCount; slot++)
+            {
+                var pkm = saveFile.GetBoxSlotAtIndex(box, slot);
+                if (pkm.Species != 0)
+                {
+                    allPokemon.Add(pkm);
+                }
+            }
+        }
+
+        if (allPokemon.Count == 0)
+        {
+            isBusy = false;
+            Snackbar.Add("No Pokémon found in the save file.", Severity.Warning);
+            return;
+        }
+
+        // Duplicate detection.
+        var duplicates = new List<PKM>();
+        var unique = new List<PKM>();
+
+        foreach (var pkm in allPokemon)
+        {
+            if (await BankService.IsDuplicateAsync(pkm))
+            {
+                duplicates.Add(pkm);
+            }
+            else
+            {
+                unique.Add(pkm);
+            }
+        }
+
+        var toAdd = unique;
+
+        if (duplicates.Count > 0)
+        {
+            var skipDuplicates = await DialogService.ShowMessageBoxAsync(
+                "Duplicates Detected",
+                $"{duplicates.Count} duplicate(s) found. Skip them and add only the {unique.Count} unique Pokémon?",
+                yesText: "Skip Duplicates",
+                noText: "Add All",
+                cancelText: "Cancel");
+
+            switch (skipDuplicates)
+            {
+                case null:
+                    isBusy = false;
+                    StateHasChanged();
+                    return;
+                case false:
+                    toAdd = allPokemon;
+                    break;
+            }
+        }
+
+        await BankService.AddRangeAsync(toAdd);
+        await ReloadAsync();
+
+        isBusy = false;
+        Snackbar.Add($"{toAdd.Count} Pokémon added to the bank.", Severity.Success);
+    }
+
+    // ── Import from file ──────────────────────────────────────────────────
+
+    private async Task OnImportFileChangedAsync()
+    {
+        if (importFile is null)
+        {
+            return;
+        }
+
+        await OnImportFileAsync(importFile);
+        importFile = null;
+    }
+
+    private async Task OnImportFileAsync(IBrowserFile file)
+    {
+
+        isBusy = true;
+        StateHasChanged();
+
+        try
+        {
+            using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            using var ms = new System.IO.MemoryStream();
+            await stream.CopyToAsync(ms);
+            var data = ms.ToArray();
+
+            await BankService.ImportAsync(data);
+            await ReloadAsync();
+
+            Snackbar.Add("Bank imported successfully.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Import failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isBusy = false;
+            StateHasChanged();
+        }
+    }
+
+    // ── Export ────────────────────────────────────────────────────────────
+
+    private async Task ExportAsync()
+    {
+        isBusy = true;
+        StateHasChanged();
+
+        try
+        {
+            var data = await BankService.ExportAsync();
+            var b64 = Convert.ToBase64String(data);
+
+            var element = await JSRuntime.InvokeAsync<IJSObjectReference>(
+                "eval", "document.createElement('a')");
+            await element.InvokeVoidAsync(
+                "setAttribute", "href", $"data:application/json;base64,{b64}");
+            await element.InvokeVoidAsync(
+                "setAttribute", "download", "pkmds-bank.json");
+            await element.InvokeVoidAsync("click");
+
+            Snackbar.Add("Bank exported.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Export failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isBusy = false;
+            StateHasChanged();
+        }
+    }
+
+    // ── Send to save ──────────────────────────────────────────────────────
+
+    private async Task SendToSaveAsync(BankEntry entry)
+    {
+        if (AppState.SaveFile is not { } saveFile)
+        {
+            return;
+        }
+
+        isBusy = true;
+        StateHasChanged();
+
+        var pkm = entry.Pokemon.Clone();
+        if (pkm.GetType() != saveFile.PKMType)
+        {
+            pkm = EntityConverter.ConvertToType(pkm, saveFile.PKMType, out var result);
+            if (pkm is null || !result.IsSuccess)
+            {
+                isBusy = false;
+                Snackbar.Add(
+                    $"Could not convert {entry.SpeciesName} to the current save format.",
+                    Severity.Error);
+                StateHasChanged();
+                return;
+            }
+        }
+
+        saveFile.AdaptToSaveFile(pkm);
+
+        if (!AppService.TryPlacePokemonInFirstAvailableSlot(pkm))
+        {
+            isBusy = false;
+            Snackbar.Add("No empty slots available in the save file.", Severity.Warning);
+            StateHasChanged();
+            return;
+        }
+
+        isBusy = false;
+        Snackbar.Add($"{entry.SpeciesName} sent to save.", Severity.Success);
+        StateHasChanged();
+    }
+
+    private async Task SendSelectedToSaveAsync()
+    {
+        if (AppState.SaveFile is null)
+        {
+            return;
+        }
+
+        var toSend = entries.Where(e => selectedIds.Contains(e.Id)).ToList();
+        foreach (var entry in toSend)
+        {
+            await SendToSaveAsync(entry);
+        }
+
+        selectedIds.Clear();
+    }
+
+    // ── Delete ────────────────────────────────────────────────────────────
+
+    private async Task DeleteOneAsync(BankEntry entry)
+    {
+        var confirmed = await DialogService.ShowMessageBoxAsync(
+            "Remove Pokémon",
+            $"Remove {entry.SpeciesName} from the bank?",
+            yesText: "Remove",
+            cancelText: "Cancel");
+
+        if (confirmed != true)
+        {
+            return;
+        }
+
+        isBusy = true;
+        StateHasChanged();
+
+        await BankService.DeleteAsync(entry.Id);
+        selectedIds.Remove(entry.Id);
+        await ReloadAsync();
+
+        isBusy = false;
+        Snackbar.Add($"{entry.SpeciesName} removed from bank.", Severity.Normal);
+    }
+
+    private async Task DeleteSelectedAsync()
+    {
+        if (selectedIds.Count == 0)
+        {
+            return;
+        }
+
+        var confirmed = await DialogService.ShowMessageBoxAsync(
+            "Remove Selected",
+            $"Remove {selectedIds.Count} Pokémon from the bank?",
+            yesText: "Remove",
+            cancelText: "Cancel");
+
+        if (confirmed != true)
+        {
+            return;
+        }
+
+        isBusy = true;
+        StateHasChanged();
+
+        foreach (var id in selectedIds.ToList())
+        {
+            await BankService.DeleteAsync(id);
+        }
+
+        selectedIds.Clear();
+        await ReloadAsync();
+
+        isBusy = false;
+        Snackbar.Add("Selected Pokémon removed from bank.", Severity.Normal);
+    }
+}
