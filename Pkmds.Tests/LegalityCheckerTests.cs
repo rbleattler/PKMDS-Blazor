@@ -2,7 +2,9 @@ namespace Pkmds.Tests;
 
 /// <summary>
 /// Service-level unit tests for <see cref="AppService.GetLegalityAnalysis" />.
+/// Runs sequentially to avoid cross-test interference on <see cref="ParseSettings" /> global state.
 /// </summary>
+[Collection("Sequential")]
 public class LegalityCheckerTests
 {
     private const string TestFilesPath = "../../../TestFiles";
@@ -63,6 +65,7 @@ public class LegalityCheckerTests
 
         var pkm = LoadPkm("Lucario_B06DDFAD.pk5");
         pkm.AbilityNumber = 4; // Hidden Ability — illegal for this specific event Lucario
+        pkm.RefreshChecksum();
 
         var service = new AppService(new TestAppState(), new TestRefreshService());
         var la = service.GetLegalityAnalysis(pkm);
@@ -80,7 +83,6 @@ public class LegalityCheckerTests
         ParseSettings.InitFromSaveFileData(saveFile);
 
         PKM? pkm = null;
-    outer:
         for (var box = 0; box < saveFile.BoxCount; box++)
         {
             for (var slot = 0; slot < saveFile.BoxSlotCount; slot++)
@@ -89,10 +91,11 @@ public class LegalityCheckerTests
                 if (candidate.Species > 0 && !candidate.IsShiny)
                 {
                     pkm = candidate;
-                    goto outer;
+                    goto foundCandidate;
                 }
             }
         }
+        foundCandidate:
 
         pkm.Should().NotBeNull("Black full completion save must have at least one non-shiny box Pokémon");
 
@@ -222,7 +225,7 @@ public class LegalityCheckerTests
             "InitFromSaveFileData must set AllowEraCartGB=true for physical Gen 1 carts so GB-era events remain legal");
     }
 
-    // ── Inner test helpers (same pattern as AppServiceTests) ──────────────
+    // ── Inner test helpers (same pattern as AppServiceTests) ─────────────
 
     private class TestAppState : IAppState
     {
@@ -264,3 +267,10 @@ public class LegalityCheckerTests
 #pragma warning restore CS0067
     }
 }
+
+/// <summary>
+/// Marks the "Sequential" collection so xUnit disables parallelism for all classes in it.
+/// Used by <see cref="LegalityCheckerTests" /> to serialize access to <see cref="ParseSettings" /> global state.
+/// </summary>
+[CollectionDefinition("Sequential", DisableParallelization = true)]
+public class SequentialCollection { }
