@@ -223,7 +223,7 @@
 
                     </MudTable>
                 }
-                else if (mode == TabMode.Preview)
+                else if (!showPropertiesPanel && previewResults.Count > 0)
                 {
                     <MudStack Row
                               AlignItems="@AlignItems.Center"

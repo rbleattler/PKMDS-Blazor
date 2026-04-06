@@ -48,15 +48,18 @@ public sealed class BatchEditorService(
 
             foreach (var set in sets)
             {
-                if (!editor.IsFilterMatch(set.Filters, pkm))
+                // Use the mutable clone for filter matching — mirrors how ApplyAsync
+                // processes the entity in-place so earlier instructions affect later filters.
+                if (!editor.IsFilterMatch(set.Filters, clone))
                 {
                     continue;
                 }
 
                 foreach (var cmd in set.Instructions)
                 {
-                    // Capture value before modification
-                    var before = TryGetPropertyValue(editor, pkm, cmd.PropertyName);
+                    // Read "before" from the clone (current working state, not the original)
+                    // so multi-instruction scripts report accurate per-step deltas.
+                    var before = TryGetPropertyValue(editor, clone, cmd.PropertyName);
                     var result = editor.TryModify(clone, [], [cmd]);
                     if (result == ModifyResult.Modified)
                     {
@@ -85,13 +88,13 @@ public sealed class BatchEditorService(
     {
         if (appState.SaveFile is not { } sav)
         {
-            return new BatchEditorSummary(0, 0, 0);
+            return new BatchEditorSummary(0, 0);
         }
 
         var lines = ParseLines(script);
         if (lines.Length == 0)
         {
-            return new BatchEditorSummary(0, 0, 0);
+            return new BatchEditorSummary(0, 0);
         }
 
         var sets = StringInstructionSet.GetBatchSets(lines.AsSpan());
@@ -134,7 +137,7 @@ public sealed class BatchEditorService(
         }
 
         refreshService.Refresh();
-        return new BatchEditorSummary(modified, skipped, 0);
+        return new BatchEditorSummary(modified, skipped);
     }
 
     public bool CreateSnapshot()

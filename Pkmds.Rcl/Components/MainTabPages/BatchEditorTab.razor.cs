@@ -122,7 +122,12 @@ public partial class BatchEditorTab : RefreshAwareComponent
             return;
         }
 
-        BatchEditorService.CreateSnapshot();
+        if (!BatchEditorService.CreateSnapshot())
+        {
+            Snackbar.Add("Unable to create an undo snapshot. Apply was cancelled.", Severity.Error);
+            return;
+        }
+
         await ApplyAsync();
     }
 
@@ -143,9 +148,8 @@ public partial class BatchEditorTab : RefreshAwareComponent
         {
             var summary = await BatchEditorService.ApplyAsync(script, scope);
             Snackbar.Add(
-                $"Modified {summary.Modified}, skipped {summary.Skipped}" +
-                (summary.Errors > 0 ? $", errors {summary.Errors}" : string.Empty),
-                summary.Errors > 0 ? Severity.Warning : Severity.Success);
+                $"Modified {summary.Modified}, skipped {summary.Skipped}.",
+                Severity.Success);
         }
         catch (Exception ex)
         {

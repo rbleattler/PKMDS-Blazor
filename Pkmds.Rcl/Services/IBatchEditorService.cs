@@ -4,7 +4,7 @@ namespace Pkmds.Rcl.Services;
 
 public enum BatchEditorScope { Party, Boxes, All }
 
-public sealed record BatchEditorSummary(int Modified, int Skipped, int Errors);
+public sealed record BatchEditorSummary(int Modified, int Skipped);
 
 public interface IBatchEditorService
 {
