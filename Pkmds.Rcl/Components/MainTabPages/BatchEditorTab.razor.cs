@@ -16,6 +16,7 @@ public partial class BatchEditorTab : RefreshAwareComponent
 
     private List<BatchEditorPreviewEntry> previewResults = [];
     private bool showUnchanged = true;
+    private bool showPropertiesPanel = true;
 
     private List<BatchEditorPreset> presets = [];
     private string? selectedPresetName;
@@ -93,11 +94,13 @@ public partial class BatchEditorTab : RefreshAwareComponent
         {
             var results = await BatchEditorService.PreviewAsync(script, scope);
             previewResults = results.ToList();
+            showPropertiesPanel = false;
         }
         catch (Exception ex)
         {
             Snackbar.Add($"Preview failed: {ex.Message}", Severity.Error);
             mode = TabMode.Reference;
+            showPropertiesPanel = true;
         }
         finally
         {

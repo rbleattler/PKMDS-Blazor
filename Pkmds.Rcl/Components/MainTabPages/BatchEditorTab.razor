@@ -138,11 +138,31 @@
                 </MudStack>
             </MudItem>
 
-            @* Right panel: property reference or preview results *@
+            @* Right panel: property reference and/or preview results *@
             <MudItem xs="12"
                      md="7">
 
-                @if (mode == TabMode.Reference)
+                @* View toggle — only shown when preview results are available *@
+                @if (previewResults.Count > 0)
+                {
+                    <MudButtonGroup Variant="@Variant.Outlined"
+                                    Size="@Size.Small"
+                                    Class="mb-2">
+
+                        <MudButton Color="@(showPropertiesPanel ? Color.Primary : Color.Default)"
+                                   OnClick="@(() => showPropertiesPanel = true)">
+                            Properties
+                        </MudButton>
+
+                        <MudButton Color="@(!showPropertiesPanel ? Color.Secondary : Color.Default)"
+                                   OnClick="@(() => showPropertiesPanel = false)">
+                            Preview Results
+                        </MudButton>
+
+                    </MudButtonGroup>
+                }
+
+                @if (showPropertiesPanel)
                 {
                     <MudText Typo="@Typo.subtitle2"
                              Class="mb-2">
