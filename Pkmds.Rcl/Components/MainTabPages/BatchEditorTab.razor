@@ -103,7 +103,9 @@
                                    StartIcon="@Icons.Material.Filled.Preview"
                                    OnClick="@RunPreviewAsync"
                                    Disabled="@(isBusy || string.IsNullOrWhiteSpace(script))">
-                            @(isBusy && mode == TabMode.Preview ? "Previewing…" : "Preview")
+                            @(isBusy && mode == TabMode.Preview
+                                ? "Previewing…"
+                                : "Preview")
                         </MudButton>
 
                         <MudButton Variant="@Variant.Filled"
@@ -111,7 +113,9 @@
                                    StartIcon="@Icons.Material.Filled.PlayArrow"
                                    OnClick="@ConfirmApplyAsync"
                                    Disabled="@(isBusy || string.IsNullOrWhiteSpace(script))">
-                            @(isBusy && mode == TabMode.Apply ? "Applying…" : "Apply")
+                            @(isBusy && mode == TabMode.Apply
+                                ? "Applying…"
+                                : "Apply")
                         </MudButton>
 
                         <MudButton Variant="@Variant.Outlined"
@@ -163,12 +167,16 @@
                                     Size="@Size.Small"
                                     Class="mb-2">
 
-                        <MudButton Color="@(showPropertiesPanel ? Color.Primary : Color.Default)"
+                        <MudButton Color="@(showPropertiesPanel
+                                              ? Color.Primary
+                                              : Color.Default)"
                                    OnClick="@(() => showPropertiesPanel = true)">
                             Properties
                         </MudButton>
 
-                        <MudButton Color="@(!showPropertiesPanel ? Color.Secondary : Color.Default)"
+                        <MudButton Color="@(!showPropertiesPanel
+                                              ? Color.Secondary
+                                              : Color.Default)"
                                    OnClick="@(() => showPropertiesPanel = false)">
                             Preview Results
                         </MudButton>
@@ -231,7 +239,8 @@
                               Class="mb-2">
 
                         <MudText Typo="@Typo.subtitle2">
-                            Preview — @previewResults.Count(r => r.HasChanges) of @previewResults.Count Pokémon would be modified
+                            Preview — @previewResults.Count(r => r.HasChanges) of @previewResults.Count Pokémon would be
+                            modified
                         </MudText>
 
                         <MudSwitch T="@bool"

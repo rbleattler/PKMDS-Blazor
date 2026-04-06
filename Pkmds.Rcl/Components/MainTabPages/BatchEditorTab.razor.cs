@@ -1,5 +1,3 @@
-using Pkmds.Rcl.Models;
-
 namespace Pkmds.Rcl.Components.MainTabPages;
 
 public partial class BatchEditorTab : RefreshAwareComponent
@@ -26,10 +24,13 @@ public partial class BatchEditorTab : RefreshAwareComponent
     private string propertySearch = string.Empty;
 
     private sealed record PropertyRow(string Name, string TypeName);
+
     private List<PropertyRow> allProperties = [];
 
     private IEnumerable<BatchEditorPreviewEntry> FilteredPreview =>
-        showUnchanged ? previewResults : previewResults.Where(r => r.HasChanges);
+        showUnchanged
+            ? previewResults
+            : previewResults.Where(r => r.HasChanges);
 
     private IEnumerable<PropertyRow> FilteredProperties =>
         string.IsNullOrWhiteSpace(propertySearch)
@@ -219,12 +220,7 @@ public partial class BatchEditorTab : RefreshAwareComponent
             return;
         }
 
-        var preset = new BatchEditorPreset
-        {
-            Name = newPresetName.Trim(),
-            Script = script,
-            SavedAt = DateTimeOffset.UtcNow,
-        };
+        var preset = new BatchEditorPreset { Name = newPresetName.Trim(), Script = script, SavedAt = DateTimeOffset.UtcNow, };
 
         await BatchEditorService.SavePresetAsync(preset);
         presets = (await BatchEditorService.GetPresetsAsync()).ToList();
@@ -248,5 +244,7 @@ public partial class BatchEditorTab : RefreshAwareComponent
     }
 
     private static string GetPreviewRowStyle(BatchEditorPreviewEntry entry, int _) =>
-        entry.HasChanges ? string.Empty : "opacity: 0.5;";
+        entry.HasChanges
+            ? string.Empty
+            : "opacity: 0.5;";
 }

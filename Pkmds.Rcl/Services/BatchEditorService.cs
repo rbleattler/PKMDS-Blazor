@@ -1,5 +1,3 @@
-using Pkmds.Rcl.Models;
-
 namespace Pkmds.Rcl.Services;
 
 public sealed class BatchEditorService(
@@ -9,9 +7,9 @@ public sealed class BatchEditorService(
 {
     private const string PresetsKey = "pkmds.batcheditor.presets";
 
-    private byte[]? _snapshot;
+    private byte[]? snapshot;
 
-    public bool HasSnapshot => _snapshot is not null;
+    public bool HasSnapshot => snapshot is not null;
 
     public async Task<IReadOnlyList<BatchEditorPreviewEntry>> PreviewAsync(string script, BatchEditorScope scope)
     {
@@ -44,41 +42,19 @@ public sealed class BatchEditorService(
             }
 
             var clone = pkm.Clone();
-            var changes = new List<string>();
+            var changes = (
+                    from set in sets
+                    where editor.IsFilterMatch(set.Filters, clone)
+                    from cmd in set.Instructions
+                    let before = TryGetPropertyValue(editor, clone, cmd.PropertyName)
+                    let result = editor.TryModify(clone, [], [cmd])
+                    where result == ModifyResult.Modified
+                    let after = TryGetPropertyValue(editor, clone, cmd.PropertyName)
+                    where before != after
+                    select $"{cmd.PropertyName}: {before} → {after}")
+                .ToList();
 
-            foreach (var set in sets)
-            {
-                // Use the mutable clone for filter matching — mirrors how ApplyAsync
-                // processes the entity in-place so earlier instructions affect later filters.
-                if (!editor.IsFilterMatch(set.Filters, clone))
-                {
-                    continue;
-                }
-
-                foreach (var cmd in set.Instructions)
-                {
-                    // Read "before" from the clone (current working state, not the original)
-                    // so multi-instruction scripts report accurate per-step deltas.
-                    var before = TryGetPropertyValue(editor, clone, cmd.PropertyName);
-                    var result = editor.TryModify(clone, [], [cmd]);
-                    if (result == ModifyResult.Modified)
-                    {
-                        var after = TryGetPropertyValue(editor, clone, cmd.PropertyName);
-                        // Only record if the value actually changed
-                        if (before != after)
-                        {
-                            changes.Add($"{cmd.PropertyName}: {before} → {after}");
-                        }
-                    }
-                }
-            }
-
-            results.Add(new BatchEditorPreviewEntry
-            {
-                SpeciesName = GetSpeciesName(sav, pkm),
-                Location = location,
-                Changes = changes,
-            });
+            results.Add(new BatchEditorPreviewEntry { SpeciesName = GetSpeciesName(pkm), Location = location, Changes = changes, });
         }
 
         return results;
@@ -147,18 +123,18 @@ public sealed class BatchEditorService(
             return false;
         }
 
-        _snapshot = sav.Write().ToArray();
+        snapshot = sav.Write().ToArray();
         return true;
     }
 
     public bool RestoreSnapshot()
     {
-        if (_snapshot is null)
+        if (snapshot is null)
         {
             return false;
         }
 
-        if (!SaveUtil.TryGetSaveFile(_snapshot, out var restored))
+        if (!SaveUtil.TryGetSaveFile(snapshot, out var restored))
         {
             return false;
         }
@@ -166,7 +142,7 @@ public sealed class BatchEditorService(
         ParseSettings.InitFromSaveFileData(restored);
         appState.SaveFile = restored;
         appState.BoxEdit?.LoadBox(restored.CurrentBox);
-        _snapshot = null;
+        snapshot = null;
         refreshService.Refresh();
         return true;
     }
@@ -226,10 +202,10 @@ public sealed class BatchEditorService(
 
     private static string[] ParseLines(string script) =>
         script.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-              .Where(line => !line.StartsWith('#'))
-              .ToArray();
+            .Where(line => !line.StartsWith('#'))
+            .ToArray();
 
-    private static string GetSpeciesName(SaveFile sav, PKM pkm)
+    private static string GetSpeciesName(PKM pkm)
     {
         var strings = GameInfo.GetStrings(GameInfo.CurrentLanguage);
         var species = strings.Species;
@@ -259,17 +235,19 @@ public sealed class BatchEditorService(
             }
         }
 
-        if (scope is BatchEditorScope.Boxes or BatchEditorScope.All)
+        if (scope is not (BatchEditorScope.Boxes or BatchEditorScope.All))
         {
-            for (var box = 0; box < sav.BoxCount; box++)
-            {
-                for (var slot = 0; slot < sav.BoxSlotCount; slot++)
-                {
-                    yield return (sav.GetBoxSlotAtIndex(box, slot), $"Box {box + 1}, Slot {slot + 1}");
-                }
+            yield break;
+        }
 
-                await Task.Yield();
+        for (var box = 0; box < sav.BoxCount; box++)
+        {
+            for (var slot = 0; slot < sav.BoxSlotCount; slot++)
+            {
+                yield return (sav.GetBoxSlotAtIndex(box, slot), $"Box {box + 1}, Slot {slot + 1}");
             }
+
+            await Task.Yield();
         }
     }
 
@@ -286,7 +264,11 @@ public sealed class BatchEditorService(
             }
         }
 
-        if (scope is BatchEditorScope.Boxes or BatchEditorScope.All)
+        if (scope is not (BatchEditorScope.Boxes or BatchEditorScope.All))
+        {
+            yield break;
+        }
+
         {
             for (var box = 0; box < sav.BoxCount; box++)
             {
