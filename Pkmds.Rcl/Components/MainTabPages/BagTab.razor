@@ -111,7 +111,7 @@
                                                              Variant="@Variant.Outlined"
                                                              Value="@GetItem(context)"
                                                              ValueChanged="@(newItem => SetItem(context, newItem))"
-                                                             SearchFunc="@((string searchString, CancellationToken _) => SearchItemNames(pouch, searchString))"
+                                                             SearchFunc="@((searchString, _) => SearchItemNames(pouch, searchString))"
                                                              ToStringFunc="@(_ => ItemList[context.Item.Index])">
                                                 <ItemTemplate Context="item">
                                                     <MudStack Row>
@@ -163,7 +163,7 @@
                                             {
                                                 <MudCheckBox Label="Free Space"
                                                              Value="@freeSpaceItem.IsFreeSpace"
-                                                             ValueChanged="@((bool value) => freeSpaceItem.IsFreeSpace = value)"/>
+                                                             ValueChanged="@(value => freeSpaceItem.IsFreeSpace = value)"/>
                                             }
                                         </EditTemplate>
                                     </TemplateColumn>
@@ -189,7 +189,7 @@
                                             {
                                                 <MudCheckBox Label="Favorite"
                                                              Value="@favoriteItem.IsFavorite"
-                                                             ValueChanged="@((bool value) => favoriteItem.IsFavorite = value)"/>
+                                                             ValueChanged="@(value => favoriteItem.IsFavorite = value)"/>
                                             }
                                         </EditTemplate>
                                     </TemplateColumn>
@@ -202,7 +202,7 @@
                                             {
                                                 <MudCheckBox Label="New"
                                                              Value="@newFlagItem.IsNew"
-                                                             ValueChanged="@((bool value) => newFlagItem.IsNew = value)"/>
+                                                             ValueChanged="@(value => newFlagItem.IsNew = value)"/>
                                             }
                                         </EditTemplate>
                                     </TemplateColumn>

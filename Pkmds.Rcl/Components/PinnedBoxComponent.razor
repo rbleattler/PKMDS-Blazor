@@ -14,7 +14,7 @@
 
             <div class="w-[300px] m-1.5 p-1.5">
                 <MudSelect Value="@pinnedBox"
-                           ValueChanged="@((int newBox) => OnBoxChanged(newBox))"
+                           ValueChanged="@(newBox => OnBoxChanged(newBox))"
                            Class="m-1.5 p-1.5">
                     @for (var boxId = 0; boxId < saveFile.BoxCount; boxId++)
                     {

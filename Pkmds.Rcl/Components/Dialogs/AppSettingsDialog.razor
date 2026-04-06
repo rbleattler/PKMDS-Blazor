@@ -93,7 +93,7 @@
                                Color="@Color.Warning"
                                Label="PKHaX Mode"
                                title="Enables unrestricted editing. May create illegal/untradable Pokémon. Use at your own risk."
-                               ValueChanged="@((bool value) => OnHaXEnabledChanged(value))"/>
+                               ValueChanged="@(value => OnHaXEnabledChanged(value))"/>
                     <MudSwitch @bind-Value="@isVerboseLogging"
                                Color="@Color.Primary"
                                Label="Verbose Logging"

@@ -133,7 +133,7 @@
                                           ? 15
                                           : 31)"
                                  Value="@Pokemon.IV_HP"
-                                 ValueChanged="@((int newValue) => OnSetIv(Stats.Hp, newValue))"
+                                 ValueChanged="@(newValue => OnSetIv(Stats.Hp, newValue))"
                                  For="@(() => Pokemon.IV_HP)"
                                  ReadOnly="@(saveGeneration == 1 && Pokemon is PK1)"
                                  HideSpinButtons="@(saveGeneration == 1 && Pokemon is PK1)"/>
@@ -147,7 +147,7 @@
                                           ? 15
                                           : 31)"
                                  Value="@Pokemon.IV_ATK"
-                                 ValueChanged="@((int newValue) => OnSetIv(Stats.Attack, newValue))"
+                                 ValueChanged="@(newValue => OnSetIv(Stats.Attack, newValue))"
                                  For="@(() => Pokemon.IV_ATK)"/>
 
                 <MudNumericField Label="Def"
@@ -159,7 +159,7 @@
                                           ? 15
                                           : 31)"
                                  Value="@Pokemon.IV_DEF"
-                                 ValueChanged="@((int newValue) => OnSetIv(Stats.Defense, newValue))"
+                                 ValueChanged="@(newValue => OnSetIv(Stats.Defense, newValue))"
                                  For="@(() => Pokemon.IV_DEF)"/>
 
 
@@ -172,7 +172,7 @@
                                      Min="@int.MinValue"
                                      Max="15"
                                      Value="@pk1.IV_SPE"
-                                     ValueChanged="@((int newValue) => OnSetDv(Stats.Speed, newValue))"
+                                     ValueChanged="@(newValue => OnSetDv(Stats.Speed, newValue))"
                                      For="@(() => pk1.IV_SPE)"/>
 
                     <MudNumericField Label="Spc"
@@ -182,7 +182,7 @@
                                      Min="@int.MinValue"
                                      Max="15"
                                      Value="@pk1.IV_SPC"
-                                     ValueChanged="@((int newValue) => OnSetDv(Stats.Special, newValue))"
+                                     ValueChanged="@(newValue => OnSetDv(Stats.Special, newValue))"
                                      For="@(() => pk1.IV_SPC)"/>
                 }
                 else
@@ -196,7 +196,7 @@
                                               ? 15
                                               : 31)"
                                      Value="@Pokemon.IV_SPA"
-                                     ValueChanged="@((int newValue) => OnSetIv(Stats.SpecialAttack, newValue))"
+                                     ValueChanged="@(newValue => OnSetIv(Stats.SpecialAttack, newValue))"
                                      For="@(() => Pokemon.IV_SPA)"/>
 
                     <MudNumericField Label="Spd"
@@ -208,7 +208,7 @@
                                               ? 15
                                               : 31)"
                                      Value="@Pokemon.IV_SPD"
-                                     ValueChanged="@((int newValue) => OnSetIv(Stats.SpecialDefense, newValue))"
+                                     ValueChanged="@(newValue => OnSetIv(Stats.SpecialDefense, newValue))"
                                      For="@(() => Pokemon.IV_SPD)"/>
 
                     <MudNumericField Label="Spe"
@@ -220,7 +220,7 @@
                                               ? 15
                                               : 31)"
                                      Value="@Pokemon.IV_SPE"
-                                     ValueChanged="@((int newValue) => OnSetIv(Stats.Speed, newValue))"
+                                     ValueChanged="@(newValue => OnSetIv(Stats.Speed, newValue))"
                                      For="@(() => Pokemon.IV_SPE)"/>
 
                     <MudNumericField Label="Sum"
@@ -538,7 +538,7 @@
                                  Min="0"
                                  Max="@(ushort.MaxValue)"
                                  Value="@Pokemon.Stat_HPMax"
-                                 ValueChanged="@((int v) => OnHaXStatHpSet(v))"
+                                 ValueChanged="@(v => OnHaXStatHpSet(v))"
                                  ReadOnly="@(AppState?.IsHaXEnabled is not true)"
                                  HideSpinButtons="@(AppState?.IsHaXEnabled is not true)"/>
 
@@ -549,7 +549,7 @@
                                  Min="0"
                                  Max="@(ushort.MaxValue)"
                                  Value="@Pokemon.Stat_ATK"
-                                 ValueChanged="@((int v) => OnHaXStatSet(v, (s, val) => s.Stat_ATK = val))"
+                                 ValueChanged="@(v => OnHaXStatSet(v, (s, val) => s.Stat_ATK = val))"
                                  Adornment="@GetNatureAdornment(Stats.Attack)"
                                  AdornmentIcon="@GetNatureAdornmentIcon(Stats.Attack)"
                                  AdornmentColor="@GetNatureAdornmentColor(Stats.Attack)"
@@ -563,7 +563,7 @@
                                  Min="0"
                                  Max="@(ushort.MaxValue)"
                                  Value="@Pokemon.Stat_DEF"
-                                 ValueChanged="@((int v) => OnHaXStatSet(v, (s, val) => s.Stat_DEF = val))"
+                                 ValueChanged="@(v => OnHaXStatSet(v, (s, val) => s.Stat_DEF = val))"
                                  Adornment="@GetNatureAdornment(Stats.Defense)"
                                  AdornmentIcon="@GetNatureAdornmentIcon(Stats.Defense)"
                                  AdornmentColor="@GetNatureAdornmentColor(Stats.Defense)"
@@ -578,7 +578,7 @@
                                      Min="0"
                                      Max="@(ushort.MaxValue)"
                                      Value="@pk1.Stat_SPE"
-                                     ValueChanged="@((int v) => OnHaXStatSet(v, (s, val) => s.Stat_SPE = val))"
+                                     ValueChanged="@(v => OnHaXStatSet(v, (s, val) => s.Stat_SPE = val))"
                                      ReadOnly="@(AppState?.IsHaXEnabled is not true)"
                                      HideSpinButtons="@(AppState?.IsHaXEnabled is not true)"/>
 
@@ -588,7 +588,7 @@
                                      Min="0"
                                      Max="@(ushort.MaxValue)"
                                      Value="@pk1.Stat_SPC"
-                                     ValueChanged="@((int v) => OnHaXStatSet(v, (s, val) =>
+                                     ValueChanged="@(v => OnHaXStatSet(v, (s, val) =>
                                                    {
                                                        if (s is PK1 p) p.Stat_SPC = val;
                                                    }))"
@@ -604,7 +604,7 @@
                                      Min="0"
                                      Max="@(ushort.MaxValue)"
                                      Value="@Pokemon.Stat_SPA"
-                                     ValueChanged="@((int v) => OnHaXStatSet(v, (s, val) => s.Stat_SPA = val))"
+                                     ValueChanged="@(v => OnHaXStatSet(v, (s, val) => s.Stat_SPA = val))"
                                      Adornment="@GetNatureAdornment(Stats.SpecialAttack)"
                                      AdornmentIcon="@GetNatureAdornmentIcon(Stats.SpecialAttack)"
                                      AdornmentColor="@GetNatureAdornmentColor(Stats.SpecialAttack)"
@@ -618,7 +618,7 @@
                                      Min="0"
                                      Max="@(ushort.MaxValue)"
                                      Value="@Pokemon.Stat_SPD"
-                                     ValueChanged="@((int v) => OnHaXStatSet(v, (s, val) => s.Stat_SPD = val))"
+                                     ValueChanged="@(v => OnHaXStatSet(v, (s, val) => s.Stat_SPD = val))"
                                      Adornment="@GetNatureAdornment(Stats.SpecialDefense)"
                                      AdornmentIcon="@GetNatureAdornmentIcon(Stats.SpecialDefense)"
                                      AdornmentColor="@GetNatureAdornmentColor(Stats.SpecialDefense)"
@@ -632,7 +632,7 @@
                                      Min="0"
                                      Max="@(ushort.MaxValue)"
                                      Value="@Pokemon.Stat_SPE"
-                                     ValueChanged="@((int v) => OnHaXStatSet(v, (s, val) => s.Stat_SPE = val))"
+                                     ValueChanged="@(v => OnHaXStatSet(v, (s, val) => s.Stat_SPE = val))"
                                      Adornment="@GetNatureAdornment(Stats.Speed)"
                                      AdornmentIcon="@GetNatureAdornmentIcon(Stats.Speed)"
                                      AdornmentColor="@GetNatureAdornmentColor(Stats.Speed)"

@@ -28,7 +28,7 @@
                               Style="max-height: 380px;">
                         <MudList T="@int"
                                  SelectedValue="@selectedBoxIndex"
-                                 SelectedValueChanged="@((int idx) => SelectBox(idx))"
+                                 SelectedValueChanged="@(idx => SelectBox(idx))"
                                  Dense>
                             @for (var i = 0; i < boxNames.Length; i++)
                             {
@@ -47,7 +47,7 @@
                     {
                         <MudTextField @key="@($"name-{selectedBoxIndex}")"
                                       Value="@boxNames[selectedBoxIndex]"
-                                      ValueChanged="@((string v) => OnBoxNameChanged(v))"
+                                      ValueChanged="@(v => OnBoxNameChanged(v))"
                                       Label="Box Name"
                                       Immediate
                                       MaxLength="@GetBoxNameMaxLength()"
@@ -59,7 +59,7 @@
                     {
                         <MudSelect @key="@($"wallpaper-{selectedBoxIndex}")"
                                    Value="@wallpaperIds[selectedBoxIndex]"
-                                   ValueChanged="@((int id) => OnWallpaperChanged(id))"
+                                   ValueChanged="@(id => OnWallpaperChanged(id))"
                                    Label="Wallpaper"
                                    Class="mb-3">
                             @for (var i = 0; i < wallpaperNameList.Length; i++)
@@ -80,7 +80,7 @@
                     @if (showUnlocked)
                     {
                         <MudSelect Value="@boxesUnlocked"
-                                   ValueChanged="@((int v) => OnBoxesUnlockedChanged(v))"
+                                   ValueChanged="@(v => OnBoxesUnlockedChanged(v))"
                                    Label="Unlocked"
                                    Class="mb-3">
                             @for (var i = 0; i <= saveFile.BoxCount; i++)

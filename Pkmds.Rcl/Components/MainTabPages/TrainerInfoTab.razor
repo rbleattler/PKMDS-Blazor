@@ -28,7 +28,7 @@
                           Variant="@Variant.Outlined"
                           MaxLength="@saveFile.MaxStringLengthTrainer"
                           @bind-Value:get="@saveFile.OT"
-                          @bind-Value:set="@(async (string value) => await OnOTNameChangedAsync(saveFile, value))"
+                          @bind-Value:set="@(async value => await OnOTNameChangedAsync(saveFile, value))"
                           For="@(() => saveFile.OT)"/>
         </div>
 
@@ -40,7 +40,7 @@
                     <MudNumericField Label="ID"
                                      Variant="@Variant.Outlined"
                                      @bind-Value:get="@saveFile.TID16"
-                                     @bind-Value:set="@(async (ushort value) => await OnTID16ChangedAsync(saveFile, value))"
+                                     @bind-Value:set="@(async value => await OnTID16ChangedAsync(saveFile, value))"
                                      Format="@AppService.GetIdFormatString()"
                                      For="@(() => saveFile.TID16)"/>
                 </div>
@@ -51,7 +51,7 @@
                         <MudNumericField Label="SID"
                                          Variant="@Variant.Outlined"
                                          @bind-Value:get="@saveFile.SID16"
-                                         @bind-Value:set="@(async (ushort value) => await OnSID16ChangedAsync(saveFile, value))"
+                                         @bind-Value:set="@(async value => await OnSID16ChangedAsync(saveFile, value))"
                                          Format="@AppService.GetIdFormatString(true)"
                                          For="@(() => saveFile.SID16)"/>
                     </div>
@@ -65,7 +65,7 @@
                     <MudNumericField Label="ID"
                                      Variant="@Variant.Outlined"
                                      @bind-Value:get="@saveFile.TrainerTID7"
-                                     @bind-Value:set="@(async (uint value) => await OnTrainerTID7ChangedAsync(saveFile, value))"
+                                     @bind-Value:set="@(async value => await OnTrainerTID7ChangedAsync(saveFile, value))"
                                      Format="@AppService.GetIdFormatString()"
                                      For="@(() => saveFile.TrainerTID7)"/>
                 </div>
@@ -76,7 +76,7 @@
                         <MudNumericField Label="SID"
                                          Variant="@Variant.Outlined"
                                          @bind-Value:get="@saveFile.TrainerSID7"
-                                         @bind-Value:set="@(async (uint value) => await OnTrainerSID7ChangedAsync(saveFile, value))"
+                                         @bind-Value:set="@(async value => await OnTrainerSID7ChangedAsync(saveFile, value))"
                                          Format="@AppService.GetIdFormatString(true)"
                                          For="@(() => saveFile.TrainerSID7)"/>
                     </div>
@@ -295,7 +295,7 @@
                                      Label="@($"Trainer Card {localIndex + 1}")"
                                      Variant="@Variant.Outlined"
                                      @bind-Value:get="@GetTrainerCardPokemon(sav3FrLgTrainerCard, localIndex)"
-                                     @bind-Value:set="@((ComboItem species) => { SetTrainerCardPokemon(sav3FrLgTrainerCard, localIndex, species); })"
+                                     @bind-Value:set="@(species => { SetTrainerCardPokemon(sav3FrLgTrainerCard, localIndex, species); })"
                                      SearchFunc="@SearchPokemonNames"
                                      ToStringFunc="@(species => species?.Text)"/>
                 </div>
