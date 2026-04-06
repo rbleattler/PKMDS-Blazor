@@ -25,13 +25,7 @@ public class BlobService(IConfiguration configuration, ILogger<BlobService> logg
             return null;
         }
 
-        var sasBuilder = new BlobSasBuilder
-        {
-            BlobContainerName = containerClient.Name,
-            BlobName = blobName,
-            Resource = "b",
-            ExpiresOn = DateTimeOffset.UtcNow.Add(expiry)
-        };
+        var sasBuilder = new BlobSasBuilder { BlobContainerName = containerClient.Name, BlobName = blobName, Resource = "b", ExpiresOn = DateTimeOffset.UtcNow.Add(expiry) };
         sasBuilder.SetPermissions(BlobSasPermissions.Read);
         // Use AbsoluteUri (percent-encoded) — ToString() leaves spaces unencoded, breaking Markdown links
         return blobClient.GenerateSasUri(sasBuilder).AbsoluteUri;

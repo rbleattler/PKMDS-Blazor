@@ -4,8 +4,8 @@ public partial class MovesTab
 {
     private readonly MoveSummary?[] moveInfos = new MoveSummary?[4];
     private readonly MoveSummary?[] relearnMoveInfos = new MoveSummary?[4];
-    private MoveSummary? alphaMoveInfo;
     private AbilitySummary? abilityInfo;
+    private MoveSummary? alphaMoveInfo;
 
     // Cached move summaries — reloaded when the Pokemon reference changes.
     private PKM? lastPokemon;

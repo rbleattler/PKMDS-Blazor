@@ -22,7 +22,7 @@
                      ValueChanged="@(v =>
                                    {
                                        dex.SetCaught(SpeciesId, v);
-                                       if (v) dex.SetSeen(SpeciesId, 0, true);
+                                       if (v) dex.SetSeen(SpeciesId, 0);
                                        StateHasChanged();
                                    })"/>
 

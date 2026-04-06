@@ -1,0 +1,331 @@
+@inherits RefreshAwareComponent
+
+<MudStack Class="pa-2"
+          Spacing="3">
+
+    @if (AppState.SaveFile is null)
+    {
+        <MudAlert Severity="@Severity.Info">No save file is loaded.</MudAlert>
+    }
+    else
+    {
+        <MudGrid>
+
+            @* Left panel: script editor + controls *@
+            <MudItem xs="12"
+                     md="5">
+                <MudStack Spacing="2">
+
+                    @* Preset bar *@
+                    <MudStack Row
+                              AlignItems="@AlignItems.Center"
+                              Spacing="1">
+
+                        <MudSelect T="@string"
+                                   Value="@selectedPresetName"
+                                   ValueChanged="@OnPresetSelected"
+                                   Label="Preset"
+                                   Variant="@Variant.Outlined"
+                                   Dense
+                                   Class="flex-1">
+                            @foreach (var preset in presets)
+                            {
+                                <MudSelectItem Value="@preset.Name">@preset.Name</MudSelectItem>
+                            }
+                        </MudSelect>
+
+                        <MudIconButton Icon="@Icons.Material.Filled.Save"
+                                       title="Save as preset"
+                                       Variant="@Variant.Outlined"
+                                       OnClick="@OpenSavePresetDialog"/>
+
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                       title="Delete preset"
+                                       Color="@Color.Error"
+                                       Variant="@Variant.Outlined"
+                                       Disabled="@(selectedPresetName is null)"
+                                       OnClick="@DeletePresetAsync"/>
+
+                    </MudStack>
+
+                    @* Script editor *@
+                    <MudTextField T="@string"
+                                  @bind-Value="@script"
+                                  Label="Batch Script"
+                                  Variant="@Variant.Outlined"
+                                  Lines="16"
+                                  Immediate
+                                  Style="font-family: monospace; font-size: 0.85rem;"
+                                  Placeholder="# One instruction per line&#10;# Filters: =Species=25&#10;# Set: .Nickname=Pika&#10;# Comments start with #"/>
+
+                    @* Scope selector *@
+                    <MudStack Spacing="0">
+
+                        <MudText Typo="@Typo.caption"
+                                 Class="mb-1">
+                            Apply to
+                            <MudTooltip Text="Controls which Pokémon the script runs on: Party slots only, all Box slots only, or both.">
+                                <MudIcon Icon="@Icons.Material.Outlined.Info"
+                                         Size="@Size.Small"
+                                         Style="vertical-align: middle; font-size: 1rem;"/>
+                            </MudTooltip>
+                        </MudText>
+
+                        <MudToggleGroup T="@BatchEditorScope"
+                                        @bind-Value="@scope"
+                                        SelectionMode="@SelectionMode.SingleSelection"
+                                        Color="@Color.Primary"
+                                        Size="@Size.Small">
+
+                            <MudToggleItem Value="@BatchEditorScope.Party"
+                                           Text="Party"
+                                           title="Apply to party slots only (up to 6 Pokémon)"/>
+
+                            <MudToggleItem Value="@BatchEditorScope.Boxes"
+                                           Text="Boxes"
+                                           title="Apply to all box slots only"/>
+
+                            <MudToggleItem Value="@BatchEditorScope.All"
+                                           Text="All"
+                                           title="Apply to both party and all box slots"/>
+
+                        </MudToggleGroup>
+
+                    </MudStack>
+
+                    @* Action buttons *@
+                    <MudStack Row
+                              Spacing="1"
+                              Wrap="@Wrap.Wrap">
+
+                        <MudButton Variant="@Variant.Filled"
+                                   Color="@Color.Secondary"
+                                   StartIcon="@Icons.Material.Filled.Preview"
+                                   OnClick="@RunPreviewAsync"
+                                   Disabled="@(isBusy || string.IsNullOrWhiteSpace(script))">
+                            @(isBusy && mode == TabMode.Preview
+                                ? "Previewing…"
+                                : "Preview")
+                        </MudButton>
+
+                        <MudButton Variant="@Variant.Filled"
+                                   Color="@Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.PlayArrow"
+                                   OnClick="@ConfirmApplyAsync"
+                                   Disabled="@(isBusy || string.IsNullOrWhiteSpace(script))">
+                            @(isBusy && mode == TabMode.Apply
+                                ? "Applying…"
+                                : "Apply")
+                        </MudButton>
+
+                        <MudButton Variant="@Variant.Outlined"
+                                   Color="@Color.Warning"
+                                   StartIcon="@Icons.Material.Filled.Undo"
+                                   OnClick="@UndoAsync"
+                                   Disabled="@(isBusy || !BatchEditorService.HasSnapshot)">
+                            Undo
+                        </MudButton>
+
+                        @if (isBusy)
+                        {
+                            <MudProgressCircular Indeterminate
+                                                 Size="@Size.Small"
+                                                 Color="@Color.Primary"/>
+                        }
+
+                    </MudStack>
+
+                    @* Built-in examples *@
+                    <MudExpansionPanels>
+                        <MudExpansionPanel Text="Example Scripts">
+                            <MudStack Spacing="1">
+                                @foreach (var example in ExampleScripts)
+                                {
+                                    <MudButton Variant="@Variant.Text"
+                                               Color="@Color.Default"
+                                               Size="@Size.Small"
+                                               StartIcon="@Icons.Material.Filled.ContentPaste"
+                                               OnClick="@(() => script = example.Script)">
+                                        @example.Name
+                                    </MudButton>
+                                }
+                            </MudStack>
+                        </MudExpansionPanel>
+                    </MudExpansionPanels>
+
+                </MudStack>
+            </MudItem>
+
+            @* Right panel: property reference and/or preview results *@
+            <MudItem xs="12"
+                     md="7">
+
+                @* View toggle — only shown when preview results are available *@
+                @if (previewResults.Count > 0)
+                {
+                    <MudButtonGroup Variant="@Variant.Outlined"
+                                    Size="@Size.Small"
+                                    Class="mb-2">
+
+                        <MudButton Color="@(showPropertiesPanel
+                                              ? Color.Primary
+                                              : Color.Default)"
+                                   OnClick="@(() => showPropertiesPanel = true)">
+                            Properties
+                        </MudButton>
+
+                        <MudButton Color="@(!showPropertiesPanel
+                                              ? Color.Secondary
+                                              : Color.Default)"
+                                   OnClick="@(() => showPropertiesPanel = false)">
+                            Preview Results
+                        </MudButton>
+
+                    </MudButtonGroup>
+                }
+
+                @if (showPropertiesPanel)
+                {
+                    <MudText Typo="@Typo.subtitle2"
+                             Class="mb-2">
+                        Property Reference — type a property name in your script to filter
+                    </MudText>
+
+                    <MudTextField T="@string"
+                                  @bind-Value="@propertySearch"
+                                  Label="Filter properties"
+                                  Variant="@Variant.Outlined"
+                                  Adornment="@Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  Immediate
+                                  Class="mb-2"/>
+
+                    <MudTable T="@PropertyRow"
+                              Items="@FilteredProperties"
+                              Dense
+                              Hover
+                              Bordered
+                              FixedHeader
+                              Height="calc(100dvh - 380px)"
+                              Class="property-ref-table">
+
+                        <HeaderContent>
+                            <MudTh>Property</MudTh>
+                            <MudTh>Type</MudTh>
+                        </HeaderContent>
+
+                        <RowTemplate>
+                            <MudTd DataLabel="Property">
+                                <MudText Style="font-family: monospace; font-size: 0.82rem;">
+                                    @context.Name
+                                </MudText>
+                            </MudTd>
+                            <MudTd DataLabel="Type">
+                                <MudText Typo="@Typo.caption">@context.TypeName</MudText>
+                            </MudTd>
+                        </RowTemplate>
+
+                        <NoRecordsContent>
+                            <MudText>No properties match.</MudText>
+                        </NoRecordsContent>
+
+                    </MudTable>
+                }
+                else if (!showPropertiesPanel && previewResults.Count > 0)
+                {
+                    <MudStack Row
+                              AlignItems="@AlignItems.Center"
+                              Spacing="2"
+                              Class="mb-2">
+
+                        <MudText Typo="@Typo.subtitle2">
+                            Preview — @previewResults.Count(r => r.HasChanges) of @previewResults.Count Pokémon would be
+                            modified
+                        </MudText>
+
+                        <MudSwitch T="@bool"
+                                   @bind-Value="@showUnchanged"
+                                   Color="@Color.Primary"
+                                   Label="Show unchanged"/>
+
+                    </MudStack>
+
+                    <MudTable T="@BatchEditorPreviewEntry"
+                              Items="@FilteredPreview"
+                              Dense
+                              Hover
+                              Bordered
+                              FixedHeader
+                              Height="calc(100dvh - 380px)"
+                              RowStyleFunc="@GetPreviewRowStyle"
+                              Class="batch-preview-table">
+
+                        <HeaderContent>
+                            <MudTh>Location</MudTh>
+                            <MudTh>Species</MudTh>
+                            <MudTh>Changes</MudTh>
+                        </HeaderContent>
+
+                        <RowTemplate>
+                            <MudTd DataLabel="Location">@context.Location</MudTd>
+                            <MudTd DataLabel="Species">@context.SpeciesName</MudTd>
+                            <MudTd DataLabel="Changes">
+                                @if (context.HasChanges)
+                                {
+                                    @string.Join("; ", context.Changes)
+                                }
+                                else
+                                {
+                                    <MudText Typo="@Typo.caption"
+                                             Color="@Color.Default">
+                                        (no change)
+                                    </MudText>
+                                }
+                            </MudTd>
+                        </RowTemplate>
+
+                        <NoRecordsContent>
+                            <MudText>No Pokémon found in scope.</MudText>
+                        </NoRecordsContent>
+
+                    </MudTable>
+                }
+
+            </MudItem>
+
+        </MudGrid>
+
+        @* Save-preset dialog *@
+        @if (showSavePresetDialog)
+        {
+            <MudPaper Class="pa-3 mt-2"
+                      Outlined>
+                <MudStack Row
+                          AlignItems="@AlignItems.Center"
+                          Spacing="2">
+
+                    <MudTextField T="@string"
+                                  @bind-Value="@newPresetName"
+                                  Label="Preset name"
+                                  Variant="@Variant.Outlined"
+                                  Immediate
+                                  Class="flex-1"/>
+
+                    <MudButton Variant="@Variant.Filled"
+                               Color="@Color.Primary"
+                               Disabled="@string.IsNullOrWhiteSpace(newPresetName)"
+                               OnClick="@SavePresetAsync">
+                        Save
+                    </MudButton>
+
+                    <MudButton Variant="@Variant.Outlined"
+                               OnClick="@(() => showSavePresetDialog = false)">
+                        Cancel
+                    </MudButton>
+
+                </MudStack>
+            </MudPaper>
+        }
+    }
+
+</MudStack>

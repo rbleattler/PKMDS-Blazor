@@ -22,17 +22,17 @@
                     {
                         <MudCheckBox @bind-Value="@KeepNature"
                                      Label="Keep nature"
-                                     Color="@Color.Primary" />
+                                     Color="@Color.Primary"/>
                         @if (Pokemon.PersonalInfo.IsDualGender)
                         {
                             <MudCheckBox @bind-Value="@KeepGender"
                                          Label="Keep gender"
-                                         Color="@Color.Primary" />
+                                         Color="@Color.Primary"/>
                         }
                     }
                     <MudCheckBox @bind-Value="@AvoidShiny"
                                  Label="Avoid shiny"
-                                 Color="@Color.Primary" />
+                                 Color="@Color.Primary"/>
                 </MudStack>
 
                 <MudStack Row

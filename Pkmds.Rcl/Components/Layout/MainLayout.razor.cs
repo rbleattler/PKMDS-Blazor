@@ -66,7 +66,7 @@ public partial class MainLayout : IDisposable
                 await Task.Delay(4000);
                 IsUpdateCheckFailed = false;
                 break;
-            // "found": JS already dispatched 'updateAvailable' → ShowUpdateMessage() sets IsUpdateAvailable = true
+                // "found": JS already dispatched 'updateAvailable' → ShowUpdateMessage() sets IsUpdateAvailable = true
         }
 
         StateHasChanged();
@@ -157,11 +157,7 @@ public partial class MainLayout : IDisposable
 
     private async Task ShowBugReportDialog()
     {
-        var parameters = new DialogParameters
-        {
-            { nameof(BugReportDialog.HasSaveFile), AppState.SaveFile is not null },
-            { nameof(BugReportDialog.AppVersion), AppState.AppVersion ?? string.Empty },
-        };
+        var parameters = new DialogParameters { { nameof(BugReportDialog.HasSaveFile), AppState.SaveFile is not null }, { nameof(BugReportDialog.AppVersion), AppState.AppVersion ?? string.Empty } };
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
         var dialog = await DialogService.ShowAsync<BugReportDialog>("Report a Bug", parameters, options);
         var result = await dialog.Result;

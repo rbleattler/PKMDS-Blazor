@@ -124,7 +124,8 @@
                         Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.IVs))"/>
                 </MudStack>
 
-                <MudNumericField Label="HP"
+                <MudNumericField T="@int"
+                                 Label="HP"
                                  Class="@GetIvFieldClass(Pokemon.IV_HP, Stats.Hp)"
                                  title="HP IV"
                                  Variant="@Variant.Outlined"
@@ -133,12 +134,13 @@
                                           ? 15
                                           : 31)"
                                  Value="@Pokemon.IV_HP"
-                                 ValueChanged="@((int newValue) => OnSetIv(Stats.Hp, newValue))"
+                                 ValueChanged="@(newValue => OnSetIv(Stats.Hp, newValue))"
                                  For="@(() => Pokemon.IV_HP)"
                                  ReadOnly="@(saveGeneration == 1 && Pokemon is PK1)"
                                  HideSpinButtons="@(saveGeneration == 1 && Pokemon is PK1)"/>
 
-                <MudNumericField Label="Atk"
+                <MudNumericField T="@int"
+                                 Label="Atk"
                                  Class="@GetIvFieldClass(Pokemon.IV_ATK, Stats.Attack)"
                                  title="Attack IV"
                                  Variant="@Variant.Outlined"
@@ -147,10 +149,11 @@
                                           ? 15
                                           : 31)"
                                  Value="@Pokemon.IV_ATK"
-                                 ValueChanged="@((int newValue) => OnSetIv(Stats.Attack, newValue))"
+                                 ValueChanged="@(newValue => OnSetIv(Stats.Attack, newValue))"
                                  For="@(() => Pokemon.IV_ATK)"/>
 
-                <MudNumericField Label="Def"
+                <MudNumericField T="@int"
+                                 Label="Def"
                                  Class="@GetIvFieldClass(Pokemon.IV_DEF, Stats.Defense)"
                                  title="Defense IV"
                                  Variant="@Variant.Outlined"
@@ -159,35 +162,38 @@
                                           ? 15
                                           : 31)"
                                  Value="@Pokemon.IV_DEF"
-                                 ValueChanged="@((int newValue) => OnSetIv(Stats.Defense, newValue))"
+                                 ValueChanged="@(newValue => OnSetIv(Stats.Defense, newValue))"
                                  For="@(() => Pokemon.IV_DEF)"/>
 
 
                 @if (saveGeneration == 1 && Pokemon is PK1 pk1)
                 {
-                    <MudNumericField Label="Spe"
+                    <MudNumericField T="@int"
+                                     Label="Spe"
                                      Class="@GetIvFieldClass(pk1.IV_SPE, Stats.Speed)"
                                      title="Speed IV"
                                      Variant="@Variant.Outlined"
                                      Min="@int.MinValue"
                                      Max="15"
                                      Value="@pk1.IV_SPE"
-                                     ValueChanged="@((int newValue) => OnSetDv(Stats.Speed, newValue))"
+                                     ValueChanged="@(newValue => OnSetDv(Stats.Speed, newValue))"
                                      For="@(() => pk1.IV_SPE)"/>
 
-                    <MudNumericField Label="Spc"
+                    <MudNumericField T="@int"
+                                     Label="Spc"
                                      Class="@GetIvFieldClass(pk1.IV_SPC, Stats.Special)"
                                      title="Special IV"
                                      Variant="@Variant.Outlined"
                                      Min="@int.MinValue"
                                      Max="15"
                                      Value="@pk1.IV_SPC"
-                                     ValueChanged="@((int newValue) => OnSetDv(Stats.Special, newValue))"
+                                     ValueChanged="@(newValue => OnSetDv(Stats.Special, newValue))"
                                      For="@(() => pk1.IV_SPC)"/>
                 }
                 else
                 {
-                    <MudNumericField Label="Spa"
+                    <MudNumericField T="@int"
+                                     Label="Spa"
                                      Class="@GetIvFieldClass(Pokemon.IV_SPA, Stats.SpecialAttack)"
                                      title="Special Attack IV"
                                      Variant="@Variant.Outlined"
@@ -196,10 +202,11 @@
                                               ? 15
                                               : 31)"
                                      Value="@Pokemon.IV_SPA"
-                                     ValueChanged="@((int newValue) => OnSetIv(Stats.SpecialAttack, newValue))"
+                                     ValueChanged="@(newValue => OnSetIv(Stats.SpecialAttack, newValue))"
                                      For="@(() => Pokemon.IV_SPA)"/>
 
-                    <MudNumericField Label="Spd"
+                    <MudNumericField T="@int"
+                                     Label="Spd"
                                      Class="@GetIvFieldClass(Pokemon.IV_SPD, Stats.SpecialDefense)"
                                      title="Special Defense IV"
                                      Variant="@Variant.Outlined"
@@ -208,10 +215,11 @@
                                               ? 15
                                               : 31)"
                                      Value="@Pokemon.IV_SPD"
-                                     ValueChanged="@((int newValue) => OnSetIv(Stats.SpecialDefense, newValue))"
+                                     ValueChanged="@(newValue => OnSetIv(Stats.SpecialDefense, newValue))"
                                      For="@(() => Pokemon.IV_SPD)"/>
 
-                    <MudNumericField Label="Spe"
+                    <MudNumericField T="@int"
+                                     Label="Spe"
                                      Class="@GetIvFieldClass(Pokemon.IV_SPE, Stats.Speed)"
                                      title="Speed IV"
                                      Variant="@Variant.Outlined"
@@ -220,7 +228,7 @@
                                               ? 15
                                               : 31)"
                                      Value="@Pokemon.IV_SPE"
-                                     ValueChanged="@((int newValue) => OnSetIv(Stats.Speed, newValue))"
+                                     ValueChanged="@(newValue => OnSetIv(Stats.Speed, newValue))"
                                      For="@(() => Pokemon.IV_SPE)"/>
 
                     <MudNumericField Label="Sum"
@@ -532,38 +540,41 @@
                     }
                 </MudStack>
 
-                <MudNumericField Label="HP"
+                <MudNumericField T="@int"
+                                 Label="HP"
                                  title="Max HP Stat"
                                  Variant="@Variant.Outlined"
                                  Min="0"
                                  Max="@(ushort.MaxValue)"
                                  Value="@Pokemon.Stat_HPMax"
-                                 ValueChanged="@((int v) => OnHaXStatHpSet(v))"
+                                 ValueChanged="@(v => OnHaXStatHpSet(v))"
                                  ReadOnly="@(AppState?.IsHaXEnabled is not true)"
                                  HideSpinButtons="@(AppState?.IsHaXEnabled is not true)"/>
 
-                <MudNumericField Label="Atk"
+                <MudNumericField T="@int"
+                                 Label="Atk"
                                  Class="@GetStatClass(Stats.Attack)"
                                  title="@GetNatureTooltip(Stats.Attack)"
                                  Variant="@Variant.Outlined"
                                  Min="0"
                                  Max="@(ushort.MaxValue)"
                                  Value="@Pokemon.Stat_ATK"
-                                 ValueChanged="@((int v) => OnHaXStatSet(v, (s, val) => s.Stat_ATK = val))"
+                                 ValueChanged="@(v => OnHaXStatSet(v, (s, val) => s.Stat_ATK = val))"
                                  Adornment="@GetNatureAdornment(Stats.Attack)"
                                  AdornmentIcon="@GetNatureAdornmentIcon(Stats.Attack)"
                                  AdornmentColor="@GetNatureAdornmentColor(Stats.Attack)"
                                  ReadOnly="@(AppState?.IsHaXEnabled is not true)"
                                  HideSpinButtons="@(AppState?.IsHaXEnabled is not true)"/>
 
-                <MudNumericField Label="Def"
+                <MudNumericField T="@int"
+                                 Label="Def"
                                  Class="@GetStatClass(Stats.Defense)"
                                  title="@GetNatureTooltip(Stats.Defense)"
                                  Variant="@Variant.Outlined"
                                  Min="0"
                                  Max="@(ushort.MaxValue)"
                                  Value="@Pokemon.Stat_DEF"
-                                 ValueChanged="@((int v) => OnHaXStatSet(v, (s, val) => s.Stat_DEF = val))"
+                                 ValueChanged="@(v => OnHaXStatSet(v, (s, val) => s.Stat_DEF = val))"
                                  Adornment="@GetNatureAdornment(Stats.Defense)"
                                  AdornmentIcon="@GetNatureAdornmentIcon(Stats.Defense)"
                                  AdornmentColor="@GetNatureAdornmentColor(Stats.Defense)"
@@ -572,23 +583,25 @@
 
                 @if (saveGeneration == 1 && Pokemon is PK1 pk1)
                 {
-                    <MudNumericField Label="Spe"
+                    <MudNumericField T="@int"
+                                     Label="Spe"
                                      title="Speed Stat"
                                      Variant="@Variant.Outlined"
                                      Min="0"
                                      Max="@(ushort.MaxValue)"
                                      Value="@pk1.Stat_SPE"
-                                     ValueChanged="@((int v) => OnHaXStatSet(v, (s, val) => s.Stat_SPE = val))"
+                                     ValueChanged="@(v => OnHaXStatSet(v, (s, val) => s.Stat_SPE = val))"
                                      ReadOnly="@(AppState?.IsHaXEnabled is not true)"
                                      HideSpinButtons="@(AppState?.IsHaXEnabled is not true)"/>
 
-                    <MudNumericField Label="Spc"
+                    <MudNumericField T="@int"
+                                     Label="Spc"
                                      title="Special Stat"
                                      Variant="@Variant.Outlined"
                                      Min="0"
                                      Max="@(ushort.MaxValue)"
                                      Value="@pk1.Stat_SPC"
-                                     ValueChanged="@((int v) => OnHaXStatSet(v, (s, val) =>
+                                     ValueChanged="@(v => OnHaXStatSet(v, (s, val) =>
                                                    {
                                                        if (s is PK1 p) p.Stat_SPC = val;
                                                    }))"
@@ -597,42 +610,45 @@
                 }
                 else
                 {
-                    <MudNumericField Label="Spa"
+                    <MudNumericField T="@int"
+                                     Label="Spa"
                                      Class="@GetStatClass(Stats.SpecialAttack)"
                                      title="@GetNatureTooltip(Stats.SpecialAttack)"
                                      Variant="@Variant.Outlined"
                                      Min="0"
                                      Max="@(ushort.MaxValue)"
                                      Value="@Pokemon.Stat_SPA"
-                                     ValueChanged="@((int v) => OnHaXStatSet(v, (s, val) => s.Stat_SPA = val))"
+                                     ValueChanged="@(v => OnHaXStatSet(v, (s, val) => s.Stat_SPA = val))"
                                      Adornment="@GetNatureAdornment(Stats.SpecialAttack)"
                                      AdornmentIcon="@GetNatureAdornmentIcon(Stats.SpecialAttack)"
                                      AdornmentColor="@GetNatureAdornmentColor(Stats.SpecialAttack)"
                                      ReadOnly="@(AppState?.IsHaXEnabled is not true)"
                                      HideSpinButtons="@(AppState?.IsHaXEnabled is not true)"/>
 
-                    <MudNumericField Label="Spd"
+                    <MudNumericField T="@int"
+                                     Label="Spd"
                                      Class="@GetStatClass(Stats.SpecialDefense)"
                                      title="@GetNatureTooltip(Stats.SpecialDefense)"
                                      Variant="@Variant.Outlined"
                                      Min="0"
                                      Max="@(ushort.MaxValue)"
                                      Value="@Pokemon.Stat_SPD"
-                                     ValueChanged="@((int v) => OnHaXStatSet(v, (s, val) => s.Stat_SPD = val))"
+                                     ValueChanged="@(v => OnHaXStatSet(v, (s, val) => s.Stat_SPD = val))"
                                      Adornment="@GetNatureAdornment(Stats.SpecialDefense)"
                                      AdornmentIcon="@GetNatureAdornmentIcon(Stats.SpecialDefense)"
                                      AdornmentColor="@GetNatureAdornmentColor(Stats.SpecialDefense)"
                                      ReadOnly="@(AppState?.IsHaXEnabled is not true)"
                                      HideSpinButtons="@(AppState?.IsHaXEnabled is not true)"/>
 
-                    <MudNumericField Label="Spe"
+                    <MudNumericField T="@int"
+                                     Label="Spe"
                                      Class="@GetStatClass(Stats.Speed)"
                                      title="@GetNatureTooltip(Stats.Speed)"
                                      Variant="@Variant.Outlined"
                                      Min="0"
                                      Max="@(ushort.MaxValue)"
                                      Value="@Pokemon.Stat_SPE"
-                                     ValueChanged="@((int v) => OnHaXStatSet(v, (s, val) => s.Stat_SPE = val))"
+                                     ValueChanged="@(v => OnHaXStatSet(v, (s, val) => s.Stat_SPE = val))"
                                      Adornment="@GetNatureAdornment(Stats.Speed)"
                                      AdornmentIcon="@GetNatureAdornmentIcon(Stats.Speed)"
                                      AdornmentColor="@GetNatureAdornmentColor(Stats.Speed)"

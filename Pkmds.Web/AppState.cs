@@ -38,7 +38,9 @@ public record AppState : IAppState
                 : null;
 
             if (SaveFile is null)
+            {
                 SaveFileName = null;
+            }
 
             PinnedBoxNumber = null;
         }

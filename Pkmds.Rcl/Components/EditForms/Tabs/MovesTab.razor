@@ -127,7 +127,8 @@
 
                                             @if (moveInfo.Priority != 0)
                                             {
-                                                <MudText Typo="@Typo.caption">Priority: <b>@FormatPriority(moveInfo.Priority)</b></MudText>
+                                                <MudText Typo="@Typo.caption">Priority:
+                                                    <b>@FormatPriority(moveInfo.Priority)</b></MudText>
                                             }
 
                                             @if (moveInfo.SecondaryEffects is { } fx)
@@ -135,31 +136,40 @@
                                                 <MudStack Spacing="0">
                                                     @if (fx.Drain < 0)
                                                     {
-                                                        <MudText Typo="@Typo.caption">Recoil: <b>@(Math.Abs(fx.Drain))% of damage dealt</b></MudText>
+                                                        <MudText Typo="@Typo.caption">Recoil: <b>@(Math.Abs(fx.Drain))%
+                                                                of damage dealt</b></MudText>
                                                     }
                                                     else if (fx.Drain > 0)
                                                     {
-                                                        <MudText Typo="@Typo.caption">Drains <b>@(fx.Drain)% of damage dealt</b></MudText>
+                                                        <MudText Typo="@Typo.caption">Drains <b>@(fx.Drain)% of damage
+                                                                dealt</b></MudText>
                                                     }
                                                     @if (fx.Healing > 0)
                                                     {
-                                                        <MudText Typo="@Typo.caption">Restores <b>@(fx.Healing)% of max HP</b></MudText>
+                                                        <MudText Typo="@Typo.caption">Restores <b>@(fx.Healing)% of max
+                                                                HP</b></MudText>
                                                     }
                                                     @if (fx.AilmentId != 0 || fx.AilmentChance > 0)
                                                     {
-                                                        var ailment = fx.AilmentId == -1 ? "a random status condition" : (fx.AilmentName ?? "a status condition").ToLowerInvariant();
+                                                        var ailment = fx.AilmentId == -1
+                                                            ? "a random status condition"
+                                                            : (fx.AilmentName ?? "a status condition").ToLowerInvariant();
                                                         @if (fx.AilmentChance > 0)
                                                         {
-                                                            <MudText Typo="@Typo.caption"><b>@(fx.AilmentChance)%</b> chance to inflict <b>@ailment</b></MudText>
+                                                            <MudText Typo="@Typo.caption"><b>@(fx.AilmentChance)%</b>
+                                                                chance to inflict <b>@ailment</b></MudText>
                                                         }
                                                         else
                                                         {
-                                                            <MudText Typo="@Typo.caption">Inflicts <b>@ailment</b></MudText>
+                                                            <MudText Typo="@Typo.caption">Inflicts <b>@ailment</b>
+                                                            </MudText>
                                                         }
                                                     }
                                                     @if (fx.FlinchChance > 0)
                                                     {
-                                                        <MudText Typo="@Typo.caption"><b>@(fx.FlinchChance)%</b> chance to flinch</MudText>
+                                                        <MudText Typo="@Typo.caption"><b>@(fx.FlinchChance)%</b> chance
+                                                            to flinch
+                                                        </MudText>
                                                     }
                                                     @if (fx.MinHits.HasValue || fx.MaxHits.HasValue)
                                                     {
@@ -169,7 +179,7 @@
                                                             ({ } mn, { } mx) => $"Hits {mn}–{mx} times",
                                                             ({ } mn, null) => $"Hits at least {mn} times",
                                                             (null, { } mx) => $"Hits up to {mx} times",
-                                                            _ => string.Empty,
+                                                            _ => string.Empty
                                                         };
                                                         @if (hitsText.Length > 0)
                                                         {
@@ -178,26 +188,37 @@
                                                     }
                                                     @if (fx.CritRate >= 6)
                                                     {
-                                                        <MudText Typo="@Typo.caption"><b>Always lands a critical hit</b></MudText>
+                                                        <MudText Typo="@Typo.caption"><b>Always lands a critical hit</b>
+                                                        </MudText>
                                                     }
                                                     else if (fx.CritRate > 0)
                                                     {
-                                                        <MudText Typo="@Typo.caption"><b>High critical hit ratio</b></MudText>
+                                                        <MudText Typo="@Typo.caption"><b>High critical hit ratio</b>
+                                                        </MudText>
                                                     }
                                                     @{ var partialStatChance = fx.StatChance > 0 && fx.StatChance < 100; }
                                                     @foreach (var sc in fx.StatChanges)
                                                     {
-                                                        var verbFull = sc.Change > 0 ? "Raises" : "Lowers";
-                                                        var verbBase = sc.Change > 0 ? "raise" : "lower";
+                                                        var verbFull = sc.Change > 0
+                                                            ? "Raises"
+                                                            : "Lowers";
+                                                        var verbBase = sc.Change > 0
+                                                            ? "raise"
+                                                            : "lower";
                                                         var stages = Math.Abs(sc.Change);
-                                                        var stageWord = stages == 1 ? "stage" : "stages";
+                                                        var stageWord = stages == 1
+                                                            ? "stage"
+                                                            : "stages";
                                                         @if (partialStatChance)
                                                         {
-                                                            <MudText Typo="@Typo.caption"><b>@(fx.StatChance)%</b> chance to @verbBase <b>@sc.Stat</b> by <b>@stages @stageWord</b></MudText>
+                                                            <MudText Typo="@Typo.caption"><b>@(fx.StatChance)%</b>
+                                                                chance to @verbBase <b>@sc.Stat</b> by
+                                                                <b>@stages @stageWord</b></MudText>
                                                         }
                                                         else
                                                         {
-                                                            <MudText Typo="@Typo.caption">@verbFull <b>@sc.Stat</b> by <b>@stages @stageWord</b></MudText>
+                                                            <MudText Typo="@Typo.caption">@verbFull <b>@sc.Stat</b> by
+                                                                <b>@stages @stageWord</b></MudText>
                                                         }
                                                     }
                                                 </MudStack>
@@ -507,7 +528,10 @@
 
                                                 @if (relearnInfo.Priority != 0)
                                                 {
-                                                    <MudText Typo="@Typo.caption">Priority: <b>@(relearnInfo.Priority > 0 ? $"+{relearnInfo.Priority}" : relearnInfo.Priority.ToString())</b></MudText>
+                                                    <MudText Typo="@Typo.caption">Priority:
+                                                        <b>@(relearnInfo.Priority > 0
+                                                                ? $"+{relearnInfo.Priority}"
+                                                                : relearnInfo.Priority.ToString())</b></MudText>
                                                 }
 
                                                 @if (relearnInfo.Flags.Count > 0)
@@ -640,7 +664,9 @@
 
                                                 @if (alphaInfo.Priority != 0)
                                                 {
-                                                    <MudText Typo="@Typo.caption">Priority: <b>@(alphaInfo.Priority > 0 ? $"+{alphaInfo.Priority}" : alphaInfo.Priority.ToString())</b></MudText>
+                                                    <MudText Typo="@Typo.caption">Priority: <b>@(alphaInfo.Priority > 0
+                                                                ? $"+{alphaInfo.Priority}"
+                                                                : alphaInfo.Priority.ToString())</b></MudText>
                                                 }
 
                                                 @if (alphaInfo.Flags.Count > 0)

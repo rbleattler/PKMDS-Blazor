@@ -15,8 +15,9 @@
                                Variant="@Variant.Filled"
                                Size="@Size.Small"/>
 
-                <MudSelect Value="@currentBox"
-                           ValueChanged="@((int newBox) => currentBox = newBox)"
+                <MudSelect T="@int"
+                           Value="@currentBox"
+                           ValueChanged="@(newBox => currentBox = newBox)"
                            Dense
                            Class="flex-1">
                     @for (var boxId = 0; boxId < saveFile.BoxCount; boxId++)
