@@ -59,25 +59,39 @@
                                   Placeholder="# One instruction per line&#10;# Filters: =Species=25&#10;# Set: .Nickname=Pika&#10;# Comments start with #"/>
 
                     @* Scope selector *@
-                    <MudButtonGroup Variant="@Variant.Outlined"
-                                    Size="@Size.Small">
+                    <MudStack Spacing="0">
 
-                        <MudButton Color="@(scope == BatchEditorScope.Party ? Color.Primary : Color.Default)"
-                                   OnClick="@(() => scope = BatchEditorScope.Party)">
-                            Party
-                        </MudButton>
+                        <MudText Typo="@Typo.caption"
+                                 Class="mb-1">
+                            Apply to
+                            <MudTooltip Text="Controls which Pokémon the script runs on: Party slots only, all Box slots only, or both.">
+                                <MudIcon Icon="@Icons.Material.Outlined.Info"
+                                         Size="@Size.Small"
+                                         Style="vertical-align: middle; font-size: 1rem;"/>
+                            </MudTooltip>
+                        </MudText>
 
-                        <MudButton Color="@(scope == BatchEditorScope.Boxes ? Color.Primary : Color.Default)"
-                                   OnClick="@(() => scope = BatchEditorScope.Boxes)">
-                            Boxes
-                        </MudButton>
+                        <MudToggleGroup T="@BatchEditorScope"
+                                        @bind-Value="@scope"
+                                        SelectionMode="@SelectionMode.SingleSelection"
+                                        Color="@Color.Primary"
+                                        Size="@Size.Small">
 
-                        <MudButton Color="@(scope == BatchEditorScope.All ? Color.Primary : Color.Default)"
-                                   OnClick="@(() => scope = BatchEditorScope.All)">
-                            All
-                        </MudButton>
+                            <MudToggleItem Value="@BatchEditorScope.Party"
+                                           Text="Party"
+                                           title="Apply to party slots only (up to 6 Pokémon)"/>
 
-                    </MudButtonGroup>
+                            <MudToggleItem Value="@BatchEditorScope.Boxes"
+                                           Text="Boxes"
+                                           title="Apply to all box slots only"/>
+
+                            <MudToggleItem Value="@BatchEditorScope.All"
+                                           Text="All"
+                                           title="Apply to both party and all box slots"/>
+
+                        </MudToggleGroup>
+
+                    </MudStack>
 
                     @* Action buttons *@
                     <MudStack Row
