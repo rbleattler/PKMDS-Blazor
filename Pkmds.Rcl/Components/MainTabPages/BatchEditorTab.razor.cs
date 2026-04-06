@@ -113,7 +113,7 @@ public partial class BatchEditorTab : RefreshAwareComponent
     {
         var confirm = await DialogService.ShowMessageBoxAsync(
             "Apply Batch Edit",
-            "This will modify Pokémon in your save file. Take a snapshot first to enable Undo. Continue?",
+            "This will modify Pokémon in your save file. You can undo this afterward using the Undo button. Continue?",
             yesText: "Apply",
             cancelText: "Cancel");
 
