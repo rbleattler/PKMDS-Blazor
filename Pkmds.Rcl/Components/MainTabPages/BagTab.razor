@@ -161,7 +161,8 @@
                                         <EditTemplate>
                                             @if (context.Item is IItemFreeSpace freeSpaceItem)
                                             {
-                                                <MudCheckBox Label="Free Space"
+                                                <MudCheckBox T="@bool"
+                                                             Label="Free Space"
                                                              Value="@freeSpaceItem.IsFreeSpace"
                                                              ValueChanged="@(value => freeSpaceItem.IsFreeSpace = value)"/>
                                             }
@@ -187,7 +188,8 @@
                                         <EditTemplate>
                                             @if (context.Item is IItemFavorite favoriteItem)
                                             {
-                                                <MudCheckBox Label="Favorite"
+                                                <MudCheckBox T="@bool"
+                                                             Label="Favorite"
                                                              Value="@favoriteItem.IsFavorite"
                                                              ValueChanged="@(value => favoriteItem.IsFavorite = value)"/>
                                             }
@@ -200,7 +202,8 @@
                                         <EditTemplate>
                                             @if (context.Item is IItemNewFlag newFlagItem)
                                             {
-                                                <MudCheckBox Label="New"
+                                                <MudCheckBox T="@bool"
+                                                             Label="New"
                                                              Value="@newFlagItem.IsNew"
                                                              ValueChanged="@(value => newFlagItem.IsNew = value)"/>
                                             }

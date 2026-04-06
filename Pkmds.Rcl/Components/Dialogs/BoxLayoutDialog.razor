@@ -45,7 +45,8 @@
                 <MudItem xs="7">
                     @if (supportsNameRead)
                     {
-                        <MudTextField @key="@($"name-{selectedBoxIndex}")"
+                        <MudTextField T="@string"
+                                      @key="@($"name-{selectedBoxIndex}")"
                                       Value="@boxNames[selectedBoxIndex]"
                                       ValueChanged="@(v => OnBoxNameChanged(v))"
                                       Label="Box Name"
@@ -57,7 +58,8 @@
 
                     @if (supportsWallpaper && wallpaperNameList.Length > 0)
                     {
-                        <MudSelect @key="@($"wallpaper-{selectedBoxIndex}")"
+                        <MudSelect T="@int"
+                                   @key="@($"wallpaper-{selectedBoxIndex}")"
                                    Value="@wallpaperIds[selectedBoxIndex]"
                                    ValueChanged="@(id => OnWallpaperChanged(id))"
                                    Label="Wallpaper"
@@ -79,7 +81,8 @@
 
                     @if (showUnlocked)
                     {
-                        <MudSelect Value="@boxesUnlocked"
+                        <MudSelect T="@int"
+                                   Value="@boxesUnlocked"
                                    ValueChanged="@(v => OnBoxesUnlockedChanged(v))"
                                    Label="Unlocked"
                                    Class="mb-3">

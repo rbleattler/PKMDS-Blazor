@@ -15,7 +15,8 @@
                                Variant="@Variant.Filled"
                                Size="@Size.Small"/>
 
-                <MudSelect Value="@currentBox"
+                <MudSelect T="@int"
+                           Value="@currentBox"
                            ValueChanged="@(newBox => currentBox = newBox)"
                            Dense
                            Class="flex-1">
