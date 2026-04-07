@@ -74,9 +74,16 @@ public partial class PidEcDialog
         };
         var desiredAbilityBit = Pokemon.PID & abilityBitMask;
 
+        const int MaxAttempts = 1_000_000;
         uint pid;
+        var attempts = 0;
         do
         {
+            if (++attempts > MaxAttempts)
+            {
+                Snackbar.Add("Could not find a PID satisfying all constraints after 1,000,000 attempts. Try relaxing the constraints.", Severity.Warning);
+                return;
+            }
             pid = NextRandomUInt32();
             Pokemon.PID = pid; // needed to evaluate IsShiny
         } while (
@@ -117,9 +124,16 @@ public partial class PidEcDialog
         // Loop until we find a seed whose PID satisfies all checked constraints.
         // For Gen 3–5, both nature and gender are encoded in the PID, so a random
         // PID will only match by chance — this avoids the user having to retry manually.
+        const int MaxAttempts = 1_000_000;
         uint seed, pid;
+        var attempts = 0;
         do
         {
+            if (++attempts > MaxAttempts)
+            {
+                Snackbar.Add("Could not find a PID satisfying all constraints after 1,000,000 attempts. Try relaxing the constraints.", Severity.Warning);
+                return;
+            }
             seed = NextRandomUInt32();
             pid = ClassicEraRNG.GetSequentialPID(ref seed);
             Pokemon.PID = pid; // needed to evaluate IsShiny
