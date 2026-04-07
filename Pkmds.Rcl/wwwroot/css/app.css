@@ -118,7 +118,7 @@ body, html {
 
 .status-indicator-icon {
     position: absolute;
-    bottom: 2px;
+    bottom: 24px;
     left: 2px;
     width: 16px;
     height: 16px;
