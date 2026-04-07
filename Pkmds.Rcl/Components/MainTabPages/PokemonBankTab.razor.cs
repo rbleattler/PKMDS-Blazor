@@ -292,7 +292,7 @@ public partial class PokemonBankTab : RefreshAwareComponent
         }
     }
 
-    private void SendToSaveAsync(BankEntry entry)
+    private void SendToSave(BankEntry entry)
     {
         if (AppState.SaveFile is not { } saveFile)
         {
