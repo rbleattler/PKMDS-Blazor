@@ -74,6 +74,11 @@ public partial class PokemonBankTab : RefreshAwareComponent
         UpdatePagination();
     }
 
+    private static string? GetOriginMarkSprite(PKM pkm) =>
+        pkm.Format >= 6
+            ? ImageHelper.GetOriginMarkSpriteFileName(OriginMarkUtil.GetOriginMark(pkm))
+            : null;
+
     private void UpdatePagination() =>
         paginatedEntries =
         [

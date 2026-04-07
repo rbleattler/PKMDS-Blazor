@@ -183,16 +183,31 @@
                                     </MudText>
                                 </CardHeaderContent>
                                 <CardHeaderActions>
-                                    @if (entry.Pokemon.IsShiny)
+                                    @if (entry.Pokemon.GetIsShinySafe())
                                     {
-                                        <MudIcon Icon="@Icons.Material.Filled.Star"
-                                                 Color="@Color.Warning"
-                                                 Size="@Size.Small"
-                                                 title="Shiny"/>
+                                        <img src="@ImageHelper.GetShinyIndicatorSpriteFileName(ShinyExtensions.GetType(entry.Pokemon) is Shiny.AlwaysSquare)"
+                                             alt="Shiny"
+                                             title="Shiny"
+                                             style="width: 16px; height: 16px; object-fit: contain;">
                                     }
                                 </CardHeaderActions>
                             </MudCardHeader>
                             <MudCardContent Class="py-1">
+                                <MudStack Row
+                                          Spacing="1"
+                                          AlignItems="@AlignItems.Center">
+                                    @{ var originSrc = GetOriginMarkSprite(entry.Pokemon); }
+                                    @if (originSrc is not null)
+                                    {
+                                        <img src="@originSrc"
+                                             alt="Origin Mark"
+                                             title="Origin Mark"
+                                             style="width: 16px; height: 16px; object-fit: contain;">
+                                    }
+                                    <MudText Typo="@Typo.caption">
+                                        @entry.Pokemon.Version
+                                    </MudText>
+                                </MudStack>
                                 <MudText Typo="@Typo.caption"
                                          Class="d-block">
                                     Added: @entry.AddedAt.LocalDateTime.ToString("yyyy-MM-dd")
