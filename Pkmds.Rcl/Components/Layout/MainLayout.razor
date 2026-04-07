@@ -124,6 +124,14 @@
                        Disabled="@(AppState.SaveFile is null)">
                 Save Info
             </MudButton>
+            <MudButton OnClick="@ShowSaveFileRepairDialog"
+                       Variant="@Variant.Filled"
+                       StartIcon="@Icons.Material.Filled.Build"
+                       FullWidth
+                       Color="@Color.Default"
+                       Disabled="@(AppState.SaveFile is null)">
+                Repair
+            </MudButton>
             <MudButton OnClick="@ShowLoadPokemonFileDialog"
                        Variant="@Variant.Filled"
                        StartIcon="@Icons.Material.Filled.CloudUpload"

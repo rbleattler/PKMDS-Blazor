@@ -216,6 +216,16 @@ public partial class MainLayout : IDisposable
         await DialogService.ShowAsync<SaveFileInfoDialog>("Save File Info", parameters, options);
     }
 
+    private async Task ShowSaveFileRepairDialog()
+    {
+        var parameters = new DialogParameters
+        {
+            { nameof(SaveFileRepairDialog.SaveFile), AppState.SaveFile }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
+        await DialogService.ShowAsync<SaveFileRepairDialog>("Repair Save File", parameters, options);
+    }
+
     private async Task ShowBackupManagerDialog()
     {
         var parameters = new DialogParameters
