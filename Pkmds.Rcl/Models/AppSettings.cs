@@ -47,4 +47,14 @@ public record AppSettings
     /// Defaults to <see cref="SpriteStyle.Home" /> (high-res HOME sprites).
     /// </summary>
     public SpriteStyle SpriteStyle { get; init; } = SpriteStyle.Home;
+
+    /// <summary>
+    /// Whether save files are automatically backed up to IndexedDB when loaded.
+    /// </summary>
+    public bool IsAutoBackupEnabled { get; init; } = true;
+
+    /// <summary>
+    /// Maximum number of save file backups to retain. Oldest backups are pruned when this limit is exceeded.
+    /// </summary>
+    public int MaxBackupCount { get; init; } = 10;
 }

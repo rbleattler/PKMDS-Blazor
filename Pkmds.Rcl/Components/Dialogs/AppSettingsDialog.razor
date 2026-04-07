@@ -136,19 +136,27 @@
                 </MudStack>
             </MudTabPanel>
 
-            <!-- Tab 3: Advanced (placeholder) -->
+            <!-- Tab 3: Advanced -->
             <MudTabPanel Text="Advanced">
-                <MudStack Class="pa-4"
-                          AlignItems="@AlignItems.Center"
-                          Justify="@Justify.Center"
-                          Style="min-height: 120px;">
-                    <MudIcon Icon="@Icons.Material.Outlined.Construction"
-                             Color="@Color.Secondary"
-                             Size="@Size.Large"/>
-                    <MudText Typo="@Typo.body1"
-                             Color="@Color.Secondary"
-                             Align="@Align.Center">
-                        Auto-backup, export folders, and database settings — coming soon.
+                <MudStack Spacing="3"
+                          Class="pa-4">
+                    <MudText Typo="@Typo.subtitle1"
+                             Color="@Color.Primary">
+                        Backup
+                    </MudText>
+                    <MudSwitch @bind-Value="@isAutoBackupEnabled"
+                               Color="@Color.Primary"
+                               Label="Auto-backup on load"
+                               title="Automatically create a backup each time a save file is loaded"/>
+                    <MudNumericField @bind-Value="@maxBackupCount"
+                                     Label="Max backups to keep"
+                                     Variant="@Variant.Outlined"
+                                     Min="@((int)1)"
+                                     Max="@((int)50)"/>
+                    <MudText Typo="@Typo.caption"
+                             Color="@Color.Secondary">
+                        Backups are stored in the browser. Oldest backups are automatically
+                        removed when the limit is exceeded.
                     </MudText>
                 </MudStack>
             </MudTabPanel>

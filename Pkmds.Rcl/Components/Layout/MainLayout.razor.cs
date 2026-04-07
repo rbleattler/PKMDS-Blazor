@@ -15,6 +15,9 @@ public partial class MainLayout : IDisposable
     private ThemeMode themeMode = ThemeMode.System;
 
     [Inject]
+    private IBackupService BackupService { get; set; } = null!;
+
+    [Inject]
     private ISettingsService SettingsService { get; set; } = null!;
 
     private bool IsUpdateAvailable { get; set; }
@@ -203,6 +206,78 @@ public partial class MainLayout : IDisposable
         }
     }
 
+    private async Task ShowBackupManagerDialog()
+    {
+        var parameters = new DialogParameters
+        {
+            { nameof(BackupManagerDialog.SaveFile), AppState.SaveFile }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<BackupManagerDialog>("Backup Manager", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is { Data: BackupRestoreResult restore })
+        {
+            await RestoreFromBackup(restore);
+        }
+        else if (result is { Data: BackupExportResult export })
+        {
+            var fileName = string.IsNullOrWhiteSpace(export.Entry.FileName)
+                ? "save.sav"
+                : export.Entry.FileName;
+            var ext = Path.GetExtension(fileName);
+            if (string.IsNullOrEmpty(ext))
+            {
+                ext = ".sav";
+            }
+
+            await WriteFile(export.SaveBytes, fileName, ext, "Save File");
+        }
+    }
+
+    private async Task RestoreFromBackup(BackupRestoreResult restore)
+    {
+        AppService.ClearSelection();
+        ParseSettings.ClearActiveTrainer();
+        AppState.SaveFile = null;
+        AppState.ShowProgressIndicator = true;
+
+        try
+        {
+            var data = restore.SaveBytes;
+            var fileName = restore.Entry.FileName;
+
+            if (restore.Entry.IsManicEmu &&
+                ManicEmuSaveHelper.TryExtractSaveFromZip(data, fileName, out var saveFile, out var manicContext))
+            {
+                manicEmuSaveContext = manicContext;
+                FinishLoadingSaveFile(saveFile, fileName);
+            }
+            else if (SaveUtil.TryGetSaveFile(data, out var rawSave, fileName))
+            {
+                manicEmuSaveContext = null;
+                FinishLoadingSaveFile(rawSave, fileName);
+            }
+            else
+            {
+                Logger.LogError("Failed to restore backup: invalid save data");
+                await DialogService.ShowMessageBoxAsync("Error", "Failed to restore backup — the save data could not be parsed.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error restoring backup");
+            await DialogService.ShowMessageBoxAsync("Error", $"Failed to restore backup: {ex.Message}");
+        }
+
+        AppState.ShowProgressIndicator = false;
+        if (AppState.SaveFile is not null)
+        {
+            RefreshService.RefreshBoxAndPartyState();
+            Snackbar.Add("Backup restored.", Severity.Success);
+        }
+    }
+
     private async Task ShowLoadSaveFileDialog()
     {
         const string message = "Choose a save file";
@@ -302,6 +377,22 @@ public partial class MainLayout : IDisposable
         {
             AppState.ShowProgressIndicator = false;
             return;
+        }
+
+        // Auto-backup the raw save bytes on successful load (non-fatal).
+        if (SettingsService.Settings.IsAutoBackupEnabled)
+        {
+            try
+            {
+                await BackupService.CreateBackupAsync(
+                    data, AppState.SaveFile, selectedFile.Name,
+                    isManicEmu: manicEmuSaveContext is not null, source: "auto");
+                await BackupService.EnforceRetentionAsync(SettingsService.Settings.MaxBackupCount);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Auto-backup failed for {FileName}", selectedFile.Name);
+            }
         }
 
         AppState.ShowProgressIndicator = false;

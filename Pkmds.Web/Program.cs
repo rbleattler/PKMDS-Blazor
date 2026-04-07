@@ -46,7 +46,8 @@ services
     .AddSingleton<IBugReportService, BugReportService>()
     .AddSingleton<IDescriptionService, DescriptionService>()
     .AddSingleton<IBatchEditorService, BatchEditorService>()
-    .AddScoped<IBankService, BankService>();
+    .AddScoped<IBankService, BankService>()
+    .AddScoped<IBackupService, BackupService>();
 
 var app = builder.Build();
 
