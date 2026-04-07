@@ -103,9 +103,9 @@ public class BackupService(IJSRuntime js) : IBackupService, IAsyncDisposable
 
         var excess = count - maxBackups;
         var oldestIds = await module.InvokeAsync<long[]>("getOldestIds", excess);
-        foreach (var id in oldestIds)
+        if (oldestIds.Length > 0)
         {
-            await module.InvokeVoidAsync("deleteBackup", id);
+            await module.InvokeVoidAsync("deleteMultiple", (object)oldestIds);
         }
     }
 
@@ -117,9 +117,9 @@ public class BackupService(IJSRuntime js) : IBackupService, IAsyncDisposable
         }
     }
 
-    // ── Private DTOs for JS deserialization ───────────────────────────────
+    // ── Internal DTOs for JS deserialization (internal for test/mocking support) ──
 
-    private sealed class RawBackupEntry
+    internal sealed class RawBackupEntry
     {
         [System.Text.Json.Serialization.JsonPropertyName("id")]
         public long Id { get; set; }
@@ -137,7 +137,7 @@ public class BackupService(IJSRuntime js) : IBackupService, IAsyncDisposable
         public string? Source { get; set; }
     }
 
-    private sealed class RawBackupMeta
+    internal sealed class RawBackupMeta
     {
         [System.Text.Json.Serialization.JsonPropertyName("fileName")]
         public string? FileName { get; set; }

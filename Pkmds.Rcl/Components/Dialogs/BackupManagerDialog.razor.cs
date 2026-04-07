@@ -11,8 +11,20 @@ public partial class BackupManagerDialog
     [Parameter]
     public SaveFile? SaveFile { get; set; }
 
+    [Parameter]
+    public string? FileName { get; set; }
+
+    [Parameter]
+    public bool IsManicEmu { get; set; }
+
+    [Parameter]
+    public ManicEmuSaveHelper.ManicEmuSaveContext? ManicEmuContext { get; set; }
+
     [Inject]
     private IBackupService BackupService { get; set; } = null!;
+
+    [Inject]
+    private ISettingsService SettingsService { get; set; } = null!;
 
     protected override async Task OnInitializedAsync() => await LoadBackups();
 
@@ -37,8 +49,12 @@ public partial class BackupManagerDialog
             return;
         }
 
-        var data = SaveFile.Write().ToArray();
-        await BackupService.CreateBackupAsync(data, SaveFile, null, isManicEmu: false, source: "manual");
+        var rawBytes = SaveFile.Write().ToArray();
+        var data = IsManicEmu && ManicEmuContext is not null
+            ? ManicEmuSaveHelper.RebuildZip(ManicEmuContext, rawBytes)
+            : rawBytes;
+        await BackupService.CreateBackupAsync(data, SaveFile, FileName, isManicEmu: IsManicEmu, source: "manual");
+        await BackupService.EnforceRetentionAsync(SettingsService.Settings.MaxBackupCount);
         await LoadBackups();
         Snackbar.Add("Backup created.", Severity.Success);
     }

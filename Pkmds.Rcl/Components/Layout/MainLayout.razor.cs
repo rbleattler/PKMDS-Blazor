@@ -230,7 +230,10 @@ public partial class MainLayout : IDisposable
     {
         var parameters = new DialogParameters
         {
-            { nameof(BackupManagerDialog.SaveFile), AppState.SaveFile }
+            { nameof(BackupManagerDialog.SaveFile), AppState.SaveFile },
+            { nameof(BackupManagerDialog.FileName), AppState.SaveFileName },
+            { nameof(BackupManagerDialog.IsManicEmu), manicEmuSaveContext is not null },
+            { nameof(BackupManagerDialog.ManicEmuContext), manicEmuSaveContext }
         };
         var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = true };
         var dialog = await DialogService.ShowAsync<BackupManagerDialog>("Backup Manager", parameters, options);
@@ -403,11 +406,16 @@ public partial class MainLayout : IDisposable
         // Use SaveFile.Write() to get properly serialized bytes — the original `data` array
         // may have been mutated in-place by decryption (e.g. SwishCrypto for Gen 8-9 saves),
         // making the raw array unparseable by TryGetSaveFile on restore.
+        // For Manic EMU saves, rebuild the ZIP so that restore and export round-trip correctly
+        // (exporting raw save bytes would produce a file Manic EMU can't re-import).
         if (SettingsService.Settings.IsAutoBackupEnabled)
         {
             try
             {
-                var backupBytes = AppState.SaveFile.Write().ToArray();
+                var rawSave = AppState.SaveFile.Write().ToArray();
+                var backupBytes = manicEmuSaveContext is not null
+                    ? ManicEmuSaveHelper.RebuildZip(manicEmuSaveContext, rawSave)
+                    : rawSave;
                 await BackupService.CreateBackupAsync(
                     backupBytes, AppState.SaveFile, selectedFile.Name,
                     isManicEmu: manicEmuSaveContext is not null, source: "auto");

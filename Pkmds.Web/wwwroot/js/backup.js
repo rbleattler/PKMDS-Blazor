@@ -73,19 +73,30 @@ export async function addBackup(bytesBase64, meta, source) {
 }
 
 // Returns all backup records WITHOUT bytesBase64 — lightweight for list display.
-// This avoids transferring potentially hundreds of MB of base64 data to C# just
-// to show a table of backup metadata.
+// Uses a cursor so that full blob data is never loaded into memory at once.
 export async function getBackupMetadata() {
     const db = await openDb();
     return new Promise((resolve, reject) => {
         const tx = db.transaction(STORE, "readonly");
         const store = tx.objectStore(STORE);
-        const request = store.getAll();
+        const results = [];
+        const request = store.openCursor();
+
         request.onsuccess = (event) => {
-            const results = event.target.result.map(({ bytesBase64: _bytes, ...rest }) => rest);
-            resolve(results);
+            const cursor = event.target.result;
+            if (!cursor) {
+                resolve(results);
+                return;
+            }
+
+            const { bytesBase64: _bytes, ...rest } = cursor.value;
+            results.push(rest);
+            cursor.continue();
         };
+
         request.onerror = (event) => reject(event.target.error);
+        tx.onerror = (event) => reject(event.target.error);
+        tx.onabort = (event) => reject(event.target.error ?? new Error("Transaction aborted"));
     });
 }
 
@@ -133,6 +144,23 @@ export async function getCount() {
         const request = store.count();
         request.onsuccess = (event) => resolve(event.target.result);
         request.onerror = (event) => reject(event.target.error);
+    });
+}
+
+// Deletes multiple backups by ID in a single readwrite transaction.
+// More efficient than repeated single-delete calls from C# interop.
+export async function deleteMultiple(ids) {
+    if (!ids || ids.length === 0) return;
+    const db = await openDb();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE, "readwrite");
+        const store = tx.objectStore(STORE);
+        for (const id of ids) {
+            store.delete(id);
+        }
+        tx.oncomplete = () => resolve();
+        tx.onerror = (event) => reject(event.target.error);
+        tx.onabort = (event) => reject(event.target.error ?? new Error("Transaction aborted"));
     });
 }
 
