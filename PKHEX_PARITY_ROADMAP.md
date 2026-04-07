@@ -2,7 +2,7 @@
 
 This roadmap outlines the path to achieving 100% feature parity with PKHeX. Tasks are broken down into actionable items organized by feature category and priority.
 
-**Last Updated:** 2026-03-26 (One-Touch Evolve implemented — §1.1, tracks #448; Gen-Specific editor tab implemented — §1.1 #419; Box pop-out dialogs implemented — §6.2, tracks #352; Pokédex per-species grid + LA research editor implemented — §2.5, tracks #414/#437/#438/#439; Fix Load Pokémon/Gift File slot behaviour implemented — §4.1, tracks #445; Trash bytes auto-fixer added to legality tab — tracks #542; Spinda spot preview implemented — tracks #554; Manic EMU `.3ds.sav` ZIP round-trip support added — tracks #537; Bag virtualization enabled via MudBlazor 9.2.0 — §7.2a, tracks #454; Info popovers for moves/items/abilities/balls added — §4.1, tracks #579)
+**Last Updated:** 2026-04-07 (Pokémon Bank implemented — §2.1b, tracks #330; One-Touch Evolve implemented — §1.1, tracks #448; Gen-Specific editor tab implemented — §1.1 #419; Box pop-out dialogs implemented — §6.2, tracks #352; Pokédex per-species grid + LA research editor implemented — §2.5, tracks #414/#437/#438/#439; Fix Load Pokémon/Gift File slot behaviour implemented — §4.1, tracks #445; Trash bytes auto-fixer added to legality tab — tracks #542; Spinda spot preview implemented — tracks #554; Manic EMU `.3ds.sav` ZIP round-trip support added — tracks #537; Bag virtualization enabled via MudBlazor 9.2.0 — §7.2a, tracks #454; Info popovers for moves/items/abilities/balls added — §4.1, tracks #579)
 
 ---
 
@@ -37,6 +37,7 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - **Legality Checker** - Full `LegalityAnalysis` integration: per-check detail view, color-coded results, full verbose report, slot-level valid/warn icon overlays, one-click fix buttons (ball, met location, moves, TechRecord), and a batch "Legality Report" tab that sweeps all party and box Pokémon with a sortable/filterable table, aggregate Legal/Fishy/Illegal counts, and jump-to-slot navigation
 - **Advanced Search** - Multi-criteria search tab sweeping all party and box slots with filters for species, shiny, nature, ability, held item, ball, origin game, gender, level range, IV/EV floors, moves (any/all), Hidden Power type, OT name/TID, language, ribbons/marks, and legal status; saved filters via localStorage; batch Showdown text export
 - **Encounter Database** - Encounter DB tab backed by PKHeX.Core's `EncounterMovesetGenerator`; filter by species, game version, level range, shiny lock, and encounter type (Wild, Static, Mystery Gift, Trade, Egg); sortable results table with type-coloured chips and location display; per-encounter detail panel with "Generate Legal Pokémon" action that places a legal PKM into the selected slot
+- **Pokémon Bank** - Persistent client-side Pokémon storage using browser IndexedDB; card grid UI with species sprite, shiny indicator, nickname, source save label, and added date; "Add from Save" bulk-imports all party + box Pokémon with duplicate detection (O(N+M) hash set); single and multi-select "Send to Save" with cross-format conversion; JSON file import/export via File System Access API; species/nickname search and shiny-only filter; configurable pagination; dismissible backup reminder; automatic cleanup of corrupt records
 - **Gen-Specific Editor Tab** — Generation-specific Pokémon fields consolidated into a dedicated tab that appears only when applicable: Gen 3 Colo/XD Shadow fields (`IsShadow` read-only, `ShadowID`, `Purification`), Gen 4 HGSS ShinyLeaf (5 leaf checkboxes + Crown flag) and `WalkingMood`, Gen 5 `NSparkle` and `PokeStarFame`, LGPE `Spirit`, `Mood`, and full received timestamp; Gen 8 SwSh `DynamaxLevel`/`CanGigantamax`, Gen 8 LA `IsNoble`/`IsAlpha`, and Gen 9 `TeraTypeOriginal`/`TeraTypeOverride` consolidated here from StatsTab
 - **One-Touch Evolve** — Evolve button on Main tab; single-path evolutions apply instantly; branching evolutions (Eevee, Slowpoke, etc.) open a picker dialog with sprite, localized name, and method label; Nincada→Ninjask offers Shedinja placement; Gen 2 trade evolutions show the required held item; nickname sync on evolve
 - **Box Pop-Out Dialogs** — `BoxViewerDialog` (single-box pop-out with independent prev/next navigation, "View All Boxes" button) and `BoxListDialog` (all-boxes responsive grid with per-box ⇄ swap buttons); both subscribe to live box state; triggered from box nav bar; `SwapBoxes` added to `IAppService`
@@ -290,7 +291,7 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 ## Priority 2: Important Secondary Features
 
 ### 2.1 Database/Bank System
-**Status:** ⚠️ Partial (Mystery Gift DB exists; redesign tracked in #444)
+**Status:** ⚠️ Partial (Pokémon Bank implemented — #330; Mystery Gift DB redesign tracked in #444)
 **Complexity:** Very High
 **Tasks:**
 
@@ -316,29 +317,38 @@ Bring the Mystery Gift Database tab to full parity with PKHeX's `SAV_MysteryGift
 - [ ] Responsive layout: sidebar filter panel collapses to `MudDrawer` on mobile
 
 #### 2.1b Pokémon Database/Bank (Personal Collection)
-- [ ] Design Pokemon Database/Bank UI
-- [ ] Implement personal Pokemon database storage (IndexedDB)
-- [ ] Add database import/export functionality
-- [ ] Create database search with advanced filters:
+**Status:** ⚠️ Partial (core bank implemented — #330; advanced filters and organization remain)
+**Complexity:** Very High
+**Tracks:** #330
+
+**Implemented:**
+- [x] Design Pokémon Bank UI — card grid with species sprite, nickname, shiny indicator (same sprite as box slots), source save label, and added date
+- [x] Implement personal Pokémon storage using browser IndexedDB (`bank.js` + `BankService`)
+- [x] Add bank import/export functionality (JSON file round-trip via File System Access API)
+- [x] Create basic search/filter: species/nickname text search, shiny-only toggle; filtered count shown only when active
+- [x] Mass import from save — "Add from Save" imports all party + box Pokémon with source save tracking (trainer name, TID, game name)
+- [x] Send to save — single and multi-select batch send with cross-format conversion (EntityConverter)
+- [x] Batch delete — multi-select with confirmation dialog
+- [x] Duplicate detection — O(N+M) bulk check via `PartitionDuplicatesAsync` using DecryptedBoxData hash set; skip-or-add-all prompt on import
+- [x] Backup reminder — dismissible banner warning that browser storage clearing erases the bank
+- [x] Pagination — configurable page size (20/50/100)
+- [x] Uniform card height — nickname line always rendered (placeholder when absent)
+- [x] Bulk insert performance — single IDB transaction + single JS interop call for batch imports
+- [x] Invalid record cleanup — corrupt/unparseable IndexedDB entries auto-deleted on load
+
+**Remaining:**
+- [ ] Create advanced search filters:
   - [ ] Species/forms
   - [ ] Moves
   - [ ] Abilities
   - [ ] Ribbons
   - [ ] Stats/IVs
-  - [ ] Shiny status
   - [ ] Ball type
   - [ ] OT/TID
   - [ ] Generation/origin
-- [ ] Implement batch operations on database:
-  - [ ] Mass import from save
-  - [ ] Mass export to save
-  - [ ] Batch delete
-  - [ ] Batch tag/organize
 - [ ] Add folder/tag organization system
 - [ ] Support drag-and-drop from database to save
-- [ ] Implement database backup/restore
 - [ ] Create database statistics view
-- [ ] Add duplicate detection
 - [ ] Support multiple database profiles
 
 ### 2.2 Encounter Database
