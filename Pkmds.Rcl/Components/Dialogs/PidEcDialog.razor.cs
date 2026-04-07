@@ -17,7 +17,35 @@ public partial class PidEcDialog
 
     private bool KeepGender { get; set; } = true;
 
-    private bool AvoidShiny { get; set; } = true;
+    private bool _avoidShiny = true;
+
+    private bool AvoidShiny
+    {
+        get => _avoidShiny;
+        set
+        {
+            _avoidShiny = value;
+            if (value)
+            {
+                _forceShiny = false;
+            }
+        }
+    }
+
+    private bool _forceShiny;
+
+    private bool ForceShiny
+    {
+        get => _forceShiny;
+        set
+        {
+            _forceShiny = value;
+            if (value)
+            {
+                _avoidShiny = false;
+            }
+        }
+    }
 
     private int SaveGeneration => AppState.SaveFile?.Generation ?? 0;
 
@@ -55,7 +83,8 @@ public partial class PidEcDialog
             abilityBitMask != 0 && (pid & abilityBitMask) != desiredAbilityBit ||
             IsGen345 && KeepNature && pid % 25 != desiredNature ||
             IsGen345 && KeepGender && isDualGender && EntityGender.GetFromPIDAndRatio(pid, genderRatio) != desiredGender ||
-            AvoidShiny && Pokemon.IsShiny
+            AvoidShiny && Pokemon.IsShiny ||
+            ForceShiny && !Pokemon.IsShiny
         );
 
         AppService.LoadPokemonStats(Pokemon);
@@ -97,7 +126,8 @@ public partial class PidEcDialog
         } while (
             KeepNature && pid % 25 != desiredNature ||
             KeepGender && isDualGender && EntityGender.GetFromPIDAndRatio(pid, genderRatio) != desiredGender ||
-            AvoidShiny && Pokemon.IsShiny
+            AvoidShiny && Pokemon.IsShiny ||
+            ForceShiny && !Pokemon.IsShiny
         );
 
         uint ivs;
