@@ -37,6 +37,7 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - **Legality Checker** - Full `LegalityAnalysis` integration: per-check detail view, color-coded results, full verbose report, slot-level valid/warn icon overlays, one-click fix buttons (ball, met location, moves, TechRecord), and a batch "Legality Report" tab that sweeps all party and box Pokémon with a sortable/filterable table, aggregate Legal/Fishy/Illegal counts, and jump-to-slot navigation
 - **Advanced Search** - Multi-criteria search tab sweeping all party and box slots with filters for species, shiny, nature, ability, held item, ball, origin game, gender, level range, IV/EV floors, moves (any/all), Hidden Power type, OT name/TID, language, ribbons/marks, and legal status; saved filters via localStorage; batch Showdown text export
 - **Encounter Database** - Encounter DB tab backed by PKHeX.Core's `EncounterMovesetGenerator`; filter by species, game version, level range, shiny lock, and encounter type (Wild, Static, Mystery Gift, Trade, Egg); sortable results table with type-coloured chips and location display; per-encounter detail panel with "Generate Legal Pokémon" action that places a legal PKM into the selected slot
+- **Batch Editor** - Scripted batch property editor wrapping PKHeX.Core's `BatchEditing` engine; multi-line script input with filter (`.Property=Value`) and mutation (`=Property=Value`) instructions; comparison operators; named presets with localStorage persistence; dry-run preview mode showing matched Pokémon and proposed changes before applying; scope selector (party, current box, all boxes, or all)
 - **Pokémon Bank** - Persistent client-side Pokémon storage using browser IndexedDB; card grid UI with species sprite, shiny indicator, nickname, source save label, and added date; "Add from Save" bulk-imports all party + box Pokémon with duplicate detection (O(N+M) hash set); single and multi-select "Send to Save" with cross-format conversion; JSON file import/export via File System Access API; species/nickname search and shiny-only filter; configurable pagination; dismissible backup reminder; automatic cleanup of corrupt records
 - **Gen-Specific Editor Tab** — Generation-specific Pokémon fields consolidated into a dedicated tab that appears only when applicable: Gen 3 Colo/XD Shadow fields (`IsShadow` read-only, `ShadowID`, `Purification`), Gen 4 HGSS ShinyLeaf (5 leaf checkboxes + Crown flag) and `WalkingMood`, Gen 5 `NSparkle` and `PokeStarFame`, LGPE `Spirit`, `Mood`, and full received timestamp; Gen 8 SwSh `DynamaxLevel`/`CanGigantamax`, Gen 8 LA `IsNoble`/`IsAlpha`, and Gen 9 `TeraTypeOriginal`/`TeraTypeOverride` consolidated here from StatsTab
 - **One-Touch Evolve** — Evolve button on Main tab; single-path evolutions apply instantly; branching evolutions (Eevee, Slowpoke, etc.) open a picker dialog with sprite, localized name, and method label; Nincada→Ninjask offers Shedinja placement; Gen 2 trade evolutions show the required held item; nickname sync on evolve
@@ -259,29 +260,22 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - **Note:** `ParseSettings.InitFromSaveFileData` is intentionally not called (see `MainLayout.razor.cs` comment); relies on default `AllowGBCartEra = false` so VC encounters are always checked regardless of filename. PKHeX bug filed: [kwsch/PKHeX#4734](https://github.com/kwsch/PKHeX/issues/4734).
 
 ### 1.3 Batch Editor
-**Status:** ❌ Not Implemented  
-**Complexity:** Very High  
-**Priority:** High  
-**Tracks:** #649
+**Status:** ✅ Implemented
+**Complexity:** Very High
+**Priority:** High
+**Tracks:** #329
 **Tasks:**
-- [ ] Design Batch Editor UI with script input
-- [ ] Implement batch editor scripting engine:
-  - [ ] Property filtering (`.Property=Value`)
-  - [ ] Property setting (`=Property=Value`)
-  - [ ] Comparison operators (`>`, `<`, `>=`, `<=`, `!=`)
-  - [ ] Logical operators (`&`, `|`)
-  - [ ] Special filters (`.IsShiny`, `.IsEgg`, etc.)
-- [ ] Add batch editor presets/templates
-- [ ] Implement dry-run mode (preview changes)
+- [x] Design Batch Editor UI with script input
+- [x] Implement batch editor scripting engine (wraps PKHeX.Core `BatchEditing` / `StringInstructionSet`):
+  - [x] Property filtering (`.Property=Value`)
+  - [x] Property setting (`=Property=Value`)
+  - [x] Comparison operators (`>`, `<`, `>=`, `<=`, `!=`)
+  - [x] Logical operators (`&`, `|`)
+  - [x] Special filters (`.IsShiny`, `.IsEgg`, etc.)
+- [x] Add batch editor presets/templates
+- [x] Implement dry-run mode (preview changes)
 - [ ] Add undo functionality
-- [ ] Support filtering by:
-  - [ ] Species/forms
-  - [ ] Levels
-  - [ ] OT/TID
-  - [ ] Moves
-  - [ ] Ribbons
-  - [ ] Stats
-  - [ ] Met data
+- [x] Support filtering by all PKM properties (species, levels, OT/TID, moves, ribbons, stats, met data, etc.)
 - [ ] Create batch editor tutorial/documentation
 - [ ] Add example scripts library
 - [ ] Implement batch export/import
