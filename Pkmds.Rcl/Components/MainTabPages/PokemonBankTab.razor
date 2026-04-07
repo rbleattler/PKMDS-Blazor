@@ -113,13 +113,6 @@
                    Color="@Color.Primary"
                    Label="Shiny only"/>
 
-        <MudTextField @bind-Value="tagFilter"
-                      @bind-Value:after="ApplyFilter"
-                      Label="Tag"
-                      Variant="@Variant.Outlined"
-                      Clearable
-                      Style="min-width: 160px;"/>
-
         <MudText Typo="@Typo.caption"
                  Class="ms-auto">
             @filteredEntries.Count / @entries.Count stored
@@ -187,12 +180,6 @@
                                 </CardHeaderActions>
                             </MudCardHeader>
                             <MudCardContent Class="py-1">
-                                @if (!string.IsNullOrEmpty(entry.Tag))
-                                {
-                                    <MudChip T="string"
-                                             Size="@Size.Small"
-                                             Color="@Color.Info">@entry.Tag</MudChip>
-                                }
                                 <MudText Typo="@Typo.caption"
                                          Class="d-block">
                                     Added: @entry.AddedAt.LocalDateTime.ToString("yyyy-MM-dd")

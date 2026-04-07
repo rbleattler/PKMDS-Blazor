@@ -227,6 +227,12 @@ body, html {
         overflow: hidden;
     }
 
+    /* Prevent non-grid children (alert, action bar, divider, filter row)
+       from growing — only the card grid should expand. */
+    .bank-tab-root > * {
+        flex-shrink: 0;
+    }
+
     .bank-card-grid {
         flex: 1;
         min-height: 0;

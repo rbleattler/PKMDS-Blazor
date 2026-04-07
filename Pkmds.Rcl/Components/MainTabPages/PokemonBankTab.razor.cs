@@ -20,7 +20,6 @@ public partial class PokemonBankTab : RefreshAwareComponent
 
     private string searchText = string.Empty;
     private bool shinyOnly;
-    private string tagFilter = string.Empty;
 
     private int TotalPages => Math.Max(1, (int)Math.Ceiling((double)filteredEntries.Count / pageSize));
 
@@ -68,12 +67,6 @@ public partial class PokemonBankTab : RefreshAwareComponent
         if (shinyOnly)
         {
             filtered = filtered.Where(e => e.Pokemon.IsShiny);
-        }
-
-        if (!string.IsNullOrWhiteSpace(tagFilter))
-        {
-            filtered = filtered.Where(e =>
-                e.Tag?.Contains(tagFilter, StringComparison.OrdinalIgnoreCase) == true);
         }
 
         filteredEntries = [.. filtered];
