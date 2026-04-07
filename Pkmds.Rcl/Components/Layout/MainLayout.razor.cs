@@ -206,6 +206,16 @@ public partial class MainLayout : IDisposable
         }
     }
 
+    private async Task ShowSaveFileInfoDialog()
+    {
+        var parameters = new DialogParameters
+        {
+            { nameof(SaveFileInfoDialog.SaveFile), AppState.SaveFile }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
+        await DialogService.ShowAsync<SaveFileInfoDialog>("Save File Info", parameters, options);
+    }
+
     private async Task ShowBackupManagerDialog()
     {
         var parameters = new DialogParameters
