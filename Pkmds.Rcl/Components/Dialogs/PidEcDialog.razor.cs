@@ -17,32 +17,32 @@ public partial class PidEcDialog
 
     private bool KeepGender { get; set; } = true;
 
-    private bool _avoidShiny = true;
+    private bool avoidShiny = true;
 
     private bool AvoidShiny
     {
-        get => _avoidShiny;
+        get => avoidShiny;
         set
         {
-            _avoidShiny = value;
+            avoidShiny = value;
             if (value)
             {
-                _forceShiny = false;
+                forceShiny = false;
             }
         }
     }
 
-    private bool _forceShiny;
+    private bool forceShiny;
 
     private bool ForceShiny
     {
-        get => _forceShiny;
+        get => forceShiny;
         set
         {
-            _forceShiny = value;
+            forceShiny = value;
             if (value)
             {
-                _avoidShiny = false;
+                avoidShiny = false;
             }
         }
     }
