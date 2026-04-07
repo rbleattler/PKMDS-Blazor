@@ -45,12 +45,14 @@
 
                     <MudButton Variant="@Variant.Outlined"
                                OnClick="@GeneratePid"
+                               Disabled="@IsGenerating"
                                StartIcon="@Icons.Material.Filled.Refresh">
                         Generate PID
                     </MudButton>
 
                     <MudButton Variant="@Variant.Outlined"
                                OnClick="@MakeShinyPid"
+                               Disabled="@IsGenerating"
                                StartIcon="@Icons.Material.Filled.Star">
                         Make Shiny PID
                     </MudButton>
@@ -81,6 +83,7 @@
 
                         <MudButton Variant="@Variant.Filled"
                                    OnClick="@GenerateWithMethod"
+                                   Disabled="@IsGenerating"
                                    Color="@Color.Primary">
                             Generate
                         </MudButton>

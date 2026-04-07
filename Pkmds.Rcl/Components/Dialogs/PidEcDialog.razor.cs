@@ -51,7 +51,12 @@ public partial class PidEcDialog
 
     private bool IsGen345 => SaveGeneration is 3 or 4 or 5;
 
-    private void GeneratePid()
+    private bool IsGenerating { get; set; }
+
+    // Yield to the browser event loop every this many iterations to keep the UI responsive.
+    private const int YieldInterval = 10_000;
+
+    private async Task GeneratePid()
     {
         if (Pokemon is null)
         {
@@ -77,22 +82,34 @@ public partial class PidEcDialog
         const int MaxAttempts = 1_000_000;
         uint pid;
         var attempts = 0;
-        do
+        IsGenerating = true;
+        try
         {
-            if (++attempts > MaxAttempts)
+            do
             {
-                Snackbar.Add("Could not find a PID satisfying all constraints after 1,000,000 attempts. Try relaxing the constraints.", Severity.Warning);
-                return;
-            }
-            pid = NextRandomUInt32();
-            Pokemon.PID = pid; // needed to evaluate IsShiny
-        } while (
-            abilityBitMask != 0 && (pid & abilityBitMask) != desiredAbilityBit ||
-            IsGen345 && KeepNature && pid % 25 != desiredNature ||
-            IsGen345 && KeepGender && isDualGender && EntityGender.GetFromPIDAndRatio(pid, genderRatio) != desiredGender ||
-            AvoidShiny && Pokemon.IsShiny ||
-            ForceShiny && !Pokemon.IsShiny
-        );
+                if (++attempts > MaxAttempts)
+                {
+                    Snackbar.Add("Could not find a PID satisfying all constraints after 1,000,000 attempts. Try relaxing the constraints.", Severity.Warning);
+                    return;
+                }
+                if (attempts % YieldInterval == 0)
+                {
+                    await Task.Yield();
+                }
+                pid = NextRandomUInt32();
+                Pokemon.PID = pid; // needed to evaluate IsShiny
+            } while (
+                abilityBitMask != 0 && (pid & abilityBitMask) != desiredAbilityBit ||
+                IsGen345 && KeepNature && pid % 25 != desiredNature ||
+                IsGen345 && KeepGender && isDualGender && EntityGender.GetFromPIDAndRatio(pid, genderRatio) != desiredGender ||
+                AvoidShiny && Pokemon.IsShiny ||
+                ForceShiny && !Pokemon.IsShiny
+            );
+        }
+        finally
+        {
+            IsGenerating = false;
+        }
 
         AppService.LoadPokemonStats(Pokemon);
         RefreshService.Refresh();
@@ -109,7 +126,7 @@ public partial class PidEcDialog
         RefreshService.Refresh();
     }
 
-    private void GenerateWithMethod()
+    private async Task GenerateWithMethod()
     {
         if (Pokemon is null)
         {
@@ -127,22 +144,34 @@ public partial class PidEcDialog
         const int MaxAttempts = 1_000_000;
         uint seed, pid;
         var attempts = 0;
-        do
+        IsGenerating = true;
+        try
         {
-            if (++attempts > MaxAttempts)
+            do
             {
-                Snackbar.Add("Could not find a PID satisfying all constraints after 1,000,000 attempts. Try relaxing the constraints.", Severity.Warning);
-                return;
-            }
-            seed = NextRandomUInt32();
-            pid = ClassicEraRNG.GetSequentialPID(ref seed);
-            Pokemon.PID = pid; // needed to evaluate IsShiny
-        } while (
-            KeepNature && pid % 25 != desiredNature ||
-            KeepGender && isDualGender && EntityGender.GetFromPIDAndRatio(pid, genderRatio) != desiredGender ||
-            AvoidShiny && Pokemon.IsShiny ||
-            ForceShiny && !Pokemon.IsShiny
-        );
+                if (++attempts > MaxAttempts)
+                {
+                    Snackbar.Add("Could not find a PID satisfying all constraints after 1,000,000 attempts. Try relaxing the constraints.", Severity.Warning);
+                    return;
+                }
+                if (attempts % YieldInterval == 0)
+                {
+                    await Task.Yield();
+                }
+                seed = NextRandomUInt32();
+                pid = ClassicEraRNG.GetSequentialPID(ref seed);
+                Pokemon.PID = pid; // needed to evaluate IsShiny
+            } while (
+                KeepNature && pid % 25 != desiredNature ||
+                KeepGender && isDualGender && EntityGender.GetFromPIDAndRatio(pid, genderRatio) != desiredGender ||
+                AvoidShiny && Pokemon.IsShiny ||
+                ForceShiny && !Pokemon.IsShiny
+            );
+        }
+        finally
+        {
+            IsGenerating = false;
+        }
 
         uint ivs;
         switch (SelectedMethod)

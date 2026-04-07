@@ -14,7 +14,7 @@ on:
       - '**/*.yml'
   pull_request:
     branches: [ main ]
-    types: [opened, synchronize, reopened]  # Only run when PR is created or updated
+    types: [opened, synchronize, reopened, ready_for_review]  # Also run when PR is marked ready for review
 
 jobs:
   build:
