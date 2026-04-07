@@ -670,6 +670,92 @@
 
     </MudGrid>
 
+    @if (IsPartyPokemon)
+    {
+        <MudPaper Class="pa-4 mt-2" Elevation="1">
+            <MudText Typo="Typo.h6">Party Stats</MudText>
+
+            <MudGrid Class="mt-2">
+                <MudItem xs="6">
+                    <MudStack Row AlignItems="@AlignItems.Center" Spacing="2">
+                        <MudNumericField T="@int"
+                                         Label="Current HP"
+                                         title="Current HP"
+                                         Variant="@Variant.Outlined"
+                                         Min="0"
+                                         Max="@Pokemon.Stat_HPMax"
+                                         Value="@Pokemon.Stat_HPCurrent"
+                                         ValueChanged="@OnCurrentHpChanged"/>
+                        <MudText Typo="Typo.body1" Class="mt-4">
+                            / @Pokemon.Stat_HPMax
+                        </MudText>
+                        @if (Pokemon.Stat_HPCurrent == 0)
+                        {
+                            <MudImage Src="@ImageHelper.GetFaintStatusSpriteFileName()"
+                                      Alt="Fainted"
+                                      Width="24"
+                                      Height="24"
+                                      Class="mt-4"
+                                      title="Fainted"/>
+                        }
+                    </MudStack>
+                </MudItem>
+
+                <MudItem xs="6">
+                    <MudStack Row AlignItems="@AlignItems.Center" Spacing="2">
+                        @{
+                            var statusSprite = GetCurrentStatusSpriteFileName();
+                        }
+                        @if (statusSprite is not null && Pokemon.Stat_HPCurrent > 0)
+                        {
+                            <MudImage Src="@statusSprite"
+                                      Alt="Status"
+                                      Width="24"
+                                      Height="24"
+                                      Class="mt-4"/>
+                        }
+                        <MudSelect T="@int"
+                                   Label="Status Condition"
+                                   Variant="@Variant.Outlined"
+                                   Value="@GetCurrentStatusValue()"
+                                   ValueChanged="@OnStatusChanged">
+                            @foreach (var option in GetStatusOptions())
+                            {
+                                <MudSelectItem T="@int"
+                                               Value="@option.Value"
+                                               @key="@option.Value">
+                                    <MudStack Row AlignItems="@AlignItems.Center" Spacing="1">
+                                        @if (option.SpriteFileName is not null)
+                                        {
+                                            <MudImage Src="@option.SpriteFileName"
+                                                      Alt="@option.Label"
+                                                      Width="16"
+                                                      Height="16"/>
+                                        }
+                                        <MudText>@option.Label</MudText>
+                                    </MudStack>
+                                </MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudStack>
+
+                    @if (Pokemon.Format <= 4 && IsSleepSelected())
+                    {
+                        <MudNumericField T="@int"
+                                         Label="Sleep Turns"
+                                         title="Sleep turn count (1-7)"
+                                         Variant="@Variant.Outlined"
+                                         Min="1"
+                                         Max="7"
+                                         Class="mt-2"
+                                         Value="@GetSleepTurns()"
+                                         ValueChanged="@OnSleepTurnsChanged"/>
+                    }
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+    }
+
     <MudNumericField Label="Level"
                      Variant="@Variant.Outlined"
                      @bind-Value="@Pokemon.CurrentLevel"

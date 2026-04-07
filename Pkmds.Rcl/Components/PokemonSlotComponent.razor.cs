@@ -183,6 +183,9 @@ public partial class PokemonSlotComponent : IDisposable
     /// </returns>
     private bool? GetLegalityValid() => legalityValid;
 
+    private string? GetStatusOverlaySpriteFileName() =>
+        ImageHelper.GetStatusOverlaySpriteFileName(Pokemon);
+
     private int? GetLetsGoPartySlotNumber()
     {
         // Only show party slot indicators for Let's Go games in the BOX view

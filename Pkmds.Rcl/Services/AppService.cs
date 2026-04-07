@@ -18,11 +18,15 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         {
             field = value?.Clone();
 
-            // In HaX mode, battle stats for party Pokémon are already stored in
-            // the save data (party format includes them). Recalculating here would
-            // overwrite any HaX-edited values that were saved.
-            // Box Pokémon always need recalculation because box format omits stats.
-            if (!AppState.IsHaXEnabled || AppState.SelectedPartySlotNumber is null)
+            // Skip stat recalculation when the Pokémon already has persistent party
+            // stats that we don't want to overwrite:
+            // - HaX mode party Pokémon: user may have hand-edited battle stats
+            // - PB7 (Let's Go): all storage is unified (SIZE_PARTY == SIZE_STORED),
+            //   so party stats including current HP and status condition persist in
+            //   the box and should not be reset
+            var hasPersistedPartyStats = field is PB7 { PartyStatsPresent: true }
+                || (AppState.IsHaXEnabled && AppState.SelectedPartySlotNumber is not null);
+            if (!hasPersistedPartyStats)
             {
                 LoadPokemonStats(field);
             }
@@ -111,7 +115,15 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         var pi = pt.GetFormEntry(pokemon.Species, pokemon.Form);
         Span<ushort> stats = stackalloc ushort[6];
         pokemon.LoadStats(pi, stats);
+
+        // Preserve current HP for party Pokémon — SetStats overwrites
+        // Stat_HPCurrent with Stat_HPMax, losing any user-set value.
+        var previousHp = pokemon.PartyStatsPresent ? pokemon.Stat_HPCurrent : -1;
         pokemon.SetStats(stats);
+        if (previousHp >= 0)
+        {
+            pokemon.Stat_HPCurrent = Math.Min(previousHp, pokemon.Stat_HPMax);
+        }
     }
 
     public IEnumerable<ComboItem> SearchMetLocations(string searchString, GameVersion gameVersion,

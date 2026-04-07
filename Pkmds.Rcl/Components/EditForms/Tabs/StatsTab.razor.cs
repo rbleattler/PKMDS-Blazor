@@ -333,4 +333,181 @@ public partial class StatsTab : IDisposable
 
         setter(pkm, newValue);
     }
+
+    private bool IsPartyPokemon => Pokemon is not null && HasPersistentPartyStats;
+
+    // Party stats are genuinely persistent (not just computed for display) when:
+    // - Gen 1/2: box and party format are identical (SIZE_PARTY == SIZE_STORED)
+    // - Let's Go (PB7): party members live in the box
+    // - Any game: Pokémon is explicitly selected from a party slot
+    // For Gen 3+ box Pokémon, LoadPokemonStats computes stats for display but
+    // they aren't saved back to the box format, so we shouldn't offer editing.
+    private bool HasPersistentPartyStats =>
+        Pokemon?.Format <= 2 ||
+        Pokemon is PB7 ||
+        AppState?.SelectedPartySlotNumber is not null;
+
+    private void OnCurrentHpChanged(int value)
+    {
+        if (Pokemon is null)
+        {
+            return;
+        }
+
+        value = Math.Clamp(value, 0, Pokemon.Stat_HPMax);
+        Pokemon.Stat_HPCurrent = value;
+    }
+
+    private int GetCurrentStatusValue()
+    {
+        if (Pokemon is null)
+        {
+            return 0;
+        }
+
+        if (Pokemon.Format <= 4)
+        {
+            var condition = (StatusCondition)(Pokemon.Status_Condition & 0xFF);
+            if (condition == StatusCondition.None)
+            {
+                return 0;
+            }
+
+            if (condition <= StatusCondition.Sleep7)
+            {
+                return (int)StatusCondition.Sleep1;
+            }
+
+            if ((condition & StatusCondition.PoisonBad) != 0)
+            {
+                return (int)StatusCondition.PoisonBad;
+            }
+
+            return (int)condition;
+        }
+
+        return Pokemon.Status_Condition & 0xFF;
+    }
+
+    private void OnStatusChanged(int value)
+    {
+        if (Pokemon is null)
+        {
+            return;
+        }
+
+        if (Pokemon.Format <= 4)
+        {
+            var current = Pokemon.Status_Condition & ~0xFF;
+            if (value == (int)StatusCondition.Sleep1)
+            {
+                var sleepTurns = GetSleepTurns();
+                current |= sleepTurns;
+            }
+            else
+            {
+                current |= value;
+            }
+
+            Pokemon.Status_Condition = current;
+        }
+        else
+        {
+            var current = Pokemon.Status_Condition & ~0xFF;
+            current |= value;
+            Pokemon.Status_Condition = current;
+        }
+    }
+
+    private int GetSleepTurns()
+    {
+        if (Pokemon is null)
+        {
+            return 1;
+        }
+
+        var raw = Pokemon.Status_Condition & 7;
+        return raw is >= 1 and <= 7 ? raw : 1;
+    }
+
+    private void OnSleepTurnsChanged(int value)
+    {
+        if (Pokemon is null)
+        {
+            return;
+        }
+
+        value = Math.Clamp(value, 1, 7);
+        var current = Pokemon.Status_Condition & ~0xFF;
+        current |= value;
+        Pokemon.Status_Condition = current;
+    }
+
+    private record StatusOption(int Value, string Label, string? SpriteFileName);
+
+    private List<StatusOption> GetStatusOptions()
+    {
+        var options = new List<StatusOption>();
+        var isGen8a = Pokemon?.Context == EntityContext.Gen8a;
+
+        if (Pokemon is null)
+        {
+            return options;
+        }
+
+        options.Add(new StatusOption(0, "None", null));
+
+        if (Pokemon.Format <= 4)
+        {
+            options.Add(new StatusOption((int)StatusCondition.Sleep1, "Sleep",
+                ImageHelper.GetSleepStatusSpriteFileName()));
+            options.Add(new StatusOption((int)StatusCondition.Poison, "Poison",
+                ImageHelper.GetPoisonStatusSpriteFileName()));
+            options.Add(new StatusOption((int)StatusCondition.PoisonBad,
+                Pokemon.Format is 3 or 4 ? "Toxic" : "Badly Poisoned",
+                ImageHelper.GetToxicStatusSpriteFileName()));
+            options.Add(new StatusOption((int)StatusCondition.Burn, "Burn",
+                ImageHelper.GetBurnStatusSpriteFileName()));
+            options.Add(new StatusOption((int)StatusCondition.Freeze, "Freeze",
+                ImageHelper.GetFrostbiteStatusSpriteFileName()));
+            options.Add(new StatusOption((int)StatusCondition.Paralysis, "Paralysis",
+                ImageHelper.GetParalysisStatusSpriteFileName()));
+        }
+        else
+        {
+            options.Add(new StatusOption((int)StatusType.Paralysis, "Paralysis",
+                ImageHelper.GetParalysisStatusSpriteFileName()));
+            options.Add(new StatusOption((int)StatusType.Sleep,
+                isGen8a ? "Drowsy" : "Sleep",
+                ImageHelper.GetSleepStatusSpriteFileName()));
+            options.Add(new StatusOption((int)StatusType.Freeze,
+                isGen8a ? "Frostbite" : "Freeze",
+                ImageHelper.GetFrostbiteStatusSpriteFileName()));
+            options.Add(new StatusOption((int)StatusType.Burn, "Burn",
+                ImageHelper.GetBurnStatusSpriteFileName()));
+            options.Add(new StatusOption((int)StatusType.Poison, "Poison",
+                ImageHelper.GetPoisonStatusSpriteFileName()));
+        }
+
+        return options;
+    }
+
+    private string? GetCurrentStatusSpriteFileName() =>
+        ImageHelper.GetStatusOverlaySpriteFileName(Pokemon);
+
+    private bool IsSleepSelected()
+    {
+        if (Pokemon is null)
+        {
+            return false;
+        }
+
+        if (Pokemon.Format <= 4)
+        {
+            var condition = (StatusCondition)(Pokemon.Status_Condition & 0xFF);
+            return condition is >= StatusCondition.Sleep1 and <= StatusCondition.Sleep7;
+        }
+
+        return false;
+    }
 }
