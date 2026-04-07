@@ -24,9 +24,25 @@ public class BankService(IJSRuntime js) : IBankService, IAsyncDisposable
 
     public async Task AddRangeAsync(IEnumerable<PKM> pokemon, string? tag = null)
     {
-        foreach (var pkm in pokemon)
+        var module = await GetModuleAsync();
+        // Collect all entries first and send in one JS call / one IDB transaction
+        // rather than one round-trip per Pokémon.
+        var entries = pokemon.Select(pkm => (object)new
         {
-            await AddAsync(pkm, tag);
+            bytesBase64 = Convert.ToBase64String(pkm.DecryptedBoxData),
+            meta = new
+            {
+                species = pkm.Species,
+                isShiny = pkm.IsShiny,
+                nickname = pkm.Nickname,
+                ext = pkm.Extension,
+                tag
+            }
+        }).ToArray();
+
+        if (entries.Length > 0)
+        {
+            await module.InvokeVoidAsync("addRange", (object)entries);
         }
     }
 
@@ -41,11 +57,16 @@ public class BankService(IJSRuntime js) : IBankService, IAsyncDisposable
         }
 
         var results = new List<BankEntry>(raw.Length);
+        var invalidIds = new List<long>();
+
         foreach (var r in raw)
         {
             var bytes = Convert.FromBase64String(r.BytesBase64);
             if (!FileUtil.TryGetPKM(bytes, out var pkm, r.Meta.Ext))
             {
+                // Record is corrupt or uses an unsupported format — schedule it for
+                // deletion so it doesn't accumulate as an undeletable ghost entry.
+                invalidIds.Add(r.Id);
                 continue;
             }
 
@@ -53,7 +74,10 @@ public class BankService(IJSRuntime js) : IBankService, IAsyncDisposable
                 ? GameInfo.Strings.Species[pkm.Species]
                 : string.Empty;
 
-            _ = DateTimeOffset.TryParse(r.AddedAt, out var addedAt);
+            if (!DateTimeOffset.TryParse(r.AddedAt, out var addedAt))
+            {
+                addedAt = DateTimeOffset.UtcNow;
+            }
 
             results.Add(new BankEntry
             {
@@ -63,6 +87,12 @@ public class BankService(IJSRuntime js) : IBankService, IAsyncDisposable
                 Tag = r.Meta.Tag,
                 AddedAt = addedAt
             });
+        }
+
+        // Proactively clean up any records that could not be rehydrated.
+        foreach (var id in invalidIds)
+        {
+            await DeleteAsync(id);
         }
 
         return results;

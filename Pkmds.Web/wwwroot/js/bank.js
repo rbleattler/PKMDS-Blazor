@@ -64,8 +64,30 @@ export async function addPokemon(bytesBase64, meta) {
         const store = tx.objectStore(STORE);
         const addedAt = new Date().toISOString();
         const request = store.add({ bytesBase64, meta, addedAt });
-        request.onsuccess = (event) => resolve(event.target.result);
-        request.onerror = (event) => reject(event.target.error);
+        let newId;
+        // Capture the auto-assigned ID from the request, but resolve only after
+        // the transaction commits so callers observe durable state.
+        request.onsuccess = (event) => { newId = event.target.result; };
+        tx.oncomplete = () => resolve(newId);
+        tx.onerror = (event) => reject(event.target.error);
+        tx.onabort = (event) => reject(event.target.error ?? new Error("Transaction aborted"));
+    });
+}
+
+// Bulk-insert all entries in a single readwrite transaction — much faster than
+// calling addPokemon() in a loop when importing an entire save file.
+export async function addRange(entries) {
+    const db = await openDb();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE, "readwrite");
+        const store = tx.objectStore(STORE);
+        const addedAt = new Date().toISOString();
+        for (const { bytesBase64, meta } of entries) {
+            store.add({ bytesBase64, meta, addedAt });
+        }
+        tx.oncomplete = () => resolve(entries.length);
+        tx.onerror = (event) => reject(event.target.error);
+        tx.onabort = (event) => reject(event.target.error ?? new Error("Transaction aborted"));
     });
 }
 
@@ -85,9 +107,10 @@ export async function deletePokemon(id) {
     return new Promise((resolve, reject) => {
         const tx = db.transaction(STORE, "readwrite");
         const store = tx.objectStore(STORE);
-        const request = store.delete(id);
-        request.onsuccess = () => resolve();
-        request.onerror = (event) => reject(event.target.error);
+        store.delete(id);
+        tx.oncomplete = () => resolve();
+        tx.onerror = (event) => reject(event.target.error);
+        tx.onabort = (event) => reject(event.target.error ?? new Error("Transaction aborted"));
     });
 }
 
@@ -96,9 +119,10 @@ export async function clearAll() {
     return new Promise((resolve, reject) => {
         const tx = db.transaction(STORE, "readwrite");
         const store = tx.objectStore(STORE);
-        const request = store.clear();
-        request.onsuccess = () => resolve();
-        request.onerror = (event) => reject(event.target.error);
+        store.clear();
+        tx.oncomplete = () => resolve();
+        tx.onerror = (event) => reject(event.target.error);
+        tx.onabort = (event) => reject(event.target.error ?? new Error("Transaction aborted"));
     });
 }
 
@@ -111,23 +135,48 @@ export async function exportAll() {
     return encoder.encode(json);
 }
 
+function isValidEntry(entry) {
+    return entry !== null &&
+        typeof entry === "object" &&
+        !Array.isArray(entry) &&
+        typeof entry.bytesBase64 === "string" && entry.bytesBase64.trim() !== "" &&
+        entry.meta !== null && typeof entry.meta === "object" &&
+        typeof entry.meta.ext === "string" && entry.meta.ext.trim() !== "";
+}
+
 export async function importAll(jsonBytes) {
     const decoder = new TextDecoder();
-    const json = decoder.decode(new Uint8Array(jsonBytes));
-    const entries = JSON.parse(json);
+    // Avoid an unnecessary copy when the interop payload is already a Uint8Array.
+    const bytes = jsonBytes instanceof Uint8Array ? jsonBytes : new Uint8Array(jsonBytes);
+
+    let entries;
+    try {
+        entries = JSON.parse(decoder.decode(bytes));
+    } catch {
+        throw new Error("Invalid bank import file: malformed JSON.");
+    }
+
+    if (!Array.isArray(entries)) {
+        throw new Error("Invalid bank import file: expected an array of entries.");
+    }
+
+    // Filter out entries that are missing required fields (e.g. from a future or
+    // corrupt export) so they don't create records that can't be rehydrated later.
+    const valid = entries.filter(isValidEntry);
 
     const db = await openDb();
     return new Promise((resolve, reject) => {
         const tx = db.transaction(STORE, "readwrite");
         const store = tx.objectStore(STORE);
 
-        for (const entry of entries) {
+        for (const entry of valid) {
             // Strip the id so IndexedDB auto-assigns a new one (avoids conflicts).
             const { id: _id, ...entryWithoutId } = entry;
             store.add(entryWithoutId);
         }
 
-        tx.oncomplete = () => resolve(entries.length);
+        tx.oncomplete = () => resolve(valid.length);
         tx.onerror = (event) => reject(event.target.error);
+        tx.onabort = (event) => reject(event.target.error ?? new Error("Transaction aborted"));
     });
 }

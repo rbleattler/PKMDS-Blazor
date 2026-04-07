@@ -252,6 +252,27 @@ public partial class PokemonBankTab : RefreshAwareComponent
 
     // ── Send to save ──────────────────────────────────────────────────────
 
+    // Core send logic with no UI state management — safe to call in a batch loop.
+    // Returns (true, success message) or (false, error message).
+    private (bool Success, string Message) TrySendToSaveCore(BankEntry entry, SaveFile saveFile)
+    {
+        var pkm = entry.Pokemon.Clone();
+        if (pkm.GetType() != saveFile.PKMType)
+        {
+            pkm = EntityConverter.ConvertToType(pkm, saveFile.PKMType, out var result);
+            if (pkm is null || !result.IsSuccess)
+            {
+                return (false, $"Could not convert {entry.SpeciesName} to the current save format.");
+            }
+        }
+
+        saveFile.AdaptToSaveFile(pkm);
+
+        return !AppService.TryPlacePokemonInFirstAvailableSlot(pkm)
+            ? (false, "No empty slots available in the save file.")
+            : (true, $"{entry.SpeciesName} sent to save.");
+    }
+
     private async Task SendToSaveAsync(BankEntry entry)
     {
         if (AppState.SaveFile is not { } saveFile)
@@ -262,50 +283,54 @@ public partial class PokemonBankTab : RefreshAwareComponent
         isBusy = true;
         StateHasChanged();
 
-        var pkm = entry.Pokemon.Clone();
-        if (pkm.GetType() != saveFile.PKMType)
-        {
-            pkm = EntityConverter.ConvertToType(pkm, saveFile.PKMType, out var result);
-            if (pkm is null || !result.IsSuccess)
-            {
-                isBusy = false;
-                Snackbar.Add(
-                    $"Could not convert {entry.SpeciesName} to the current save format.",
-                    Severity.Error);
-                StateHasChanged();
-                return;
-            }
-        }
-
-        saveFile.AdaptToSaveFile(pkm);
-
-        if (!AppService.TryPlacePokemonInFirstAvailableSlot(pkm))
-        {
-            isBusy = false;
-            Snackbar.Add("No empty slots available in the save file.", Severity.Warning);
-            StateHasChanged();
-            return;
-        }
+        var (success, message) = TrySendToSaveCore(entry, saveFile);
 
         isBusy = false;
-        Snackbar.Add($"{entry.SpeciesName} sent to save.", Severity.Success);
+        Snackbar.Add(message, success ? Severity.Success : Severity.Warning);
         StateHasChanged();
     }
 
     private async Task SendSelectedToSaveAsync()
     {
-        if (AppState.SaveFile is null)
+        if (AppState.SaveFile is not { } saveFile)
         {
             return;
         }
 
         var toSend = entries.Where(e => selectedIds.Contains(e.Id)).ToList();
+        if (toSend.Count == 0)
+        {
+            return;
+        }
+
+        // Set isBusy once around the whole batch to keep the operation atomic
+        // from the UI's perspective — no mid-loop UI flicker or re-enabled actions.
+        isBusy = true;
+        StateHasChanged();
+
+        var sent = 0;
         foreach (var entry in toSend)
         {
-            await SendToSaveAsync(entry);
+            var (success, message) = TrySendToSaveCore(entry, saveFile);
+            if (success)
+            {
+                sent++;
+            }
+            else
+            {
+                Snackbar.Add(message, Severity.Error);
+            }
         }
 
         selectedIds.Clear();
+        isBusy = false;
+
+        if (sent > 0)
+        {
+            Snackbar.Add($"{sent} Pokémon sent to save.", Severity.Success);
+        }
+
+        StateHasChanged();
     }
 
     // ── Delete ────────────────────────────────────────────────────────────
