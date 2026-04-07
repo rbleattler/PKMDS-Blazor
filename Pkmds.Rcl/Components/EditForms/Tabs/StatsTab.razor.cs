@@ -333,4 +333,217 @@ public partial class StatsTab : IDisposable
 
         setter(pkm, newValue);
     }
+
+    private bool IsPartyPokemon =>
+        AppState?.SelectedPartySlotNumber is not null && Pokemon?.PartyStatsPresent == true;
+
+    private void OnCurrentHpChanged(int value)
+    {
+        if (Pokemon is null)
+        {
+            return;
+        }
+
+        value = Math.Clamp(value, 0, Pokemon.Stat_HPMax);
+        Pokemon.Stat_HPCurrent = value;
+    }
+
+    private int GetCurrentStatusValue()
+    {
+        if (Pokemon is null)
+        {
+            return 0;
+        }
+
+        if (Pokemon.Format <= 4)
+        {
+            var condition = (StatusCondition)(Pokemon.Status_Condition & 0xFF);
+            if (condition == StatusCondition.None)
+            {
+                return 0;
+            }
+
+            if (condition <= StatusCondition.Sleep7)
+            {
+                return (int)StatusCondition.Sleep1;
+            }
+
+            if ((condition & StatusCondition.PoisonBad) != 0)
+            {
+                return (int)StatusCondition.PoisonBad;
+            }
+
+            return (int)condition;
+        }
+
+        return Pokemon.Status_Condition & 0xFF;
+    }
+
+    private void OnStatusChanged(int value)
+    {
+        if (Pokemon is null)
+        {
+            return;
+        }
+
+        if (Pokemon.Format <= 4)
+        {
+            var current = Pokemon.Status_Condition & ~0xFF;
+            if (value == (int)StatusCondition.Sleep1)
+            {
+                var sleepTurns = GetSleepTurns();
+                current |= sleepTurns;
+            }
+            else
+            {
+                current |= value;
+            }
+
+            Pokemon.Status_Condition = current;
+        }
+        else
+        {
+            var current = Pokemon.Status_Condition & ~0xFF;
+            current |= value;
+            Pokemon.Status_Condition = current;
+        }
+    }
+
+    private int GetSleepTurns()
+    {
+        if (Pokemon is null)
+        {
+            return 1;
+        }
+
+        var raw = Pokemon.Status_Condition & 7;
+        return raw is >= 1 and <= 7 ? raw : 1;
+    }
+
+    private void OnSleepTurnsChanged(int value)
+    {
+        if (Pokemon is null)
+        {
+            return;
+        }
+
+        value = Math.Clamp(value, 1, 7);
+        var current = Pokemon.Status_Condition & ~0xFF;
+        current |= value;
+        Pokemon.Status_Condition = current;
+    }
+
+    private record StatusOption(int Value, string Label, string? SpriteFileName);
+
+    private List<StatusOption> GetStatusOptions()
+    {
+        var options = new List<StatusOption>();
+        var isGen8a = Pokemon?.Context == EntityContext.Gen8a;
+
+        if (Pokemon is null)
+        {
+            return options;
+        }
+
+        options.Add(new StatusOption(0, "None", null));
+
+        if (Pokemon.Format <= 4)
+        {
+            options.Add(new StatusOption((int)StatusCondition.Sleep1, "Sleep",
+                ImageHelper.GetSleepStatusSpriteFileName()));
+            options.Add(new StatusOption((int)StatusCondition.Poison, "Poison",
+                ImageHelper.GetPoisonStatusSpriteFileName()));
+            if (Pokemon.Format is 3 or 4)
+            {
+                options.Add(new StatusOption((int)StatusCondition.PoisonBad, "Toxic",
+                    ImageHelper.GetToxicStatusSpriteFileName()));
+            }
+
+            options.Add(new StatusOption((int)StatusCondition.Burn, "Burn",
+                ImageHelper.GetBurnStatusSpriteFileName()));
+            options.Add(new StatusOption((int)StatusCondition.Freeze, "Freeze",
+                ImageHelper.GetFrostbiteStatusSpriteFileName()));
+            options.Add(new StatusOption((int)StatusCondition.Paralysis, "Paralysis",
+                ImageHelper.GetParalysisStatusSpriteFileName()));
+        }
+        else
+        {
+            options.Add(new StatusOption((int)StatusType.Paralysis, "Paralysis",
+                ImageHelper.GetParalysisStatusSpriteFileName()));
+            options.Add(new StatusOption((int)StatusType.Sleep,
+                isGen8a ? "Drowsy" : "Sleep",
+                ImageHelper.GetSleepStatusSpriteFileName()));
+            options.Add(new StatusOption((int)StatusType.Freeze,
+                isGen8a ? "Frostbite" : "Freeze",
+                ImageHelper.GetFrostbiteStatusSpriteFileName()));
+            options.Add(new StatusOption((int)StatusType.Burn, "Burn",
+                ImageHelper.GetBurnStatusSpriteFileName()));
+            options.Add(new StatusOption((int)StatusType.Poison, "Poison",
+                ImageHelper.GetPoisonStatusSpriteFileName()));
+        }
+
+        return options;
+    }
+
+    private string? GetCurrentStatusSpriteFileName()
+    {
+        if (Pokemon is null)
+        {
+            return null;
+        }
+
+        if (Pokemon.Stat_HPCurrent == 0)
+        {
+            return ImageHelper.GetFaintStatusSpriteFileName();
+        }
+
+        if (Pokemon.Format <= 4)
+        {
+            var condition = (StatusCondition)(Pokemon.Status_Condition & 0xFF);
+            return condition switch
+            {
+                StatusCondition.None => null,
+                <= StatusCondition.Sleep7 => ImageHelper.GetSleepStatusSpriteFileName(),
+                _ when (condition & StatusCondition.PoisonBad) != 0 =>
+                    ImageHelper.GetToxicStatusSpriteFileName(),
+                _ when (condition & StatusCondition.Poison) != 0 =>
+                    ImageHelper.GetPoisonStatusSpriteFileName(),
+                _ when (condition & StatusCondition.Burn) != 0 =>
+                    ImageHelper.GetBurnStatusSpriteFileName(),
+                _ when (condition & StatusCondition.Freeze) != 0 =>
+                    ImageHelper.GetFrostbiteStatusSpriteFileName(),
+                _ when (condition & StatusCondition.Paralysis) != 0 =>
+                    ImageHelper.GetParalysisStatusSpriteFileName(),
+                _ => null,
+            };
+        }
+
+        var statusType = (StatusType)(Pokemon.Status_Condition & 0xFF);
+        return statusType switch
+        {
+            StatusType.None => null,
+            StatusType.Sleep => ImageHelper.GetSleepStatusSpriteFileName(),
+            StatusType.Poison => ImageHelper.GetPoisonStatusSpriteFileName(),
+            StatusType.Burn => ImageHelper.GetBurnStatusSpriteFileName(),
+            StatusType.Freeze => ImageHelper.GetFrostbiteStatusSpriteFileName(),
+            StatusType.Paralysis => ImageHelper.GetParalysisStatusSpriteFileName(),
+            _ => null,
+        };
+    }
+
+    private bool IsSleepSelected()
+    {
+        if (Pokemon is null)
+        {
+            return false;
+        }
+
+        if (Pokemon.Format <= 4)
+        {
+            var condition = (StatusCondition)(Pokemon.Status_Condition & 0xFF);
+            return condition is >= StatusCondition.Sleep1 and <= StatusCondition.Sleep7;
+        }
+
+        return false;
+    }
 }
