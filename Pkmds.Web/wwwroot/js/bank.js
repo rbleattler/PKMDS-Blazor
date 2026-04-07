@@ -5,8 +5,15 @@ const DB_NAME = "pkmds-bank";
 const DB_VERSION = 1;
 const STORE = "pokemon";
 
+// Shared connection promise — reused across operations to avoid opening a new
+// connection for every CRUD call and to ensure versionchange events can close
+// the connection cleanly so future schema upgrades are not blocked.
+let _dbPromise = null;
+
 function openDb() {
-    return new Promise((resolve, reject) => {
+    if (_dbPromise) return _dbPromise;
+
+    _dbPromise = new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, DB_VERSION);
 
         request.onupgradeneeded = (event) => {
@@ -25,9 +32,29 @@ function openDb() {
             // if (oldVersion < 2) { ... }
         };
 
-        request.onsuccess = (event) => resolve(event.target.result);
-        request.onerror = (event) => reject(event.target.error);
+        request.onsuccess = (event) => {
+            const db = event.target.result;
+
+            // Reset when the DB is closed externally (e.g., browser clears storage).
+            db.onclose = () => { _dbPromise = null; };
+
+            // Allow other tabs to upgrade the schema without being blocked by
+            // this open connection.
+            db.onversionchange = () => {
+                db.close();
+                _dbPromise = null;
+            };
+
+            resolve(db);
+        };
+
+        request.onerror = (event) => {
+            _dbPromise = null;
+            reject(event.target.error);
+        };
     });
+
+    return _dbPromise;
 }
 
 export async function addPokemon(bytesBase64, meta) {
@@ -79,7 +106,9 @@ export async function exportAll() {
     const entries = await getAllPokemon();
     const json = JSON.stringify(entries);
     const encoder = new TextEncoder();
-    return Array.from(encoder.encode(json));
+    // Return Uint8Array directly — .NET marshals this to byte[] without an extra
+    // Array.from() copy, which halves the memory needed for large exports.
+    return encoder.encode(json);
 }
 
 export async function importAll(jsonBytes) {

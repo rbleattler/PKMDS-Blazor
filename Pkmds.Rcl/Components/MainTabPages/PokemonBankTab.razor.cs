@@ -150,23 +150,9 @@ public partial class PokemonBankTab : RefreshAwareComponent
             return;
         }
 
-        // Duplicate detection.
-        var duplicates = new List<PKM>();
-        var unique = new List<PKM>();
-
-        foreach (var pkm in allPokemon)
-        {
-            if (await BankService.IsDuplicateAsync(pkm))
-            {
-                duplicates.Add(pkm);
-            }
-            else
-            {
-                unique.Add(pkm);
-            }
-        }
-
-        var toAdd = unique;
+        // Duplicate detection — single bank read, O(N+M) via PartitionDuplicatesAsync.
+        var (unique, duplicates) = await BankService.PartitionDuplicatesAsync(allPokemon);
+        var toAdd = unique.ToList();
 
         if (duplicates.Count > 0)
         {
@@ -248,15 +234,8 @@ public partial class PokemonBankTab : RefreshAwareComponent
         try
         {
             var data = await BankService.ExportAsync();
-            var b64 = Convert.ToBase64String(data);
-
-            var element = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                "eval", "document.createElement('a')");
-            await element.InvokeVoidAsync(
-                "setAttribute", "href", $"data:application/json;base64,{b64}");
-            await element.InvokeVoidAsync(
-                "setAttribute", "download", "pkmds-bank.json");
-            await element.InvokeVoidAsync("click");
+            await JSRuntime.InvokeVoidAsync(
+                "showFilePickerAndWrite", "pkmds-bank.json", data, ".json", "Pokémon Bank Export");
 
             Snackbar.Add("Bank exported.", Severity.Success);
         }

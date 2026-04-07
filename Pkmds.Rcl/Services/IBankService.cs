@@ -34,4 +34,12 @@ public interface IBankService
     /// decrypted box data matches <paramref name="pkm"/>.
     /// </summary>
     Task<bool> IsDuplicateAsync(PKM pkm);
+
+    /// <summary>
+    /// Splits <paramref name="candidates"/> into Pokémon not already in the bank
+    /// (<c>Unique</c>) and those that match an existing entry by decrypted box data
+    /// (<c>Duplicates</c>), using a single bank read — O(N+M) instead of O(N×M).
+    /// </summary>
+    Task<(IReadOnlyList<PKM> Unique, IReadOnlyList<PKM> Duplicates)> PartitionDuplicatesAsync(
+        IEnumerable<PKM> candidates);
 }

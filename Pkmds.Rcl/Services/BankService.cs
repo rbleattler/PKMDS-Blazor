@@ -35,6 +35,11 @@ public class BankService(IJSRuntime js) : IBankService, IAsyncDisposable
         var module = await GetModuleAsync();
         var raw = await module.InvokeAsync<RawEntry[]>("getAllPokemon");
 
+        if (raw is null || raw.Length == 0)
+        {
+            return [];
+        }
+
         var results = new List<BankEntry>(raw.Length);
         foreach (var r in raw)
         {
@@ -78,8 +83,8 @@ public class BankService(IJSRuntime js) : IBankService, IAsyncDisposable
     public async Task<byte[]> ExportAsync()
     {
         var module = await GetModuleAsync();
-        var byteList = await module.InvokeAsync<int[]>("exportAll");
-        return byteList.Select(b => (byte)b).ToArray();
+        // JS exportAll() returns a Uint8Array; Blazor marshals it directly to byte[].
+        return await module.InvokeAsync<byte[]>("exportAll");
     }
 
     public async Task ImportAsync(byte[] data)
@@ -96,6 +101,34 @@ public class BankService(IJSRuntime js) : IBankService, IAsyncDisposable
             entry.Pokemon.DecryptedBoxData.AsSpan().SequenceEqual(candidateBytes));
     }
 
+    public async Task<(IReadOnlyList<PKM> Unique, IReadOnlyList<PKM> Duplicates)> PartitionDuplicatesAsync(
+        IEnumerable<PKM> candidates)
+    {
+        var all = await GetAllAsync();
+
+        // Build a hash set of existing entries' DecryptedBoxData (base64) for O(1) lookup.
+        var existingHashes = all
+            .Select(e => Convert.ToBase64String(e.Pokemon.DecryptedBoxData))
+            .ToHashSet();
+
+        var unique = new List<PKM>();
+        var duplicates = new List<PKM>();
+
+        foreach (var pkm in candidates)
+        {
+            if (existingHashes.Contains(Convert.ToBase64String(pkm.DecryptedBoxData)))
+            {
+                duplicates.Add(pkm);
+            }
+            else
+            {
+                unique.Add(pkm);
+            }
+        }
+
+        return (unique, duplicates);
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (_module is not null)
@@ -105,8 +138,10 @@ public class BankService(IJSRuntime js) : IBankService, IAsyncDisposable
     }
 
     // ── Private DTOs for JS deserialization ───────────────────────────────
+    // internal so that Pkmds.Tests can reference these types when setting up
+    // JS interop mocks (via InternalsVisibleTo in Pkmds.Rcl.csproj).
 
-    private sealed class RawEntry
+    internal sealed class RawEntry
     {
         [System.Text.Json.Serialization.JsonPropertyName("id")]
         public long Id { get; set; }
@@ -121,7 +156,7 @@ public class BankService(IJSRuntime js) : IBankService, IAsyncDisposable
         public string AddedAt { get; set; } = string.Empty;
     }
 
-    private sealed class RawMeta
+    internal sealed class RawMeta
     {
         [System.Text.Json.Serialization.JsonPropertyName("species")]
         public ushort Species { get; set; }
