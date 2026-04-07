@@ -1,0 +1,128 @@
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="@Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Backup"
+                     Class="mr-2"
+                     Style="vertical-align: middle;"/>
+            Backup Manager
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="2"
+                  Class="pa-2"
+                  Style="min-width: 500px;">
+
+            <!-- Toolbar -->
+            <MudStack Row
+                      Spacing="2"
+                      AlignItems="@AlignItems.Center">
+                <MudButton StartIcon="@Icons.Material.Filled.Add"
+                           Variant="@Variant.Filled"
+                           Color="@Color.Primary"
+                           Size="@Size.Small"
+                           Disabled="@(SaveFile is null)"
+                           OnClick="@OnCreateManualBackup">
+                    Create Backup
+                </MudButton>
+                <MudSpacer/>
+                <MudButton StartIcon="@Icons.Material.Filled.DeleteSweep"
+                           Variant="@Variant.Text"
+                           Color="@Color.Error"
+                           Size="@Size.Small"
+                           Disabled="@(backups.Count == 0)"
+                           OnClick="@OnClearAll">
+                    Clear All
+                </MudButton>
+            </MudStack>
+
+            @if (isLoading)
+            {
+                <MudProgressLinear Indeterminate/>
+            }
+            else if (backups.Count == 0)
+            {
+                <MudStack AlignItems="@AlignItems.Center"
+                          Justify="@Justify.Center"
+                          Class="py-8">
+                    <MudIcon Icon="@Icons.Material.Outlined.BackupTable"
+                             Color="@Color.Secondary"
+                             Size="@Size.Large"/>
+                    <MudText Typo="@Typo.body1"
+                             Color="@Color.Secondary">
+                        No backups yet. Backups are created automatically when you load a save file.
+                    </MudText>
+                </MudStack>
+            }
+            else
+            {
+                <MudTable Items="@backups"
+                          Dense
+                          Hover
+                          Elevation="0"
+                          Breakpoint="@Breakpoint.None">
+                    <HeaderContent>
+                        <MudTh>File</MudTh>
+                        <MudTh>Game</MudTh>
+                        <MudTh>Trainer</MudTh>
+                        <MudTh>Size</MudTh>
+                        <MudTh>Date</MudTh>
+                        <MudTh>Source</MudTh>
+                        <MudTh Style="text-align: right;">Actions</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="File">
+                            <MudText Typo="@Typo.body2">@context.FileName</MudText>
+                        </MudTd>
+                        <MudTd DataLabel="Game">
+                            <MudText Typo="@Typo.body2">@FormatGame(context)</MudText>
+                        </MudTd>
+                        <MudTd DataLabel="Trainer">
+                            <MudText Typo="@Typo.body2">@context.TrainerName</MudText>
+                        </MudTd>
+                        <MudTd DataLabel="Size">
+                            <MudText Typo="@Typo.body2">@FormatSize(context.SizeBytes)</MudText>
+                        </MudTd>
+                        <MudTd DataLabel="Date">
+                            <MudTooltip Text="@context.CreatedAt.ToString("F")">
+                                <MudText Typo="@Typo.body2">@context.CreatedAt.LocalDateTime.ToString("g")</MudText>
+                            </MudTooltip>
+                        </MudTd>
+                        <MudTd DataLabel="Source">
+                            <MudChip T="@string"
+                                     Size="@Size.Small"
+                                     Variant="@Variant.Outlined"
+                                     Color="@(context.Source == "auto" ? Color.Info : Color.Success)">
+                                @context.Source
+                            </MudChip>
+                        </MudTd>
+                        <MudTd DataLabel="Actions"
+                               Style="text-align: right;">
+                            <MudIconButton Icon="@Icons.Material.Filled.Restore"
+                                           Size="@Size.Small"
+                                           Color="@Color.Primary"
+                                           title="Restore this backup"
+                                           OnClick="@(() => OnRestore(context))"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.Download"
+                                           Size="@Size.Small"
+                                           Color="@Color.Default"
+                                           title="Export to disk"
+                                           OnClick="@(() => OnExport(context))"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                           Size="@Size.Small"
+                                           Color="@Color.Error"
+                                           title="Delete this backup"
+                                           OnClick="@(() => OnDelete(context))"/>
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@Close"
+                   Variant="@Variant.Text">
+            Close
+        </MudButton>
+    </DialogActions>
+</MudDialog>

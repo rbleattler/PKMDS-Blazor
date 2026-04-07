@@ -1,0 +1,145 @@
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="@Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Build"
+                     Class="mr-2"
+                     Style="vertical-align: middle;"/>
+            Repair Save File
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (SaveFile is null)
+        {
+            <MudText Color="@Color.Secondary">No save file loaded.</MudText>
+        }
+        else
+        {
+            <MudStack Spacing="3"
+                      Class="pa-2"
+                      Style="min-width: 420px;">
+
+                <!-- Fix Checksums -->
+                <MudPaper Elevation="0"
+                          Outlined
+                          Class="pa-3">
+                    <MudStack Row
+                              AlignItems="@AlignItems.Center"
+                              Justify="@Justify.SpaceBetween">
+                        <MudStack Spacing="0">
+                            <MudText Typo="@Typo.subtitle2">Fix Checksums</MudText>
+                            <MudText Typo="@Typo.caption"
+                                     Color="@Color.Secondary">
+                                Recalculate and write all save file checksums.
+                            </MudText>
+                        </MudStack>
+                        @if (HasChecksums)
+                        {
+                            <MudButton Variant="@Variant.Outlined"
+                                       Size="@Size.Small"
+                                       Color="@(SaveFile.ChecksumsValid ? Color.Success : Color.Warning)"
+                                       StartIcon="@(SaveFile.ChecksumsValid
+                                                       ? Icons.Material.Filled.CheckCircle
+                                                       : Icons.Material.Filled.Warning)"
+                                       OnClick="@OnFixChecksums">
+                                @(SaveFile.ChecksumsValid ? "Valid" : "Fix")
+                            </MudButton>
+                        }
+                        else
+                        {
+                            <MudChip T="@string"
+                                     Size="@Size.Small"
+                                     Variant="@Variant.Outlined"
+                                     Color="@Color.Default">
+                                N/A
+                            </MudChip>
+                        }
+                    </MudStack>
+                </MudPaper>
+
+                <!-- Heal Party -->
+                <MudPaper Elevation="0"
+                          Outlined
+                          Class="pa-3">
+                    <MudStack Row
+                              AlignItems="@AlignItems.Center"
+                              Justify="@Justify.SpaceBetween">
+                        <MudStack Spacing="0">
+                            <MudText Typo="@Typo.subtitle2">Heal Party</MudText>
+                            <MudText Typo="@Typo.caption"
+                                     Color="@Color.Secondary">
+                                Restore HP, PP, and stats for all party members.
+                            </MudText>
+                        </MudStack>
+                        <MudButton Variant="@Variant.Outlined"
+                                   Size="@Size.Small"
+                                   Color="@Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.Healing"
+                                   Disabled="@(SaveFile.PartyCount == 0)"
+                                   OnClick="@OnHealParty">
+                            Heal (@SaveFile.PartyCount)
+                        </MudButton>
+                    </MudStack>
+                </MudPaper>
+
+                <!-- Heal Box PP -->
+                <MudPaper Elevation="0"
+                          Outlined
+                          Class="pa-3">
+                    <MudStack Row
+                              AlignItems="@AlignItems.Center"
+                              Justify="@Justify.SpaceBetween">
+                        <MudStack Spacing="0">
+                            <MudText Typo="@Typo.subtitle2">Restore Box PP</MudText>
+                            <MudText Typo="@Typo.caption"
+                                     Color="@Color.Secondary">
+                                Restore PP to max for all moves on box Pokémon.
+                            </MudText>
+                        </MudStack>
+                        <MudButton Variant="@Variant.Outlined"
+                                   Size="@Size.Small"
+                                   Color="@Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.Battery5Bar"
+                                   Disabled="@(!SaveFile.HasBox)"
+                                   OnClick="@OnHealBoxPP">
+                            Restore
+                        </MudButton>
+                    </MudStack>
+                </MudPaper>
+
+                <!-- Compact Storage -->
+                @if (SaveFile is IStorageCleanup)
+                {
+                    <MudPaper Elevation="0"
+                              Outlined
+                              Class="pa-3">
+                        <MudStack Row
+                                  AlignItems="@AlignItems.Center"
+                                  Justify="@Justify.SpaceBetween">
+                            <MudStack Spacing="0">
+                                <MudText Typo="@Typo.subtitle2">Compact Storage</MudText>
+                                <MudText Typo="@Typo.caption"
+                                         Color="@Color.Secondary">
+                                    Remove empty gaps in box storage.
+                                </MudText>
+                            </MudStack>
+                            <MudButton Variant="@Variant.Outlined"
+                                       Size="@Size.Small"
+                                       Color="@Color.Primary"
+                                       StartIcon="@Icons.Material.Filled.Compress"
+                                       OnClick="@OnCompactStorage">
+                                Compact
+                            </MudButton>
+                        </MudStack>
+                    </MudPaper>
+                }
+
+            </MudStack>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@Close"
+                   Variant="@Variant.Text">
+            Close
+        </MudButton>
+    </DialogActions>
+</MudDialog>

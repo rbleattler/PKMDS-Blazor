@@ -20,8 +20,10 @@ public partial class AppSettingsDialog
     private string defaultOtName = string.Empty;
     private uint defaultSecretId;
     private uint defaultTrainerId;
+    private bool isAutoBackupEnabled = true;
     private bool isHaXEnabled;
     private bool isVerboseLogging;
+    private int maxBackupCount = 10;
     private SpriteStyle spriteStyle;
 
     // Working copy — only committed on Save
@@ -48,6 +50,8 @@ public partial class AppSettingsDialog
         defaultTrainerId = InitialSettings.DefaultTrainerId;
         defaultSecretId = InitialSettings.DefaultSecretId;
         defaultLanguageId = InitialSettings.DefaultLanguageId;
+        isAutoBackupEnabled = InitialSettings.IsAutoBackupEnabled;
+        maxBackupCount = InitialSettings.MaxBackupCount;
     }
 
     private async Task OnHaXEnabledChanged(bool newValue)
@@ -92,6 +96,8 @@ public partial class AppSettingsDialog
         defaultTrainerId = defaults.DefaultTrainerId;
         defaultSecretId = defaults.DefaultSecretId;
         defaultLanguageId = defaults.DefaultLanguageId;
+        isAutoBackupEnabled = defaults.IsAutoBackupEnabled;
+        maxBackupCount = defaults.MaxBackupCount;
         StateHasChanged();
     }
 
@@ -115,7 +121,9 @@ public partial class AppSettingsDialog
             DefaultOtName = defaultOtName,
             DefaultTrainerId = defaultTrainerId,
             DefaultSecretId = defaultSecretId,
-            DefaultLanguageId = defaultLanguageId
+            DefaultLanguageId = defaultLanguageId,
+            IsAutoBackupEnabled = isAutoBackupEnabled,
+            MaxBackupCount = maxBackupCount
         };
 
         MudDialog.Close(DialogResult.Ok(updated));

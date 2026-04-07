@@ -15,6 +15,9 @@ public partial class MainLayout : IDisposable
     private ThemeMode themeMode = ThemeMode.System;
 
     [Inject]
+    private IBackupService BackupService { get; set; } = null!;
+
+    [Inject]
     private ISettingsService SettingsService { get; set; } = null!;
 
     private bool IsUpdateAvailable { get; set; }
@@ -203,6 +206,101 @@ public partial class MainLayout : IDisposable
         }
     }
 
+    private async Task ShowSaveFileInfoDialog()
+    {
+        var parameters = new DialogParameters
+        {
+            { nameof(SaveFileInfoDialog.SaveFile), AppState.SaveFile }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
+        await DialogService.ShowAsync<SaveFileInfoDialog>("Save File Info", parameters, options);
+    }
+
+    private async Task ShowSaveFileRepairDialog()
+    {
+        var parameters = new DialogParameters
+        {
+            { nameof(SaveFileRepairDialog.SaveFile), AppState.SaveFile }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
+        await DialogService.ShowAsync<SaveFileRepairDialog>("Repair Save File", parameters, options);
+    }
+
+    private async Task ShowBackupManagerDialog()
+    {
+        var parameters = new DialogParameters
+        {
+            { nameof(BackupManagerDialog.SaveFile), AppState.SaveFile },
+            { nameof(BackupManagerDialog.FileName), AppState.SaveFileName },
+            { nameof(BackupManagerDialog.IsManicEmu), manicEmuSaveContext is not null },
+            { nameof(BackupManagerDialog.ManicEmuContext), manicEmuSaveContext }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<BackupManagerDialog>("Backup Manager", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is { Data: BackupRestoreResult restore })
+        {
+            await RestoreFromBackup(restore);
+        }
+        else if (result is { Data: BackupExportResult export })
+        {
+            var fileName = string.IsNullOrWhiteSpace(export.Entry.FileName)
+                ? "save.sav"
+                : export.Entry.FileName;
+            var ext = Path.GetExtension(fileName);
+            if (string.IsNullOrEmpty(ext))
+            {
+                ext = ".sav";
+            }
+
+            await WriteFile(export.SaveBytes, fileName, ext, "Save File");
+        }
+    }
+
+    private async Task RestoreFromBackup(BackupRestoreResult restore)
+    {
+        AppService.ClearSelection();
+        ParseSettings.ClearActiveTrainer();
+        AppState.SaveFile = null;
+        AppState.ShowProgressIndicator = true;
+
+        try
+        {
+            var data = restore.SaveBytes;
+            var fileName = restore.Entry.FileName;
+
+            if (restore.Entry.IsManicEmu &&
+                ManicEmuSaveHelper.TryExtractSaveFromZip(data, fileName, out var saveFile, out var manicContext))
+            {
+                manicEmuSaveContext = manicContext;
+                FinishLoadingSaveFile(saveFile, fileName);
+            }
+            else if (SaveUtil.TryGetSaveFile(data, out var rawSave, fileName))
+            {
+                manicEmuSaveContext = null;
+                FinishLoadingSaveFile(rawSave, fileName);
+            }
+            else
+            {
+                Logger.LogError("Failed to restore backup: invalid save data");
+                await DialogService.ShowMessageBoxAsync("Error", "Failed to restore backup — the save data could not be parsed.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error restoring backup");
+            await DialogService.ShowMessageBoxAsync("Error", $"Failed to restore backup: {ex.Message}");
+        }
+
+        AppState.ShowProgressIndicator = false;
+        if (AppState.SaveFile is not null)
+        {
+            RefreshService.RefreshBoxAndPartyState();
+            Snackbar.Add("Backup restored.", Severity.Success);
+        }
+    }
+
     private async Task ShowLoadSaveFileDialog()
     {
         const string message = "Choose a save file";
@@ -302,6 +400,31 @@ public partial class MainLayout : IDisposable
         {
             AppState.ShowProgressIndicator = false;
             return;
+        }
+
+        // Auto-backup on successful load (non-fatal).
+        // Use SaveFile.Write() to get properly serialized bytes — the original `data` array
+        // may have been mutated in-place by decryption (e.g. SwishCrypto for Gen 8-9 saves),
+        // making the raw array unparseable by TryGetSaveFile on restore.
+        // For Manic EMU saves, rebuild the ZIP so that restore and export round-trip correctly
+        // (exporting raw save bytes would produce a file Manic EMU can't re-import).
+        if (SettingsService.Settings.IsAutoBackupEnabled)
+        {
+            try
+            {
+                var rawSave = AppState.SaveFile.Write().ToArray();
+                var backupBytes = manicEmuSaveContext is not null
+                    ? ManicEmuSaveHelper.RebuildZip(manicEmuSaveContext, rawSave)
+                    : rawSave;
+                await BackupService.CreateBackupAsync(
+                    backupBytes, AppState.SaveFile, selectedFile.Name,
+                    isManicEmu: manicEmuSaveContext is not null, source: "auto");
+                await BackupService.EnforceRetentionAsync(SettingsService.Settings.MaxBackupCount);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Auto-backup failed for {FileName}", selectedFile.Name);
+            }
         }
 
         AppState.ShowProgressIndicator = false;
