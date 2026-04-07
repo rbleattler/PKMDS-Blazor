@@ -111,7 +111,15 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         var pi = pt.GetFormEntry(pokemon.Species, pokemon.Form);
         Span<ushort> stats = stackalloc ushort[6];
         pokemon.LoadStats(pi, stats);
+
+        // Preserve current HP for party Pokémon — SetStats overwrites
+        // Stat_HPCurrent with Stat_HPMax, losing any user-set value.
+        var previousHp = pokemon.PartyStatsPresent ? pokemon.Stat_HPCurrent : -1;
         pokemon.SetStats(stats);
+        if (previousHp >= 0)
+        {
+            pokemon.Stat_HPCurrent = Math.Min(previousHp, pokemon.Stat_HPMax);
+        }
     }
 
     public IEnumerable<ComboItem> SearchMetLocations(string searchString, GameVersion gameVersion,
