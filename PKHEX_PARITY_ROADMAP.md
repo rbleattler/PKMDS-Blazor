@@ -2,7 +2,7 @@
 
 This roadmap outlines the path to achieving 100% feature parity with PKHeX. Tasks are broken down into actionable items organized by feature category and priority.
 
-**Last Updated:** 2026-03-26 (One-Touch Evolve implemented — §1.1, tracks #448; Gen-Specific editor tab implemented — §1.1 #419; Box pop-out dialogs implemented — §6.2, tracks #352; Pokédex per-species grid + LA research editor implemented — §2.5, tracks #414/#437/#438/#439; Fix Load Pokémon/Gift File slot behaviour implemented — §4.1, tracks #445; Trash bytes auto-fixer added to legality tab — tracks #542; Spinda spot preview implemented — tracks #554; Manic EMU `.3ds.sav` ZIP round-trip support added — tracks #537; Bag virtualization enabled via MudBlazor 9.2.0 — §7.2a, tracks #454; Info popovers for moves/items/abilities/balls added — §4.1, tracks #579)
+**Last Updated:** 2026-04-07 (Pokémon Bank implemented — §2.1b, tracks #330; One-Touch Evolve implemented — §1.1, tracks #448; Gen-Specific editor tab implemented — §1.1 #419; Box pop-out dialogs implemented — §6.2, tracks #352; Pokédex per-species grid + LA research editor implemented — §2.5, tracks #414/#437/#438/#439; Fix Load Pokémon/Gift File slot behaviour implemented — §4.1, tracks #445; Trash bytes auto-fixer added to legality tab — tracks #542; Spinda spot preview implemented — tracks #554; Manic EMU `.3ds.sav` ZIP round-trip support added — tracks #537; Bag virtualization enabled via MudBlazor 9.2.0 — §7.2a, tracks #454; Info popovers for moves/items/abilities/balls added — §4.1, tracks #579)
 
 ---
 
@@ -37,6 +37,8 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - **Legality Checker** - Full `LegalityAnalysis` integration: per-check detail view, color-coded results, full verbose report, slot-level valid/warn icon overlays, one-click fix buttons (ball, met location, moves, TechRecord), and a batch "Legality Report" tab that sweeps all party and box Pokémon with a sortable/filterable table, aggregate Legal/Fishy/Illegal counts, and jump-to-slot navigation
 - **Advanced Search** - Multi-criteria search tab sweeping all party and box slots with filters for species, shiny, nature, ability, held item, ball, origin game, gender, level range, IV/EV floors, moves (any/all), Hidden Power type, OT name/TID, language, ribbons/marks, and legal status; saved filters via localStorage; batch Showdown text export
 - **Encounter Database** - Encounter DB tab backed by PKHeX.Core's `EncounterMovesetGenerator`; filter by species, game version, level range, shiny lock, and encounter type (Wild, Static, Mystery Gift, Trade, Egg); sortable results table with type-coloured chips and location display; per-encounter detail panel with "Generate Legal Pokémon" action that places a legal PKM into the selected slot
+- **Batch Editor** - Scripted batch property editor wrapping PKHeX.Core's `BatchEditing` engine; multi-line script input with filter (`.Property=Value`) and mutation (`=Property=Value`) instructions; comparison operators; named presets with localStorage persistence; dry-run preview mode showing matched Pokémon and proposed changes before applying; scope selector (party, current box, all boxes, or all)
+- **Pokémon Bank** - Persistent client-side Pokémon storage using browser IndexedDB; card grid UI with species sprite, shiny indicator, nickname, source save label, and added date; "Add from Save" bulk-imports all party + box Pokémon with duplicate detection (O(N+M) hash set); single and multi-select "Send to Save" with cross-format conversion; JSON file import/export via File System Access API; species/nickname search and shiny-only filter; configurable pagination; dismissible backup reminder; automatic cleanup of corrupt records
 - **Gen-Specific Editor Tab** — Generation-specific Pokémon fields consolidated into a dedicated tab that appears only when applicable: Gen 3 Colo/XD Shadow fields (`IsShadow` read-only, `ShadowID`, `Purification`), Gen 4 HGSS ShinyLeaf (5 leaf checkboxes + Crown flag) and `WalkingMood`, Gen 5 `NSparkle` and `PokeStarFame`, LGPE `Spirit`, `Mood`, and full received timestamp; Gen 8 SwSh `DynamaxLevel`/`CanGigantamax`, Gen 8 LA `IsNoble`/`IsAlpha`, and Gen 9 `TeraTypeOriginal`/`TeraTypeOverride` consolidated here from StatsTab
 - **One-Touch Evolve** — Evolve button on Main tab; single-path evolutions apply instantly; branching evolutions (Eevee, Slowpoke, etc.) open a picker dialog with sprite, localized name, and method label; Nincada→Ninjask offers Shedinja placement; Gen 2 trade evolutions show the required held item; nickname sync on evolve
 - **Box Pop-Out Dialogs** — `BoxViewerDialog` (single-box pop-out with independent prev/next navigation, "View All Boxes" button) and `BoxListDialog` (all-boxes responsive grid with per-box ⇄ swap buttons); both subscribe to live box state; triggered from box nav bar; `SwapBoxes` added to `IAppService`
@@ -51,7 +53,7 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 ### 1.1 Pokemon Editor Enhancements
 
 #### Ribbon Editor
-**Status:** ⚠️ Partial (ribbon legality checking and search/filter not yet implemented)  
+**Status:** ⚠️ Partial (ribbon legality checking and search/filter — #650)  
 **Complexity:** High  
 **Tasks:**
 - [x] Design Ribbon UI component with tabs for different ribbon categories
@@ -93,7 +95,7 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - [x] Create unit tests for contest stats
 
 #### Form/Appearance Editor
-**Status:** ⚠️ Partial (basic form support exists; Spinda spot preview implemented — #554)
+**Status:** ⚠️ Partial (basic form support exists; Spinda spot preview implemented — #554; remaining enhancements — #651)
 **Complexity:** Medium
 **Tasks:**
 - [ ] Enhance form selection UI with visual previews
@@ -258,28 +260,22 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - **Note:** `ParseSettings.InitFromSaveFileData` is intentionally not called (see `MainLayout.razor.cs` comment); relies on default `AllowGBCartEra = false` so VC encounters are always checked regardless of filename. PKHeX bug filed: [kwsch/PKHeX#4734](https://github.com/kwsch/PKHeX/issues/4734).
 
 ### 1.3 Batch Editor
-**Status:** ❌ Not Implemented  
-**Complexity:** Very High  
-**Priority:** High  
+**Status:** ✅ Implemented
+**Complexity:** Very High
+**Priority:** High
+**Tracks:** #329
 **Tasks:**
-- [ ] Design Batch Editor UI with script input
-- [ ] Implement batch editor scripting engine:
-  - [ ] Property filtering (`.Property=Value`)
-  - [ ] Property setting (`=Property=Value`)
-  - [ ] Comparison operators (`>`, `<`, `>=`, `<=`, `!=`)
-  - [ ] Logical operators (`&`, `|`)
-  - [ ] Special filters (`.IsShiny`, `.IsEgg`, etc.)
-- [ ] Add batch editor presets/templates
-- [ ] Implement dry-run mode (preview changes)
+- [x] Design Batch Editor UI with script input
+- [x] Implement batch editor scripting engine (wraps PKHeX.Core `BatchEditing` / `StringInstructionSet`):
+  - [x] Property filtering (`.Property=Value`)
+  - [x] Property setting (`=Property=Value`)
+  - [x] Comparison operators (`>`, `<`, `>=`, `<=`, `!=`)
+  - [x] Logical operators (`&`, `|`)
+  - [x] Special filters (`.IsShiny`, `.IsEgg`, etc.)
+- [x] Add batch editor presets/templates
+- [x] Implement dry-run mode (preview changes)
 - [ ] Add undo functionality
-- [ ] Support filtering by:
-  - [ ] Species/forms
-  - [ ] Levels
-  - [ ] OT/TID
-  - [ ] Moves
-  - [ ] Ribbons
-  - [ ] Stats
-  - [ ] Met data
+- [x] Support filtering by all PKM properties (species, levels, OT/TID, moves, ribbons, stats, met data, etc.)
 - [ ] Create batch editor tutorial/documentation
 - [ ] Add example scripts library
 - [ ] Implement batch export/import
@@ -290,7 +286,7 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 ## Priority 2: Important Secondary Features
 
 ### 2.1 Database/Bank System
-**Status:** ⚠️ Partial (Mystery Gift DB exists; redesign tracked in #444)
+**Status:** ⚠️ Partial (Pokémon Bank implemented — #330; Mystery Gift DB redesign tracked in #444)
 **Complexity:** Very High
 **Tasks:**
 
@@ -316,29 +312,30 @@ Bring the Mystery Gift Database tab to full parity with PKHeX's `SAV_MysteryGift
 - [ ] Responsive layout: sidebar filter panel collapses to `MudDrawer` on mobile
 
 #### 2.1b Pokémon Database/Bank (Personal Collection)
-- [ ] Design Pokemon Database/Bank UI
-- [ ] Implement personal Pokemon database storage (IndexedDB)
-- [ ] Add database import/export functionality
-- [ ] Create database search with advanced filters:
-  - [ ] Species/forms
-  - [ ] Moves
-  - [ ] Abilities
-  - [ ] Ribbons
-  - [ ] Stats/IVs
-  - [ ] Shiny status
-  - [ ] Ball type
-  - [ ] OT/TID
-  - [ ] Generation/origin
-- [ ] Implement batch operations on database:
-  - [ ] Mass import from save
-  - [ ] Mass export to save
-  - [ ] Batch delete
-  - [ ] Batch tag/organize
-- [ ] Add folder/tag organization system
-- [ ] Support drag-and-drop from database to save
-- [ ] Implement database backup/restore
-- [ ] Create database statistics view
-- [ ] Add duplicate detection
+**Status:** ⚠️ Partial (core bank implemented — #330; advanced filters and organization remain)
+**Complexity:** Very High
+**Tracks:** #330
+
+**Implemented:**
+- [x] Design Pokémon Bank UI — card grid with species sprite, nickname, shiny indicator (same sprite as box slots), source save label, and added date
+- [x] Implement personal Pokémon storage using browser IndexedDB (`bank.js` + `BankService`)
+- [x] Add bank import/export functionality (JSON file round-trip via File System Access API)
+- [x] Create basic search/filter: species/nickname text search, shiny-only toggle; filtered count shown only when active
+- [x] Mass import from save — "Add from Save" imports all party + box Pokémon with source save tracking (trainer name, TID, game name)
+- [x] Send to save — single and multi-select batch send with cross-format conversion (EntityConverter)
+- [x] Batch delete — multi-select with confirmation dialog
+- [x] Duplicate detection — O(N+M) bulk check via `PartitionDuplicatesAsync` using DecryptedBoxData hash set; skip-or-add-all prompt on import
+- [x] Backup reminder — dismissible banner warning that browser storage clearing erases the bank
+- [x] Pagination — configurable page size (20/50/100)
+- [x] Uniform card height — nickname line always rendered (placeholder when absent)
+- [x] Bulk insert performance — single IDB transaction + single JS interop call for batch imports
+- [x] Invalid record cleanup — corrupt/unparseable IndexedDB entries auto-deleted on load
+
+**Remaining:**
+- [ ] Create advanced search filters (#645): species/forms, moves, abilities, ribbons, stats/IVs, ball type, OT/TID, generation/origin, source save
+- [ ] Add folder/tag organization system (#646)
+- [ ] Support drag-and-drop from database to save (#647)
+- [ ] Create database statistics view (#648)
 - [ ] Support multiple database profiles
 
 ### 2.2 Encounter Database
@@ -402,8 +399,8 @@ Bring the Mystery Gift Database tab to full parity with PKHeX's `SAV_MysteryGift
 - [x] **Info popovers on filter fields and result rows (#579)** — ball/ability/held item filter fields show item sprites and description popovers; result rows show ball and held item sprites; explicit "Jump to Pokémon" button per row replaces implicit row-click navigation
 
 ### 2.5 Pokédex Editor
-**Tracks:** #414
-**Status:** ⚠️ Partial (per-species Seen/Caught grid + LA research task editor implemented via #490/#437/#438/#439/#510; bulk operations and progress bars via #436; per-generation advanced fields — gender/shiny tracking, form tracking, language flags — still absent)
+**Tracks:** #414, #654
+**Status:** ⚠️ Partial (per-species Seen/Caught grid + LA research task editor implemented via #490/#437/#438/#439/#510; bulk operations and progress bars via #436; per-generation advanced fields — gender/shiny tracking, form tracking, language flags — #654)
 **Complexity:** High
 **PKHeX Reference:** `SAV_SimplePokedex.cs`, `SAV_Pokedex4.cs`, `SAV_Pokedex5.cs`, `SAV_PokedexXY.cs`, `SAV_PokedexORAS.cs`, `SAV_PokedexSM.cs`, `SAV_PokedexGG.cs`, `SAV_PokedexSWSH.cs`, `SAV_PokedexBDSP.cs`, `SAV_PokedexLA.cs`, `SAV_PokedexSV.cs`, `SAV_PokedexSVKitakami.cs`, `SAV_Pokedex9a.cs`
 **Core API:** `ZukanBase` / `Zukan4` / `Zukan5` / `Zukan6` / `Zukan7` / `Zukan7b` / `Zukan8` / `Zukan8b` / `PokedexSave8a` / `Zukan9Paldea` / `Zukan9Kitakami` / `Zukan9a` in `PKHeX.Core/Saves/Substructures/PokeDex/`
