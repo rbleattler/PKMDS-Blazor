@@ -114,10 +114,13 @@
                        Color="@Color.Primary"
                        Label="Shiny only"/>
 
-            <MudText Typo="@Typo.caption"
-                     Class="ms-auto">
-                @filteredEntries.Count / @entries.Count stored
-            </MudText>
+            @if (filteredEntries.Count != entries.Count)
+            {
+                <MudText Typo="@Typo.caption"
+                         Class="ms-auto">
+                    @filteredEntries.Count / @entries.Count stored
+                </MudText>
+            }
         </MudStack>
 
     </MudStack>
