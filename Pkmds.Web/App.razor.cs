@@ -17,11 +17,19 @@ public partial class App
         await JsRuntime.InvokeVoidAsync("addUpdateListener");
     }
 
-    private async void ShowCrashReportDialog(Exception? exception)
+    private async Task ShowCrashReportDialog(Exception? exception)
     {
-        var parameters = new DialogParameters { { nameof(BugReportDialog.HasSaveFile), AppState.SaveFile is not null }, { nameof(BugReportDialog.AppVersion), AppState.AppVersion ?? string.Empty }, { nameof(BugReportDialog.CapturedException), exception } };
-        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = false, BackdropClick = false };
-        var dialog = await DialogService.ShowAsync<BugReportDialog>("Report this crash", parameters, options);
-        await dialog.Result;
+        try
+        {
+            var parameters = new DialogParameters { { nameof(BugReportDialog.HasSaveFile), AppState.SaveFile is not null }, { nameof(BugReportDialog.AppVersion), AppState.AppVersion ?? string.Empty }, { nameof(BugReportDialog.CapturedException), exception } };
+            var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = false, BackdropClick = false };
+            var dialog = await DialogService.ShowAsync<BugReportDialog>("Report this crash", parameters, options);
+            await dialog.Result;
+        }
+        catch
+        {
+            // Dialog infrastructure may not be available in error boundary context.
+            // Silently fail rather than causing a cascading error.
+        }
     }
 }

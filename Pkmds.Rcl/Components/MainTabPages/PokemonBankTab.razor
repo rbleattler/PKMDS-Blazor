@@ -1,0 +1,262 @@
+@inherits RefreshAwareComponent
+
+<div class="bank-tab-root">
+
+    @* ── Fixed header (never scrolls) ── *@
+    <MudStack Class="pa-2"
+              Spacing="2">
+
+        @* ── Backup reminder ── *@
+        @if (showBackupReminder)
+        {
+            <MudAlert Severity="@Severity.Warning"
+                      ShowCloseIcon
+                      CloseIconClicked="@DismissBackupReminderAsync">
+                Bank data lives in your browser. Clearing browser storage will erase it permanently.
+                Export a backup regularly to keep your Pokémon safe.
+                <MudButton Size="@Size.Small"
+                           Variant="@Variant.Text"
+                           Color="@Color.Warning"
+                           StartIcon="@Icons.Material.Filled.FileDownload"
+                           OnClick="@ExportAsync"
+                           Disabled="@(isBusy || entries.Count == 0)"
+                           Class="ms-2">
+                    Export Now
+                </MudButton>
+            </MudAlert>
+        }
+
+        @* ── Action bar ── *@
+        <MudStack Row
+                  Spacing="2"
+                  Wrap="@Wrap.Wrap"
+                  AlignItems="@AlignItems.Center">
+
+            @if (AppState.SaveFile is not null)
+            {
+                <MudButton Variant="@Variant.Filled"
+                           Color="@Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Download"
+                           OnClick="@ImportFromSaveAsync"
+                           Disabled="@isBusy">
+                    Add from Save
+                </MudButton>
+            }
+
+            <MudFileUpload T="IBrowserFile"
+                           Accept=".json"
+                           @bind-Files="importFile"
+                           @bind-Files:after="OnImportFileChangedAsync">
+                <CustomContent>
+                    <MudButton Variant="@Variant.Outlined"
+                               StartIcon="@Icons.Material.Filled.UploadFile"
+                               Disabled="@isBusy"
+                               OnClick="@context.OpenFilePickerAsync">
+                        Import File
+                    </MudButton>
+                </CustomContent>
+            </MudFileUpload>
+
+            <MudButton Variant="@Variant.Outlined"
+                       StartIcon="@Icons.Material.Filled.FileDownload"
+                       OnClick="@ExportAsync"
+                       Disabled="@(isBusy || entries.Count == 0)">
+                Export All
+            </MudButton>
+
+            @if (selectedIds.Count > 0)
+            {
+                <MudDivider Vertical
+                            FlexItem/>
+
+                @if (AppState.SaveFile is not null)
+                {
+                    <MudButton Variant="@Variant.Filled"
+                               Color="@Color.Secondary"
+                               StartIcon="@Icons.Material.Filled.MoveToInbox"
+                               OnClick="@SendSelectedToSaveAsync"
+                               Disabled="@isBusy">
+                        Send to Save (@selectedIds.Count)
+                    </MudButton>
+                }
+
+                <MudButton Variant="@Variant.Filled"
+                           Color="@Color.Error"
+                           StartIcon="@Icons.Material.Filled.Delete"
+                           OnClick="@DeleteSelectedAsync"
+                           Disabled="@isBusy">
+                    Delete (@selectedIds.Count)
+                </MudButton>
+            }
+
+            @if (isBusy)
+            {
+                <MudProgressCircular Size="@Size.Small"
+                                     Indeterminate/>
+            }
+        </MudStack>
+
+        @* ── Filter / search bar ── *@
+        <MudStack Row
+                  Spacing="2"
+                  Wrap="@Wrap.Wrap"
+                  AlignItems="@AlignItems.Center">
+
+            <MudTextField @bind-Value="searchText"
+                          @bind-Value:after="ApplyFilter"
+                          Label="Search species / nickname"
+                          Variant="@Variant.Outlined"
+                          Clearable
+                          Style="min-width: 220px;"/>
+
+            <MudSwitch @bind-Value="shinyOnly"
+                       @bind-Value:after="ApplyFilter"
+                       Color="@Color.Primary"
+                       Label="Shiny only"/>
+
+            @if (filteredEntries.Count != entries.Count)
+            {
+                <MudText Typo="@Typo.caption"
+                         Class="ms-auto">
+                    @filteredEntries.Count / @entries.Count stored
+                </MudText>
+            }
+        </MudStack>
+
+    </MudStack>
+
+    @* ── Grid (scrolls independently) ── *@
+    @if (isLoading)
+    {
+        <MudProgressLinear Indeterminate
+                           Class="mx-2"/>
+    }
+    else if (entries.Count == 0)
+    {
+        <MudAlert Severity="@Severity.Info"
+                  Class="mx-2">
+            The Pokémon Bank is empty. Use "Add from Save" or "Import File" to get started.
+        </MudAlert>
+    }
+    else
+    {
+        <div class="bank-card-grid px-2">
+            <MudGrid Spacing="1">
+                @foreach (var entry in paginatedEntries)
+                {
+                    var isSelected = selectedIds.Contains(entry.Id);
+                    <MudItem xs="12"
+                             sm="6"
+                             md="4"
+                             lg="3"
+                             xl="2"
+                             @key="@entry.Id">
+                        <MudCard Outlined="@isSelected"
+                                 Class="bank-card"
+                                 Style="@(isSelected ? "border: 2px solid var(--mud-palette-primary);" : string.Empty)">
+                            <MudCardHeader>
+                                <CardHeaderAvatar>
+                                    <MudCheckBox T="bool"
+                                                 Value="@isSelected"
+                                                 ValueChanged="@(v => ToggleSelect(entry.Id, v))"
+                                                 Color="@Color.Primary"/>
+                                </CardHeaderAvatar>
+                                <CardHeaderContent>
+                                    <object class="pkm-sprite"
+                                            type="image/png"
+                                            style="object-fit: contain;"
+                                            data="@ImageHelper.GetPokemonSpriteFilename(entry.Pokemon)"
+                                            title="@entry.SpeciesName">
+                                        <img class="pkm-sprite"
+                                             src="@ImageHelper.PokemonFallbackImageFileName"
+                                             alt="@entry.SpeciesName"
+                                             title="@entry.SpeciesName">
+                                    </object>
+                                    <MudText Typo="@Typo.subtitle2">@entry.SpeciesName</MudText>
+                                    <MudText Typo="@Typo.caption"
+                                             Class="bank-card-nickname">
+                                        @if (!string.IsNullOrEmpty(entry.Pokemon.Nickname) && entry.Pokemon.Nickname != entry.SpeciesName)
+                                        {
+                                            @entry.Pokemon.Nickname
+                                        }
+                                        else
+                                        {
+                                            @:&nbsp;
+                                        }
+                                    </MudText>
+                                </CardHeaderContent>
+                                <CardHeaderActions>
+                                    @if (entry.Pokemon.GetIsShinySafe())
+                                    {
+                                        <img src="@ImageHelper.GetShinyIndicatorSpriteFileName(ShinyExtensions.GetType(entry.Pokemon) is Shiny.AlwaysSquare)"
+                                             alt="Shiny"
+                                             title="Shiny"
+                                             style="width: 16px; height: 16px; object-fit: contain;">
+                                    }
+                                </CardHeaderActions>
+                            </MudCardHeader>
+                            <MudCardContent Class="py-1">
+                                @if (!string.IsNullOrEmpty(entry.SourceSave))
+                                {
+                                    <MudText Typo="@Typo.caption"
+                                             Class="d-block">
+                                        From: @entry.SourceSave
+                                    </MudText>
+                                }
+                                <MudText Typo="@Typo.caption"
+                                         Class="d-block">
+                                    Added: @entry.AddedAt.LocalDateTime.ToString("yyyy-MM-dd")
+                                </MudText>
+                            </MudCardContent>
+                            <MudCardActions>
+                                @if (AppState.SaveFile is not null)
+                                {
+                                    <MudButton Size="@Size.Small"
+                                               Variant="@Variant.Filled"
+                                               StartIcon="@Icons.Material.Filled.MoveToInbox"
+                                               Color="@Color.Default"
+                                               OnClick="@(() => SendToSave(entry))"
+                                               Disabled="@isBusy"
+                                               title="Send to save">
+                                        Send
+                                    </MudButton>
+                                }
+                                <MudButton Size="@Size.Small"
+                                           Variant="@Variant.Outlined"
+                                           StartIcon="@Icons.Material.Filled.Delete"
+                                           Color="@Color.Error"
+                                           OnClick="@(() => DeleteOneAsync(entry))"
+                                           Disabled="@isBusy"
+                                           title="Remove from bank">
+                                    Remove
+                                </MudButton>
+                            </MudCardActions>
+                        </MudCard>
+                    </MudItem>
+                }
+            </MudGrid>
+        </div>
+
+        <MudStack Row
+                  Spacing="2"
+                  AlignItems="@AlignItems.Center"
+                  Class="pa-2">
+            <MudPagination @bind-Selected="currentPage"
+                           @bind-Selected:after="UpdatePagination"
+                           Count="@TotalPages"
+                           ShowNextButton/>
+
+            <MudSelect T="int"
+                       @bind-Value="pageSize"
+                       @bind-Value:after="OnPageSizeChanged"
+                       Label="Per page"
+                       Style="max-width: 100px;">
+                @foreach (var size in PageSizes)
+                {
+                    <MudSelectItem Value="@size">@size</MudSelectItem>
+                }
+            </MudSelect>
+        </MudStack>
+    }
+
+</div>

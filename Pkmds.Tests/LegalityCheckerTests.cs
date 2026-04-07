@@ -95,7 +95,7 @@ public class LegalityCheckerTests
                 }
             }
         }
-        foundCandidate:
+    foundCandidate:
 
         pkm.Should().NotBeNull("Black full completion save must have at least one non-shiny box Pokémon");
 

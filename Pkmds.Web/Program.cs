@@ -45,7 +45,8 @@ services
     .AddSingleton<BlazorMd5Provider>()
     .AddSingleton<IBugReportService, BugReportService>()
     .AddSingleton<IDescriptionService, DescriptionService>()
-    .AddSingleton<IBatchEditorService, BatchEditorService>();
+    .AddSingleton<IBatchEditorService, BatchEditorService>()
+    .AddScoped<IBankService, BankService>();
 
 var app = builder.Build();
 

@@ -48,10 +48,13 @@ public static class PkmExtensions
         {
             var type1 = pkm.PersonalInfo.Type1;
             var type2 = pkm.PersonalInfo.Type2;
-            var generation = pkm.Generation;
 
-            return generation <= 2
-                ? (ConvertGenerationType(type1, generation), ConvertGenerationType(type2, generation))
+            // Only convert Gen 1/2 type IDs when the PKM is still in its original
+            // format (PK1/PK2). Transferred Pokémon (e.g. PK7 with Generation=1)
+            // already have modern type IDs in PersonalInfo — re-converting them
+            // produces wrong results and can cause out-of-range errors.
+            return pkm.Format <= 2
+                ? (ConvertGenerationType(type1, pkm.Generation), ConvertGenerationType(type2, pkm.Generation))
                 : (type1, type2);
 
             static byte ConvertGenerationType(byte type, byte generation) =>
