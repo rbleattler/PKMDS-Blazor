@@ -1,6 +1,6 @@
 @inherits RefreshAwareComponent
 
-<MudStack Class="pa-2"
+<MudStack Class="pa-2 bank-tab-root"
           Spacing="2">
 
     @* ── Backup reminder ── *@
@@ -139,7 +139,7 @@
     }
     else
     {
-        <div style="overflow-y: auto; max-height: calc(100dvh - 320px); padding-bottom: env(safe-area-inset-bottom, 0px);">
+        <div class="bank-card-grid">
             <MudGrid Spacing="1">
                 @foreach (var entry in paginatedEntries)
                 {

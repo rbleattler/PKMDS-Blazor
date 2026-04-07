@@ -529,6 +529,19 @@ body, html {
     z-index: 1000;
 }
 
+/* ── Pokémon Bank tab ── */
+.bank-tab-root {
+    height: 100%;
+    overflow: hidden;
+}
+
+.bank-card-grid {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 #blazor-error-ui .dismiss {
     cursor: pointer;
     position: absolute;
