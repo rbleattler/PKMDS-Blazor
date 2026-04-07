@@ -183,51 +183,8 @@ public partial class PokemonSlotComponent : IDisposable
     /// </returns>
     private bool? GetLegalityValid() => legalityValid;
 
-    private string? GetStatusOverlaySpriteFileName()
-    {
-        if (Pokemon is not { Species: > 0 } || !Pokemon.PartyStatsPresent)
-        {
-            return null;
-        }
-
-        if (Pokemon.Stat_HPCurrent == 0)
-        {
-            return ImageHelper.GetFaintStatusSpriteFileName();
-        }
-
-        if (Pokemon.Format <= 4)
-        {
-            var condition = (StatusCondition)(Pokemon.Status_Condition & 0xFF);
-            return condition switch
-            {
-                StatusCondition.None => null,
-                <= StatusCondition.Sleep7 => ImageHelper.GetSleepStatusSpriteFileName(),
-                _ when (condition & StatusCondition.PoisonBad) != 0 =>
-                    ImageHelper.GetToxicStatusSpriteFileName(),
-                _ when (condition & StatusCondition.Poison) != 0 =>
-                    ImageHelper.GetPoisonStatusSpriteFileName(),
-                _ when (condition & StatusCondition.Burn) != 0 =>
-                    ImageHelper.GetBurnStatusSpriteFileName(),
-                _ when (condition & StatusCondition.Freeze) != 0 =>
-                    ImageHelper.GetFrostbiteStatusSpriteFileName(),
-                _ when (condition & StatusCondition.Paralysis) != 0 =>
-                    ImageHelper.GetParalysisStatusSpriteFileName(),
-                _ => null,
-            };
-        }
-
-        var statusType = (StatusType)(Pokemon.Status_Condition & 0xFF);
-        return statusType switch
-        {
-            StatusType.None => null,
-            StatusType.Sleep => ImageHelper.GetSleepStatusSpriteFileName(),
-            StatusType.Poison => ImageHelper.GetPoisonStatusSpriteFileName(),
-            StatusType.Burn => ImageHelper.GetBurnStatusSpriteFileName(),
-            StatusType.Freeze => ImageHelper.GetFrostbiteStatusSpriteFileName(),
-            StatusType.Paralysis => ImageHelper.GetParalysisStatusSpriteFileName(),
-            _ => null,
-        };
-    }
+    private string? GetStatusOverlaySpriteFileName() =>
+        ImageHelper.GetStatusOverlaySpriteFileName(Pokemon);
 
     private int? GetLetsGoPartySlotNumber()
     {

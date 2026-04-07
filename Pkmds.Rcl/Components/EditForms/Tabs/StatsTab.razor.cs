@@ -463,12 +463,9 @@ public partial class StatsTab : IDisposable
                 ImageHelper.GetSleepStatusSpriteFileName()));
             options.Add(new StatusOption((int)StatusCondition.Poison, "Poison",
                 ImageHelper.GetPoisonStatusSpriteFileName()));
-            if (Pokemon.Format is 3 or 4)
-            {
-                options.Add(new StatusOption((int)StatusCondition.PoisonBad, "Toxic",
-                    ImageHelper.GetToxicStatusSpriteFileName()));
-            }
-
+            options.Add(new StatusOption((int)StatusCondition.PoisonBad,
+                Pokemon.Format is 3 or 4 ? "Toxic" : "Badly Poisoned",
+                ImageHelper.GetToxicStatusSpriteFileName()));
             options.Add(new StatusOption((int)StatusCondition.Burn, "Burn",
                 ImageHelper.GetBurnStatusSpriteFileName()));
             options.Add(new StatusOption((int)StatusCondition.Freeze, "Freeze",
@@ -495,51 +492,8 @@ public partial class StatsTab : IDisposable
         return options;
     }
 
-    private string? GetCurrentStatusSpriteFileName()
-    {
-        if (Pokemon is null)
-        {
-            return null;
-        }
-
-        if (Pokemon.Stat_HPCurrent == 0)
-        {
-            return ImageHelper.GetFaintStatusSpriteFileName();
-        }
-
-        if (Pokemon.Format <= 4)
-        {
-            var condition = (StatusCondition)(Pokemon.Status_Condition & 0xFF);
-            return condition switch
-            {
-                StatusCondition.None => null,
-                <= StatusCondition.Sleep7 => ImageHelper.GetSleepStatusSpriteFileName(),
-                _ when (condition & StatusCondition.PoisonBad) != 0 =>
-                    ImageHelper.GetToxicStatusSpriteFileName(),
-                _ when (condition & StatusCondition.Poison) != 0 =>
-                    ImageHelper.GetPoisonStatusSpriteFileName(),
-                _ when (condition & StatusCondition.Burn) != 0 =>
-                    ImageHelper.GetBurnStatusSpriteFileName(),
-                _ when (condition & StatusCondition.Freeze) != 0 =>
-                    ImageHelper.GetFrostbiteStatusSpriteFileName(),
-                _ when (condition & StatusCondition.Paralysis) != 0 =>
-                    ImageHelper.GetParalysisStatusSpriteFileName(),
-                _ => null,
-            };
-        }
-
-        var statusType = (StatusType)(Pokemon.Status_Condition & 0xFF);
-        return statusType switch
-        {
-            StatusType.None => null,
-            StatusType.Sleep => ImageHelper.GetSleepStatusSpriteFileName(),
-            StatusType.Poison => ImageHelper.GetPoisonStatusSpriteFileName(),
-            StatusType.Burn => ImageHelper.GetBurnStatusSpriteFileName(),
-            StatusType.Freeze => ImageHelper.GetFrostbiteStatusSpriteFileName(),
-            StatusType.Paralysis => ImageHelper.GetParalysisStatusSpriteFileName(),
-            _ => null,
-        };
-    }
+    private string? GetCurrentStatusSpriteFileName() =>
+        ImageHelper.GetStatusOverlaySpriteFileName(Pokemon);
 
     private bool IsSleepSelected()
     {
