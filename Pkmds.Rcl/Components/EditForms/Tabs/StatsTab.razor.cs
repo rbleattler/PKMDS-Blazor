@@ -334,8 +334,7 @@ public partial class StatsTab : IDisposable
         setter(pkm, newValue);
     }
 
-    private bool IsPartyPokemon =>
-        AppState?.SelectedPartySlotNumber is not null && Pokemon?.PartyStatsPresent == true;
+    private bool IsPartyPokemon => Pokemon?.PartyStatsPresent == true;
 
     private void OnCurrentHpChanged(int value)
     {
