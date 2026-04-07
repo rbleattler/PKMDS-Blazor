@@ -9,10 +9,10 @@ public interface IBankService
     Task<IReadOnlyList<BankEntry>> GetAllAsync();
 
     /// <summary>Adds a single Pokémon to the bank.</summary>
-    Task AddAsync(PKM pkm, string? tag = null);
+    Task AddAsync(PKM pkm, string? tag = null, string? sourceSave = null);
 
     /// <summary>Adds multiple Pokémon to the bank.</summary>
-    Task AddRangeAsync(IEnumerable<PKM> pokemon, string? tag = null);
+    Task AddRangeAsync(IEnumerable<PKM> pokemon, string? tag = null, string? sourceSave = null);
 
     /// <summary>Removes the entry with the given <paramref name="id"/> from the bank.</summary>
     Task DeleteAsync(long id);

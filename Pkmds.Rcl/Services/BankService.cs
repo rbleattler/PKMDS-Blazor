@@ -7,7 +7,7 @@ public class BankService(IJSRuntime js) : IBankService, IAsyncDisposable
     private async Task<IJSObjectReference> GetModuleAsync() =>
         _module ??= await js.InvokeAsync<IJSObjectReference>("import", "./js/bank.js");
 
-    public async Task AddAsync(PKM pkm, string? tag = null)
+    public async Task AddAsync(PKM pkm, string? tag = null, string? sourceSave = null)
     {
         var module = await GetModuleAsync();
         var b64 = Convert.ToBase64String(pkm.DecryptedBoxData);
@@ -17,12 +17,13 @@ public class BankService(IJSRuntime js) : IBankService, IAsyncDisposable
             isShiny = pkm.IsShiny,
             nickname = pkm.Nickname,
             ext = pkm.Extension,
-            tag
+            tag,
+            sourceSave
         };
         await module.InvokeVoidAsync("addPokemon", b64, meta);
     }
 
-    public async Task AddRangeAsync(IEnumerable<PKM> pokemon, string? tag = null)
+    public async Task AddRangeAsync(IEnumerable<PKM> pokemon, string? tag = null, string? sourceSave = null)
     {
         var module = await GetModuleAsync();
         // Collect all entries first and send in one JS call / one IDB transaction
@@ -36,7 +37,8 @@ public class BankService(IJSRuntime js) : IBankService, IAsyncDisposable
                 isShiny = pkm.IsShiny,
                 nickname = pkm.Nickname,
                 ext = pkm.Extension,
-                tag
+                tag,
+                sourceSave
             }
         }).ToArray();
 
@@ -97,6 +99,7 @@ public class BankService(IJSRuntime js) : IBankService, IAsyncDisposable
                 Pokemon = pkm,
                 SpeciesName = string.IsNullOrEmpty(speciesName) ? "Unknown" : speciesName,
                 Tag = r.Meta.Tag,
+                SourceSave = r.Meta.SourceSave,
                 AddedAt = addedAt
             });
         }
@@ -214,5 +217,8 @@ public class BankService(IJSRuntime js) : IBankService, IAsyncDisposable
 
         [System.Text.Json.Serialization.JsonPropertyName("tag")]
         public string? Tag { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("sourceSave")]
+        public string? SourceSave { get; set; }
     }
 }

@@ -196,21 +196,13 @@
                                 </CardHeaderActions>
                             </MudCardHeader>
                             <MudCardContent Class="py-1">
-                                <MudStack Row
-                                          Spacing="1"
-                                          AlignItems="@AlignItems.Center">
-                                    @{ var originSrc = GetOriginMarkSprite(entry.Pokemon); }
-                                    @if (originSrc is not null)
-                                    {
-                                        <img src="@originSrc"
-                                             alt="Origin Mark"
-                                             title="Origin Mark"
-                                             style="width: 16px; height: 16px; object-fit: contain;">
-                                    }
-                                    <MudText Typo="@Typo.caption">
-                                        @entry.Pokemon.Version
+                                @if (!string.IsNullOrEmpty(entry.SourceSave))
+                                {
+                                    <MudText Typo="@Typo.caption"
+                                             Class="d-block">
+                                        From: @entry.SourceSave
                                     </MudText>
-                                </MudStack>
+                                }
                                 <MudText Typo="@Typo.caption"
                                          Class="d-block">
                                     Added: @entry.AddedAt.LocalDateTime.ToString("yyyy-MM-dd")
