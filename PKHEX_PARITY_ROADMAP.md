@@ -52,7 +52,7 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 ### 1.1 Pokemon Editor Enhancements
 
 #### Ribbon Editor
-**Status:** ⚠️ Partial (ribbon legality checking and search/filter not yet implemented)  
+**Status:** ⚠️ Partial (ribbon legality checking and search/filter — #650)  
 **Complexity:** High  
 **Tasks:**
 - [x] Design Ribbon UI component with tabs for different ribbon categories
@@ -94,7 +94,7 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - [x] Create unit tests for contest stats
 
 #### Form/Appearance Editor
-**Status:** ⚠️ Partial (basic form support exists; Spinda spot preview implemented — #554)
+**Status:** ⚠️ Partial (basic form support exists; Spinda spot preview implemented — #554; remaining enhancements — #651)
 **Complexity:** Medium
 **Tasks:**
 - [ ] Enhance form selection UI with visual previews
@@ -262,6 +262,7 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 **Status:** ❌ Not Implemented  
 **Complexity:** Very High  
 **Priority:** High  
+**Tracks:** #649
 **Tasks:**
 - [ ] Design Batch Editor UI with script input
 - [ ] Implement batch editor scripting engine:
@@ -337,18 +338,10 @@ Bring the Mystery Gift Database tab to full parity with PKHeX's `SAV_MysteryGift
 - [x] Invalid record cleanup — corrupt/unparseable IndexedDB entries auto-deleted on load
 
 **Remaining:**
-- [ ] Create advanced search filters:
-  - [ ] Species/forms
-  - [ ] Moves
-  - [ ] Abilities
-  - [ ] Ribbons
-  - [ ] Stats/IVs
-  - [ ] Ball type
-  - [ ] OT/TID
-  - [ ] Generation/origin
-- [ ] Add folder/tag organization system
-- [ ] Support drag-and-drop from database to save
-- [ ] Create database statistics view
+- [ ] Create advanced search filters (#645): species/forms, moves, abilities, ribbons, stats/IVs, ball type, OT/TID, generation/origin, source save
+- [ ] Add folder/tag organization system (#646)
+- [ ] Support drag-and-drop from database to save (#647)
+- [ ] Create database statistics view (#648)
 - [ ] Support multiple database profiles
 
 ### 2.2 Encounter Database
@@ -412,8 +405,8 @@ Bring the Mystery Gift Database tab to full parity with PKHeX's `SAV_MysteryGift
 - [x] **Info popovers on filter fields and result rows (#579)** — ball/ability/held item filter fields show item sprites and description popovers; result rows show ball and held item sprites; explicit "Jump to Pokémon" button per row replaces implicit row-click navigation
 
 ### 2.5 Pokédex Editor
-**Tracks:** #414
-**Status:** ⚠️ Partial (per-species Seen/Caught grid + LA research task editor implemented via #490/#437/#438/#439/#510; bulk operations and progress bars via #436; per-generation advanced fields — gender/shiny tracking, form tracking, language flags — still absent)
+**Tracks:** #414, #654
+**Status:** ⚠️ Partial (per-species Seen/Caught grid + LA research task editor implemented via #490/#437/#438/#439/#510; bulk operations and progress bars via #436; per-generation advanced fields — gender/shiny tracking, form tracking, language flags — #654)
 **Complexity:** High
 **PKHeX Reference:** `SAV_SimplePokedex.cs`, `SAV_Pokedex4.cs`, `SAV_Pokedex5.cs`, `SAV_PokedexXY.cs`, `SAV_PokedexORAS.cs`, `SAV_PokedexSM.cs`, `SAV_PokedexGG.cs`, `SAV_PokedexSWSH.cs`, `SAV_PokedexBDSP.cs`, `SAV_PokedexLA.cs`, `SAV_PokedexSV.cs`, `SAV_PokedexSVKitakami.cs`, `SAV_Pokedex9a.cs`
 **Core API:** `ZukanBase` / `Zukan4` / `Zukan5` / `Zukan6` / `Zukan7` / `Zukan7b` / `Zukan8` / `Zukan8b` / `PokedexSave8a` / `Zukan9Paldea` / `Zukan9Kitakami` / `Zukan9a` in `PKHeX.Core/Saves/Substructures/PokeDex/`
