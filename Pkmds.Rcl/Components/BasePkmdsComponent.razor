@@ -1,6 +1,9 @@
 ﻿@code {
     protected const string ColumnClass = "d-flex align-center justify-center";
 
+    private static string GetTypeName(byte type) =>
+        type < GameInfo.Strings.Types.Count ? GameInfo.Strings.Types[type] : "???";
+
     private static RenderFragment TypeSummary(byte type1, byte type2) =>
         @<MudStack Row
                    Class="my-2"
@@ -9,15 +12,15 @@
                 Type:
             </MudText>
             <MudImage Src="@ImageHelper.GetTypeWideSpriteFileName(type1)"
-                      Alt="@GameInfo.Strings.Types[type1]"
-                      title="@GameInfo.Strings.Types[type1]"
+                      Alt="@GetTypeName(type1)"
+                      title="@GetTypeName(type1)"
                       ObjectFit="@ObjectFit.Contain"
                       ObjectPosition="@ObjectPosition.Center"/>
             @if (type1 != type2)
             {
                 <MudImage Src="@ImageHelper.GetTypeWideSpriteFileName(type2)"
-                          Alt="@GameInfo.Strings.Types[type2]"
-                          title="@GameInfo.Strings.Types[type2]"
+                          Alt="@GetTypeName(type2)"
+                          title="@GetTypeName(type2)"
                           ObjectFit="@ObjectFit.Contain"
                           ObjectPosition="@ObjectPosition.Center"/>
             }
@@ -28,8 +31,8 @@
 
     protected static RenderFragment MoveTypeSummary(byte type) =>
         @<MudImage Src="@ImageHelper.GetTypeSquareSpriteFileName(type)"
-                   Alt="@GameInfo.Strings.Types[type]"
-                   title="@GameInfo.Strings.Types[type]"
+                   Alt="@GetTypeName(type)"
+                   title="@GetTypeName(type)"
                    ObjectFit="@ObjectFit.Contain"
                    ObjectPosition="@ObjectPosition.Center"
                    Width="30"/>;
