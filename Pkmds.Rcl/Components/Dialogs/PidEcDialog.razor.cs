@@ -2,6 +2,13 @@ namespace Pkmds.Rcl.Components.Dialogs;
 
 public partial class PidEcDialog
 {
+    // Yield to the browser event loop every this many iterations to keep the UI responsive.
+    private const int YieldInterval = 10_000;
+
+    private bool avoidShiny = true;
+
+    private bool forceShiny;
+
     [Parameter]
     [EditorRequired]
     public PKM? Pokemon { get; set; }
@@ -17,8 +24,6 @@ public partial class PidEcDialog
 
     private bool KeepGender { get; set; } = true;
 
-    private bool avoidShiny = true;
-
     private bool AvoidShiny
     {
         get => avoidShiny;
@@ -31,8 +36,6 @@ public partial class PidEcDialog
             }
         }
     }
-
-    private bool forceShiny;
 
     private bool ForceShiny
     {
@@ -52,9 +55,6 @@ public partial class PidEcDialog
     private bool IsGen345 => SaveGeneration is 3 or 4 or 5;
 
     private bool IsGenerating { get; set; }
-
-    // Yield to the browser event loop every this many iterations to keep the UI responsive.
-    private const int YieldInterval = 10_000;
 
     private async Task GeneratePid()
     {
@@ -79,23 +79,28 @@ public partial class PidEcDialog
         };
         var desiredAbilityBit = Pokemon.PID & abilityBitMask;
 
-        const int MaxAttempts = 1_000_000;
-        uint pid;
+        const int maxAttempts = 1_000_000;
         var attempts = 0;
         IsGenerating = true;
         try
         {
+            uint pid;
             do
             {
-                if (++attempts > MaxAttempts)
+                if (++attempts > maxAttempts)
                 {
-                    Snackbar.Add("Could not find a PID satisfying all constraints after 1,000,000 attempts. Try relaxing the constraints.", Severity.Warning);
+                    Snackbar.Add(
+                        "Could not find a PID satisfying all constraints after 1,000,000 attempts. " +
+                        "Try relaxing the constraints.",
+                        Severity.Warning);
                     return;
                 }
+
                 if (attempts % YieldInterval == 0)
                 {
                     await Task.Yield();
                 }
+
                 pid = NextRandomUInt32();
                 Pokemon.PID = pid; // needed to evaluate IsShiny
             } while (
@@ -141,23 +146,29 @@ public partial class PidEcDialog
         // Loop until we find a seed whose PID satisfies all checked constraints.
         // For Gen 3–5, both nature and gender are encoded in the PID, so a random
         // PID will only match by chance — this avoids the user having to retry manually.
-        const int MaxAttempts = 1_000_000;
-        uint seed, pid;
+        const int maxAttempts = 1_000_000;
+        uint seed;
         var attempts = 0;
         IsGenerating = true;
         try
         {
+            uint pid;
             do
             {
-                if (++attempts > MaxAttempts)
+                if (++attempts > maxAttempts)
                 {
-                    Snackbar.Add("Could not find a PID satisfying all constraints after 1,000,000 attempts. Try relaxing the constraints.", Severity.Warning);
+                    Snackbar.Add(
+                        "Could not find a PID satisfying all constraints after 1,000,000 attempts. " +
+                        "Try relaxing the constraints.",
+                        Severity.Warning);
                     return;
                 }
+
                 if (attempts % YieldInterval == 0)
                 {
                     await Task.Yield();
                 }
+
                 seed = NextRandomUInt32();
                 pid = ClassicEraRNG.GetSequentialPID(ref seed);
                 Pokemon.PID = pid; // needed to evaluate IsShiny
