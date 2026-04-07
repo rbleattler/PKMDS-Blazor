@@ -127,6 +127,17 @@
                     </object>
                 </div>
             }
+
+            @if (GetStatusOverlaySpriteFileName() is { } statusSprite)
+            {
+                <div class="status-indicator-icon"
+                     title="Status Condition">
+                    <img src="@statusSprite"
+                         alt="Status"
+                         class="w-full h-full object-contain"
+                         draggable="false">
+                </div>
+            }
         }
     </div>
 </MudPaper>
