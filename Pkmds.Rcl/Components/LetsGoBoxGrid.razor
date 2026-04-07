@@ -2,9 +2,9 @@
 
 @if (AppState.SaveFile is SAV7b saveFile)
 {
-    <MudText>
-        Note: The box grid is scrollable.
-    </MudText>
+    <MudAlert Severity="Severity.Info" Dense>
+        The box grid is scrollable.
+    </MudAlert>
     <div
         class="overflow-x-hidden overflow-y-auto max-w-full h-[398px] xl:h-[calc(100vh-319px)] xl:h-[calc(100dvh-319px)] grid grid-cols-6 grid-rows-[repeat(167,80px)] gap-1">
         @{
