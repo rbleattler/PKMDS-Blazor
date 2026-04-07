@@ -21,12 +21,27 @@
             }
         </MudGrid>
     </div>
-    <MudButton OnClick="@ExportAsShowdown"
-               ButtonType="@ButtonType.Button"
-               Variant="@Variant.Filled"
-               StartIcon="@Icons.Material.Filled.Share"
-               Class="my-3"
-               Color="@Color.Default">
-        Export Party As Showdown
-    </MudButton>
+    <div class="flex flex-wrap gap-2 my-3">
+        <MudButton OnClick="@ExportAsShowdown"
+                   ButtonType="@ButtonType.Button"
+                   Variant="@Variant.Filled"
+                   StartIcon="@Icons.Material.Filled.Share"
+                   Color="@Color.Default">
+            Export Party As Showdown
+        </MudButton>
+        <MudButton OnClick="@ExportToPokePaste"
+                   ButtonType="@ButtonType.Button"
+                   Variant="@Variant.Filled"
+                   StartIcon="@Icons.Material.Filled.CloudUpload"
+                   Color="@Color.Default">
+            Export to PokePaste
+        </MudButton>
+        <MudButton OnClick="@ImportFromShowdown"
+                   ButtonType="@ButtonType.Button"
+                   Variant="@Variant.Filled"
+                   StartIcon="@Icons.Material.Filled.FileUpload"
+                   Color="@Color.Default">
+            Import from Showdown
+        </MudButton>
+    </div>
 }

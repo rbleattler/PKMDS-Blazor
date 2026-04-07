@@ -329,6 +329,67 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         return sbShowdown.ToString().Trim();
     }
 
+    public string ExportBoxAsShowdown(int boxNumber)
+    {
+        if (AppState.SaveFile is not { } sav)
+        {
+            return string.Empty;
+        }
+
+        var sbShowdown = new StringBuilder();
+
+        for (var slot = 0; slot < sav.BoxSlotCount; slot++)
+        {
+            var pkm = sav.GetBoxSlotAtIndex(boxNumber, slot);
+            if (pkm.Species == 0)
+            {
+                continue;
+            }
+
+            sbShowdown
+                .AppendLine(ShowdownParsing.GetShowdownText(pkm))
+                .AppendLine();
+        }
+
+        return sbShowdown.ToString().TrimEnd();
+    }
+
+    public IReadOnlyList<ShowdownSet> ParseShowdownText(string text) =>
+        [.. ShowdownParsing.GetShowdownSets(text).Where(s => s.Species != 0)];
+
+    public PKM? ConvertShowdownSetToPkm(ShowdownSet set)
+    {
+        if (AppState.SaveFile is not { } sav || set.Species == 0)
+        {
+            return null;
+        }
+
+        var pkm = sav.BlankPKM;
+        pkm.ApplySetDetails(set);
+
+        // Apply trainer info from save when not provided by the template,
+        // mirroring the pattern in GeneratePokemonFromEncounter.
+        if (string.IsNullOrEmpty(pkm.OriginalTrainerName) && !string.IsNullOrEmpty(sav.OT))
+        {
+            pkm.OriginalTrainerName = sav.OT;
+            pkm.OriginalTrainerGender = sav.Gender;
+        }
+
+        return pkm;
+    }
+
+    public bool TryPlacePokemonInPartySlot(PKM pkm)
+    {
+        if (AppState.SaveFile is not { } sav || sav.PartyCount >= 6)
+        {
+            return false;
+        }
+
+        sav.SetPartySlotAtIndex(pkm, sav.PartyCount);
+        RefreshService.RefreshPartyState();
+        return true;
+    }
+
     public string GetIdFormatString(bool isSid = false)
     {
         if (AppState.SaveFile is not { } saveFile)

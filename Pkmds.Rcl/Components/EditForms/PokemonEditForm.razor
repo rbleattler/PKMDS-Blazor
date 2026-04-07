@@ -78,6 +78,29 @@
                 Showdown
             </MudButton>
 
+            <MudButton OnClick="@ExportToPokePaste"
+                       ButtonType="@ButtonType.Button"
+                       Variant="@Variant.Filled"
+                       StartIcon="@Icons.Material.Filled.CloudUpload"
+                       Class="my-2"
+                       Color="@Color.Default"
+                       Size="@Size.Small"
+                       title="Export Pokémon to PokePaste"
+                       Disabled="@(Pokemon.Species.IsInvalidSpecies())">
+                PokePaste
+            </MudButton>
+
+            <MudButton OnClick="@ImportFromShowdown"
+                       ButtonType="@ButtonType.Button"
+                       Variant="@Variant.Filled"
+                       StartIcon="@Icons.Material.Filled.FileUpload"
+                       Class="my-2"
+                       Color="@Color.Default"
+                       Size="@Size.Small"
+                       title="Import Pokémon from Showdown / PokePaste">
+                Import
+            </MudButton>
+
         </div>
 
         <div class="edit-form-tabs-container">

@@ -11,8 +11,27 @@ public partial class PartyGrid : RefreshAwareComponent
         ? Constants.SelectedSlotClass
         : string.Empty;
 
+    private static readonly DialogOptions ImportExportDialogOptions = new()
+    {
+        CloseOnEscapeKey = true,
+        MaxWidth = MaxWidth.Medium,
+        FullWidth = true,
+    };
+
     private void ExportAsShowdown() =>
         DialogService.ShowAsync<ShowdownExportDialog>(
             "Showdown Export",
             new DialogOptions { CloseOnEscapeKey = true });
+
+    private void ExportToPokePaste() =>
+        DialogService.ShowAsync<PokePasteExportDialog>(
+            "Export to PokePaste",
+            new DialogParameters<PokePasteExportDialog>(),
+            ImportExportDialogOptions);
+
+    private void ImportFromShowdown() =>
+        DialogService.ShowAsync<ShowdownImportDialog>(
+            "Import from Showdown / PokePaste",
+            new DialogParameters<ShowdownImportDialog>(),
+            ImportExportDialogOptions);
 }

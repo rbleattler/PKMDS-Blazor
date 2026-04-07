@@ -193,6 +193,42 @@ public interface IAppService
     string ExportPartyAsShowdown();
 
     /// <summary>
+    /// Exports all Pokémon in a box to Pokémon Showdown format text, skipping empty slots.
+    /// </summary>
+    /// <param name="boxNumber">The 0-based box index to export.</param>
+    /// <returns>A Showdown-formatted text representation of the non-empty box slots.</returns>
+    string ExportBoxAsShowdown(int boxNumber);
+
+    /// <summary>
+    /// Parses raw Showdown / PokePaste text into a list of <see cref="ShowdownSet"/> objects.
+    /// Sets with an unknown species (Species == 0) are excluded from the result.
+    /// </summary>
+    /// <param name="text">The raw Showdown-format text to parse.</param>
+    /// <returns>A read-only list of successfully parsed sets.</returns>
+    IReadOnlyList<ShowdownSet> ParseShowdownText(string text);
+
+    /// <summary>
+    /// Converts a <see cref="ShowdownSet"/> into a <see cref="PKM"/> compatible with the current save file.
+    /// Applies trainer info (OT name, gender) from the save file when not provided by the template.
+    /// </summary>
+    /// <param name="set">The battle template to convert.</param>
+    /// <returns>
+    /// The generated <see cref="PKM" />, or <see langword="null" /> if no save file is loaded
+    /// or the set has no species.
+    /// </returns>
+    PKM? ConvertShowdownSetToPkm(ShowdownSet set);
+
+    /// <summary>
+    /// Places a Pokémon in the first available party slot (does not fall back to boxes).
+    /// </summary>
+    /// <param name="pkm">The Pokémon to place.</param>
+    /// <returns>
+    /// <see langword="true" /> if the Pokémon was placed in the party;
+    /// <see langword="false" /> if the party is full or no save file is loaded.
+    /// </returns>
+    bool TryPlacePokemonInPartySlot(PKM pkm);
+
+    /// <summary>
     /// Gets the format string for displaying trainer IDs based on the current save file's format.
     /// </summary>
     /// <param name="isSid">Whether to get the format for SID instead of TID.</param>

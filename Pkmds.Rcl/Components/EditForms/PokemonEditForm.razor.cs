@@ -30,11 +30,30 @@ public partial class PokemonEditForm : IDisposable
             ? AppService.GetLegalityAnalysis(Pokemon)
             : null;
 
+    private static readonly DialogOptions ImportExportDialogOptions = new()
+    {
+        CloseOnEscapeKey = true,
+        MaxWidth = MaxWidth.Medium,
+        FullWidth = true,
+    };
+
     private void ExportAsShowdown() =>
         DialogService.ShowAsync<ShowdownExportDialog>(
             "Showdown Export",
             new() { { nameof(ShowdownExportDialog.Pokemon), Pokemon } },
             new() { CloseOnEscapeKey = true });
+
+    private void ExportToPokePaste() =>
+        DialogService.ShowAsync<PokePasteExportDialog>(
+            "Export to PokePaste",
+            new() { { nameof(PokePasteExportDialog.Pokemon), Pokemon } },
+            ImportExportDialogOptions);
+
+    private void ImportFromShowdown() =>
+        DialogService.ShowAsync<ShowdownImportDialog>(
+            "Import from Showdown / PokePaste",
+            new DialogParameters<ShowdownImportDialog>(),
+            ImportExportDialogOptions);
 
     private void SaveAndClose()
     {
