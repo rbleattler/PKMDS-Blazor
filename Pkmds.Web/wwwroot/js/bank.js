@@ -171,8 +171,14 @@ export async function importAll(jsonBytes) {
 
         for (const entry of valid) {
             // Strip the id so IndexedDB auto-assigns a new one (avoids conflicts).
-            const { id: _id, ...entryWithoutId } = entry;
-            store.add(entryWithoutId);
+            // Normalize addedAt to an ISO string — a non-string value (e.g. a number
+            // from an older or hand-edited export) would survive isValidEntry but
+            // then fail RawEntry.AddedAt deserialization in C#, preventing bank load.
+            const { id: _id, addedAt: rawAddedAt, ...rest } = entry;
+            const addedAt = (typeof rawAddedAt === "string" && rawAddedAt.trim() !== "")
+                ? rawAddedAt
+                : new Date().toISOString();
+            store.add({ ...rest, addedAt });
         }
 
         tx.oncomplete = () => resolve(valid.length);

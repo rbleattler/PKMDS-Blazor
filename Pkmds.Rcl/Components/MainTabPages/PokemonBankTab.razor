@@ -241,7 +241,7 @@
                        @bind-Value:after="OnPageSizeChanged"
                        Label="Per page"
                        Style="max-width: 100px;">
-                @foreach (var size in pageSizes)
+                @foreach (var size in PageSizes)
                 {
                     <MudSelectItem Value="@size">@size</MudSelectItem>
                 }

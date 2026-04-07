@@ -4,7 +4,7 @@ public partial class PokemonBankTab : RefreshAwareComponent
 {
     private const string BackupReminderDismissedKey = "pkmds.bank.backup-reminder-dismissed";
 
-    private static readonly int[] pageSizes = [20, 50, 100];
+    private static readonly int[] PageSizes = [20, 50, 100];
 
     private List<BankEntry> entries = [];
     private List<BankEntry> filteredEntries = [];
@@ -253,27 +253,46 @@ public partial class PokemonBankTab : RefreshAwareComponent
     // ── Send to save ──────────────────────────────────────────────────────
 
     // Core send logic with no UI state management — safe to call in a batch loop.
-    // Returns (true, success message) or (false, error message).
+    // Returns (true, success message) or (false, error message); never throws.
     private (bool Success, string Message) TrySendToSaveCore(BankEntry entry, SaveFile saveFile)
     {
-        var pkm = entry.Pokemon.Clone();
-        if (pkm.GetType() != saveFile.PKMType)
+        try
         {
-            pkm = EntityConverter.ConvertToType(pkm, saveFile.PKMType, out var result);
-            if (pkm is null || !result.IsSuccess)
+            var pkm = entry.Pokemon.Clone();
+            if (pkm.GetType() != saveFile.PKMType)
             {
-                return (false, $"Could not convert {entry.SpeciesName} to the current save format.");
+                // Mirror the AllowIncompatibleConversion pattern used in PokemonSlotComponent
+                // so cross-game conversions (e.g. Gen 8 → Gen 9) are attempted even when
+                // PKHeX considers them "incompatible".
+                var previous = EntityConverter.AllowIncompatibleConversion;
+                EntityConverter.AllowIncompatibleConversion = EntityCompatibilitySetting.AllowIncompatibleAll;
+                try
+                {
+                    pkm = EntityConverter.ConvertToType(pkm, saveFile.PKMType, out var result);
+                    if (pkm is null || !result.IsSuccess)
+                    {
+                        return (false, $"Could not convert {entry.SpeciesName} to the current save format.");
+                    }
+                }
+                finally
+                {
+                    EntityConverter.AllowIncompatibleConversion = previous;
+                }
             }
+
+            saveFile.AdaptToSaveFile(pkm);
+
+            return !AppService.TryPlacePokemonInFirstAvailableSlot(pkm)
+                ? (false, "No empty slots available in the save file.")
+                : (true, $"{entry.SpeciesName} sent to save.");
         }
-
-        saveFile.AdaptToSaveFile(pkm);
-
-        return !AppService.TryPlacePokemonInFirstAvailableSlot(pkm)
-            ? (false, "No empty slots available in the save file.")
-            : (true, $"{entry.SpeciesName} sent to save.");
+        catch (Exception ex)
+        {
+            return (false, $"Failed to send {entry.SpeciesName}: {ex.Message}");
+        }
     }
 
-    private async Task SendToSaveAsync(BankEntry entry)
+    private void SendToSaveAsync(BankEntry entry)
     {
         if (AppState.SaveFile is not { } saveFile)
         {

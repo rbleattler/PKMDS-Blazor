@@ -61,7 +61,19 @@ public class BankService(IJSRuntime js) : IBankService, IAsyncDisposable
 
         foreach (var r in raw)
         {
-            var bytes = Convert.FromBase64String(r.BytesBase64);
+            byte[] bytes;
+            try
+            {
+                bytes = Convert.FromBase64String(r.BytesBase64);
+            }
+            catch (FormatException)
+            {
+                // Record contains invalid base64 data — schedule it for deletion so it
+                // doesn't prevent the rest of the bank from loading.
+                invalidIds.Add(r.Id);
+                continue;
+            }
+
             if (!FileUtil.TryGetPKM(bytes, out var pkm, r.Meta.Ext))
             {
                 // Record is corrupt or uses an unsupported format — schedule it for
