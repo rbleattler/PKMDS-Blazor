@@ -13,6 +13,15 @@ public partial class SaveFileInfoDialog
             ? rev.SaveRevisionString
             : null;
 
+    // SaveFile.Data.Length is 0 for SCBlock-based saves (Gen 8-9) because their
+    // base constructor receives Memory<byte>.Empty — data lives in blocks, not a
+    // contiguous buffer.  Fall back to Write().Length which always produces the
+    // correct serialised size.
+    private int FileSize =>
+        SaveFile is null ? 0
+        : SaveFile.Data.Length > 0 ? SaveFile.Data.Length
+        : SaveFile.Write().Length;
+
     private void Close() => MudDialog.Close(DialogResult.Cancel());
 
     private string GetEncryptionDescription() => SaveFile?.Generation switch

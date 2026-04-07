@@ -389,13 +389,17 @@ public partial class MainLayout : IDisposable
             return;
         }
 
-        // Auto-backup the raw save bytes on successful load (non-fatal).
+        // Auto-backup on successful load (non-fatal).
+        // Use SaveFile.Write() to get properly serialized bytes — the original `data` array
+        // may have been mutated in-place by decryption (e.g. SwishCrypto for Gen 8-9 saves),
+        // making the raw array unparseable by TryGetSaveFile on restore.
         if (SettingsService.Settings.IsAutoBackupEnabled)
         {
             try
             {
+                var backupBytes = AppState.SaveFile.Write().ToArray();
                 await BackupService.CreateBackupAsync(
-                    data, AppState.SaveFile, selectedFile.Name,
+                    backupBytes, AppState.SaveFile, selectedFile.Name,
                     isManicEmu: manicEmuSaveContext is not null, source: "auto");
                 await BackupService.EnforceRetentionAsync(SettingsService.Settings.MaxBackupCount);
             }
