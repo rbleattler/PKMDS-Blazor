@@ -334,7 +334,18 @@ public partial class StatsTab : IDisposable
         setter(pkm, newValue);
     }
 
-    private bool IsPartyPokemon => Pokemon?.PartyStatsPresent == true;
+    private bool IsPartyPokemon => Pokemon is not null && HasPersistentPartyStats;
+
+    // Party stats are genuinely persistent (not just computed for display) when:
+    // - Gen 1/2: box and party format are identical (SIZE_PARTY == SIZE_STORED)
+    // - Let's Go (PB7): party members live in the box
+    // - Any game: Pokémon is explicitly selected from a party slot
+    // For Gen 3+ box Pokémon, LoadPokemonStats computes stats for display but
+    // they aren't saved back to the box format, so we shouldn't offer editing.
+    private bool HasPersistentPartyStats =>
+        Pokemon?.Format <= 2 ||
+        Pokemon is PB7 ||
+        AppState?.SelectedPartySlotNumber is not null;
 
     private void OnCurrentHpChanged(int value)
     {
