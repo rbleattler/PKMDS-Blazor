@@ -206,6 +206,33 @@ body, html {
         overflow: hidden;
     }
 
+    /* Bank tab: the tab panel becomes a flex column so the card grid can
+       fill remaining vertical space without a fragile calc() offset. */
+    .save-file-outer-tabs > .mud-tabs-panels > .mud-tab-panel:has(.bank-tab-content) {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .bank-tab-content {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .bank-tab-root {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .bank-card-grid {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+    }
+
     /* Pokédex tab content: inner MudDataGrid owns its scroll (FixedHeader + Virtualize),
        so the outer container must not add a second scrollbar. */
     .pokedex-tab-content {
@@ -529,18 +556,7 @@ body, html {
     z-index: 1000;
 }
 
-/* ── Pokémon Bank tab ── */
-.bank-tab-root {
-    height: 100%;
-    overflow: hidden;
-}
-
-.bank-card-grid {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-}
+/* ── Pokémon Bank tab (no-op on narrow screens — the tab panel scrolls naturally) ── */
 
 #blazor-error-ui .dismiss {
     cursor: pointer;
