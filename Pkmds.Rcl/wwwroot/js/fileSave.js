@@ -1,4 +1,33 @@
-﻿// Track the last drag event for external file drag
+﻿// Submit a PokePaste create form in a new tab.
+// The /create endpoint on pokepast.es does not set CORS headers, so a direct XHR/fetch
+// POST would be blocked by the browser. Submitting a hidden form with target="_blank"
+// bypasses CORS entirely because it is a standard browser navigation, not an XHR.
+window.submitPokePasteForm = function (paste, title, author, notes) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = 'https://pokepast.es/create';
+    form.target = '_blank';
+    form.rel = 'noopener noreferrer';
+
+    const addField = (name, value) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value ?? '';
+        form.appendChild(input);
+    };
+
+    addField('paste', paste);
+    addField('title', title);
+    addField('author', author);
+    addField('notes', notes);
+
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+};
+
+// Track the last drag event for external file drag
 window.lastDragEvent = null;
 window.droppedFiles = null;
 

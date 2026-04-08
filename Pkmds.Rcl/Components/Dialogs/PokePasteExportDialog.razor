@@ -1,0 +1,51 @@
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="@Typo.h6">Export to PokePaste</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="3">
+
+            <MudTextField Value="@ShowdownText"
+                          Label="Showdown Export Preview"
+                          Lines="10"
+                          Variant="@Variant.Outlined"
+                          ReadOnly="true"/>
+
+            <MudTextField @bind-Value="title"
+                          Label="Title (optional)"
+                          Variant="@Variant.Outlined"
+                          MaxLength="60"/>
+
+            <MudTextField @bind-Value="author"
+                          Label="Author (optional)"
+                          Variant="@Variant.Outlined"
+                          MaxLength="60"/>
+
+            <MudTextField @bind-Value="notes"
+                          Label="Notes (optional)"
+                          Lines="3"
+                          Variant="@Variant.Outlined"/>
+
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@Close"
+                   Variant="@Variant.Filled"
+                   StartIcon="@Icons.Material.Filled.Clear">
+            Cancel
+        </MudButton>
+        <MudButton OnClick="@CopyToClipboardAsync"
+                   Variant="@Variant.Filled"
+                   StartIcon="@Icons.Material.Filled.ContentCopy"
+                   Disabled="@string.IsNullOrWhiteSpace(ShowdownText)">
+            Copy
+        </MudButton>
+        <MudButton OnClick="@UploadToPokePasteAsync"
+                   Variant="@Variant.Filled"
+                   Color="@Color.Primary"
+                   StartIcon="@Icons.Material.Filled.CloudUpload"
+                   Disabled="@string.IsNullOrWhiteSpace(ShowdownText)">
+            Upload to PokePaste
+        </MudButton>
+    </DialogActions>
+</MudDialog>

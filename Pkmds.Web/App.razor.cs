@@ -28,8 +28,23 @@ public partial class App
         }
         catch
         {
-            // Dialog infrastructure may not be available in error boundary context.
-            // Silently fail rather than causing a cascading error.
+            // MudDialogProvider lives inside the ErrorBoundary's child content (via MainLayout).
+            // When the boundary fires, the entire child tree is unmounted — the dialog provider
+            // is gone and ShowAsync silently fails. Fall back to opening the GitHub new-issue
+            // page in a new tab with crash details pre-filled.
+            await OpenGitHubIssueAsync(exception);
         }
+    }
+
+    private async Task OpenGitHubIssueAsync(Exception? exception)
+    {
+        var title = Uri.EscapeDataString($"[Crash] {exception?.GetType().Name}: {exception?.Message}");
+        var body = Uri.EscapeDataString(
+            $"**Version:** {AppState.AppVersion}\n\n" +
+            $"**Error:** `{exception?.GetType().Name}: {exception?.Message}`\n\n" +
+            $"**Stack trace:**\n```\n{exception?.StackTrace?.Trim()}\n```\n\n" +
+            "**Steps to reproduce:**\n*(Please describe what you were doing when this crash occurred)*");
+        var url = $"https://github.com/codemonkey85/PKMDS-Blazor/issues/new?title={title}&body={body}&labels=bug";
+        await JsRuntime.InvokeVoidAsync("window.open", url, "_blank");
     }
 }
