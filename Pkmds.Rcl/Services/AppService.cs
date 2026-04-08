@@ -408,22 +408,16 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
             }
         }
 
-        // Fix any moves that are illegal for the current format/encounter.
-        var la = new LegalityAnalysis(pkm);
-        if (!MoveResult.AllValid(la.Info.Moves))
-        {
-            pkm.SetMoveset();
-        }
+        // ApplySetDetails already handles relearn moves when the encounter is parsed;
+        // we intentionally preserve the moves from the Showdown set rather than calling
+        // SetMoveset(), because with an invalid encounter MoveResult.AllValid returns false
+        // even for legitimately learnable moves, and SetMoveset()'s random fallback can
+        // replace valid user-specified moves with moves the species cannot even learn.
 
-        // Fix relearn moves after potentially changing the moveset.
-        var la2 = new LegalityAnalysis(pkm);
-        if (!MoveResult.AllValid(la2.Info.Relearn))
-        {
-            pkm.SetRelearnMoves(la2);
-        }
-
-        // A blank nickname on a nicknamed Pokémon is invalid; clear the flag instead.
-        if (pkm.IsNicknamed && string.IsNullOrEmpty(pkm.Nickname))
+        // If the nickname buffer is empty (which LoadString checks directly against the raw
+        // trash bytes, not the IsNicknamed flag), clear it so the verifier sees the species
+        // name instead of an empty slot.
+        if (string.IsNullOrEmpty(pkm.Nickname))
         {
             pkm.SetDefaultNickname();
         }
