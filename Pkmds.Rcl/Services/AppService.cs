@@ -375,7 +375,61 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
             pkm.OriginalTrainerGender = sav.Gender;
         }
 
+        ApplyPostImportFixes(pkm, sav);
         return pkm;
+    }
+
+    private static void ApplyPostImportFixes(PKM pkm, SaveFile sav)
+    {
+        // Fill in the language so legality checks that key off it (e.g. nickname language)
+        // don't fail with "unknown language".
+        if (pkm.Language <= 0)
+        {
+            pkm.Language = sav.Language > 0 ? sav.Language : (int)LanguageID.English;
+        }
+
+        // Suggest a met location/level so the encounter check can match a legal origin.
+        var enc = EncounterSuggestion.GetSuggestedMetInfo(pkm);
+        if (enc is { Location: not 0 })
+        {
+            pkm.MetLocation = enc.Location;
+            var metLevel = enc.GetSuggestedMetLevel(pkm);
+            pkm.MetLevel = metLevel;
+            if (pkm.CurrentLevel < metLevel)
+            {
+                pkm.CurrentLevel = metLevel;
+            }
+        }
+
+        // Fix any moves that are illegal for the current format/encounter.
+        var la = new LegalityAnalysis(pkm);
+        if (!MoveResult.AllValid(la.Info.Moves))
+        {
+            pkm.SetMoveset();
+        }
+
+        // Fix relearn moves after potentially changing the moveset.
+        var la2 = new LegalityAnalysis(pkm);
+        if (!MoveResult.AllValid(la2.Info.Relearn))
+        {
+            pkm.SetRelearnMoves(la2);
+        }
+
+        // A blank nickname on a nicknamed Pokémon is invalid; clear the flag instead.
+        if (pkm.IsNicknamed && string.IsNullOrEmpty(pkm.Nickname))
+        {
+            pkm.SetDefaultNickname();
+        }
+
+        // Showdown format has no height/weight data; use average (0x80) to avoid
+        // "improbable height/weight" legality warnings.
+        if (pkm is IScaledSize ss && ss.HeightScalar == 0 && ss.WeightScalar == 0)
+        {
+            ss.HeightScalar = 0x80;
+            ss.WeightScalar = 0x80;
+        }
+
+        pkm.RefreshChecksum();
     }
 
     public bool TryPlacePokemonInPartySlot(PKM pkm)
@@ -388,6 +442,19 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         sav.SetPartySlotAtIndex(pkm, sav.PartyCount);
         RefreshService.RefreshPartyState();
         return true;
+    }
+
+    public int OverwriteParty(IReadOnlyList<PKM> pokemon)
+    {
+        if (AppState.SaveFile is not { } sav || pokemon.Count == 0)
+        {
+            return 0;
+        }
+
+        var list = pokemon.Take(6).ToList();
+        sav.PartyData = list;
+        RefreshService.RefreshPartyState();
+        return list.Count;
     }
 
     public string GetIdFormatString(bool isSid = false)

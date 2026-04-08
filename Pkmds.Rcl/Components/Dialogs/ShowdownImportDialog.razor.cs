@@ -118,53 +118,111 @@ public partial class ShowdownImportDialog
 
     private async Task ImportAsync()
     {
-        if (AppState.SaveFile is null)
+        if (AppState.SaveFile is not { } sav)
         {
             Snackbar.Add("No save file loaded.", Severity.Warning);
             return;
         }
 
-        var imported = 0;
-        var failed = 0;
-
+        // Convert all sets up front so we know exactly what we have.
+        var converted = new List<PKM>(parsedSets.Count);
+        var conversionFailed = 0;
         foreach (var set in parsedSets)
         {
             var pkm = AppService.ConvertShowdownSetToPkm(set);
             if (pkm is null)
             {
-                failed++;
-                continue;
-            }
-
-            var placed = importToParty
-                ? AppService.TryPlacePokemonInPartySlot(pkm)
-                : AppService.TryPlacePokemonInFirstAvailableSlot(pkm);
-
-            if (placed)
-            {
-                imported++;
+                conversionFailed++;
             }
             else
             {
-                failed++;
+                converted.Add(pkm);
             }
         }
 
-        if (imported > 0)
+        if (importToParty)
         {
-            // Placement methods already fire individual refresh events;
-            // fire both here to cover all views regardless of target.
-            RefreshService.RefreshBoxState();
-            RefreshService.RefreshPartyState();
+            await ImportToPartyAsync(sav, converted, conversionFailed);
+        }
+        else
+        {
+            ImportToBox(converted, conversionFailed);
+        }
+    }
+
+    private async Task ImportToPartyAsync(SaveFile sav, List<PKM> converted, int conversionFailed)
+    {
+        var emptySlots = 6 - sav.PartyCount;
+
+        if (converted.Count <= emptySlots)
+        {
+            // Enough empty slots — just fill them.
+            var placed = 0;
+            foreach (var pkm in converted)
+            {
+                if (AppService.TryPlacePokemonInPartySlot(pkm))
+                {
+                    placed++;
+                }
+            }
+
+            ReportResult(placed, conversionFailed + (converted.Count - placed));
+            MudDialog?.Close();
+            return;
+        }
+
+        // Party doesn't have enough room — ask to overwrite.
+        var names = string.Join(", ", converted
+            .Take(6)
+            .Select(p => AppService.GetPokemonSpeciesName(p.Species) ?? p.Species.ToString()));
+
+        var confirm = await DialogService.ShowMessageBoxAsync(
+            "Overwrite Party?",
+            $"The party doesn't have enough empty slots for all {converted.Count} Pokémon. " +
+            $"Replace the entire party with: {names}?",
+            yesText: "Overwrite",
+            cancelText: "Cancel");
+
+        if (confirm != true)
+        {
+            return;
+        }
+
+        var written = AppService.OverwriteParty(converted);
+        var skipped = Math.Max(0, converted.Count - written);
+        ReportResult(written, conversionFailed + skipped);
+        MudDialog?.Close();
+    }
+
+    private void ImportToBox(List<PKM> converted, int conversionFailed)
+    {
+        var placed = 0;
+        foreach (var pkm in converted)
+        {
+            if (AppService.TryPlacePokemonInFirstAvailableSlot(pkm))
+            {
+                placed++;
+            }
+        }
+
+        RefreshService.RefreshBoxState();
+        ReportResult(placed, conversionFailed + (converted.Count - placed));
+        MudDialog?.Close();
+    }
+
+    private void ReportResult(int imported, int failed)
+    {
+        if (imported == 0 && failed == 0)
+        {
+            return;
         }
 
         var severity = failed == 0 ? Severity.Success : Severity.Warning;
         var message = failed == 0
             ? $"Imported {imported} Pokémon."
-            : $"Imported {imported} Pokémon. {failed} could not be placed (no empty slots available).";
+            : $"Imported {imported} Pokémon. {failed} could not be placed.";
 
         Snackbar.Add(message, severity);
-        MudDialog?.Close();
     }
 
     private void Cancel() => MudDialog?.Close(DialogResult.Cancel());

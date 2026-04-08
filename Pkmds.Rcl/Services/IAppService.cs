@@ -229,6 +229,14 @@ public interface IAppService
     bool TryPlacePokemonInPartySlot(PKM pkm);
 
     /// <summary>
+    /// Replaces the entire party with the provided Pokémon (up to 6).
+    /// Any excess Pokémon beyond 6 are silently dropped.
+    /// </summary>
+    /// <param name="pokemon">The list of Pokémon to write into the party.</param>
+    /// <returns>The number of Pokémon actually written.</returns>
+    int OverwriteParty(IReadOnlyList<PKM> pokemon);
+
+    /// <summary>
     /// Gets the format string for displaying trainer IDs based on the current save file's format.
     /// </summary>
     /// <param name="isSid">Whether to get the format for SID instead of TID.</param>
