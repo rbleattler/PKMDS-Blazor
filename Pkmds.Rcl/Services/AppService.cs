@@ -394,24 +394,23 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
             .OrderByDescending(v => (int)v)
             .ToArray();
 
-        // Skip egg encounters: EncounterTypeGroup.Egg has the lowest value (highest priority)
-        // so eggs are returned first within each version. Wild/static encounters are far more
-        // appropriate for competitive Pokémon and avoid the complex egg relearn-move logic.
-        // Keep the first egg encounter as a fallback if no non-egg encounter exists at all.
+        // Skip egg and mystery-gift encounters: the generator yields them first (Egg=1, Mystery=2
+        // have the lowest EncounterTypeGroup values = highest priority) but they're unsuitable for
+        // competitive Pokémon imports: eggs produce complex relearn requirements, mystery gifts set
+        // FatefulEncounter + event marks that the Pokémon hasn't actually received.
+        // Fall back to a gift encounter before an egg if no wild/static/trade is found.
         PKM pkm;
         IEncounterable? foundEnc = null;
         IEncounterable? eggFallback = null;
+        IEncounterable? giftFallback = null;
         foreach (var enc in EncounterMovesetGenerator.GenerateEncounters(probe, set.Moves.AsMemory(), versions))
         {
-            if (enc is IEncounterEgg)
-            {
-                eggFallback ??= enc;
-                continue;
-            }
+            if (enc is IEncounterEgg) { eggFallback ??= enc; continue; }
+            if (enc is MysteryGift) { giftFallback ??= enc; continue; }
             foundEnc = enc;
             break;
         }
-        foundEnc ??= eggFallback; // only use egg if no wild/static/trade/mystery was found
+        foundEnc ??= giftFallback ?? eggFallback;
 
         if (foundEnc is not null)
         {
@@ -429,20 +428,28 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         // nickname, shiny, tera type, etc.) on top of the legally-generated base.
         pkm.ApplySetDetails(set);
 
-        // Fix relearn moves using encounter context (mirrors ALM's SetMovesEVs approach).
-        // ApplySetDetails only fixes relearn moves when they're already invalid; with an egg
-        // encounter the egg's initial moves may pass as "valid" even though the user's actual
-        // moves (e.g. Boomburst on Noivern) need relearn slots to be considered legal.
+        // Clamp MetLevel BEFORE suggesting relearn moves. ApplySetDetails sets
+        // CurrentLevel = set.Level (e.g. 50 for competition format). If the encounter's met
+        // level (e.g. 62 for a Noivern wild encounter) exceeds the requested level, clamp it
+        // first so that GetSuggestedRelearnMovesFromEncounter can correctly flag moves that are
+        // above the (now-lower) met level as needing relearn slots (e.g. Boomburst on Lv.50).
+        if (foundEnc is not null && pkm.MetLevel > pkm.CurrentLevel)
+            pkm.MetLevel = pkm.CurrentLevel;
+
+        // Clamp ObedienceLevel alongside MetLevel so Gen9 Pokémon don't fail the
+        // "obedience level exceeds current level" check after the MetLevel is lowered.
+        if (pkm is IObedienceLevel obLevel && obLevel.ObedienceLevel > pkm.CurrentLevel)
+            obLevel.ObedienceLevel = pkm.CurrentLevel;
+
+        // Suggest relearn moves now that MetLevel is finalised. With mystery-gift encounters
+        // skipped, the remaining encounter types (wild/static/trade/egg) produce reliable
+        // suggestions and we no longer need a "clear if still invalid" safety net.
         if (foundEnc is not null && !pkm.FatefulEncounter)
         {
             Span<ushort> suggestedRelearn = stackalloc ushort[4];
             var la = new LegalityAnalysis(pkm);
             la.GetSuggestedRelearnMovesFromEncounter(suggestedRelearn, foundEnc);
             pkm.SetRelearnMoves(suggestedRelearn);
-            // If the suggested relearn moves are still invalid, clear them rather than leaving bad data.
-            la = new LegalityAnalysis(pkm);
-            if (la.Info.Relearn.Any(r => r.Judgement == PKHeX.Core.Severity.Invalid))
-                pkm.SetRelearnMoves([0, 0, 0, 0]);
         }
 
         ApplyPostImportFixes(pkm, sav, foundEnc);
@@ -466,7 +473,8 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         }
 
         // Only suggest a met location when we have no valid encounter (blank fallback path).
-        // When enc is not null, ConvertToPKM already set the correct met location and level.
+        // When enc is not null, ConvertToPKM already set the correct met location and level,
+        // and MetLevel was already clamped to CurrentLevel in ConvertShowdownSetToPkm.
         if (enc is null)
         {
             var suggestedMet = EncounterSuggestion.GetSuggestedMetInfo(pkm);
@@ -478,13 +486,6 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
                 if (pkm.CurrentLevel < metLevel)
                     pkm.CurrentLevel = metLevel;
             }
-        }
-        else if (pkm.MetLevel > pkm.CurrentLevel)
-        {
-            // ApplySetDetails sets CurrentLevel = set.Level (e.g. 50 for competition format).
-            // If the encounter's MetLevel (e.g. 70 for Timeless Woods) is higher than the
-            // requested level, clamp MetLevel down to avoid "current level below met level".
-            pkm.MetLevel = pkm.CurrentLevel;
         }
 
         // Toxtricity's form is determined by nature (Amped vs Low-Key). After ApplySetDetails
