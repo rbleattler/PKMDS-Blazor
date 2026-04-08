@@ -156,9 +156,21 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
             .DistinctBy(move => move.Value)
             .OrderBy(move => move.Text);
 
-    public ComboItem GetMoveComboItem(int moveId) => GameInfo.FilteredSources.Moves
-        .DistinctBy(move => move.Value)
-        .FirstOrDefault(metLocation => metLocation.Value == moveId) ?? null!;
+    public ComboItem GetMoveComboItem(int moveId)
+    {
+        var item = GameInfo.FilteredSources.Moves
+            .DistinctBy(move => move.Value)
+            .FirstOrDefault(m => m.Value == moveId);
+        if (item != null)
+            return item;
+        // FilteredSources.Moves is capped at the save's MaxMoveID; DLC moves (e.g. Blood Moon
+        // for a base-game save) won't be in the list even though the move ID is stored in the
+        // PKM. Fall back to the full move string table so the name always displays correctly.
+        var strings = GameInfo.Strings;
+        if (moveId > 0 && moveId < strings.Move.Count)
+            return new ComboItem(strings.Move[moveId], moveId);
+        return null!;
+    }
 
     public void SavePokemon(PKM? pokemon)
     {
