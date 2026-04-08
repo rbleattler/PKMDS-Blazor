@@ -379,13 +379,23 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         probe.CurrentLevel = set.Level;
         EncounterMovesetGenerator.OptimizeCriteria(probe, sav);
 
+        // Search ALL game versions (context=0 = no generation filter) sorted newest-first
+        // (higher GameVersion enum value = newer game, e.g. SL=50, VL=51 vs X=24, Y=25)
+        // so native Gen9 encounters are found before older-gen egg encounters. This also
+        // ensures PLA encounters are reached for HOME-only Pokémon like Basculegion.
+        var versions = GameUtil.GetVersionsWithinRange(probe)
+            .OrderByDescending(v => (int)v)
+            .ToArray();
+
         PKM pkm;
-        var enc = EncounterMovesetGenerator.GenerateEncounters(probe, sav, set.Moves.AsMemory())
+        IEncounterable? foundEnc = null;
+        var firstEnc = EncounterMovesetGenerator.GenerateEncounters(probe, set.Moves.AsMemory(), versions)
             .FirstOrDefault();
 
-        if (enc is not null)
+        if (firstEnc is not null)
         {
-            var generated = enc.ConvertToPKM(sav);
+            foundEnc = firstEnc;
+            var generated = foundEnc.ConvertToPKM(sav);
             pkm = EntityConverter.ConvertToType(generated, destType, out _) ?? blank.Clone();
         }
         else
@@ -399,11 +409,27 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         // nickname, shiny, tera type, etc.) on top of the legally-generated base.
         pkm.ApplySetDetails(set);
 
-        ApplyPostImportFixes(pkm, sav);
+        // Fix relearn moves using encounter context (mirrors ALM's SetMovesEVs approach).
+        // ApplySetDetails only fixes relearn moves when they're already invalid; with an egg
+        // encounter the egg's initial moves may pass as "valid" even though the user's actual
+        // moves (e.g. Boomburst on Noivern) need relearn slots to be considered legal.
+        if (foundEnc is not null && !pkm.FatefulEncounter)
+        {
+            Span<ushort> suggestedRelearn = stackalloc ushort[4];
+            var la = new LegalityAnalysis(pkm);
+            la.GetSuggestedRelearnMovesFromEncounter(suggestedRelearn, foundEnc);
+            pkm.SetRelearnMoves(suggestedRelearn);
+            // If the suggested relearn moves are still invalid, clear them rather than leaving bad data.
+            la = new LegalityAnalysis(pkm);
+            if (la.Info.Relearn.Any(r => r.Judgement == PKHeX.Core.Severity.Invalid))
+                pkm.SetRelearnMoves([0, 0, 0, 0]);
+        }
+
+        ApplyPostImportFixes(pkm, sav, foundEnc);
         return pkm;
     }
 
-    private static void ApplyPostImportFixes(PKM pkm, SaveFile sav)
+    private static void ApplyPostImportFixes(PKM pkm, SaveFile sav, IEncounterable? enc = null)
     {
         // Clear held items not available in this save file's game to prevent null refs
         // when rendering the slot component and to avoid legality errors.
@@ -419,16 +445,18 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
             pkm.Language = sav.Language > 0 ? sav.Language : (int)LanguageID.English;
         }
 
-        // Suggest a met location/level so the encounter check can match a legal origin.
-        var enc = EncounterSuggestion.GetSuggestedMetInfo(pkm);
-        if (enc is { Location: not 0 })
+        // Only suggest a met location when we have no valid encounter (blank fallback path).
+        // When enc is not null, ConvertToPKM already set the correct met location and level.
+        if (enc is null)
         {
-            pkm.MetLocation = enc.Location;
-            var metLevel = enc.GetSuggestedMetLevel(pkm);
-            pkm.MetLevel = metLevel;
-            if (pkm.CurrentLevel < metLevel)
+            var suggestedMet = EncounterSuggestion.GetSuggestedMetInfo(pkm);
+            if (suggestedMet is { Location: not 0 })
             {
-                pkm.CurrentLevel = metLevel;
+                pkm.MetLocation = suggestedMet.Location;
+                var metLevel = suggestedMet.GetSuggestedMetLevel(pkm);
+                pkm.MetLevel = metLevel;
+                if (pkm.CurrentLevel < metLevel)
+                    pkm.CurrentLevel = metLevel;
             }
         }
 
@@ -454,6 +482,17 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
             ss.WeightScalar = 0x80;
         }
 
+        // Fix FormArgument for Pokémon that require a non-zero evolution argument
+        // (e.g. Basculegion ≥ 294, Runerigus ≥ 49, Wyrdeer ≥ 20, Annihilape ≥ 20, etc.).
+        // When the encounter species differs from the PKM species, the Pokémon was generated
+        // from a pre-evolution encounter and GetFormArgumentMinEvolution returns the minimum.
+        if (pkm is IFormArgument fa && enc is not null && enc.Species != pkm.Species)
+        {
+            var minArg = GetFormArgumentMinEvolution(pkm.Species, enc.Species);
+            if (fa.FormArgument < minArg)
+                fa.FormArgument = minArg;
+        }
+
         // Set a non-zero HOME tracker so the "tracker missing" legality error is suppressed.
         // Also keep Scale == HeightScalar: when HasTracker is true, MiscScaleVerifier requires
         // HeightScalar == Scale for non-PLA encounters.
@@ -468,6 +507,21 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
 
         pkm.RefreshChecksum();
     }
+
+    // Mirrors IFormArgument.GetFormArgumentMinEvolution from the PKHeX.Core source.
+    // Inlined here because that method uses C#14 extension syntax unavailable in the consumed package.
+    private static uint GetFormArgumentMinEvolution(ushort currentSpecies, ushort originalSpecies) => originalSpecies switch
+    {
+        (int)Species.Yamask when currentSpecies == (int)Species.Runerigus => 49u,
+        (int)Species.Qwilfish when currentSpecies == (int)Species.Overqwil => 20u,
+        (int)Species.Stantler when currentSpecies == (int)Species.Wyrdeer => 20u,
+        (int)Species.Basculin when currentSpecies == (int)Species.Basculegion => 294u,
+        (int)Species.Mankey or (int)Species.Primeape when currentSpecies == (int)Species.Annihilape => 20u,
+        (int)Species.Pawniard or (int)Species.Bisharp when currentSpecies == (int)Species.Kingambit => 3u,
+        (int)Species.Farfetchd when currentSpecies == (int)Species.Sirfetchd => 3u,
+        (int)Species.Gimmighoul when currentSpecies == (int)Species.Gholdengo => 999u,
+        _ => 0u,
+    };
 
     public bool TryPlacePokemonInPartySlot(PKM pkm)
     {
