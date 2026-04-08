@@ -364,16 +364,40 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
             return null;
         }
 
-        var pkm = sav.BlankPKM;
-        pkm.ApplySetDetails(set);
+        var blank = sav.BlankPKM;
+        var destType = blank.GetType();
 
-        // Apply trainer info from save when not provided by the template,
-        // mirroring the pattern in GeneratePokemonFromEncounter.
-        if (string.IsNullOrEmpty(pkm.OriginalTrainerName) && !string.IsNullOrEmpty(sav.OT))
+        // Use EncounterMovesetGenerator to find a legal encounter that supports all of the
+        // requested moves. This is the same pattern used by the Living Dex generator and the
+        // popular Auto Legality Modifier (ALM) plugin: starting from a valid encounter means
+        // the resulting PKM has a correct met location, origin version, and HOME-transfer
+        // chain automatically — resolving "Unable to match an encounter from origin game"
+        // for species like Basculegion that can only reach SV via HOME from PLA.
+        var probe = blank.Clone();
+        probe.Species = set.Species;
+        probe.Form = set.Form;
+        probe.CurrentLevel = set.Level;
+        EncounterMovesetGenerator.OptimizeCriteria(probe, sav);
+
+        PKM pkm;
+        var enc = EncounterMovesetGenerator.GenerateEncounters(probe, sav, set.Moves.AsMemory())
+            .FirstOrDefault();
+
+        if (enc is not null)
         {
-            pkm.OriginalTrainerName = sav.OT;
-            pkm.OriginalTrainerGender = sav.Gender;
+            var generated = enc.ConvertToPKM(sav);
+            pkm = EntityConverter.ConvertToType(generated, destType, out _) ?? blank.Clone();
         }
+        else
+        {
+            // No valid encounter found — fall back to a blank template. The import will
+            // succeed but may still have legality issues (e.g. unrecognised species).
+            pkm = blank.Clone();
+        }
+
+        // Overlay the user-specified Showdown details (moves, EVs/IVs, nature, ability,
+        // nickname, shiny, tera type, etc.) on top of the legally-generated base.
+        pkm.ApplySetDetails(set);
 
         ApplyPostImportFixes(pkm, sav);
         return pkm;
