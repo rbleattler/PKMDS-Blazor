@@ -377,24 +377,44 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         probe.Species = set.Species;
         probe.Form = set.Form;
         probe.CurrentLevel = set.Level;
+
+        // For Toxtricity, the form is nature-locked: Amped (form 0) or Low-Key (form 1) is
+        // determined by the Pokémon's nature. Override the probe form so the generator searches
+        // the correct form's encounter pool, ensuring form+nature compatibility.
+        if (probe.Species == (int)Species.Toxtricity && set.Nature != Nature.Random)
+            probe.Form = (byte)ToxtricityUtil.GetAmpLowKeyResult(set.Nature);
+
         EncounterMovesetGenerator.OptimizeCriteria(probe, sav);
 
         // Search ALL game versions (context=0 = no generation filter) sorted newest-first
         // (higher GameVersion enum value = newer game, e.g. SL=50, VL=51 vs X=24, Y=25)
-        // so native Gen9 encounters are found before older-gen egg encounters. This also
-        // ensures PLA encounters are reached for HOME-only Pokémon like Basculegion.
+        // so native Gen9 encounters are found before older-gen egg encounters. PLA(47) still
+        // comes before SWSH(44,45) ensuring Hisuian-only Pokémon get their PLA encounter.
         var versions = GameUtil.GetVersionsWithinRange(probe)
             .OrderByDescending(v => (int)v)
             .ToArray();
 
+        // Skip egg encounters: EncounterTypeGroup.Egg has the lowest value (highest priority)
+        // so eggs are returned first within each version. Wild/static encounters are far more
+        // appropriate for competitive Pokémon and avoid the complex egg relearn-move logic.
+        // Keep the first egg encounter as a fallback if no non-egg encounter exists at all.
         PKM pkm;
         IEncounterable? foundEnc = null;
-        var firstEnc = EncounterMovesetGenerator.GenerateEncounters(probe, set.Moves.AsMemory(), versions)
-            .FirstOrDefault();
-
-        if (firstEnc is not null)
+        IEncounterable? eggFallback = null;
+        foreach (var enc in EncounterMovesetGenerator.GenerateEncounters(probe, set.Moves.AsMemory(), versions))
         {
-            foundEnc = firstEnc;
+            if (enc is IEncounterEgg)
+            {
+                eggFallback ??= enc;
+                continue;
+            }
+            foundEnc = enc;
+            break;
+        }
+        foundEnc ??= eggFallback; // only use egg if no wild/static/trade/mystery was found
+
+        if (foundEnc is not null)
+        {
             var generated = foundEnc.ConvertToPKM(sav);
             pkm = EntityConverter.ConvertToType(generated, destType, out _) ?? blank.Clone();
         }
@@ -459,6 +479,18 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
                     pkm.CurrentLevel = metLevel;
             }
         }
+        else if (pkm.MetLevel > pkm.CurrentLevel)
+        {
+            // ApplySetDetails sets CurrentLevel = set.Level (e.g. 50 for competition format).
+            // If the encounter's MetLevel (e.g. 70 for Timeless Woods) is higher than the
+            // requested level, clamp MetLevel down to avoid "current level below met level".
+            pkm.MetLevel = pkm.CurrentLevel;
+        }
+
+        // Toxtricity's form is determined by nature (Amped vs Low-Key). After ApplySetDetails
+        // applies the user's requested nature, ensure the form matches that nature.
+        if (pkm.Species == (int)Species.Toxtricity)
+            pkm.Form = (byte)ToxtricityUtil.GetAmpLowKeyResult(pkm.Nature);
 
         // ApplySetDetails already handles relearn moves when the encounter is parsed;
         // we intentionally preserve the moves from the Showdown set rather than calling
