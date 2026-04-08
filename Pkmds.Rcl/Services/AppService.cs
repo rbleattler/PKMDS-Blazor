@@ -94,7 +94,7 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
 
     public ComboItem GetItemComboItem(int itemId) => GameInfo.FilteredSources.Items
         .DistinctBy(item => item.Value)
-        .FirstOrDefault(item => item.Value == itemId) ?? null!;
+        .FirstOrDefault(item => item.Value == itemId) ?? new ComboItem(string.Empty, itemId);
 
     public string GetStatModifierString(Nature nature)
     {
@@ -381,6 +381,13 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
 
     private static void ApplyPostImportFixes(PKM pkm, SaveFile sav)
     {
+        // Clear held items not available in this save file's game to prevent null refs
+        // when rendering the slot component and to avoid legality errors.
+        if (pkm.HeldItem != 0 && !sav.HeldItems.Contains((ushort)pkm.HeldItem))
+        {
+            pkm.HeldItem = 0;
+        }
+
         // Fill in the language so legality checks that key off it (e.g. nickname language)
         // don't fail with "unknown language".
         if (pkm.Language <= 0)
