@@ -427,7 +427,23 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         if (foundEnc is not null)
         {
             var generated = foundEnc.ConvertToPKM(sav);
-            pkm = EntityConverter.ConvertToType(generated, destType, out _) ?? blank.Clone();
+            var converted = EntityConverter.ConvertToType(generated, destType, out _);
+            if (converted is not null)
+            {
+                pkm = converted;
+            }
+            else
+            {
+                // Conversion failed: species is likely not in the target game's personal table
+                // (e.g. Hisuian Pokémon like Sneasler that can only enter SV via HOME from PLA).
+                // Seed the blank with origin data so the legality checker can find a matching
+                // encounter in the origin game (EncounterGenerator routes by pk.Version).
+                pkm = blank.Clone();
+                pkm.Version = generated.Version;
+                pkm.MetLocation = generated.MetLocation;
+                pkm.MetLevel = generated.MetLevel;
+                pkm.Ball = generated.Ball;
+            }
         }
         else
         {
@@ -440,11 +456,16 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         // nickname, shiny, tera type, etc.) on top of the legally-generated base.
         pkm.ApplySetDetails(set);
 
-        // Clamp MetLevel BEFORE suggesting relearn moves. ApplySetDetails sets
-        // CurrentLevel = set.Level (e.g. 50 for competition format). If the encounter's met
-        // level (e.g. 62 for a Noivern wild encounter) exceeds the requested level, clamp it
-        // first so that GetSuggestedRelearnMovesFromEncounter can correctly flag moves that are
-        // above the (now-lower) met level as needing relearn slots (e.g. Boomburst on Lv.50).
+        // Ensure CurrentLevel ≥ encounter.LevelMin. ApplySetDetails sets CurrentLevel to the
+        // Showdown set's level (e.g. 50 for competition format), but some encounters have a
+        // fixed minimum (e.g. Ursaluna-Bloodmoon at 70, PLA wild Sneasler at 58+). Raise
+        // CurrentLevel so the encounter verifier's level-range check passes.
+        if (foundEnc is not null && pkm.CurrentLevel < foundEnc.LevelMin)
+            pkm.CurrentLevel = foundEnc.LevelMin;
+
+        // Clamp MetLevel to CurrentLevel (now fully resolved) BEFORE suggesting relearn moves.
+        // This ensures moves learned above the met level get flagged as needing relearn slots
+        // (e.g. Boomburst on a Noivern whose met level is below 62).
         if (foundEnc is not null && pkm.MetLevel > pkm.CurrentLevel)
             pkm.MetLevel = pkm.CurrentLevel;
 
@@ -452,6 +473,15 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         // "obedience level exceeds current level" check after the MetLevel is lowered.
         if (pkm is IObedienceLevel obLevel && obLevel.ObedienceLevel > pkm.CurrentLevel)
             obLevel.ObedienceLevel = pkm.CurrentLevel;
+
+        // Restore fixed-nature encounters (e.g. Ursaluna-Bloodmoon is always Hardy).
+        // ApplySetDetails may have overwritten the encounter's required nature with the
+        // Showdown set's nature, causing the encounter verifier to reject the match.
+        if (foundEnc is IFixedNature { IsFixedNature: true } fn)
+        {
+            pkm.Nature = fn.Nature;
+            pkm.StatNature = fn.Nature;
+        }
 
         // Suggest relearn moves now that MetLevel is finalised. With mystery-gift encounters
         // skipped, the remaining encounter types (wild/static/trade/egg) produce reliable
