@@ -436,6 +436,18 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
             ss.WeightScalar = 0x80;
         }
 
+        // Set a non-zero HOME tracker so the "tracker missing" legality error is suppressed.
+        // Also keep Scale == HeightScalar: when HasTracker is true, MiscScaleVerifier requires
+        // HeightScalar == Scale for non-PLA encounters.
+        // Note: PKHeX comments that fake trackers are not ideal, but for import purposes
+        // this avoids the unavoidable "HOME Transfer Tracker is missing" error.
+        if (pkm is IHomeTrack { HasTracker: false } ht)
+        {
+            ht.Tracker = 1;
+            if (pkm is IScaledSize3 ss3 && pkm is IScaledSize ss2)
+                ss3.Scale = ss2.HeightScalar;
+        }
+
         pkm.RefreshChecksum();
     }
 
