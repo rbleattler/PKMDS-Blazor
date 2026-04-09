@@ -274,4 +274,120 @@ public class BattleTeamTests
         var showdown = appService.ExportTeamAsShowdown([]);
         showdown.Should().BeEmpty();
     }
+
+    [Fact]
+    public void ClearBattleTeam_Gen7_RemovesTeamMembers()
+    {
+        var (saveFile, appState, refreshService, _) = BunitTestHelpers.LoadSave("moon.sav");
+        var sav7 = (SAV7)saveFile;
+        var appService = new AppService(appState, refreshService);
+
+        var pkm = sav7.BlankPKM;
+        pkm.Species = 25;
+        sav7.SetBoxSlotAtIndex(pkm, 0, 0);
+        sav7.BoxLayout.TeamSlots[0] = 0;
+        for (var i = 1; i < 6; i++)
+        {
+            sav7.BoxLayout.TeamSlots[i] = -1;
+        }
+
+        sav7.BoxLayout.SaveBattleTeams();
+        appService.GetBattleTeamPokemon(0).Should().HaveCount(1, "precondition: team has 1 member");
+
+        appService.ClearBattleTeam(0);
+
+        appService.GetBattleTeamPokemon(0).Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ClearBattleTeam_Gen7_DoesNotAffectOtherTeams()
+    {
+        var (saveFile, appState, refreshService, _) = BunitTestHelpers.LoadSave("moon.sav");
+        var sav7 = (SAV7)saveFile;
+        var appService = new AppService(appState, refreshService);
+
+        var pkm1 = sav7.BlankPKM;
+        pkm1.Species = 6;
+        sav7.SetBoxSlotAtIndex(pkm1, 0, 0);
+
+        var pkm2 = sav7.BlankPKM;
+        pkm2.Species = 9;
+        sav7.SetBoxSlotAtIndex(pkm2, 0, 1);
+
+        sav7.BoxLayout.TeamSlots[0] = 0;
+        for (var i = 1; i < 6; i++) sav7.BoxLayout.TeamSlots[i] = -1;
+        sav7.BoxLayout.TeamSlots[6] = 1;
+        for (var i = 7; i < 12; i++) sav7.BoxLayout.TeamSlots[i] = -1;
+        sav7.BoxLayout.SaveBattleTeams();
+
+        appService.ClearBattleTeam(0);
+
+        appService.GetBattleTeamPokemon(0).Should().BeEmpty();
+        appService.GetBattleTeamPokemon(1).Should().HaveCount(1);
+        appService.GetBattleTeamPokemon(1)[0].Species.Should().Be(9);
+    }
+
+    [Fact]
+    public void ClearAllBattleTeams_Gen7_ClearsAllTeamsAndUnlocks()
+    {
+        var (saveFile, appState, refreshService, _) = BunitTestHelpers.LoadSave("moon.sav");
+        var sav7 = (SAV7)saveFile;
+        var appService = new AppService(appState, refreshService);
+
+        var pkm = sav7.BlankPKM;
+        pkm.Species = 25;
+        sav7.SetBoxSlotAtIndex(pkm, 0, 0);
+        sav7.BoxLayout.TeamSlots[0] = 0;
+        for (var i = 1; i < 6; i++) sav7.BoxLayout.TeamSlots[i] = -1;
+        sav7.BoxLayout.SaveBattleTeams();
+        appService.SetBattleTeamLocked(0, true);
+
+        appService.ClearAllBattleTeams();
+
+        for (var t = 0; t < 6; t++)
+        {
+            appService.GetBattleTeamPokemon(t).Should().BeEmpty($"team {t} should be cleared");
+            appService.IsBattleTeamLocked(t).Should().BeFalse($"team {t} should be unlocked");
+        }
+    }
+
+    [Fact]
+    public void UnlockAllBattleTeams_Gen7_UnlocksAllTeams()
+    {
+        var (_, appState, refreshService, _) = BunitTestHelpers.LoadSave("moon.sav");
+        var appService = new AppService(appState, refreshService);
+
+        appService.SetBattleTeamLocked(0, true);
+        appService.SetBattleTeamLocked(2, true);
+        appService.SetBattleTeamLocked(4, true);
+
+        appService.UnlockAllBattleTeams();
+
+        for (var t = 0; t < 6; t++)
+        {
+            appService.IsBattleTeamLocked(t).Should().BeFalse($"team {t} should be unlocked");
+        }
+    }
+
+    [Fact]
+    public void HasBattleBox_Gen6XY_ReturnsTrue()
+    {
+        var (_, appState, refreshService, _) = BunitTestHelpers.LoadSave("x.sav");
+        var appService = new AppService(appState, refreshService);
+
+        appService.HasBattleBox().Should().BeTrue();
+    }
+
+    [Fact]
+    public void SetBattleBoxLocked_Gen5_TogglesLockState()
+    {
+        var (_, appState, refreshService, _) = BunitTestHelpers.LoadSave("Black - Full Completion.sav");
+        var appService = new AppService(appState, refreshService);
+
+        appService.SetBattleBoxLocked(true);
+        appService.IsBattleBoxLocked().Should().BeTrue();
+
+        appService.SetBattleBoxLocked(false);
+        appService.IsBattleBoxLocked().Should().BeFalse();
+    }
 }

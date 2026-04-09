@@ -484,4 +484,31 @@ public interface IAppService
     /// </summary>
     /// <param name="team">The Pokémon to export.</param>
     string ExportTeamAsShowdown(IReadOnlyList<PKM> team);
+
+    /// <summary>
+    /// Clears a single battle team by setting all its slot references to empty (Gen 7+).
+    /// </summary>
+    /// <param name="teamIndex">The 0-based team index (0–5).</param>
+    void ClearBattleTeam(int teamIndex);
+
+    /// <summary>
+    /// Clears all battle teams and unlocks them (Gen 7+).
+    /// </summary>
+    void ClearAllBattleTeams();
+
+    /// <summary>
+    /// Unlocks all battle teams (Gen 7+).
+    /// </summary>
+    void UnlockAllBattleTeams();
+
+    /// <summary>
+    /// Clears all Pokémon from the Battle Box (Gen 5–6).
+    /// </summary>
+    void ClearBattleBox();
+
+    /// <summary>
+    /// Sets the Battle Box lock state (Gen 5–6).
+    /// </summary>
+    /// <param name="locked">Whether to lock or unlock the Battle Box.</param>
+    void SetBattleBoxLocked(bool locked);
 }

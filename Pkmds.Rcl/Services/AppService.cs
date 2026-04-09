@@ -2116,4 +2116,160 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
 
         return sb.ToString().TrimEnd();
     }
+
+    public void ClearBattleTeam(int teamIndex)
+    {
+        if (AppState.SaveFile is not { } sav)
+        {
+            return;
+        }
+
+        var teamSlots = GetTeamSlots(sav);
+        if (teamSlots.Length == 0)
+        {
+            return;
+        }
+
+        var startIdx = teamIndex * SlotsPerTeam;
+        for (var i = 0; i < SlotsPerTeam; i++)
+        {
+            teamSlots[startIdx + i] = -1;
+        }
+
+        SaveTeamSlots(sav);
+        RefreshService.RefreshBoxState();
+        RefreshService.Refresh();
+    }
+
+    public void ClearAllBattleTeams()
+    {
+        switch (AppState.SaveFile)
+        {
+            case SAV7 s7:
+                s7.BoxLayout.ClearBattleTeams();
+                s7.BoxLayout.SaveBattleTeams();
+                break;
+            case SAV8SWSH s8:
+                s8.TeamIndexes.ClearBattleTeams();
+                s8.TeamIndexes.SaveBattleTeams();
+                break;
+            case SAV8BS s8b:
+                s8b.BoxLayout.ClearBattleTeams();
+                s8b.BoxLayout.SaveBattleTeams();
+                break;
+            case SAV9SV s9:
+                s9.TeamIndexes.ClearBattleTeams();
+                s9.TeamIndexes.SaveBattleTeams();
+                break;
+            case SAV9ZA s9z:
+                s9z.TeamIndexes.ClearBattleTeams();
+                s9z.TeamIndexes.SaveBattleTeams();
+                break;
+            default:
+                return;
+        }
+
+        RefreshService.RefreshBoxState();
+        RefreshService.Refresh();
+    }
+
+    public void UnlockAllBattleTeams()
+    {
+        switch (AppState.SaveFile)
+        {
+            case SAV7 s7:
+                s7.BoxLayout.UnlockAllTeams();
+                break;
+            case SAV8SWSH s8:
+                s8.TeamIndexes.UnlockAllTeams();
+                break;
+            case SAV8BS s8b:
+                s8b.BoxLayout.LockedTeam = 0;
+                break;
+            case SAV9SV s9:
+                s9.TeamIndexes.UnlockAllTeams();
+                break;
+            case SAV9ZA s9z:
+                s9z.TeamIndexes.UnlockAllTeams();
+                break;
+            default:
+                return;
+        }
+
+        RefreshService.Refresh();
+    }
+
+    public void ClearBattleBox()
+    {
+        switch (AppState.SaveFile)
+        {
+            case SAV5 sav5:
+                for (var i = 0; i < BattleBox5.Count; i++)
+                {
+                    sav5.BattleBox[i].Span.Clear();
+                }
+
+                break;
+            case SAV6XY xy:
+                for (var i = 0; i < BattleBox6.Count; i++)
+                {
+                    xy.BattleBox[i].Span.Clear();
+                }
+
+                break;
+            case SAV6AO ao:
+                for (var i = 0; i < BattleBox6.Count; i++)
+                {
+                    ao.BattleBox[i].Span.Clear();
+                }
+
+                break;
+            default:
+                return;
+        }
+
+        RefreshService.Refresh();
+    }
+
+    public void SetBattleBoxLocked(bool locked)
+    {
+        switch (AppState.SaveFile)
+        {
+            case SAV5 sav5:
+                sav5.BattleBox.BattleBoxLocked = locked;
+                break;
+            case SAV6XY xy:
+                xy.BattleBox.Locked = locked;
+                break;
+            case SAV6AO ao:
+                ao.BattleBox.Locked = locked;
+                break;
+            default:
+                return;
+        }
+
+        RefreshService.Refresh();
+    }
+
+    private static void SaveTeamSlots(SaveFile sav)
+    {
+        switch (sav)
+        {
+            case SAV7 s7:
+                s7.BoxLayout.SaveBattleTeams();
+                break;
+            case SAV8SWSH s8:
+                s8.TeamIndexes.SaveBattleTeams();
+                break;
+            case SAV8BS s8b:
+                s8b.BoxLayout.SaveBattleTeams();
+                break;
+            case SAV9SV s9:
+                s9.TeamIndexes.SaveBattleTeams();
+                break;
+            case SAV9ZA s9z:
+                s9z.TeamIndexes.SaveBattleTeams();
+                break;
+        }
+    }
 }

@@ -28,6 +28,14 @@
                             }
                         </MudStack>
                     </CardHeaderContent>
+                    <CardHeaderActions>
+                        <MudSwitch T="bool"
+                                   Value="@bbLocked"
+                                   ValueChanged="@(v => AppService.SetBattleBoxLocked(v))"
+                                   Color="@Color.Warning"
+                                   Label="Locked"
+                                   title="Toggle Battle Box lock"/>
+                    </CardHeaderActions>
                 </MudCardHeader>
                 <MudCardContent>
                     @if (bbPokemon.Count == 0)
@@ -57,24 +65,47 @@
                         </MudStack>
                     }
                 </MudCardContent>
-                @if (bbPokemon.Count > 0)
-                {
-                    <MudCardActions>
+                <MudCardActions>
+                    @if (bbPokemon.Count > 0)
+                    {
                         <MudButton Variant="@Variant.Text"
                                    Color="@Color.Primary"
                                    StartIcon="@Icons.Material.Filled.ContentCopy"
                                    OnClick="@(() => CopyTeamToClipboard(bbPokemon))">
                             Export Showdown
                         </MudButton>
-                    </MudCardActions>
-                }
+                        <MudButton Variant="@Variant.Text"
+                                   Color="@Color.Error"
+                                   StartIcon="@Icons.Material.Filled.Delete"
+                                   OnClick="@(() => AppService.ClearBattleBox())">
+                            Clear
+                        </MudButton>
+                    }
+                </MudCardActions>
             </MudCard>
         }
 
         @* === BATTLE TEAMS (Gen 7+) === *@
         @if (AppService.HasBattleTeams())
         {
-            <MudText Typo="@Typo.h6">Battle Teams</MudText>
+            <MudStack Row AlignItems="@AlignItems.Center" Spacing="2">
+                <MudText Typo="@Typo.h6">Battle Teams</MudText>
+                <MudSpacer/>
+                <MudButton Variant="@Variant.Text"
+                           Color="@Color.Primary"
+                           StartIcon="@Icons.Material.Filled.LockOpen"
+                           OnClick="@(() => AppService.UnlockAllBattleTeams())"
+                           Size="@MudBlazor.Size.Small">
+                    Unlock All
+                </MudButton>
+                <MudButton Variant="@Variant.Text"
+                           Color="@Color.Error"
+                           StartIcon="@Icons.Material.Filled.DeleteSweep"
+                           OnClick="@(() => AppService.ClearAllBattleTeams())"
+                           Size="@MudBlazor.Size.Small">
+                    Clear All
+                </MudButton>
+            </MudStack>
 
             @for (var t = 0; t < 6; t++)
             {
@@ -134,17 +165,23 @@
                             </MudStack>
                         }
                     </MudCardContent>
-                    @if (teamPokemon.Count > 0)
-                    {
-                        <MudCardActions>
+                    <MudCardActions>
+                        @if (teamPokemon.Count > 0)
+                        {
                             <MudButton Variant="@Variant.Text"
                                        Color="@Color.Primary"
                                        StartIcon="@Icons.Material.Filled.ContentCopy"
                                        OnClick="@(() => CopyTeamToClipboard(teamPokemon))">
                                 Export Showdown
                             </MudButton>
-                        </MudCardActions>
-                    }
+                            <MudButton Variant="@Variant.Text"
+                                       Color="@Color.Error"
+                                       StartIcon="@Icons.Material.Filled.Delete"
+                                       OnClick="@(() => AppService.ClearBattleTeam(teamIndex))">
+                                Clear
+                            </MudButton>
+                        }
+                    </MudCardActions>
                 </MudCard>
             }
         }
