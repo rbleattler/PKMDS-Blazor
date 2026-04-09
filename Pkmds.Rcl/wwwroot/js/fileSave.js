@@ -105,7 +105,7 @@ window.isInAppBrowser = function () {
         /LinkedInApp/.test(ua) ||               // LinkedIn
         /Snapchat/.test(ua) ||                  // Snapchat
         /WhatsApp/.test(ua) ||                  // WhatsApp
-        /TelegramBot/.test(ua) ||               // Telegram
+        /Telegram(Bot)?/.test(ua) ||             // Telegram
         /MicroMessenger/.test(ua) ||            // WeChat
         /Discord\//.test(ua) ||                 // Discord
         /Pinterest\//.test(ua) ||               // Pinterest
