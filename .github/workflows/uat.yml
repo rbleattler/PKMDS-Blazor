@@ -79,7 +79,7 @@ jobs:
         run: cd functions-publish && zip -r ../functions.zip .
 
       - name: Azure login
-        uses: azure/login@v1
+        uses: azure/login@v3
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
