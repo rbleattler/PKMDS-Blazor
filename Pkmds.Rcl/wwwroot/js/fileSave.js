@@ -97,13 +97,21 @@ window.readDroppedFile = async function (index) {
 window.isInAppBrowser = function () {
     const ua = navigator.userAgent || '';
     return (
-        /GSA\//.test(ua) ||          // Google Search App (iOS)
-        /FBAN\/|FBAV\//.test(ua) ||  // Facebook
-        /Instagram/.test(ua) ||       // Instagram
-        /Twitter\//.test(ua) ||       // Twitter / X
-        /Line\//.test(ua) ||          // Line messenger
-        /LinkedInApp/.test(ua) ||     // LinkedIn
-        /Snapchat/.test(ua)           // Snapchat
+        /GSA\//.test(ua) ||                    // Google Search App (iOS)
+        /FBAN\/|FBAV\//.test(ua) ||            // Facebook
+        /Instagram/.test(ua) ||                 // Instagram
+        /Twitter\//.test(ua) ||                 // Twitter / X
+        /Line\//.test(ua) ||                    // Line messenger
+        /LinkedInApp/.test(ua) ||               // LinkedIn
+        /Snapchat/.test(ua) ||                  // Snapchat
+        /WhatsApp/.test(ua) ||                  // WhatsApp
+        /TelegramBot/.test(ua) ||               // Telegram
+        /MicroMessenger/.test(ua) ||            // WeChat
+        /Discord\//.test(ua) ||                 // Discord
+        /Pinterest\//.test(ua) ||               // Pinterest
+        /BytedanceWebview|musical_ly/.test(ua) || // TikTok
+        /Reddit\//.test(ua) ||                  // Reddit
+        !!window.TelegramWebviewProxy           // Telegram (fallback — UA not always branded)
     );
 };
 
