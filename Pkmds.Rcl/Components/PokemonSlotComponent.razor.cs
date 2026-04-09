@@ -186,6 +186,30 @@ public partial class PokemonSlotComponent : IDisposable
     private string? GetStatusOverlaySpriteFileName() =>
         ImageHelper.GetStatusOverlaySpriteFileName(Pokemon);
 
+    private (int TeamNumber, bool IsLocked)? GetBattleTeamInfo()
+    {
+        // Battle team indicators only apply to box slots, not party slots
+        if (IsPartySlot || BoxNumber is not { } box || Pokemon is not { Species: > 0 })
+        {
+            return null;
+        }
+
+        if (AppState.SaveFile is not { } sav)
+        {
+            return null;
+        }
+
+        var flags = sav.GetBoxSlotFlags(box, SlotNumber);
+        var team = flags.IsBattleTeam();
+        if (team < 0)
+        {
+            return null;
+        }
+
+        var isLocked = flags.HasFlag(StorageSlotSource.Locked);
+        return (team + 1, isLocked); // Convert to 1-based for display
+    }
+
     private int? GetLetsGoPartySlotNumber()
     {
         // Only show party slot indicators for Let's Go games in the BOX view
