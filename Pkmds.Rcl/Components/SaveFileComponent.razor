@@ -74,6 +74,15 @@ else
             </MudTabPanel>
         }
 
+        @if (AppService.HasBattleBox() || AppService.HasBattleTeams() || AppService.HasRentalTeams())
+        {
+            <MudTabPanel Text="Teams">
+                <div class="mt-3">
+                    <TeamsTab/>
+                </div>
+            </MudTabPanel>
+        }
+
         <MudTabPanel Text="Legality Report">
             <div class="mt-3">
                 <LegalityReportTab OnJumpToPartyBox="@JumpToPartyBox"/>
