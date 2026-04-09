@@ -253,6 +253,13 @@ body, html {
         overflow: hidden;
     }
 
+    /* Teams tab content: simple vertical scroll for team cards */
+    .teams-tab-content {
+        height: 100%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
     /* Search / EncounterDB filter column: flex column so the action buttons are always
        visible at the bottom and only the expansion panels scroll. Height is sized to
        fit within the tab panel's overflow:hidden boundary. */
