@@ -95,6 +95,20 @@ public partial class MainLayout : IDisposable
         systemIsDarkMode = await mudThemeProvider.GetSystemDarkModeAsync();
         await mudThemeProvider.WatchSystemDarkModeAsync(OnSystemPreferenceChanged);
 
+        // Warn users who are running inside a known in-app browser (e.g. Google Search App,
+        // Facebook) whose WebView typically blocks file downloads.
+        var isInAppBrowser = await JSRuntime.InvokeAsync<bool>("isInAppBrowser");
+        if (isInAppBrowser)
+        {
+            Snackbar.Add(
+                new MarkupString(
+                    "You appear to be using an in-app browser, which may not support file exports. " +
+                    "For the best experience, please open this app in <strong>Safari</strong> (iOS) or " +
+                    "<strong>Chrome</strong> (Android)."),
+                Severity.Warning,
+                options => options.RequireInteraction = true);
+        }
+
         // Load all persisted settings (theme, PKHaX, verbose logging, trainer defaults)
         await SettingsService.LoadAsync();
 

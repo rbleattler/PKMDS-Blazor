@@ -92,6 +92,21 @@ window.readDroppedFile = async function (index) {
     });
 };
 
+// Returns true if the page is running inside a known in-app browser (e.g. Google Search App,
+// Facebook, Instagram) whose WebView may block file downloads or the File System Access API.
+window.isInAppBrowser = function () {
+    const ua = navigator.userAgent || '';
+    return (
+        /GSA\//.test(ua) ||          // Google Search App (iOS)
+        /FBAN\/|FBAV\//.test(ua) ||  // Facebook
+        /Instagram/.test(ua) ||       // Instagram
+        /Twitter\//.test(ua) ||       // Twitter / X
+        /Line\//.test(ua) ||          // Line messenger
+        /LinkedInApp/.test(ua) ||     // LinkedIn
+        /Snapchat/.test(ua)           // Snapchat
+    );
+};
+
 window.showFilePickerAndWrite = async function (fileName, byteArray, extension, description) {
     // byteArray is expected to be a JS array of numbers coming from a Blazor byte[]
     try {
