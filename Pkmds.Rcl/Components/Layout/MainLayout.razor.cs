@@ -382,6 +382,15 @@ public partial class MainLayout : IDisposable
             // Try to load the file directly as a raw save.
             if (SaveUtil.TryGetSaveFile(data, out var saveFile, selectedFile.Name))
             {
+                if (!saveFile.State.Exportable)
+                {
+                    Logger.LogWarning("Save file is not exportable (unsupported format/ROM hack): {FileName}", selectedFile.Name);
+                    await DialogService.ShowMessageBoxAsync("Unsupported save file",
+                        "This save file cannot be loaded — it may be from an unsupported ROM hack or format.");
+                    AppState.ShowProgressIndicator = false;
+                    return;
+                }
+
                 manicEmuSaveContext = null;
                 FinishLoadingSaveFile(saveFile, selectedFile.Name);
             }
@@ -389,6 +398,15 @@ public partial class MainLayout : IDisposable
             // Manic EMU packages 3DS saves as a ZIP containing sdmc/… directory paths.
             else if (ManicEmuSaveHelper.TryExtractSaveFromZip(data, selectedFile.Name, out saveFile, out var manicContext))
             {
+                if (!saveFile.State.Exportable)
+                {
+                    Logger.LogWarning("Manic EMU save file is not exportable (unsupported format/ROM hack): {FileName}", selectedFile.Name);
+                    await DialogService.ShowMessageBoxAsync("Unsupported save file",
+                        "This save file cannot be loaded — it may be from an unsupported ROM hack or format.");
+                    AppState.ShowProgressIndicator = false;
+                    return;
+                }
+
                 manicEmuSaveContext = manicContext;
                 Logger.LogInformation("Loaded save from Manic EMU .3ds.sav/.3ds.save archive; entry: {EntryPath}", manicContext.SaveEntryPath);
                 FinishLoadingSaveFile(saveFile, selectedFile.Name);
