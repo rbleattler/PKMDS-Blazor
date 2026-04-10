@@ -91,6 +91,27 @@
                 </div>
             }
 
+            @if (GetBattleTeamInfo() is var (teamNumber, isTeamLocked))
+            {
+                <div class="battle-team-indicator-icon"
+                     title="@($"Battle Team {teamNumber}{(isTeamLocked ? " (Locked)" : "")}")">
+                    <img src="@ImageHelper.GetTeamIndicatorSpriteFileName()"
+                         alt="@($"Team {teamNumber}")"
+                         class="w-full h-full object-contain"
+                         draggable="false">
+                </div>
+                @if (isTeamLocked)
+                {
+                    <div class="battle-team-lock-icon"
+                         title="Team Locked">
+                        <img src="@ImageHelper.GetLockedOverlaySpriteFileName()"
+                             alt="Locked"
+                             class="w-full h-full object-contain"
+                             draggable="false">
+                    </div>
+                }
+            }
+
             @if (GetLetsGoPartySlotNumber() is { } partySlot)
             {
                 <div class="party-slot-indicator-icon"

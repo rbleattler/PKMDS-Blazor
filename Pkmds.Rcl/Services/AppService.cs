@@ -1802,4 +1802,474 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         EncounterTypeGroup.Static => "Static",
         _ => "Unknown"
     };
+
+    // Block keys duplicated from SaveBlockAccessor8SWSH / SaveBlockAccessor9SV
+    // because they are private in PKHeX.Core. Update if upstream changes.
+    private const uint SwshTeamNamesKey = 0x1920C1E4;
+    private const uint SvTeamNamesKey = 0x1920C1E4;
+
+    private static readonly uint[] SwshRentalTeamKeys =
+    [
+        0x149A1DD0, // KRentalTeam1
+        0x179A2289, // KRentalTeam2
+        0x169A20F6, // KRentalTeam3
+        0x199A25AF, // KRentalTeam4
+        0x189A241C, // KRentalTeam5
+    ];
+
+    private const uint SvRentalTeamsKey = 0x19CB0339;
+
+    private const int TeamCount = 6;
+    private const int SlotsPerTeam = 6;
+    // Team name: 10 char16 + null terminator = 22 bytes
+    private const int TeamNameByteLength = 22;
+
+    public bool HasBattleBox() => AppState.SaveFile is SAV5 or SAV6XY or SAV6AO;
+
+    public IReadOnlyList<PKM> GetBattleBoxPokemon()
+    {
+        var result = new List<PKM>();
+        switch (AppState.SaveFile)
+        {
+            case SAV5 sav5:
+                for (var i = 0; i < BattleBox5.Count; i++)
+                {
+                    var pkm = sav5.GetStoredSlot(sav5.BattleBox[i].Span);
+                    if (pkm.Species > 0)
+                    {
+                        result.Add(pkm);
+                    }
+                }
+
+                break;
+            case SAV6XY xy:
+                for (var i = 0; i < BattleBox6.Count; i++)
+                {
+                    var pkm = xy.GetStoredSlot(xy.BattleBox[i].Span);
+                    if (pkm.Species > 0)
+                    {
+                        result.Add(pkm);
+                    }
+                }
+
+                break;
+            case SAV6AO ao:
+                for (var i = 0; i < BattleBox6.Count; i++)
+                {
+                    var pkm = ao.GetStoredSlot(ao.BattleBox[i].Span);
+                    if (pkm.Species > 0)
+                    {
+                        result.Add(pkm);
+                    }
+                }
+
+                break;
+        }
+
+        return result;
+    }
+
+    public bool IsBattleBoxLocked() => AppState.SaveFile switch
+    {
+        SAV5 sav5 => sav5.BattleBox.BattleBoxLocked,
+        SAV6XY xy => xy.BattleBox.Locked,
+        SAV6AO ao => ao.BattleBox.Locked,
+        _ => false,
+    };
+
+    public bool HasBattleTeams() => AppState.SaveFile is SAV7 or SAV8SWSH or SAV8BS or SAV9SV or SAV9ZA;
+
+    public IReadOnlyList<PKM> GetBattleTeamPokemon(int teamIndex)
+    {
+        if (AppState.SaveFile is not { } sav)
+        {
+            return [];
+        }
+
+        var teamSlots = GetTeamSlots(sav);
+        if (teamSlots.Length == 0)
+        {
+            return [];
+        }
+
+        var result = new List<PKM>();
+        var startIdx = teamIndex * SlotsPerTeam;
+        for (var i = 0; i < SlotsPerTeam; i++)
+        {
+            var idx = teamSlots[startIdx + i];
+            if (idx < 0)
+            {
+                continue;
+            }
+
+            sav.GetBoxSlotFromIndex(idx, out var box, out var slot);
+            var pkm = sav.GetBoxSlotAtIndex(box, slot);
+            if (pkm.Species > 0)
+            {
+                result.Add(pkm);
+            }
+        }
+
+        return result;
+    }
+
+    private static int[] GetTeamSlots(SaveFile sav) => sav switch
+    {
+        SAV7 s7 => s7.BoxLayout.TeamSlots,
+        SAV8SWSH s8 => s8.TeamIndexes.TeamSlots,
+        SAV8BS s8b => s8b.BoxLayout.TeamSlots,
+        SAV9SV s9 => s9.TeamIndexes.TeamSlots,
+        SAV9ZA s9z => s9z.TeamIndexes.TeamSlots,
+        _ => [],
+    };
+
+    public string GetBattleTeamName(int teamIndex)
+    {
+        switch (AppState.SaveFile)
+        {
+            case SAV8BS s8b:
+                return s8b.BoxLayout.GetTeamName(teamIndex);
+            case SAV8SWSH s8:
+                return ReadTeamNameFromBlock(s8.Blocks.GetBlock(SwshTeamNamesKey).Data, teamIndex);
+            case SAV9SV s9:
+                return ReadTeamNameFromBlock(s9.Blocks.GetBlock(SvTeamNamesKey).Data, teamIndex);
+            default:
+                return $"Team {teamIndex + 1}";
+        }
+    }
+
+    private static string ReadTeamNameFromBlock(Span<byte> data, int teamIndex)
+    {
+        var offset = teamIndex * TeamNameByteLength;
+        if (offset + TeamNameByteLength > data.Length)
+        {
+            return $"Team {teamIndex + 1}";
+        }
+
+        var name = StringConverter8.GetString(data.Slice(offset, TeamNameByteLength));
+        return string.IsNullOrWhiteSpace(name) ? $"Team {teamIndex + 1}" : name;
+    }
+
+    public bool IsBattleTeamLocked(int teamIndex) => AppState.SaveFile switch
+    {
+        SAV7 s7 => s7.BoxLayout.GetIsTeamLocked(teamIndex),
+        SAV8SWSH s8 => s8.TeamIndexes.GetIsTeamLocked(teamIndex),
+        SAV8BS s8b => s8b.BoxLayout.GetIsTeamLocked(teamIndex),
+        SAV9SV s9 => s9.TeamIndexes.GetIsTeamLocked(teamIndex),
+        SAV9ZA s9z => s9z.TeamIndexes.GetIsTeamLocked(teamIndex),
+        _ => false,
+    };
+
+    public void SetBattleTeamLocked(int teamIndex, bool locked)
+    {
+        switch (AppState.SaveFile)
+        {
+            case SAV7 s7:
+                s7.BoxLayout.SetIsTeamLocked(teamIndex, locked);
+                break;
+            case SAV8SWSH s8:
+                s8.TeamIndexes.SetIsTeamLocked(teamIndex, locked);
+                break;
+            case SAV8BS s8b:
+                {
+                    // BoxLayout8b only exposes GetIsTeamLocked (bit read) and the LockedTeam byte property.
+                    var current = s8b.BoxLayout.LockedTeam;
+                    s8b.BoxLayout.LockedTeam = locked
+                        ? (byte)(current | (1 << teamIndex))
+                        : (byte)(current & ~(1 << teamIndex));
+                    break;
+                }
+            case SAV9SV s9:
+                s9.TeamIndexes.SetIsTeamLocked(teamIndex, locked);
+                break;
+            case SAV9ZA s9z:
+                s9z.TeamIndexes.SetIsTeamLocked(teamIndex, locked);
+                break;
+        }
+
+        RefreshService.Refresh();
+    }
+
+    public bool HasRentalTeams() => AppState.SaveFile is SAV8SWSH or SAV9SV;
+
+    public int GetRentalTeamCount() => AppState.SaveFile switch
+    {
+        SAV8SWSH => SwshRentalTeamKeys.Length,
+        SAV9SV => RentalTeamSet9.Count,
+        _ => 0,
+    };
+
+    public IReadOnlyList<PKM> GetRentalTeamPokemon(int teamIndex)
+    {
+        switch (AppState.SaveFile)
+        {
+            case SAV8SWSH s8:
+                {
+                    if ((uint)teamIndex >= SwshRentalTeamKeys.Length)
+                    {
+                        return [];
+                    }
+
+                    var block = s8.Blocks.GetBlock(SwshRentalTeamKeys[teamIndex]);
+                    var rental = new RentalTeam8(block.Data.ToArray());
+                    return rental.GetTeam().Where(pk => pk.Species > 0).ToArray<PKM>();
+                }
+            case SAV9SV s9:
+                {
+                    if ((uint)teamIndex >= RentalTeamSet9.Count)
+                    {
+                        return [];
+                    }
+
+                    var block = s9.Blocks.GetBlock(SvRentalTeamsKey);
+                    var rentalSet = new RentalTeamSet9(block.Data.ToArray());
+                    var rental = rentalSet.GetRentalTeam(teamIndex);
+                    return rental.GetTeam().Where(pk => pk.Species > 0).ToArray<PKM>();
+                }
+            default:
+                return [];
+        }
+    }
+
+    public string GetRentalTeamName(int teamIndex)
+    {
+        switch (AppState.SaveFile)
+        {
+            case SAV8SWSH s8:
+                {
+                    if ((uint)teamIndex >= SwshRentalTeamKeys.Length)
+                    {
+                        return $"Rental Team {teamIndex + 1}";
+                    }
+
+                    var block = s8.Blocks.GetBlock(SwshRentalTeamKeys[teamIndex]);
+                    var rental = new RentalTeam8(block.Data.ToArray());
+                    var name = rental.TeamName;
+                    return string.IsNullOrWhiteSpace(name) ? $"Rental Team {teamIndex + 1}" : name;
+                }
+            case SAV9SV s9:
+                {
+                    if ((uint)teamIndex >= RentalTeamSet9.Count)
+                    {
+                        return $"Rental Team {teamIndex + 1}";
+                    }
+
+                    var block = s9.Blocks.GetBlock(SvRentalTeamsKey);
+                    var rentalSet = new RentalTeamSet9(block.Data.ToArray());
+                    var rental = rentalSet.GetRentalTeam(teamIndex);
+                    var name = rental.TeamName;
+                    return string.IsNullOrWhiteSpace(name) ? $"Rental Team {teamIndex + 1}" : name;
+                }
+            default:
+                return $"Rental Team {teamIndex + 1}";
+        }
+    }
+
+    public string GetRentalTeamPlayerName(int teamIndex)
+    {
+        switch (AppState.SaveFile)
+        {
+            case SAV8SWSH s8:
+                {
+                    if ((uint)teamIndex >= SwshRentalTeamKeys.Length)
+                    {
+                        return string.Empty;
+                    }
+
+                    var block = s8.Blocks.GetBlock(SwshRentalTeamKeys[teamIndex]);
+                    var rental = new RentalTeam8(block.Data.ToArray());
+                    return rental.PlayerName;
+                }
+            case SAV9SV s9:
+                {
+                    if ((uint)teamIndex >= RentalTeamSet9.Count)
+                    {
+                        return string.Empty;
+                    }
+
+                    var block = s9.Blocks.GetBlock(SvRentalTeamsKey);
+                    var rentalSet = new RentalTeamSet9(block.Data.ToArray());
+                    return rentalSet.GetRentalTeam(teamIndex).PlayerName;
+                }
+            default:
+                return string.Empty;
+        }
+    }
+
+    public string ExportTeamAsShowdown(IReadOnlyList<PKM> team)
+    {
+        if (team.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var sb = new StringBuilder();
+        foreach (var pkm in team)
+        {
+            if (pkm.Species == 0)
+            {
+                continue;
+            }
+
+            sb.AppendLine(ShowdownParsing.GetShowdownText(pkm)).AppendLine();
+        }
+
+        return sb.ToString().TrimEnd();
+    }
+
+    public void ClearBattleTeam(int teamIndex)
+    {
+        if (AppState.SaveFile is not { } sav)
+        {
+            return;
+        }
+
+        var teamSlots = GetTeamSlots(sav);
+        if (teamSlots.Length == 0)
+        {
+            return;
+        }
+
+        var startIdx = teamIndex * SlotsPerTeam;
+        for (var i = 0; i < SlotsPerTeam; i++)
+        {
+            teamSlots[startIdx + i] = -1;
+        }
+
+        SaveTeamSlots(sav);
+        RefreshService.RefreshBoxState();
+        RefreshService.Refresh();
+    }
+
+    public void ClearAllBattleTeams()
+    {
+        switch (AppState.SaveFile)
+        {
+            case SAV7 s7:
+                s7.BoxLayout.ClearBattleTeams();
+                s7.BoxLayout.SaveBattleTeams();
+                break;
+            case SAV8SWSH s8:
+                s8.TeamIndexes.ClearBattleTeams();
+                s8.TeamIndexes.SaveBattleTeams();
+                break;
+            case SAV8BS s8b:
+                s8b.BoxLayout.ClearBattleTeams();
+                s8b.BoxLayout.SaveBattleTeams();
+                break;
+            case SAV9SV s9:
+                s9.TeamIndexes.ClearBattleTeams();
+                s9.TeamIndexes.SaveBattleTeams();
+                break;
+            case SAV9ZA s9z:
+                s9z.TeamIndexes.ClearBattleTeams();
+                s9z.TeamIndexes.SaveBattleTeams();
+                break;
+            default:
+                return;
+        }
+
+        RefreshService.RefreshBoxState();
+        RefreshService.Refresh();
+    }
+
+    public void UnlockAllBattleTeams()
+    {
+        switch (AppState.SaveFile)
+        {
+            case SAV7 s7:
+                s7.BoxLayout.UnlockAllTeams();
+                break;
+            case SAV8SWSH s8:
+                s8.TeamIndexes.UnlockAllTeams();
+                break;
+            case SAV8BS s8b:
+                s8b.BoxLayout.LockedTeam = 0;
+                break;
+            case SAV9SV s9:
+                s9.TeamIndexes.UnlockAllTeams();
+                break;
+            case SAV9ZA s9z:
+                s9z.TeamIndexes.UnlockAllTeams();
+                break;
+            default:
+                return;
+        }
+
+        RefreshService.Refresh();
+    }
+
+    public void ClearBattleBox()
+    {
+        switch (AppState.SaveFile)
+        {
+            case SAV5 sav5:
+                for (var i = 0; i < BattleBox5.Count; i++)
+                {
+                    sav5.BattleBox[i].Span.Clear();
+                }
+
+                break;
+            case SAV6XY xy:
+                for (var i = 0; i < BattleBox6.Count; i++)
+                {
+                    xy.BattleBox[i].Span.Clear();
+                }
+
+                break;
+            case SAV6AO ao:
+                for (var i = 0; i < BattleBox6.Count; i++)
+                {
+                    ao.BattleBox[i].Span.Clear();
+                }
+
+                break;
+            default:
+                return;
+        }
+
+        RefreshService.Refresh();
+    }
+
+    public void SetBattleBoxLocked(bool locked)
+    {
+        switch (AppState.SaveFile)
+        {
+            case SAV5 sav5:
+                sav5.BattleBox.BattleBoxLocked = locked;
+                break;
+            case SAV6XY xy:
+                xy.BattleBox.Locked = locked;
+                break;
+            case SAV6AO ao:
+                ao.BattleBox.Locked = locked;
+                break;
+            default:
+                return;
+        }
+
+        RefreshService.Refresh();
+    }
+
+    private static void SaveTeamSlots(SaveFile sav)
+    {
+        switch (sav)
+        {
+            case SAV7 s7:
+                s7.BoxLayout.SaveBattleTeams();
+                break;
+            case SAV8SWSH s8:
+                s8.TeamIndexes.SaveBattleTeams();
+                break;
+            case SAV8BS s8b:
+                s8b.BoxLayout.SaveBattleTeams();
+                break;
+            case SAV9SV s9:
+                s9.TeamIndexes.SaveBattleTeams();
+                break;
+            case SAV9ZA s9z:
+                s9z.TeamIndexes.SaveBattleTeams();
+                break;
+        }
+    }
 }
