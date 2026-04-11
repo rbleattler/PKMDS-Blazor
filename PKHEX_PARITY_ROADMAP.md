@@ -2,7 +2,7 @@
 
 This roadmap outlines the path to achieving 100% feature parity with PKHeX. Tasks are broken down into actionable items organized by feature category and priority.
 
-**Last Updated:** 2026-04-07 (Pokémon Bank implemented — §2.1b, tracks #330; One-Touch Evolve implemented — §1.1, tracks #448; Gen-Specific editor tab implemented — §1.1 #419; Box pop-out dialogs implemented — §6.2, tracks #352; Pokédex per-species grid + LA research editor implemented — §2.5, tracks #414/#437/#438/#439; Fix Load Pokémon/Gift File slot behaviour implemented — §4.1, tracks #445; Trash bytes auto-fixer added to legality tab — tracks #542; Spinda spot preview implemented — tracks #554; Manic EMU `.3ds.sav` ZIP round-trip support added — tracks #537; Bag virtualization enabled via MudBlazor 9.2.0 — §7.2a, tracks #454; Info popovers for moves/items/abilities/balls added — §4.1, tracks #579)
+**Last Updated:** 2026-04-11 (Teams Tab implemented — §1.4, tracks #661; Showdown / PokePaste import implemented — §4.2, tracks #656; Backup management system implemented — §4.2/§5.5; Save file info viewer + repair tool implemented — §5.5; Display party stats implemented — tracks #658; In-app browser detection + warning implemented — §4.1, tracks #663; Non-exportable save detection implemented — tracks #675/#679; Save File Utilities §5.5 partially complete — backup manager, info viewer, repair tool, and encryption status done; remaining tasks tracked in #657. Earlier — Pokémon Bank implemented — §2.1b, tracks #330; One-Touch Evolve implemented — §1.1, tracks #448; Gen-Specific editor tab implemented — §1.1 #419; Box pop-out dialogs implemented — §6.2, tracks #352; Pokédex per-species grid + LA research editor implemented — §2.5, tracks #414/#437/#438/#439; Fix Load Pokémon/Gift File slot behaviour implemented — §4.1, tracks #445; Trash bytes auto-fixer added to legality tab — tracks #542; Spinda spot preview implemented — tracks #554; Manic EMU `.3ds.sav` ZIP round-trip support added — tracks #537; §6.6 Settings & Preferences mostly complete — `AppSettingsDialog` covers UI, trainer defaults, and auto-backup; settings import/export + reset remain. §7.2a Bag virtualization corrected — virtualization was reverted (commit 48ce4f15) and remains blocked on MudBlazor/MudBlazor#12799; Info popovers for moves/items/abilities/balls added — §4.1, tracks #579)
 
 ---
 
@@ -45,6 +45,14 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - **Pokédex Per-Species Grid** — Searchable, paginated per-species Seen/Caught checkbox grid (replacing count-only view) with full per-game dex filtering (LGPE 153-species, SWSH Galar-only, LA Hisui-only, SV regional dexes, ZA personal table); search by name or Pokédex number; Gen 8 LA per-species research task editor dialog (all task types, Clear All Research)
 - **Trash Bytes Auto-Fixer** — One-click trash-bytes cleaner in the legality tab (clears junk bytes in string fields to avoid legality flags)
 - **Manic EMU `.3ds.sav` Round-Trip** — Auto-detects and unpacks Manic EMU's ZIP-based `.3ds.sav` format on load; repacks to the same ZIP structure on export so saves can be re-imported directly
+- **Teams Tab** — Dedicated tab for battle box (Gen 7+) plus battle teams and rental teams (Gen 8/9): per-team Showdown export, lock/unlock, clear, and battle-team indicator badges on box grid sprites; backed by `IAppService` battle/rental team operations and unit-tested service layer
+- **Showdown / PokePaste Import** — `ShowdownImportDialog` parses Showdown text into legal PKM via `EncounterMovesetGenerator`, with HOME tracker / Scale fix-ups and overwrite-party confirmation; `PokePasteExportDialog` exports party as a PokePaste paste; PokePaste URLs can also be imported directly
+- **Backup Management System** — `BackupService` (browser IndexedDB) + `BackupManagerDialog` for client-side save backups with retention enforcement, restore, and per-entry delete; backup restore is guarded against non-exportable saves
+- **Save File Info Viewer** — `SaveFileInfoDialog` displays save type/generation/game/revision/size, header/footer presence, checksum status (valid/invalid + detail), encryption status, exportable + edited flags, and storage summary (boxes, party, seen/caught)
+- **Save File Repair Tool** — `SaveFileRepairDialog` exposes save file repair operations from the main menu
+- **Non-Exportable Save Detection** — Saves loaded from blank/template files are flagged as non-exportable at load time so the user is warned before attempting to export
+- **In-App Browser Detection** — Detects when the app is loaded inside an in-app browser (Telegram, WhatsApp, WeChat, Instagram, Facebook, etc.) and shows a warning so users open the site in a real browser where File System Access works
+- **Display Party Stats** — Party slots show current HP and status condition, with stat-recalculation skipped for PB7 entities that already have party stats persisted
 
 ---
 
@@ -95,16 +103,16 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - [x] Create unit tests for contest stats
 
 #### Form/Appearance Editor
-**Status:** ⚠️ Partial (basic form support exists; Spinda spot preview implemented — #554; remaining enhancements — #651)
+**Status:** ⚠️ Partial (Spinda spot preview + species-specific editors for Alcremie/Vivillon/Furfrou/Pumpkaboo/Minior implemented; general form preview UI and form-legality validation remain — #651)
 **Complexity:** Medium
 **Tasks:**
-- [ ] Enhance form selection UI with visual previews
+- [ ] Enhance form selection UI with visual previews (general species)
 - [x] **Spinda spot pattern preview** — renders Spinda's 4 unique spot positions from its PID using bundled sprite assets; shown inline in the Pokémon editor (closes #554)
-- [ ] Add Alcremie decoration editor (Gen 8)
-- [ ] Add Vivillon pattern editor
-- [ ] Add Furfrou trim editor
-- [ ] Add Pumpkaboo/Gourgeist size editor
-- [ ] Add Minior core color editor
+- [x] **Alcremie decoration editor** (Gen 8) — `AlcremieEditorDialog` covers all 63 cream × sweet combinations
+- [x] **Vivillon pattern editor** — `VivillonEditorDialog`; also covers Scatterbug and Spewpa via the Vivillon species substitution
+- [x] **Furfrou trim editor** — `FurfrouEditorDialog`; auto-sets days-remaining to maximum when switching to a trim form
+- [x] **Pumpkaboo/Gourgeist size editor** — `PumpkabooSizeDialog`
+- [x] **Minior core color editor** — `MiniorColorDialog`
 - [ ] Support all Pokemon with form variations
 - [ ] Validate form legality based on origin/capture method
 
@@ -280,6 +288,23 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - [ ] Add example scripts library
 - [ ] Implement batch export/import
 - [ ] Create unit tests
+
+### 1.4 Teams Tab (Battle Box, Battle Teams, Rental Teams)
+**Status:** ✅ Implemented (slot assignment via drag-and-drop is a follow-up — #671)
+**Complexity:** Very High
+**Tracks:** #661
+**PKHeX Reference:** `SAV_BattleBox`, `SAV_RentalTeam9`, `SAV_RentalTeam8`, `BoxLayout7/8/8b`, `TeamIndexes8`
+
+A dedicated **Teams** tab in `SaveFileComponent.razor` for viewing and managing battle box, battle teams, and rental teams across all supporting generations. Implementation is split across `TeamsTab.razor[.cs]`, `IAppService` battle/rental team operations, and box grid indicator overlays.
+
+**Tasks:**
+- [x] **Service layer** — battle team and rental team get/set/clear/lock operations on `IAppService`
+- [x] **Battle box editing operations** — clear, unlock, lock all teams
+- [x] **Battle Teams section** — 6 team cards (SWSH/SV/ZA), team name display, lock toggle, 6 sprite slots resolved from box slot references, per-team Showdown export and clear
+- [x] **Rental Teams section** — Gen 8 SWSH and Gen 9 SV rental teams with Showdown export and clear
+- [x] **Battle team indicators on box grid** — small badge overlay on box-slot sprites showing which battle team a Pokémon is registered to (mirrors PKHeX WinForms `StorageSlotSource.BattleTeamN` flags)
+- [x] **Unit tests** — battle team service layer (get, clear, lock, unlock, indicators)
+- [ ] **Slot assignment via drag-and-drop / picker** — tracked separately in #671
 
 ---
 
@@ -767,6 +792,8 @@ Bring the Mystery Gift Database tab to full parity with PKHeX's `SAV_MysteryGift
 - [ ] Add theme customization (dark/light modes already exist, add more)
 - [ ] Create customizable hotkeys
 - [x] **Info popovers for moves, items, abilities, and balls (#579)** — `DescriptionService` fetches Bulbapedia-sourced descriptions from bundled JSON; reusable `InfoButton` and `BagItemInfoButton` components with lazy-loading `MudPopover`s; Moves tab shows type/category/power/PP/accuracy/description per slot; Main tab shows held item and ability descriptions; Met tab shows ball description; Bag tab shows item sprite + move details for TM/HM items; Advanced Search shows info buttons on filters and result rows with explicit jump-to-Pokémon button
+- [x] **In-app browser detection and warning (#663)** — detects when the app is loaded inside an in-app browser (Telegram, WhatsApp, WeChat, Instagram, Facebook, etc.) and shows a warning so users open the site in a real browser where File System Access works
+- [x] **Non-exportable save detection at load time (#675/#679)** — flags blank/template saves as non-exportable on load and warns the user before they attempt to export
 - [ ] Add tooltip help system (wiki-link HelpButton — see §6.3)
 - [ ] Implement context menus for Pokemon slots
 - [ ] Add quick-edit mode (inline editing)
@@ -782,16 +809,16 @@ Bring the Mystery Gift Database tab to full parity with PKHeX's `SAV_MysteryGift
 **Tracks:** #61, #166
 **Tasks:**
 - [x] **Manic EMU `.3ds.sav` round-trip** — auto-detects the ZIP-based format on load, extracts the PKHeX-compatible save bytes, and repacks to the same ZIP structure on export so saves re-import directly into Manic EMU (closes #537)
-- [ ] Add bulk Pokemon import from files
+- [x] **Showdown text import** — `ShowdownImportDialog` parses Showdown text into legal PKM via `EncounterMovesetGenerator`, with HOME tracker / Scale fix-ups, post-import legality fixes, and overwrite-party confirmation flow (closes #656; partial coverage of #61)
+- [x] **PokePaste import / export** — `PokePasteExportDialog` exports the current party as a PokePaste paste; PokePaste URLs can be imported directly via the same Showdown import flow
+- [x] **Backup management system** — `BackupService` (browser IndexedDB) + `BackupManagerDialog` for client-side save backups with retention enforcement, restore, and per-entry delete; backup restore is guarded against non-exportable saves (closes the §5.5 backup manager task as well)
+- [ ] Add bulk Pokemon import from .pk* files (drag-and-drop)
 - [ ] Support .pk* file drag-and-drop
-- [ ] Add team import/export (multiple Pokemon at once)
 - [ ] Support Battle Video Pokemon extraction
 - [ ] Add .wc* (Wonder Card) file import
 - [ ] Implement save file conversion between formats
 - [ ] Add CSV export for Pokemon data
 - [ ] Support JSON export/import
-- [ ] Add Showdown team import (already have export)
-- [ ] Create backup management system
 
 ### 4.3 Box Management Enhancements
 **Tracks:** #352
@@ -933,15 +960,17 @@ Three parallel tracks — wiki content authoring, in-app help links (code), and 
 - [ ] Implement backup before block editing
 
 ### 5.5 Save File Utilities
+**Status:** ⚠️ Partial — backup manager, info viewer, repair tool, and encryption/decryption status are done; comparison/converter/splitter/merger remain (tracked in #657)
+**Tracks:** #349 *(closed; superseded by #657)*, #657
 **Tasks:**
-- [ ] Add save file backup manager with auto-backup
-- [ ] Implement save file comparison tool
-- [ ] Create save file info viewer (metadata, size, checksums)
-- [ ] Add save file repair tool
-- [ ] Implement save file format converter
-- [ ] Create save file splitter (for multi-save files)
-- [ ] Add save file merger
-- [ ] Implement save file encryption/decryption status
+- [x] **Save file backup manager** — `BackupService` + `BackupManagerDialog`: client-side IndexedDB backups with retention enforcement, restore, and per-entry delete; backup restore guarded against non-exportable saves
+- [ ] Implement save file comparison tool *(#657)*
+- [x] **Save file info viewer** — `SaveFileInfoDialog` shows save type, generation, game, revision, file size, header/footer presence, checksum status (with detail), encryption status, exportable + edited flags, box/party/dex storage summary
+- [x] **Save file repair tool** — `SaveFileRepairDialog` exposed from the main menu
+- [ ] Implement save file format converter *(#657)*
+- [ ] Create save file splitter (for multi-save files) *(#657)*
+- [ ] Add save file merger *(#657)*
+- [x] **Save file encryption/decryption status** — surfaced in `SaveFileInfoDialog` (Format Encryption row)
 
 ### 5.6 PKHaX / Illegal Mode
 **Status:** ✅ Implemented — PR #423 · closes #422
@@ -1117,16 +1146,17 @@ Three parallel tracks — wiki content authoring, in-app help links (code), and 
 - [ ] Create Hall of Fame export
 
 ### 6.6 Settings & Preferences
+**Status:** ⚠️ Partial — `AppSettingsDialog` covers UI / Trainer Defaults / Advanced tabs; settings import/export and reset remain.
 **Tasks:**
-- [ ] Create app settings editor (SettingsEditor equivalent)
-- [ ] Add preference for:
-  - [ ] Default OT name
-  - [ ] Default TID/SID
-  - [ ] Default language
-  - [ ] Auto-backup frequency
-  - [ ] Database location
-  - [ ] Export folders
-  - [ ] UI preferences
+- [x] Create app settings editor (SettingsEditor equivalent) — `Pkmds.Rcl/Components/Dialogs/AppSettingsDialog.razor`
+- [x] Add preference for:
+  - [x] Default OT name
+  - [x] Default TID/SID
+  - [x] Default language
+  - [x] Auto-backup frequency (auto-backup toggle + max backup count)
+  - [ ] Database location *(N/A in browser sandbox — saved via File System Access API per save)*
+  - [ ] Export folders *(N/A in browser sandbox — see above)*
+  - [x] UI preferences (theme, sprite style, HaX mode, verbose logging)
 - [ ] Implement settings import/export
 - [ ] Add settings reset
 
@@ -1160,21 +1190,21 @@ Three parallel tracks — wiki content authoring, in-app help links (code), and 
 - [ ] Add performance monitoring
 
 #### 7.2a Bag/Inventory Performance (#299)
-**Status:** ⚠️ Partial (virtualization enabled via MudBlazor 9.2.0 — #454; lazy-render attempted then removed — #511)
+**Status:** ⚠️ Partial (virtualization tried + reverted — #454; lazy-render attempted then removed — #511; blocked on upstream MudBlazor/MudBlazor#12799)
 **Complexity:** Medium
 **Priority:** High
 **Tracks:** #299
 
-The Bag tab is slow to load on large saves (SV, SwSh) because all pouches render eagerly, virtualization is off by default, and empty item rows are included.
+The Bag tab is slow to load on large saves (SV, SwSh) because all pouches render eagerly, virtualization is off, and empty item rows are included.
 
 **Root causes:**
 - All `MudTabPanel`/`MudDataGrid` instances are initialized at once even though only one tab is visible
-- `Virtualize` defaults to `false` due to known scrolling issues with fixed-height containers
+- `Virtualize` is disabled because `MudDataGrid`'s `DataGridVirtualizeRow` passes `SpacerElement="div"` inside `<tbody>`, which CSS collapses to 0 px and causes rows to jump on scroll (upstream MudBlazor/MudBlazor#12799); we tried enabling it via MudBlazor 9.2.0 in PR #500 but had to revert (commits `e3d76cbd` → `48ce4f15`)
 - Most pouches contain many empty slots (`Index == 0`, `Count == 0`) that are still rendered
 - No `CellTemplate` on the Item column — display mode falls back to raw integer rendering
 
 **Tasks:**
-- [x] **Fix virtualization and enable by default** — MudBlazor 9.2.0 resolved the underlying scroll issue; `Virtualize="true"` is now enabled for the bag `MudDataGrid` (closes #454 via PR #500)
+- [ ] **Re-enable virtualization once MudBlazor/MudBlazor#12799 ships** — bump `MudBlazor` in `Directory.Packages.props` and set `Virtualize="true"` on the bag `MudDataGrid` (#454)
 - [ ] **Lazy-render inactive pouches** — attempted in PR #511 then removed due to layout issues; revisit when a stable approach is found
 - [ ] **Filter empty slots by default** — bind `MudDataGrid.Items` to `pouch.Items.Where(i => i.Index != 0)` when `ShowEmptySlots == false`; add a per-tab "Show empty slots" toggle (default off)
 - [ ] **Add `CellTemplate` to Item column** — render `@ItemList[context.Item.Index]` as `MudText` in display mode so the grid has a lightweight non-edit render path
@@ -1354,8 +1384,8 @@ This roadmap is a living document. Community contributions are welcome!
 
 **For questions, suggestions, or to discuss the roadmap, please open an issue on GitHub or contact the maintainer.**
 
-**Last Updated:** 2026-02-28
-**Next Review:** 2026-03-27
+**Last Updated:** 2026-04-11
+**Next Review:** 2026-05-09
 <!-- Legality Checker (§1.2): fix buttons (#401) + batch report (#402) done 2026-02-27; comprehensive unit tests still pending -->
 <!-- Legality Checker (§1.2): per-field inline indicators (#411) implemented 2026-02-27; covers Moves/Stats/Main/Met/OT-Misc/Ribbons tabs -->
 <!-- PKHeX bug filed 2026-02-27: SAV1.IsVirtualConsole filename heuristic causes false cart-era detection for renamed VC saves → kwsch/PKHeX#4734 -->

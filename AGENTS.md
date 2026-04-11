@@ -189,10 +189,6 @@ Prefer reading local source over fetching from GitHub or relying solely on docs:
 - **Tests**: Do not run `dotnet test` locally — leave it to the CI GitHub Actions workflow (`.github/workflows/buildandtest.yml`). Run only `dotnet format` and `dotnet build -c Debug` to verify changes locally.
 - **PR review feedback**: (1) Review all comments and plan the response; (2) reply to each individual comment on the PR explaining what you're doing and why; (3) make code changes, commit, and push; (4) mark all addressed comments as resolved on the PR.
 
-## Known upstream issues
-
-- **MudBlazor bag virtualization** (`BagTab`): `MudDataGrid` `Virtualize="true"` is intentionally disabled due to a MudBlazor bug — `DataGridVirtualizeRow` passes `SpacerElement="div"` inside `<tbody>`, which CSS collapses to 0 px, causing rows to jump on scroll. A fix has been submitted upstream (MudBlazor/MudBlazor#12799). Once it is merged and released: bump the MudBlazor version in `Directory.Packages.props`, then re-enable `Virtualize="true"` on the bag `MudDataGrid`.
-
 ## Notes
 
 - Respect the existing code style. Reference `.editorconfig` for formatting rules; Debug builds treat warnings as errors.

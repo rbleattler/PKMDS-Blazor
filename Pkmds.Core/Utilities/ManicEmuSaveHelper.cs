@@ -24,6 +24,19 @@ namespace Pkmds.Core.Utilities;
 /// using the same compound extension as the original so Manic EMU can import it directly.
 /// </item>
 /// </list>
+/// <para>
+/// Troubleshooting "save is always corrupted in Manic EMU" reports (see issue #669):
+/// the round-trip only works if the user uploads the original <c>.3ds.sav</c> /
+/// <c>.3ds.save</c> ZIP — uploading raw save bytes causes PKMDS to export raw bytes
+/// on save, which Manic EMU cannot import. The three known suspects are:
+/// (1) user uploaded the wrong file type — there is no UI feedback confirming a
+/// Manic EMU ZIP was detected on load; (2) iOS Safari may mangle or strip the
+/// compound <c>.3ds.save</c> extension when downloading via blob URL (see
+/// <c>fileSave.js</c>); (3) no test currently round-trips a Manic EMU ZIP
+/// <em>with modifications</em> and re-validates checksums. If a similar report
+/// comes in, ask the reporter which file they uploaded, whether the exported
+/// filename is intact, and whether the failure occurs even with no edits.
+/// </para>
 /// </remarks>
 public static class ManicEmuSaveHelper
 {
