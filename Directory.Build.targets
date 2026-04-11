@@ -8,18 +8,20 @@
 
     <!-- Detect whether this project directly references PKHeX.Core so we only swap
          projects that actually consume it. Without this guard the ItemGroup below
-         runs for every project that imports Directory.Build.targets (Pkmds.Functions,
-         Pkmds.Web, etc.), unnecessarily coupling them to the local PKHeX checkout.
-         We use item batching on %(Identity) to avoid nested single quotes in the
-         condition (which break MSBuild's condition parser). -->
-    <ItemGroup>
-        <_PKHeXCorePackageRef Include="@(PackageReference)" Condition="'%(Identity)' == 'PKHeX.Core'" />
-    </ItemGroup>
+         runs for every project that imports Directory.Build.targets, unnecessarily
+         coupling them to the local PKHeX checkout.
+         We build a sentinel-delimited string from the PackageReference identity list
+         and use a property function Contains check to avoid MSBuild restrictions on
+         built-in metadata (%(Identity)) in item element conditions (MSB4190). -->
+    <PropertyGroup Condition="'$(UseLocalPKHeX)' == 'true'">
+        <_PKHeXCoreSentinel>;@(PackageReference->'%(Identity)');</_PKHeXCoreSentinel>
+        <_HasPKHeXCoreRef Condition="$(_PKHeXCoreSentinel.Contains(';PKHeX.Core;'))">true</_HasPKHeXCoreRef>
+    </PropertyGroup>
 
     <!-- Swap NuGet PKHeX.Core for a local project reference.
          Usage: dotnet build ... -p:UseLocalPKHeX=true
          Override path: -p:PKHeXSourcePath=/path/to/PKHeX.Core.csproj -->
-    <ItemGroup Condition="'$(UseLocalPKHeX)' == 'true' And '@(_PKHeXCorePackageRef)' != ''">
+    <ItemGroup Condition="'$(UseLocalPKHeX)' == 'true' And '$(_HasPKHeXCoreRef)' == 'true'">
         <PackageReference Remove="PKHeX.Core" />
         <ProjectReference Include="$(PKHeXSourcePath)" />
     </ItemGroup>
