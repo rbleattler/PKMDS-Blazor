@@ -287,11 +287,29 @@ public partial class MainLayout : IDisposable
             if (restore.Entry.IsManicEmu &&
                 ManicEmuSaveHelper.TryExtractSaveFromZip(data, fileName, out var saveFile, out var manicContext))
             {
+                if (!saveFile.State.Exportable)
+                {
+                    Logger.LogWarning("Manic EMU backup save file is not exportable (unsupported format/ROM hack): {FileName}", fileName);
+                    await DialogService.ShowMessageBoxAsync("Unsupported save file",
+                        "This backup cannot be restored — it may be from an unsupported ROM hack or format.");
+                    AppState.ShowProgressIndicator = false;
+                    return;
+                }
+
                 manicEmuSaveContext = manicContext;
                 FinishLoadingSaveFile(saveFile, fileName);
             }
             else if (SaveUtil.TryGetSaveFile(data, out var rawSave, fileName))
             {
+                if (!rawSave.State.Exportable)
+                {
+                    Logger.LogWarning("Backup save file is not exportable (unsupported format/ROM hack): {FileName}", fileName);
+                    await DialogService.ShowMessageBoxAsync("Unsupported save file",
+                        "This backup cannot be restored — it may be from an unsupported ROM hack or format.");
+                    AppState.ShowProgressIndicator = false;
+                    return;
+                }
+
                 manicEmuSaveContext = null;
                 FinishLoadingSaveFile(rawSave, fileName);
             }
