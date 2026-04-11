@@ -1,0 +1,26 @@
+<Project>
+
+    <PropertyGroup>
+        <!-- Default PKHeX source paths per OS; override with -p:PKHeXSourcePath=... -->
+        <PKHeXSourcePath Condition="'$(PKHeXSourcePath)' == '' And $([MSBuild]::IsOsPlatform('Windows'))">C:\Code\PKHeX\PKHeX.Core\PKHeX.Core.csproj</PKHeXSourcePath>
+        <PKHeXSourcePath Condition="'$(PKHeXSourcePath)' == ''">$(HOME)/Code/codemonkey85/PKHeX/PKHeX.Core/PKHeX.Core.csproj</PKHeXSourcePath>
+    </PropertyGroup>
+
+    <!-- Detect whether this project directly references PKHeX.Core so we only swap
+         projects that actually consume it. Without this guard the ItemGroup below
+         runs for every project that imports Directory.Build.targets (Pkmds.Functions,
+         Pkmds.Web, etc.), unnecessarily coupling them to the local PKHeX checkout. -->
+    <PropertyGroup>
+        <_HasPKHeXCorePackageReference>false</_HasPKHeXCorePackageReference>
+        <_HasPKHeXCorePackageReference Condition="'@(PackageReference-&gt;WithMetadataValue('Identity', 'PKHeX.Core'))' != ''">true</_HasPKHeXCorePackageReference>
+    </PropertyGroup>
+
+    <!-- Swap NuGet PKHeX.Core for a local project reference.
+         Usage: dotnet build ... -p:UseLocalPKHeX=true
+         Override path: -p:PKHeXSourcePath=/path/to/PKHeX.Core.csproj -->
+    <ItemGroup Condition="'$(UseLocalPKHeX)' == 'true' And '$(_HasPKHeXCorePackageReference)' == 'true'">
+        <PackageReference Remove="PKHeX.Core" />
+        <ProjectReference Include="$(PKHeXSourcePath)" />
+    </ItemGroup>
+
+</Project>
