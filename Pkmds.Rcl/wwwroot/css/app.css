@@ -563,16 +563,24 @@ body, html {
     background-color: rgba(76, 175, 80, 0.1);
 }
 
-.square-slot[draggable="true"] {
-    cursor: grab !important;
+/* Suppress iOS Safari's native text selection / long-press callout on Pokémon slots
+   so they don't interfere with drag-to-sort. The wrapper carries .square-slot but
+   draggable="true" lives on the inner div, so target both — and apply user-select
+   to descendants because Safari otherwise selects the inner sprite nodes. */
+.square-slot,
+.square-slot * {
     -webkit-user-select: none;
     user-select: none;
     -webkit-touch-callout: none;
+}
+
+.square-slot > div[draggable="true"] {
+    cursor: grab !important;
     -webkit-user-drag: element;
     touch-action: manipulation;
 }
 
-.square-slot[draggable="true"]:active {
+.square-slot > div[draggable="true"]:active {
     cursor: grabbing !important;
 }
 
