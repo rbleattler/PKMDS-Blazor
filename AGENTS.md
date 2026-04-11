@@ -14,6 +14,11 @@ Local dev (Blazor WASM)
   - Equivalent from `Pkmds.Web`: `dotnet watch run -c Debug -v n --no-hot-reload`
   - Launch profiles expose: http `http://localhost:5283`, https `https://localhost:7267` (see `Pkmds.Web/Properties/launchSettings.json`).
 
+Local dev with a PKHeX.Core source checkout (manual UI testing)
+- From repo root (PowerShell): `./watch-local-pkhex.ps1`
+  - Optional custom path: `./watch-local-pkhex.ps1 -PKHeXSourcePath C:\Code\PKHeX-dev\PKHeX.Core\PKHeX.Core.csproj`
+  - See **Local dev override (`UseLocalPKHeX`)** under the PKHeX.Core section for full details.
+
 Restore and build
 - Restore: `dotnet restore`
 - Build Web (Debug/Release):
@@ -71,6 +76,43 @@ Runtime wiring (Web)
 This app depends heavily on [PKHeX.Core](https://github.com/kwsch/PKHeX). When implementing features, use the PKHeX WinForms app as a reference for how to leverage PKHeX.Core — both for UI/UX patterns and for understanding the correct API usage. The first place you should look when referencing PKHeX is `~/Code/codemonkey85/PKHeX` (macOS) or `C:\Code\PKHeX` (Windows), which contains the PKHeX WinForms app source code. The `PKHeX.Core` project within that solution is the library we consume here, and the WinForms app is a separate project that references it. The PKHeX WinForms app is a great reference for how to use PKHeX.Core effectively, as it demonstrates real-world usage of the library's APIs in a production application. If you can't find the source there, the PKHeX Wiki and source code are also valuable resources for understanding how to work with PKHeX.Core.
 
 If you encounter bugs or limitations in PKHeX.Core while working on an issue or PR, note them in a code comment at the relevant site and report them on the GitHub issue or PR you are working on.
+
+### Local dev override (`UseLocalPKHeX`)
+
+`Directory.Build.targets` at the repo root supports a `UseLocalPKHeX` MSBuild flag that swaps the NuGet `PKHeX.Core` package for a `ProjectReference` to a local source checkout. Use this when you want to:
+
+- Manually test the UI against a PKHeX dev build
+- Verify whether a PKHeX bug/regression affects this app
+- Test a PKHeX fix before it is released on NuGet
+
+**Manual UI testing (watch)**
+
+```powershell
+# Default paths: C:\Code\PKHeX (Windows), ~/Code/codemonkey85/PKHeX (macOS/Linux)
+./watch-local-pkhex.ps1
+
+# Custom path (e.g. a specific branch checkout)
+./watch-local-pkhex.ps1 -PKHeXSourcePath C:\Code\PKHeX-dev\PKHeX.Core\PKHeX.Core.csproj
+```
+
+**Build / automated tests**
+
+```sh
+# Build
+dotnet build Pkmds.Web/Pkmds.Web.csproj -c Debug -p:UseLocalPKHeX=true
+
+# Test
+dotnet test -c Release -p:UseLocalPKHeX=true
+
+# Custom path
+dotnet build Pkmds.Web/Pkmds.Web.csproj -c Debug -p:UseLocalPKHeX=true -p:PKHeXSourcePath=/path/to/PKHeX.Core.csproj
+```
+
+Default `PKHeXSourcePath` values (set in `Directory.Build.targets`):
+- **Windows**: `C:\Code\PKHeX\PKHeX.Core\PKHeX.Core.csproj`
+- **macOS/Linux**: `~/Code/codemonkey85/PKHeX/PKHeX.Core/PKHeX.Core.csproj`
+
+The default build (no flag) is completely unaffected.
 
 ### PKHeX.Core API notes
 
