@@ -1,0 +1,17 @@
+<Project>
+
+    <PropertyGroup>
+        <!-- Default PKHeX source paths per OS; override with -p:PKHeXSourcePath=... -->
+        <PKHeXSourcePath Condition="'$(PKHeXSourcePath)' == '' And $([MSBuild]::IsOsPlatform('Windows'))">C:\Code\PKHeX\PKHeX.Core\PKHeX.Core.csproj</PKHeXSourcePath>
+        <PKHeXSourcePath Condition="'$(PKHeXSourcePath)' == ''">$(HOME)/Code/codemonkey85/PKHeX/PKHeX.Core/PKHeX.Core.csproj</PKHeXSourcePath>
+    </PropertyGroup>
+
+    <!-- Swap NuGet PKHeX.Core for a local project reference.
+         Usage: dotnet build ... -p:UseLocalPKHeX=true
+         Override path: -p:PKHeXSourcePath=/path/to/PKHeX.Core.csproj -->
+    <ItemGroup Condition="'$(UseLocalPKHeX)' == 'true'">
+        <PackageReference Remove="PKHeX.Core" />
+        <ProjectReference Include="$(PKHeXSourcePath)" />
+    </ItemGroup>
+
+</Project>
