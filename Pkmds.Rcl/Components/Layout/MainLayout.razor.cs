@@ -368,6 +368,7 @@ public partial class MainLayout : IDisposable
         AppService.ClearSelection();
         ParseSettings.ClearActiveTrainer();
         AppState.SaveFile = null;
+        manicEmuSaveContext = null;
         AppState.ShowProgressIndicator = true;
 
         var data = Array.Empty<byte>();
@@ -391,7 +392,6 @@ public partial class MainLayout : IDisposable
                     return;
                 }
 
-                manicEmuSaveContext = null;
                 FinishLoadingSaveFile(saveFile, selectedFile.Name);
             }
             // If that fails, check whether this is a Manic EMU .3ds.sav ZIP archive.
