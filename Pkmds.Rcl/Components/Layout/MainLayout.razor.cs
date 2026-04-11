@@ -368,6 +368,7 @@ public partial class MainLayout : IDisposable
         AppService.ClearSelection();
         ParseSettings.ClearActiveTrainer();
         AppState.SaveFile = null;
+        manicEmuSaveContext = null;
         AppState.ShowProgressIndicator = true;
 
         var data = Array.Empty<byte>();
@@ -382,13 +383,30 @@ public partial class MainLayout : IDisposable
             // Try to load the file directly as a raw save.
             if (SaveUtil.TryGetSaveFile(data, out var saveFile, selectedFile.Name))
             {
-                manicEmuSaveContext = null;
+                if (!saveFile.State.Exportable)
+                {
+                    Logger.LogWarning("Save file is not exportable (unsupported format/ROM hack): {FileName}", selectedFile.Name);
+                    await DialogService.ShowMessageBoxAsync("Unsupported save file",
+                        "This save file cannot be loaded — it may be from an unsupported ROM hack or format.");
+                    AppState.ShowProgressIndicator = false;
+                    return;
+                }
+
                 FinishLoadingSaveFile(saveFile, selectedFile.Name);
             }
             // If that fails, check whether this is a Manic EMU .3ds.sav ZIP archive.
             // Manic EMU packages 3DS saves as a ZIP containing sdmc/… directory paths.
             else if (ManicEmuSaveHelper.TryExtractSaveFromZip(data, selectedFile.Name, out saveFile, out var manicContext))
             {
+                if (!saveFile.State.Exportable)
+                {
+                    Logger.LogWarning("Manic EMU save file is not exportable (unsupported format/ROM hack): {FileName}", selectedFile.Name);
+                    await DialogService.ShowMessageBoxAsync("Unsupported save file",
+                        "This save file cannot be loaded — it may be from an unsupported ROM hack or format.");
+                    AppState.ShowProgressIndicator = false;
+                    return;
+                }
+
                 manicEmuSaveContext = manicContext;
                 Logger.LogInformation("Loaded save from Manic EMU .3ds.sav/.3ds.save archive; entry: {EntryPath}", manicContext.SaveEntryPath);
                 FinishLoadingSaveFile(saveFile, selectedFile.Name);
