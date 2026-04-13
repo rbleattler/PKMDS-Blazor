@@ -69,7 +69,7 @@ public partial class MainLayout : IDisposable
                 await Task.Delay(4000);
                 IsUpdateCheckFailed = false;
                 break;
-                // "found": JS already dispatched 'updateAvailable' → ShowUpdateMessage() sets IsUpdateAvailable = true
+            // "found": JS already dispatched 'updateAvailable' → ShowUpdateMessage() sets IsUpdateAvailable = true
         }
 
         StateHasChanged();
@@ -222,33 +222,21 @@ public partial class MainLayout : IDisposable
 
     private async Task ShowSaveFileInfoDialog()
     {
-        var parameters = new DialogParameters
-        {
-            { nameof(SaveFileInfoDialog.SaveFile), AppState.SaveFile }
-        };
+        var parameters = new DialogParameters { { nameof(SaveFileInfoDialog.SaveFile), AppState.SaveFile } };
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
         await DialogService.ShowAsync<SaveFileInfoDialog>("Save File Info", parameters, options);
     }
 
     private async Task ShowSaveFileRepairDialog()
     {
-        var parameters = new DialogParameters
-        {
-            { nameof(SaveFileRepairDialog.SaveFile), AppState.SaveFile }
-        };
+        var parameters = new DialogParameters { { nameof(SaveFileRepairDialog.SaveFile), AppState.SaveFile } };
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
         await DialogService.ShowAsync<SaveFileRepairDialog>("Repair Save File", parameters, options);
     }
 
     private async Task ShowBackupManagerDialog()
     {
-        var parameters = new DialogParameters
-        {
-            { nameof(BackupManagerDialog.SaveFile), AppState.SaveFile },
-            { nameof(BackupManagerDialog.FileName), AppState.SaveFileName },
-            { nameof(BackupManagerDialog.IsManicEmu), manicEmuSaveContext is not null },
-            { nameof(BackupManagerDialog.ManicEmuContext), manicEmuSaveContext }
-        };
+        var parameters = new DialogParameters { { nameof(BackupManagerDialog.SaveFile), AppState.SaveFile }, { nameof(BackupManagerDialog.FileName), AppState.SaveFileName }, { nameof(BackupManagerDialog.IsManicEmu), manicEmuSaveContext is not null }, { nameof(BackupManagerDialog.ManicEmuContext), manicEmuSaveContext } };
         var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = true };
         var dialog = await DialogService.ShowAsync<BackupManagerDialog>("Backup Manager", parameters, options);
         var result = await dialog.Result;
@@ -877,10 +865,17 @@ public partial class MainLayout : IDisposable
         AppState.ShowProgressIndicator = false;
     }
 
-    private static byte[] GetPokemonFileData(PKM? pokemon) =>
-        pokemon is null
-            ? []
-            : pokemon.DecryptedPartyData;
+    private static byte[] GetPokemonFileData(PKM? pokemon)
+    {
+        if (pokemon is null)
+        {
+            return [];
+        }
+
+        var data = new byte[pokemon.SIZE_PARTY];
+        pokemon.WriteDecryptedDataParty(data);
+        return data;
+    }
 
     private async Task WriteFile(byte[] data, string fileName, string fileTypeExtension, string fileTypeDescription)
     {
