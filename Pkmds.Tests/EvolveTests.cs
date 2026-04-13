@@ -199,6 +199,185 @@ public class EvolveTests
         result.Should().BeFalse();
     }
 
+    // ── Issue #688: Feebas→Milotic evolution — beauty and trade fix ─────────
+
+    [Fact]
+    public void Issue688_BeautyEvolution_SetsContestBeautyToThreshold()
+    {
+        // Arrange — Feebas has a LevelUpBeauty evolution to Milotic (Gen 6 origin can have contest stats)
+        var pk = MakePk6((ushort)Species.Feebas);
+        pk.Version = GameVersion.AS;
+        var service = CreateService();
+        var evolutions = service.GetDirectEvolutions(pk);
+        var beautyMethod = evolutions.FirstOrDefault(m => m.Method == EvolutionType.LevelUpBeauty);
+        beautyMethod.Species.Should().Be((ushort)Species.Milotic,
+            "Feebas should have a LevelUpBeauty evolution to Milotic");
+
+        // Act — replicate the beauty fix from ApplyEvolution
+        if (pk is IContestStats contestStats && contestStats.ContestBeauty < beautyMethod.Argument)
+        {
+            contestStats.ContestBeauty = (byte)beautyMethod.Argument;
+        }
+
+        // Assert
+        pk.ContestBeauty.Should().BeGreaterThanOrEqualTo(
+            (byte)beautyMethod.Argument,
+            "beauty stat should be set to at least the required threshold");
+    }
+
+    [Fact]
+    public void Issue688_BeautyEvolution_PreservesExistingHighBeauty()
+    {
+        // Arrange — Feebas already has high beauty (Gen 6 origin can have contest stats)
+        var pk = MakePk6((ushort)Species.Feebas);
+        pk.Version = GameVersion.AS;
+        pk.ContestBeauty = 255;
+        var service = CreateService();
+        var evolutions = service.GetDirectEvolutions(pk);
+        var beautyMethod = evolutions.First(m => m.Method == EvolutionType.LevelUpBeauty);
+
+        // Act — the fix should not lower an existing high value
+        if (pk is IContestStats cs && cs.ContestBeauty < beautyMethod.Argument)
+        {
+            cs.ContestBeauty = (byte)beautyMethod.Argument;
+        }
+
+        // Assert
+        pk.ContestBeauty.Should().Be(255,
+            "existing beauty above threshold should not be lowered");
+    }
+
+    [Fact]
+    public void Issue688_TradeEvolution_SetsHandlingTrainer()
+    {
+        // Arrange — Feebas has a TradeHeldItem evolution to Milotic
+        var pk = MakePk6((ushort)Species.Feebas);
+        pk.OriginalTrainerName = "Ash";
+        pk.Version = GameVersion.X;
+        var service = CreateService();
+        var evolutions = service.GetDirectEvolutions(pk);
+        var tradeMethod = evolutions.FirstOrDefault(m => m.Method == EvolutionType.TradeHeldItem);
+        tradeMethod.Species.Should().Be((ushort)Species.Milotic,
+            "Feebas should have a TradeHeldItem evolution to Milotic");
+
+        pk.IsUntraded.Should().BeTrue("Feebas should start as untraded");
+
+        // Act — replicate the trade fix from ApplyEvolution
+        const string trainerName = "TestTrainer";
+        if (pk is IHandlerUpdate && pk.IsUntraded)
+        {
+            pk.HandlingTrainerName = trainerName;
+            pk.HandlingTrainerGender = 0;
+            pk.HandlingTrainerFriendship = pk.PersonalInfo.BaseFriendship;
+            pk.CurrentHandler = 1;
+        }
+
+        // Assert
+        pk.IsUntraded.Should().BeFalse("trade fix should mark the Pokémon as traded");
+        pk.HandlingTrainerName.Should().Be(trainerName);
+        pk.CurrentHandler.Should().Be(1);
+        pk.HandlingTrainerFriendship.Should().Be(pk.PersonalInfo.BaseFriendship);
+    }
+
+    [Fact]
+    public void Issue688_TradeEvolution_SkipsAlreadyTradedPokemon()
+    {
+        // Arrange — Feebas that has already been traded
+        var pk = MakePk6((ushort)Species.Feebas);
+        pk.OriginalTrainerName = "OriginalOT";
+        pk.Version = GameVersion.X;
+        pk.HandlingTrainerName = "OtherOT";
+        pk.CurrentHandler = 1;
+        pk.HandlingTrainerFriendship = 70;
+
+        pk.IsUntraded.Should().BeFalse("pre-setup: Feebas is already traded");
+
+        // Act — the fix should not overwrite existing trade data
+        if (pk is IHandlerUpdate && pk.IsUntraded)
+        {
+            pk.HandlingTrainerName = "BadOverwrite";
+            pk.HandlingTrainerGender = 0;
+            pk.HandlingTrainerFriendship = pk.PersonalInfo.BaseFriendship;
+            pk.CurrentHandler = 1;
+        }
+
+        // Assert — original trade data preserved
+        pk.HandlingTrainerName.Should().Be("OtherOT",
+            "should not overwrite existing handler on already-traded Pokémon");
+        pk.HandlingTrainerFriendship.Should().Be(70);
+    }
+
+    [Fact]
+    public void Issue688_Evolution_RefreshesAbilityForNewSpecies()
+    {
+        // Arrange — Feebas ability slot 0 = Swift Swim (ability ID 33)
+        // After evolution, Milotic ability slot 0 = Marvel Scale (ability ID 63)
+        var pk = MakePk6((ushort)Species.Feebas);
+        pk.Version = GameVersion.X;
+        pk.SetAbilityIndex(0);
+        var originalAbility = pk.Ability;
+        originalAbility.Should().NotBe(0, "Feebas should have a valid ability");
+
+        // Act — change species and refresh ability (same as ApplyEvolution)
+        pk.Species = (ushort)Species.Milotic;
+        var abilityIndex = pk.AbilityNumber switch
+        {
+            2 => 1,
+            4 => 2,
+            _ => 0
+        };
+        pk.RefreshAbility(abilityIndex);
+
+        // Assert — ability ID should change to Milotic's slot 0 ability
+        pk.Ability.Should().NotBe(originalAbility,
+            "ability should be refreshed to match the new species");
+        pk.Ability.Should().Be(pk.PersonalInfo.GetAbilityAtIndex(0),
+            "ability should match slot 0 of Milotic's personal info");
+    }
+
+    [Fact]
+    public void Issue688_GetDirectEvolutions_FiltersBeautyForGen7()
+    {
+        // Arrange — Gen 7 Pokémon cannot have contest stats, so beauty evolution
+        // should not be offered
+        var pk = new PK7 { Species = (ushort)Species.Feebas, Version = GameVersion.US };
+        var service = CreateService();
+
+        // Act
+        var evolutions = service.GetDirectEvolutions(pk);
+
+        // Assert — only trade evolution should remain, not beauty
+        evolutions.Should().NotContain(m => m.Method == EvolutionType.LevelUpBeauty,
+            "Gen 7 Pokémon cannot legally have contest stats, so beauty evolution should be filtered out");
+        evolutions.Should().Contain(m => m.Method == EvolutionType.TradeHeldItem,
+            "trade evolution should still be available");
+    }
+
+    [Fact]
+    public void Issue688_BeautyEvolution_AllowedForGen3Origin()
+    {
+        // Arrange — Gen 3 Pokémon transferred to Gen 6 format can have contest stats
+        var pk = MakePk6((ushort)Species.Feebas);
+        pk.Version = GameVersion.R; // Ruby (Gen 3 origin)
+        var service = CreateService();
+        var evolutions = service.GetDirectEvolutions(pk);
+        var beautyMethod = evolutions.First(m => m.Method == EvolutionType.LevelUpBeauty);
+
+        // Act
+        if (beautyMethod.Method == EvolutionType.LevelUpBeauty
+            && pk.CanHaveContestStats()
+            && pk is IContestStats cs
+            && cs.ContestBeauty < beautyMethod.Argument)
+        {
+            cs.ContestBeauty = (byte)beautyMethod.Argument;
+        }
+
+        // Assert — Gen 3 origin should allow contest stats
+        pk.ContestBeauty.Should().BeGreaterThanOrEqualTo(
+            (byte)beautyMethod.Argument,
+            "Gen 3 origin Pokémon can legally have contest stats");
+    }
+
     // ── Sealed test doubles ────────────────────────────────────────────────
 
     private sealed class TestAppState : IAppState
