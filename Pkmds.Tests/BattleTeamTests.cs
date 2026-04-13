@@ -315,9 +315,17 @@ public class BattleTeamTests
         sav7.SetBoxSlotAtIndex(pkm2, 0, 1);
 
         sav7.BoxLayout.TeamSlots[0] = 0;
-        for (var i = 1; i < 6; i++) sav7.BoxLayout.TeamSlots[i] = -1;
+        for (var i = 1; i < 6; i++)
+        {
+            sav7.BoxLayout.TeamSlots[i] = -1;
+        }
+
         sav7.BoxLayout.TeamSlots[6] = 1;
-        for (var i = 7; i < 12; i++) sav7.BoxLayout.TeamSlots[i] = -1;
+        for (var i = 7; i < 12; i++)
+        {
+            sav7.BoxLayout.TeamSlots[i] = -1;
+        }
+
         sav7.BoxLayout.SaveBattleTeams();
 
         appService.ClearBattleTeam(0);
@@ -338,7 +346,11 @@ public class BattleTeamTests
         pkm.Species = 25;
         sav7.SetBoxSlotAtIndex(pkm, 0, 0);
         sav7.BoxLayout.TeamSlots[0] = 0;
-        for (var i = 1; i < 6; i++) sav7.BoxLayout.TeamSlots[i] = -1;
+        for (var i = 1; i < 6; i++)
+        {
+            sav7.BoxLayout.TeamSlots[i] = -1;
+        }
+
         sav7.BoxLayout.SaveBattleTeams();
         appService.SetBattleTeamLocked(0, true);
 
