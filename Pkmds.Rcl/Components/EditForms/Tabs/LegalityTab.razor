@@ -95,6 +95,31 @@
                 </MudList>
             }
 
+            @if (!IsLegal)
+            {
+                <MudStack Row
+                          AlignItems="@AlignItems.Center"
+                          Class="mt-2"
+                          Spacing="2">
+                    <MudButton Variant="@Variant.Filled"
+                               Color="@Color.Primary"
+                               StartIcon="@Icons.Material.Filled.AutoFixHigh"
+                               OnClick="@LegalizeAsync"
+                               Disabled="@IsLegalizing">
+                        @(IsLegalizing ? "Legalizing..." : "Legalize")
+                    </MudButton>
+                    @if (IsLegalizing)
+                    {
+                        <MudProgressCircular Size="@Size.Small"
+                                             Indeterminate />
+                        @if (!string.IsNullOrEmpty(legalizationProgress))
+                        {
+                            <MudText Typo="@Typo.caption">@legalizationProgress</MudText>
+                        }
+                    }
+                </MudStack>
+            }
+
             @if (HasRibbonIssues || HasMoveIssues || HasRelearnMoveIssues || HasBallIssues || HasMetLocationIssues || CanAutoFixTrashBytes || HasPalParkTrashByteIssues)
             {
                 <MudText Typo="@Typo.subtitle2"
