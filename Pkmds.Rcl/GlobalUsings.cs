@@ -6,6 +6,7 @@ global using System.Net;
 global using System.Reflection;
 global using System.Text;
 global using System.Text.Json;
+global using System.Text.Json.Serialization;
 global using Microsoft.AspNetCore.Components;
 global using Microsoft.AspNetCore.Components.Forms;
 global using Microsoft.AspNetCore.Components.Web;

@@ -272,7 +272,9 @@ public partial class PokemonSlotComponent : IDisposable
         // be modified during the synchronous dragstart event handler.
         Pokemon.RefreshChecksum();
         var filename = AppService.GetCleanFileName(Pokemon);
-        var base64 = Convert.ToBase64String(Pokemon.DecryptedPartyData);
+        var partyData = new byte[Pokemon.SIZE_PARTY];
+        Pokemon.WriteDecryptedDataParty(partyData);
+        var base64 = Convert.ToBase64String(partyData);
         if (JSRuntime is IJSInProcessRuntime inProcessRuntime)
         {
             inProcessRuntime.Invoke<bool>("setDragDownloadData", filename, base64);

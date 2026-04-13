@@ -200,7 +200,7 @@ public interface IAppService
     string ExportBoxAsShowdown(int boxNumber);
 
     /// <summary>
-    /// Parses raw Showdown / PokePaste text into a list of <see cref="ShowdownSet"/> objects.
+    /// Parses raw Showdown / PokePaste text into a list of <see cref="ShowdownSet" /> objects.
     /// Sets with an unknown species (Species == 0) are excluded from the result.
     /// </summary>
     /// <param name="text">The raw Showdown-format text to parse.</param>
@@ -208,7 +208,7 @@ public interface IAppService
     IReadOnlyList<ShowdownSet> ParseShowdownText(string text);
 
     /// <summary>
-    /// Converts a <see cref="ShowdownSet"/> into a <see cref="PKM"/> compatible with the current save file.
+    /// Converts a <see cref="ShowdownSet" /> into a <see cref="PKM" /> compatible with the current save file.
     /// Applies trainer info (OT name, gender) from the save file when not provided by the template.
     /// </summary>
     /// <param name="set">The battle template to convert.</param>

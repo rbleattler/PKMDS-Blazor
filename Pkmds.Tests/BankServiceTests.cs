@@ -5,17 +5,24 @@ using Microsoft.JSInterop;
 namespace Pkmds.Tests;
 
 /// <summary>
-/// Unit tests for <see cref="BankService"/> using bUnit's JS-interop mocks.
-/// <see cref="BankService.RawEntry"/> and <see cref="BankService.RawMeta"/> are
+/// Unit tests for <see cref="BankService" /> using bUnit's JS-interop mocks.
+/// <see cref="BankService.RawEntry" /> and <see cref="BankService.RawMeta" /> are
 /// <c>internal</c> and accessible here via <c>InternalsVisibleTo</c> in Pkmds.Rcl.csproj.
 /// </summary>
 public class BankServiceTests
 {
     private const string TestFilesPath = "../../../TestFiles";
 
+    private static byte[] GetStoredData(PKM pkm)
+    {
+        var data = new byte[pkm.SIZE_STORED];
+        pkm.WriteDecryptedDataStored(data);
+        return data;
+    }
+
     /// <summary>
-    /// Creates a <see cref="BankService"/> backed by bUnit's JS-interop mock with
-    /// <paramref name="bankEntries"/> pre-loaded as the <c>getAllPokemon</c> result.
+    /// Creates a <see cref="BankService" /> backed by bUnit's JS-interop mock with
+    /// <paramref name="bankEntries" /> pre-loaded as the <c>getAllPokemon</c> result.
     /// </summary>
     private static (BankService Service, BunitContext Ctx) CreateService(
         BankService.RawEntry[]? bankEntries = null)
@@ -84,21 +91,22 @@ public class BankServiceTests
     {
         var data = File.ReadAllBytes(Path.Combine(TestFilesPath, "Lucario_B06DDFAD.pk5"));
         FileUtil.TryGetPKM(data, out var pkm, ".pk5").Should().BeTrue();
+        pkm.Should().NotBeNull();
 
         // Seed the bank with a RawEntry whose bytesBase64 matches the test PKM.
         var rawEntry = new BankService.RawEntry
         {
             Id = 1,
-            BytesBase64 = Convert.ToBase64String(pkm!.DecryptedBoxData),
+            BytesBase64 = Convert.ToBase64String(GetStoredData(pkm)),
             Meta = new BankService.RawMeta
             {
                 Species = pkm.Species,
                 IsShiny = pkm.IsShiny,
                 Nickname = pkm.Nickname,
                 Ext = pkm.Extension,
-                Tag = null,
+                Tag = null
             },
-            AddedAt = DateTimeOffset.UtcNow.ToString("O"),
+            AddedAt = DateTimeOffset.UtcNow.ToString("O")
         };
 
         var (service, ctx) = CreateService([rawEntry]);
