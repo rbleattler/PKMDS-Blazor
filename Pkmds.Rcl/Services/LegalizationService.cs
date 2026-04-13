@@ -5,8 +5,9 @@ using Pkmds.Rcl.Models;
 namespace Pkmds.Rcl.Services;
 
 /// <summary>
-/// Auto-Legality engine ported from the PKHeX ALM plugin, adapted for Blazor WASM
-/// (single-threaded, cooperative yielding instead of Task.Run).
+/// Auto-Legality engine ported from the PKHeX ALM plugin, adapted for Blazor WASM.
+/// In WASM, responsiveness comes from cooperative yielding (Task.Yield) inside the
+/// legalization loop rather than wrapping the work in Task.Run.
 /// </summary>
 public sealed class LegalizationService : ILegalizationService
 {
@@ -53,10 +54,9 @@ public sealed class LegalizationService : ILegalizationService
         IProgress<string>? progress,
         CancellationToken ct)
     {
-        return await Task.Run(() => RunLegalizationLoop(set, template, sav, progress, ct, async: true));
-
-        // Note: Task.Run is a no-op in Blazor WASM (still runs on the UI thread), but
-        // structuring as async lets us Task.Yield inside the loop for UI responsiveness.
+        // In Blazor WASM, responsiveness comes from cooperative yielding inside the
+        // legalization loop rather than wrapping the work in Task.Run.
+        return await RunLegalizationLoop(set, template, sav, progress, ct, async: true);
     }
 
     private LegalizationOutcome CoreLegalizeSync(
@@ -280,7 +280,7 @@ public sealed class LegalizationService : ILegalizationService
     private static bool IsEncounterValid(ShowdownSet set, IEncounterable enc)
     {
         // Level check: encounter minimum must not exceed requested level (Gen 3+).
-        if (enc.Generation > 2 && enc.LevelMin > set.Level && enc.LevelMin > enc.LevelMax)
+        if (enc.Generation > 2 && enc.LevelMin > set.Level)
         {
             return false;
         }
@@ -454,45 +454,53 @@ public sealed class LegalizationService : ILegalizationService
     /// <summary>
     /// Gen 8 SwSh wild encounter PID/IV via XOROSHIRO128+.
     /// Ported from ALM's FindWildPIDIV8.
+    /// The entire EC→PID→IV→Height→Weight sequence must derive from the same original seed
+    /// to satisfy the overworld correlation legality checks.
     /// </summary>
     private static void FindWildPidIv8(PK8 pk, Shiny shiny, int flawless)
     {
-        // EC → PID → Flawless IV rolls → Non-flawless IVs → Height → Weight
-        var ivs = new[] { -1, -1, -1, -1, -1, -1 };
+        static bool MatchesShinyConstraint(Shiny s, uint xor) => s switch
+        {
+            Shiny.Never => xor >= 16,
+            Shiny.AlwaysSquare => xor == 0,
+            Shiny.AlwaysStar => xor is > 0 and < 16,
+            Shiny.Always => xor < 16,
+            _ => true,
+        };
 
+        // Search for a seed whose EC→PID satisfies the shiny constraint.
+        uint matchedSeed;
+        uint matchedEc;
+        uint matchedPid;
         while (true)
         {
             var seed = (uint)Random.Shared.Next();
             var rng = new Xoroshiro128Plus(seed);
 
-            pk.EncryptionConstant = (uint)rng.NextInt();
-            pk.PID = (uint)rng.NextInt();
-
-            var xor = pk.ShinyXor;
-            switch (shiny)
+            var ec = (uint)rng.NextInt();
+            var pid = (uint)rng.NextInt();
+            var xor = (uint)(((pid >> 16) ^ (pid & 0xFFFF) ^ pk.TID16 ^ pk.SID16) & 0xFFFF);
+            if (!MatchesShinyConstraint(shiny, xor))
             {
-                case Shiny.AlwaysStar when xor is 0 or > 15:
-                case Shiny.Never when xor < 16:
-                    continue;
+                continue;
             }
 
+            matchedSeed = seed;
+            matchedEc = ec;
+            matchedPid = pid;
             break;
         }
 
-        // Force square shiny if requested.
-        if ((shiny == Shiny.AlwaysSquare && pk.ShinyXor != 0)
-            || (shiny == Shiny.Always && pk.ShinyXor > 15))
-        {
-            pk.PID = GetShinyPid(pk.TID16, pk.SID16, pk.PID, 0);
-        }
+        pk.EncryptionConstant = matchedEc;
+        pk.PID = matchedPid;
 
-        // Re-initialize RNG from the found seed to continue the IV sequence.
-        // Note: we need to replay from EC generation since we consumed two calls.
-        var seedForIvs = pk.EncryptionConstant; // Not exact, but good enough for legality.
-        var rng2 = new Xoroshiro128Plus(seedForIvs);
+        // Re-initialize RNG from the matched original seed to continue the IV sequence.
+        // Replay from EC generation since two calls were consumed for EC and PID.
+        var rng2 = new Xoroshiro128Plus(matchedSeed);
         _ = rng2.NextInt(); // EC
         _ = rng2.NextInt(); // PID
 
+        var ivs = new[] { -1, -1, -1, -1, -1, -1 };
         const int unset = -1;
         const int max = 31;
         for (var i = 0; i < flawless; i++)

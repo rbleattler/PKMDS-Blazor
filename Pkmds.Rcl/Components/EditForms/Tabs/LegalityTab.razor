@@ -1,4 +1,5 @@
 @inherits BasePkmdsComponent
+@inject ILegalizationService LegalizationService
 
 @if (Pokemon is not null &&
      AppState is { SaveFile: { Context: not (EntityContext.None or EntityContext.SplitInvalid or EntityContext.MaxInvalid) }, SelectedSlotsAreValid: true })
