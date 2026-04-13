@@ -635,6 +635,20 @@ public sealed class LegalizationService : ILegalizationService
             pk.Form = (byte)ToxtricityUtil.GetAmpLowKeyResult(pk.Nature);
         }
 
+        // Validate moves: if any are illegal for this encounter, replace with suggested moves.
+        // This handles cases like a Charmander with Volt Tackle — ApplySetDetails re-applied
+        // the illegal move from the Showdown set, so we need to fix it here.
+        {
+            var moveLa = new LegalityAnalysis(pk);
+            if (!MoveResult.AllValid(moveLa.Info.Moves))
+            {
+                Span<ushort> suggestedMoves = stackalloc ushort[4];
+                moveLa.GetSuggestedCurrentMoves(suggestedMoves);
+                pk.SetMoves(suggestedMoves);
+                pk.FixMoves();
+            }
+        }
+
         // Suggest relearn moves.
         if (!pk.FatefulEncounter)
         {
@@ -643,6 +657,9 @@ public sealed class LegalizationService : ILegalizationService
             la.GetSuggestedRelearnMovesFromEncounter(suggestedRelearn, enc);
             pk.SetRelearnMoves(suggestedRelearn);
         }
+
+        // Recalculate PP from actual moves + PP Ups to avoid "PP above allowed" issues.
+        pk.HealPP();
 
         // Fill language.
         if (pk.Language <= 0)
