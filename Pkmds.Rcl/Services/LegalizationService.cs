@@ -110,8 +110,15 @@ public sealed class LegalizationService : ILegalizationService
         var allowed = EncounterMutationUtil.GetSuggested(probe.Context, (byte)set.Level);
         var criteria = EncounterCriteria.GetCriteria(set, probe.PersonalInfo, allowed);
 
-        // Gather all encounters across versions and alternate forms.
-        var encounters = GetAllEncounters(probe, set.Moves.AsMemory(), versions);
+        // When legalizing an existing Pokémon, don't constrain the encounter search by
+        // moves — the PKM may have illegal moves (e.g. Charmander with Volt Tackle) that
+        // would cause the generator to yield zero encounters. We fix moves post-generation.
+        // For Showdown imports, use the requested moves so the generator finds encounters
+        // that can learn them.
+        var searchMoves = existingPkm is not null
+            ? ReadOnlyMemory<ushort>.Empty
+            : set.Moves.AsMemory();
+        var encounters = GetAllEncounters(probe, searchMoves, versions);
 
         var timer = Stopwatch.StartNew();
         PKM? bestAttempt = null;
