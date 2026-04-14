@@ -2,7 +2,7 @@
 
 This roadmap outlines the path to achieving 100% feature parity with PKHeX. Tasks are broken down into actionable items organized by feature category and priority.
 
-**Last Updated:** 2026-04-11 (Teams Tab implemented — §1.4, tracks #661; Showdown / PokePaste import implemented — §4.2, tracks #656; Backup management system implemented — §4.2/§5.5; Save file info viewer + repair tool implemented — §5.5; Display party stats implemented — tracks #658; In-app browser detection + warning implemented — §4.1, tracks #663; Non-exportable save detection implemented — tracks #675/#679; Save File Utilities §5.5 partially complete — backup manager, info viewer, repair tool, and encryption status done; remaining tasks tracked in #657. Earlier — Pokémon Bank implemented — §2.1b, tracks #330; One-Touch Evolve implemented — §1.1, tracks #448; Gen-Specific editor tab implemented — §1.1 #419; Box pop-out dialogs implemented — §6.2, tracks #352; Pokédex per-species grid + LA research editor implemented — §2.5, tracks #414/#437/#438/#439; Fix Load Pokémon/Gift File slot behaviour implemented — §4.1, tracks #445; Trash bytes auto-fixer added to legality tab — tracks #542; Spinda spot preview implemented — tracks #554; Manic EMU `.3ds.sav` ZIP round-trip support added — tracks #537; §6.6 Settings & Preferences mostly complete — `AppSettingsDialog` covers UI, trainer defaults, and auto-backup; settings import/export + reset remain. §7.2a Bag virtualization corrected — virtualization was reverted (commit 48ce4f15) and remains blocked on MudBlazor/MudBlazor#12799; Info popovers for moves/items/abilities/balls added — §4.1, tracks #579)
+**Last Updated:** 2026-04-14 (Auto-Legality Mod Phase 1 implemented — §5.1, tracks #344; Legalize button on Legality tab; "Legalize All in Box" toolbar action scoped to Illegal-only entries — tracks #693; Batch legalize from Legality Report tab with cancel, per-Pokémon timeout, and in-place report updates — tracks #690; Showdown import now delegates to legalization engine — tracks #691; Mystery Gift event properties preserved during legalization — tracks #695; Original details (OT, met data, ribbons) preserved when legalizing existing PKM — tracks #705; Tri-state legality indicators with per-state visibility toggles + Fishy reasons in Legality Report; MudToggleGroup filter UI on Legality Report; Gen 2 trade evolutions handled with beauty/item conditions — tracks #688. Earlier — Teams Tab implemented — §1.4, tracks #661; Showdown / PokePaste import implemented — §4.2, tracks #656; Backup management system implemented — §4.2/§5.5; Save file info viewer + repair tool implemented — §5.5; Display party stats implemented — tracks #658; In-app browser detection + warning implemented — §4.1, tracks #663; Non-exportable save detection implemented — tracks #675/#679; Save File Utilities §5.5 partially complete — backup manager, info viewer, repair tool, and encryption status done; remaining tasks tracked in #657. Earlier — Pokémon Bank implemented — §2.1b, tracks #330; One-Touch Evolve implemented — §1.1, tracks #448; Gen-Specific editor tab implemented — §1.1 #419; Box pop-out dialogs implemented — §6.2, tracks #352; Pokédex per-species grid + LA research editor implemented — §2.5, tracks #414/#437/#438/#439; Fix Load Pokémon/Gift File slot behaviour implemented — §4.1, tracks #445; Trash bytes auto-fixer added to legality tab — tracks #542; Spinda spot preview implemented — tracks #554; Manic EMU `.3ds.sav` ZIP round-trip support added — tracks #537; §6.6 Settings & Preferences mostly complete — `AppSettingsDialog` covers UI, trainer defaults, and auto-backup; settings import/export + reset remain. §7.2a Bag virtualization corrected — virtualization was reverted (commit 48ce4f15) and remains blocked on MudBlazor/MudBlazor#12799; Info popovers for moves/items/abilities/balls added — §4.1, tracks #579)
 
 ---
 
@@ -53,6 +53,9 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - **Non-Exportable Save Detection** — Saves loaded from blank/template files are flagged as non-exportable at load time so the user is warned before attempting to export
 - **In-App Browser Detection** — Detects when the app is loaded inside an in-app browser (Telegram, WhatsApp, WeChat, Instagram, Facebook, etc.) and shows a warning so users open the site in a real browser where File System Access works
 - **Display Party Stats** — Party slots show current HP and status condition, with stat-recalculation skipped for PB7 entities that already have party stats persisted
+- **Auto-Legality Engine (Phase 1)** — `ILegalizationService` / `LegalizationService` wraps PKHeX.Core's encounter/criteria pipeline to generate legal PKM from a template or Showdown set; supports Gen 3–5 Method-1 PID↔IV correlation via `ClassicEraRNG`, Gen 8 SwSh overworld PID/IV, Gen 8b BDSP, and Gen 9 Tera raids; preserves original OT/met/ribbon details when legalizing an existing PKM and preserves event properties when legalizing a Mystery Gift
+- **Legalize Actions** — "Legalize" button on the Legality tab; **"Legalize All in Box"** toolbar action (scoped to Illegal-only entries, disabled when the box is empty); **batch legalize from the Legality Report tab** with a cancel button, per-Pokémon timeout, and in-place report entry updates; Showdown / PokePaste import now routes through the legalization engine instead of ad-hoc fix-ups
+- **Tri-State Legality Indicators** — Legality Report tab shows Legal / Fishy / Illegal with independent visibility toggles (MudToggleGroup); Fishy reasons surface in the "First issue" column; visually marks the active filter
 
 ---
 
@@ -254,6 +257,8 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
   - [x] Level/experience validation (`CheckIdentifier.Level`)
 - [x] Add "Fix" buttons for common legality issues (ball, met location, moves, TechRecord) — closes #401
 - [x] Implement batch legality checking — "Legality Report" tab sweeps all party/box slots, sortable/filterable table, Legal/Fishy/Illegal counts, click-to-jump-to-slot — closes #402
+- [x] **Tri-state indicators with per-state visibility toggles** — MudToggleGroup filter surfaces Legal / Fishy / Illegal independently; active filter is visually marked; "First issue" column surfaces Fishy reasons
+- [x] **Batch legalize from the report** — wraps the Auto-Legality engine (see §5.1); cancel button, per-Pokémon timeout, and in-place entry updates; adapts PKM to the save file before analysis so results match what will be written
 - [x] Show legality warnings on Pokémon slot display (valid/warn icon overlay)
 - [x] Add inline per-field legality indicators throughout Pokémon editor tabs (#411)
   - [x] Reusable `LegalityIndicator` component (MudTooltip + severity icon, renders nothing when valid)
@@ -809,7 +814,7 @@ Bring the Mystery Gift Database tab to full parity with PKHeX's `SAV_MysteryGift
 **Tracks:** #61, #166
 **Tasks:**
 - [x] **Manic EMU `.3ds.sav` round-trip** — auto-detects the ZIP-based format on load, extracts the PKHeX-compatible save bytes, and repacks to the same ZIP structure on export so saves re-import directly into Manic EMU (closes #537)
-- [x] **Showdown text import** — `ShowdownImportDialog` parses Showdown text into legal PKM via `EncounterMovesetGenerator`, with HOME tracker / Scale fix-ups, post-import legality fixes, and overwrite-party confirmation flow (closes #656; partial coverage of #61)
+- [x] **Showdown text import** — `ShowdownImportDialog` parses Showdown text into legal PKM and delegates generation to the Auto-Legality engine (see §5.1), with HOME tracker / Scale fix-ups and overwrite-party confirmation flow (closes #656 and #691; partial coverage of #61)
 - [x] **PokePaste import / export** — `PokePasteExportDialog` exports the current party as a PokePaste paste; PokePaste URLs can be imported directly via the same Showdown import flow
 - [x] **Backup management system** — `BackupService` (browser IndexedDB) + `BackupManagerDialog` for client-side save backups with retention enforcement, restore, and per-entry delete; backup restore is guarded against non-exportable saves (closes the §5.5 backup manager task as well)
 - [ ] Add bulk Pokemon import from .pk* files (drag-and-drop)
@@ -898,17 +903,26 @@ Three parallel tracks — wiki content authoring, in-app help links (code), and 
 ## Priority 5: Advanced/Plugin-Level Features
 
 ### 5.1 Auto-Legality Mod (ALM)
-**Status:** ❌ Not Implemented  
-**Complexity:** Very High  
+**Status:** ⚠️ Partial (Phase 1 core engine + Legalize button + batch/box legalize + Showdown/Mystery Gift integration implemented — tracks #344, #690, #691, #693, #695, #705)
+**Complexity:** Very High
+**PKHeX Reference:** `C:\Code\PKHeX-Plugins\AutoLegalityMod` (ALM plugin source)
 **Tasks:**
-- [ ] Research ALM functionality
-- [ ] Implement auto-generation of legal Pokemon
-- [ ] Add showdown import with auto-legality
-- [ ] Create legal move set generator
-- [ ] Implement legal ribbon/memory assignment
-- [ ] Add smart PID/EC generation
-- [ ] Create legal met data assignment
-- [ ] Implement form/ability validation and auto-correction
+- [x] Research ALM functionality
+- [x] Implement auto-generation of legal Pokémon — `ILegalizationService` / `LegalizationService` in `Pkmds.Rcl/Services/`, singleton-registered in `Program.cs`; `LegalizationResult` record models outcome + status
+- [x] **Gen 3–5 PID↔IV correlation via ClassicEraRNG (Method 1)** — addresses discussion #629
+- [x] **Gen 8 SwSh overworld PID/IV, Gen 8b BDSP, Gen 9 Tera raids**
+- [x] Add Showdown import with auto-legality — `ShowdownImportDialog` delegates to the legalization engine (#691)
+- [x] **"Legalize" button on LegalityTab** — single-PKM legalize with progress UI and `OnPokemonLegalized` callback
+- [x] **"Legalize All in Box"** toolbar action — scoped to Illegal entries only, disabled when the box is empty (#693)
+- [x] **Batch legalize from Legality Report tab** — cancel button, per-Pokémon timeout, skips save-file adapt-on-import when writing legalized PKMs, updates report entries in place; prefers Legal over Fishy outcomes; prioritises Illegal over Fishy when choosing candidates (#690)
+- [x] **Preserve original details when legalizing an existing PKM** — OT, met data, and ribbons are retained where compatible (#705)
+- [x] **Preserve Mystery Gift event properties during legalization** (#695)
+- [ ] Create legal move set generator (Phase 2 follow-ups)
+- [ ] Implement legal ribbon/memory assignment (Phase 2 follow-ups)
+- [x] Add smart PID/EC generation (covered by ClassicEraRNG path above; extended RNG sources remain)
+- [ ] Create legal met data assignment (Phase 2 follow-ups)
+- [ ] Implement form/ability validation and auto-correction (Phase 2 follow-ups)
+- [ ] Undo support after legalize
 
 ### 5.2 Living Dex Builder
 **Status:** ❌ Not Implemented  
