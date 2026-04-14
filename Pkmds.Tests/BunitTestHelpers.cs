@@ -142,57 +142,12 @@ internal class NullFileSystemAccessService : IFileSystemAccessService
 
     public Task<bool> IsSupportedAsync() => Task.FromResult(false);
 
-    public Task<FileSystemFileHandle[]> ShowOpenFilePickerAsync()
+    public Task<FileSystemFileHandle[]> ShowOpenFilePickerAsync(OpenFilePickerOptions? options = null)
         => throw new NotSupportedException();
 
-    public Task<FileSystemFileHandle[]> ShowOpenFilePickerAsync(OpenFilePickerOptionsStartInWellKnownDirectory? options)
+    public Task<FileSystemFileHandle> ShowSaveFilePickerAsync(SaveFilePickerOptions? options = null)
         => throw new NotSupportedException();
 
-    public Task<FileSystemFileHandle[]> ShowOpenFilePickerAsync(OpenFilePickerOptionsStartInFileSystemHandle? options)
-        => throw new NotSupportedException();
-
-    public Task<FileSystemFileHandle[]> ShowOpenFilePickerAsync(FileSystemOptions fileSystemOptions)
-        => throw new NotSupportedException();
-
-    public Task<FileSystemFileHandle[]> ShowOpenFilePickerAsync(OpenFilePickerOptionsStartInWellKnownDirectory? options, FileSystemOptions fileSystemOptions)
-        => throw new NotSupportedException();
-
-    public Task<FileSystemFileHandle[]> ShowOpenFilePickerAsync(OpenFilePickerOptionsStartInFileSystemHandle? options, FileSystemOptions fileSystemOptions)
-        => throw new NotSupportedException();
-
-    public Task<FileSystemFileHandle> ShowSaveFilePickerAsync()
-        => throw new NotSupportedException();
-
-    public Task<FileSystemFileHandle> ShowSaveFilePickerAsync(SaveFilePickerOptionsStartInWellKnownDirectory? options)
-        => throw new NotSupportedException();
-
-    public Task<FileSystemFileHandle> ShowSaveFilePickerAsync(SaveFilePickerOptionsStartInFileSystemHandle? options)
-        => throw new NotSupportedException();
-
-    public Task<FileSystemFileHandle> ShowSaveFilePickerAsync(FileSystemOptions fileSystemOptions)
-        => throw new NotSupportedException();
-
-    public Task<FileSystemFileHandle> ShowSaveFilePickerAsync(SaveFilePickerOptionsStartInWellKnownDirectory? options, FileSystemOptions fileSystemOptions)
-        => throw new NotSupportedException();
-
-    public Task<FileSystemFileHandle> ShowSaveFilePickerAsync(SaveFilePickerOptionsStartInFileSystemHandle? options, FileSystemOptions fileSystemOptions)
-        => throw new NotSupportedException();
-
-    public Task<FileSystemDirectoryHandle> ShowDirectoryPickerAsync()
-        => throw new NotSupportedException();
-
-    public Task<FileSystemDirectoryHandle> ShowDirectoryPickerAsync(DirectoryPickerOptionsStartInWellKnownDirectory? options)
-        => throw new NotSupportedException();
-
-    public Task<FileSystemDirectoryHandle> ShowDirectoryPickerAsync(DirectoryPickerOptionsStartInFileSystemHandle? options)
-        => throw new NotSupportedException();
-
-    public Task<FileSystemDirectoryHandle> ShowDirectoryPickerAsync(FileSystemOptions fileSystemOptions)
-        => throw new NotSupportedException();
-
-    public Task<FileSystemDirectoryHandle> ShowDirectoryPickerAsync(DirectoryPickerOptionsStartInWellKnownDirectory? options, FileSystemOptions fileSystemOptions)
-        => throw new NotSupportedException();
-
-    public Task<FileSystemDirectoryHandle> ShowDirectoryPickerAsync(DirectoryPickerOptionsStartInFileSystemHandle? options, FileSystemOptions fileSystemOptions)
+    public Task<FileSystemDirectoryHandle> ShowDirectoryPickerAsync(DirectoryPickerOptions? options = null)
         => throw new NotSupportedException();
 }
