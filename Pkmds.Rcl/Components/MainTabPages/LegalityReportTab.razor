@@ -1,4 +1,5 @@
 @inherits RefreshAwareComponent
+@inject ILegalizationService LegalizationService
 
 <MudStack Class="pa-2"
           Spacing="3">
@@ -17,13 +18,33 @@
                        Color="@Color.Primary"
                        StartIcon="@Icons.Material.Filled.FactCheck"
                        OnClick="@RunScanAsync"
-                       Disabled="@isScanning">
+                       Disabled="@(isScanning || isLegalizing)">
                 @(isScanning
                     ? "Scanning…"
                     : hasRun
                         ? "Re-run Report"
                         : "Run Legality Report")
             </MudButton>
+
+            <MudButton Variant="@Variant.Filled"
+                       Color="@Color.Secondary"
+                       StartIcon="@Icons.Material.Filled.AutoFixHigh"
+                       OnClick="@LegalizeAllAsync"
+                       Disabled="@(isScanning || isLegalizing || !HasIllegalOrFishy)">
+                @(isLegalizing
+                    ? "Legalizing…"
+                    : "Legalize All Illegal")
+            </MudButton>
+
+            @if (isLegalizing)
+            {
+                <MudButton Variant="@Variant.Outlined"
+                           Color="@Color.Error"
+                           StartIcon="@Icons.Material.Filled.Cancel"
+                           OnClick="@CancelLegalizeAll">
+                    Cancel
+                </MudButton>
+            }
 
             @if (isScanning)
             {
@@ -33,6 +54,16 @@
             }
 
         </MudStack>
+
+        @if (isLegalizing)
+        {
+            <MudStack Spacing="1">
+                <MudText Typo="@Typo.body2">@legalizationStatusText</MudText>
+                <MudProgressLinear Color="@Color.Secondary"
+                                   Value="@legalizationPercent"
+                                   Max="100"/>
+            </MudStack>
+        }
 
         @if (hasRun || isScanning)
         {
@@ -69,38 +100,31 @@
 
             </MudStack>
 
-            <MudButtonGroup Variant="@Variant.Outlined"
+            <MudToggleGroup T="LegalityStatus?"
+                            Value="@statusFilter"
+                            ValueChanged="@SetFilter"
+                            SelectionMode="@SelectionMode.SingleSelection"
+                            Color="@Color.Primary"
+                            CheckMark
                             Size="@Size.Small">
 
-                <MudButton Color="@(statusFilter is null
-                                      ? Color.Primary
-                                      : Color.Default)"
-                           OnClick="@(() => SetFilter(null))">
-                    All
-                </MudButton>
+                <MudToggleItem T="LegalityStatus?"
+                               Value="@((LegalityStatus?)null)"
+                               Text="All"/>
 
-                <MudButton Color="@(statusFilter == LegalityStatus.Legal
-                                      ? Color.Success
-                                      : Color.Default)"
-                           OnClick="@(() => SetFilter(LegalityStatus.Legal))">
-                    Legal Only
-                </MudButton>
+                <MudToggleItem T="LegalityStatus?"
+                               Value="@((LegalityStatus?)LegalityStatus.Legal)"
+                               Text="Legal Only"/>
 
-                <MudButton Color="@(statusFilter == LegalityStatus.Fishy
-                                      ? Color.Warning
-                                      : Color.Default)"
-                           OnClick="@(() => SetFilter(LegalityStatus.Fishy))">
-                    Fishy Only
-                </MudButton>
+                <MudToggleItem T="LegalityStatus?"
+                               Value="@((LegalityStatus?)LegalityStatus.Fishy)"
+                               Text="Fishy Only"/>
 
-                <MudButton Color="@(statusFilter == LegalityStatus.Illegal
-                                      ? Color.Error
-                                      : Color.Default)"
-                           OnClick="@(() => SetFilter(LegalityStatus.Illegal))">
-                    Illegal Only
-                </MudButton>
+                <MudToggleItem T="LegalityStatus?"
+                               Value="@((LegalityStatus?)LegalityStatus.Illegal)"
+                               Text="Illegal Only"/>
 
-            </MudButtonGroup>
+            </MudToggleGroup>
 
             <MudTable T="@LegalityReportEntry"
                       Items="@legalityReportEntries"

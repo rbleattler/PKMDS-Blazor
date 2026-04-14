@@ -11,6 +11,19 @@ public partial class StatsTab : IDisposable
 
     private bool ShowStatsChart { get; set; }
 
+    private bool IsPartyPokemon => Pokemon is not null && HasPersistentPartyStats;
+
+    // Party stats are genuinely persistent (not just computed for display) when:
+    // - Gen 1/2: box and party format are identical (SIZE_PARTY == SIZE_STORED)
+    // - Let's Go (PB7): party members live in the box
+    // - Any game: Pokémon is explicitly selected from a party slot
+    // For Gen 3+ box Pokémon, LoadPokemonStats computes stats for display but
+    // they aren't saved back to the box format, so we shouldn't offer editing.
+    private bool HasPersistentPartyStats =>
+        Pokemon?.Format <= 2 ||
+        Pokemon is PB7 ||
+        AppState?.SelectedPartySlotNumber is not null;
+
     public void Dispose() =>
         RefreshService.OnAppStateChanged -= StateHasChanged;
 
@@ -334,19 +347,6 @@ public partial class StatsTab : IDisposable
         setter(pkm, newValue);
     }
 
-    private bool IsPartyPokemon => Pokemon is not null && HasPersistentPartyStats;
-
-    // Party stats are genuinely persistent (not just computed for display) when:
-    // - Gen 1/2: box and party format are identical (SIZE_PARTY == SIZE_STORED)
-    // - Let's Go (PB7): party members live in the box
-    // - Any game: Pokémon is explicitly selected from a party slot
-    // For Gen 3+ box Pokémon, LoadPokemonStats computes stats for display but
-    // they aren't saved back to the box format, so we shouldn't offer editing.
-    private bool HasPersistentPartyStats =>
-        Pokemon?.Format <= 2 ||
-        Pokemon is PB7 ||
-        AppState?.SelectedPartySlotNumber is not null;
-
     private void OnCurrentHpChanged(int value)
     {
         if (Pokemon is null)
@@ -427,7 +427,9 @@ public partial class StatsTab : IDisposable
         }
 
         var raw = Pokemon.Status_Condition & 7;
-        return raw is >= 1 and <= 7 ? raw : 1;
+        return raw is >= 1 and <= 7
+            ? raw
+            : 1;
     }
 
     private void OnSleepTurnsChanged(int value)
@@ -442,8 +444,6 @@ public partial class StatsTab : IDisposable
         current |= value;
         Pokemon.Status_Condition = current;
     }
-
-    private record StatusOption(int Value, string Label, string? SpriteFileName);
 
     private List<StatusOption> GetStatusOptions()
     {
@@ -464,7 +464,9 @@ public partial class StatsTab : IDisposable
             options.Add(new StatusOption((int)StatusCondition.Poison, "Poison",
                 ImageHelper.GetPoisonStatusSpriteFileName()));
             options.Add(new StatusOption((int)StatusCondition.PoisonBad,
-                Pokemon.Format is 3 or 4 ? "Toxic" : "Badly Poisoned",
+                Pokemon.Format is 3 or 4
+                    ? "Toxic"
+                    : "Badly Poisoned",
                 ImageHelper.GetToxicStatusSpriteFileName()));
             options.Add(new StatusOption((int)StatusCondition.Burn, "Burn",
                 ImageHelper.GetBurnStatusSpriteFileName()));
@@ -478,10 +480,14 @@ public partial class StatsTab : IDisposable
             options.Add(new StatusOption((int)StatusType.Paralysis, "Paralysis",
                 ImageHelper.GetParalysisStatusSpriteFileName()));
             options.Add(new StatusOption((int)StatusType.Sleep,
-                isGen8a ? "Drowsy" : "Sleep",
+                isGen8a
+                    ? "Drowsy"
+                    : "Sleep",
                 ImageHelper.GetSleepStatusSpriteFileName()));
             options.Add(new StatusOption((int)StatusType.Freeze,
-                isGen8a ? "Frostbite" : "Freeze",
+                isGen8a
+                    ? "Frostbite"
+                    : "Freeze",
                 ImageHelper.GetFrostbiteStatusSpriteFileName()));
             options.Add(new StatusOption((int)StatusType.Burn, "Burn",
                 ImageHelper.GetBurnStatusSpriteFileName()));
@@ -510,4 +516,6 @@ public partial class StatsTab : IDisposable
 
         return false;
     }
+
+    private record StatusOption(int Value, string Label, string? SpriteFileName);
 }

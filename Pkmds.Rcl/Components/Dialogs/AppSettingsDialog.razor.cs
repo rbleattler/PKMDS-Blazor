@@ -24,6 +24,9 @@ public partial class AppSettingsDialog
     private bool isHaXEnabled;
     private bool isVerboseLogging;
     private int maxBackupCount = 10;
+    private bool showFishyIndicator = true;
+    private bool showIllegalIndicator = true;
+    private bool showLegalIndicator = true;
     private SpriteStyle spriteStyle;
 
     // Working copy — only committed on Save
@@ -52,6 +55,9 @@ public partial class AppSettingsDialog
         defaultLanguageId = InitialSettings.DefaultLanguageId;
         isAutoBackupEnabled = InitialSettings.IsAutoBackupEnabled;
         maxBackupCount = InitialSettings.MaxBackupCount;
+        showLegalIndicator = InitialSettings.ShowLegalIndicator;
+        showFishyIndicator = InitialSettings.ShowFishyIndicator;
+        showIllegalIndicator = InitialSettings.ShowIllegalIndicator;
     }
 
     private async Task OnHaXEnabledChanged(bool newValue)
@@ -98,6 +104,9 @@ public partial class AppSettingsDialog
         defaultLanguageId = defaults.DefaultLanguageId;
         isAutoBackupEnabled = defaults.IsAutoBackupEnabled;
         maxBackupCount = defaults.MaxBackupCount;
+        showLegalIndicator = defaults.ShowLegalIndicator;
+        showFishyIndicator = defaults.ShowFishyIndicator;
+        showIllegalIndicator = defaults.ShowIllegalIndicator;
         StateHasChanged();
     }
 
@@ -123,7 +132,10 @@ public partial class AppSettingsDialog
             DefaultSecretId = defaultSecretId,
             DefaultLanguageId = defaultLanguageId,
             IsAutoBackupEnabled = isAutoBackupEnabled,
-            MaxBackupCount = maxBackupCount
+            MaxBackupCount = maxBackupCount,
+            ShowLegalIndicator = showLegalIndicator,
+            ShowFishyIndicator = showFishyIndicator,
+            ShowIllegalIndicator = showIllegalIndicator
         };
 
         MudDialog.Close(DialogResult.Ok(updated));

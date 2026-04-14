@@ -2,6 +2,8 @@ namespace Pkmds.Rcl.Components.EditForms;
 
 public partial class PokemonEditForm : IDisposable
 {
+    private static readonly DialogOptions ImportExportDialogOptions = new() { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+
     [Parameter]
     [EditorRequired]
     public PKM? Pokemon { get; set; }
@@ -30,12 +32,14 @@ public partial class PokemonEditForm : IDisposable
             ? AppService.GetLegalityAnalysis(Pokemon)
             : null;
 
-    private static readonly DialogOptions ImportExportDialogOptions = new()
+    private void OnPokemonLegalized(PKM legalPkm)
     {
-        CloseOnEscapeKey = true,
-        MaxWidth = MaxWidth.Medium,
-        FullWidth = true,
-    };
+        // Replace the edit form's Pokémon with the legalized clone and recompute analysis.
+        Pokemon = legalPkm;
+        AppService.EditFormPokemon = legalPkm;
+        ComputeAnalysis();
+        RefreshService.Refresh();
+    }
 
     private void ExportAsShowdown() =>
         DialogService.ShowAsync<ShowdownExportDialog>(

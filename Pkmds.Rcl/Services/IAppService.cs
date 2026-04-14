@@ -200,7 +200,7 @@ public interface IAppService
     string ExportBoxAsShowdown(int boxNumber);
 
     /// <summary>
-    /// Parses raw Showdown / PokePaste text into a list of <see cref="ShowdownSet"/> objects.
+    /// Parses raw Showdown / PokePaste text into a list of <see cref="ShowdownSet" /> objects.
     /// Sets with an unknown species (Species == 0) are excluded from the result.
     /// </summary>
     /// <param name="text">The raw Showdown-format text to parse.</param>
@@ -208,7 +208,7 @@ public interface IAppService
     IReadOnlyList<ShowdownSet> ParseShowdownText(string text);
 
     /// <summary>
-    /// Converts a <see cref="ShowdownSet"/> into a <see cref="PKM"/> compatible with the current save file.
+    /// Converts a <see cref="ShowdownSet" /> into a <see cref="PKM" /> compatible with the current save file.
     /// Applies trainer info (OT name, gender) from the save file when not provided by the template.
     /// </summary>
     /// <param name="set">The battle template to convert.</param>
@@ -339,8 +339,14 @@ public interface IAppService
     /// <see cref="LegalityAnalysis" /> engine.
     /// </summary>
     /// <param name="pkm">The Pokémon to analyse.</param>
+    /// <param name="isParty">
+    /// True if <paramref name="pkm" /> lives in (or is
+    /// about to be written to) a party slot. Forwarded to
+    /// <see cref="SaveFile.AdaptToSaveFile" /> so the adapt step matches what
+    /// the eventual SetPartySlotAtIndex / SetBoxSlotAtIndex call will do.
+    /// </param>
     /// <returns>A <see cref="LegalityAnalysis" /> result.</returns>
-    LegalityAnalysis GetLegalityAnalysis(PKM pkm);
+    LegalityAnalysis GetLegalityAnalysis(PKM pkm, bool isParty = false);
 
     /// <summary>
     /// Sweeps all party and box slots and returns every Pokémon that satisfies
@@ -405,4 +411,110 @@ public interface IAppService
     /// <param name="pkm">The Pokémon to query.</param>
     /// <returns>A list of <see cref="EvolutionMethod" /> values (may be empty for final evolutions).</returns>
     IReadOnlyList<EvolutionMethod> GetDirectEvolutions(PKM pkm);
+
+    /// <summary>
+    /// Returns <see langword="true" /> if the current save file has a Battle Box (Gen 5–6).
+    /// </summary>
+    bool HasBattleBox();
+
+    /// <summary>
+    /// Gets the Pokémon stored in the Battle Box (Gen 5–6). Empty slots are excluded.
+    /// </summary>
+    IReadOnlyList<PKM> GetBattleBoxPokemon();
+
+    /// <summary>
+    /// Returns whether the Battle Box is locked (Gen 5–6).
+    /// </summary>
+    bool IsBattleBoxLocked();
+
+    /// <summary>
+    /// Returns <see langword="true" /> if the current save file supports Battle Teams (Gen 7+).
+    /// </summary>
+    bool HasBattleTeams();
+
+    /// <summary>
+    /// Gets the Pokémon in a battle team by resolving box slot references. Empty slots are excluded.
+    /// </summary>
+    /// <param name="teamIndex">The 0-based team index (0–5).</param>
+    IReadOnlyList<PKM> GetBattleTeamPokemon(int teamIndex);
+
+    /// <summary>
+    /// Gets the display name for a battle team.
+    /// </summary>
+    /// <param name="teamIndex">The 0-based team index (0–5).</param>
+    string GetBattleTeamName(int teamIndex);
+
+    /// <summary>
+    /// Returns whether a battle team is locked.
+    /// </summary>
+    /// <param name="teamIndex">The 0-based team index (0–5).</param>
+    bool IsBattleTeamLocked(int teamIndex);
+
+    /// <summary>
+    /// Sets the lock state of a battle team.
+    /// </summary>
+    /// <param name="teamIndex">The 0-based team index (0–5).</param>
+    /// <param name="locked">Whether to lock or unlock the team.</param>
+    void SetBattleTeamLocked(int teamIndex, bool locked);
+
+    /// <summary>
+    /// Returns <see langword="true" /> if the current save file supports Rental Teams (Gen 8 SWSH, Gen 9 SV).
+    /// </summary>
+    bool HasRentalTeams();
+
+    /// <summary>
+    /// Gets the number of rental team slots available.
+    /// </summary>
+    int GetRentalTeamCount();
+
+    /// <summary>
+    /// Gets the Pokémon in a rental team. Empty slots are excluded.
+    /// </summary>
+    /// <param name="teamIndex">The 0-based rental team index.</param>
+    IReadOnlyList<PKM> GetRentalTeamPokemon(int teamIndex);
+
+    /// <summary>
+    /// Gets the display name of a rental team.
+    /// </summary>
+    /// <param name="teamIndex">The 0-based rental team index.</param>
+    string GetRentalTeamName(int teamIndex);
+
+    /// <summary>
+    /// Gets the player name associated with a rental team.
+    /// </summary>
+    /// <param name="teamIndex">The 0-based rental team index.</param>
+    string GetRentalTeamPlayerName(int teamIndex);
+
+    /// <summary>
+    /// Exports a list of Pokémon to Showdown format text.
+    /// </summary>
+    /// <param name="team">The Pokémon to export.</param>
+    string ExportTeamAsShowdown(IReadOnlyList<PKM> team);
+
+    /// <summary>
+    /// Clears a single battle team by setting all its slot references to empty (Gen 7+).
+    /// </summary>
+    /// <param name="teamIndex">The 0-based team index (0–5).</param>
+    void ClearBattleTeam(int teamIndex);
+
+    /// <summary>
+    /// Clears all battle teams and unlocks them (Gen 7+).
+    /// </summary>
+    void ClearAllBattleTeams();
+
+    /// <summary>
+    /// Unlocks all battle teams (Gen 7+).
+    /// </summary>
+    void UnlockAllBattleTeams();
+
+    /// <summary>
+    /// Clears all Pokémon from the Battle Box (Gen 5–6).
+    /// </summary>
+    void ClearBattleBox();
+
+    /// <summary>
+    /// Sets the Battle Box lock state (Gen 5–6).
+    /// </summary>
+    /// <param name="locked">Whether to lock or unlock the Battle Box.</param>
+    void SetBattleBoxLocked(bool locked);
 }

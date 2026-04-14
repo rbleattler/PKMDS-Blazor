@@ -2,7 +2,6 @@ using Bunit;
 using KristofferStrube.Blazor.FileSystem;
 using KristofferStrube.Blazor.FileSystemAccess;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.JSInterop;
 using MudBlazor.Services;
 using Pkmds.Rcl.Models;
 using Serilog.Events;
@@ -29,7 +28,7 @@ internal static class BunitTestHelpers
         ParseSettings.InitFromSaveFileData(saveFile!);
         var appState = new TestAppState { SaveFile = saveFile };
         var refreshService = new TestRefreshService();
-        var appService = new AppService(appState, refreshService);
+        var appService = new AppService(appState, refreshService, new LegalizationService());
         return (saveFile!, appState, refreshService, appService);
     }
 
@@ -75,6 +74,9 @@ internal class TestAppState : IAppState
     public bool SelectedSlotsAreValid => true;
     public bool IsHaXEnabled { get; set; }
     public SpriteStyle SpriteStyle { get; set; }
+    public bool ShowLegalIndicator { get; set; } = true;
+    public bool ShowFishyIndicator { get; set; } = true;
+    public bool ShowIllegalIndicator { get; set; } = true;
 }
 
 internal class TestRefreshService : IRefreshService
@@ -135,61 +137,16 @@ internal class NullDragDropService : IDragDropService
 /// </summary>
 internal class NullFileSystemAccessService : IFileSystemAccessService
 {
-    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
-
     public Task<bool> IsSupportedAsync() => Task.FromResult(false);
 
-    public Task<FileSystemFileHandle[]> ShowOpenFilePickerAsync()
+    public Task<FileSystemFileHandle[]> ShowOpenFilePickerAsync(OpenFilePickerOptions? options = null)
         => throw new NotSupportedException();
 
-    public Task<FileSystemFileHandle[]> ShowOpenFilePickerAsync(OpenFilePickerOptionsStartInWellKnownDirectory? options)
+    public Task<FileSystemFileHandle> ShowSaveFilePickerAsync(SaveFilePickerOptions? options = null)
         => throw new NotSupportedException();
 
-    public Task<FileSystemFileHandle[]> ShowOpenFilePickerAsync(OpenFilePickerOptionsStartInFileSystemHandle? options)
+    public Task<FileSystemDirectoryHandle> ShowDirectoryPickerAsync(DirectoryPickerOptions? options = null)
         => throw new NotSupportedException();
 
-    public Task<FileSystemFileHandle[]> ShowOpenFilePickerAsync(FileSystemOptions fileSystemOptions)
-        => throw new NotSupportedException();
-
-    public Task<FileSystemFileHandle[]> ShowOpenFilePickerAsync(OpenFilePickerOptionsStartInWellKnownDirectory? options, FileSystemOptions fileSystemOptions)
-        => throw new NotSupportedException();
-
-    public Task<FileSystemFileHandle[]> ShowOpenFilePickerAsync(OpenFilePickerOptionsStartInFileSystemHandle? options, FileSystemOptions fileSystemOptions)
-        => throw new NotSupportedException();
-
-    public Task<FileSystemFileHandle> ShowSaveFilePickerAsync()
-        => throw new NotSupportedException();
-
-    public Task<FileSystemFileHandle> ShowSaveFilePickerAsync(SaveFilePickerOptionsStartInWellKnownDirectory? options)
-        => throw new NotSupportedException();
-
-    public Task<FileSystemFileHandle> ShowSaveFilePickerAsync(SaveFilePickerOptionsStartInFileSystemHandle? options)
-        => throw new NotSupportedException();
-
-    public Task<FileSystemFileHandle> ShowSaveFilePickerAsync(FileSystemOptions fileSystemOptions)
-        => throw new NotSupportedException();
-
-    public Task<FileSystemFileHandle> ShowSaveFilePickerAsync(SaveFilePickerOptionsStartInWellKnownDirectory? options, FileSystemOptions fileSystemOptions)
-        => throw new NotSupportedException();
-
-    public Task<FileSystemFileHandle> ShowSaveFilePickerAsync(SaveFilePickerOptionsStartInFileSystemHandle? options, FileSystemOptions fileSystemOptions)
-        => throw new NotSupportedException();
-
-    public Task<FileSystemDirectoryHandle> ShowDirectoryPickerAsync()
-        => throw new NotSupportedException();
-
-    public Task<FileSystemDirectoryHandle> ShowDirectoryPickerAsync(DirectoryPickerOptionsStartInWellKnownDirectory? options)
-        => throw new NotSupportedException();
-
-    public Task<FileSystemDirectoryHandle> ShowDirectoryPickerAsync(DirectoryPickerOptionsStartInFileSystemHandle? options)
-        => throw new NotSupportedException();
-
-    public Task<FileSystemDirectoryHandle> ShowDirectoryPickerAsync(FileSystemOptions fileSystemOptions)
-        => throw new NotSupportedException();
-
-    public Task<FileSystemDirectoryHandle> ShowDirectoryPickerAsync(DirectoryPickerOptionsStartInWellKnownDirectory? options, FileSystemOptions fileSystemOptions)
-        => throw new NotSupportedException();
-
-    public Task<FileSystemDirectoryHandle> ShowDirectoryPickerAsync(DirectoryPickerOptionsStartInFileSystemHandle? options, FileSystemOptions fileSystemOptions)
-        => throw new NotSupportedException();
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }

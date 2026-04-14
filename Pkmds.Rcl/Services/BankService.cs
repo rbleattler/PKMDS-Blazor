@@ -2,15 +2,22 @@ namespace Pkmds.Rcl.Services;
 
 public class BankService(IJSRuntime js) : IBankService, IAsyncDisposable
 {
-    private IJSObjectReference? _module;
+    private IJSObjectReference? module;
 
-    private async Task<IJSObjectReference> GetModuleAsync() =>
-        _module ??= await js.InvokeAsync<IJSObjectReference>("import", "./js/bank.js");
+    public async ValueTask DisposeAsync()
+    {
+        if (module is not null)
+        {
+            await module.DisposeAsync();
+        }
+    }
 
     public async Task AddAsync(PKM pkm, string? tag = null, string? sourceSave = null)
     {
-        var module = await GetModuleAsync();
-        var b64 = Convert.ToBase64String(pkm.DecryptedBoxData);
+        await GetModuleAsync();
+        var storedData = new byte[pkm.SIZE_STORED];
+        pkm.WriteDecryptedDataStored(storedData);
+        var b64 = Convert.ToBase64String(storedData);
         var meta = new
         {
             species = pkm.Species,
@@ -20,40 +27,61 @@ public class BankService(IJSRuntime js) : IBankService, IAsyncDisposable
             tag,
             sourceSave
         };
+
+        if (module is null)
+        {
+            return;
+        }
+
         await module.InvokeVoidAsync("addPokemon", b64, meta);
     }
 
     public async Task AddRangeAsync(IEnumerable<PKM> pokemon, string? tag = null, string? sourceSave = null)
     {
-        var module = await GetModuleAsync();
+        await GetModuleAsync();
         // Collect all entries first and send in one JS call / one IDB transaction
         // rather than one round-trip per Pokémon.
-        var entries = pokemon.Select(pkm => (object)new
+        var entries = pokemon.Select(object (pkm) =>
         {
-            bytesBase64 = Convert.ToBase64String(pkm.DecryptedBoxData),
-            meta = new
+            var storedData = new byte[pkm.SIZE_STORED];
+            pkm.WriteDecryptedDataStored(storedData);
+            return new
             {
-                species = pkm.Species,
-                isShiny = pkm.IsShiny,
-                nickname = pkm.Nickname,
-                ext = pkm.Extension,
-                tag,
-                sourceSave
-            }
+                bytesBase64 = Convert.ToBase64String(storedData),
+                meta = new
+                {
+                    species = pkm.Species,
+                    isShiny = pkm.IsShiny,
+                    nickname = pkm.Nickname,
+                    ext = pkm.Extension,
+                    tag,
+                    sourceSave
+                }
+            };
         }).ToArray();
 
         if (entries.Length > 0)
         {
+            if (module is null)
+            {
+                return;
+            }
+
             await module.InvokeVoidAsync("addRange", (object)entries);
         }
     }
 
     public async Task<IReadOnlyList<BankEntry>> GetAllAsync()
     {
-        var module = await GetModuleAsync();
+        await GetModuleAsync();
+        if (module is null)
+        {
+            return [];
+        }
+
         var raw = await module.InvokeAsync<RawEntry[]>("getAllPokemon");
 
-        if (raw is null || raw.Length == 0)
+        if (raw.Length == 0)
         {
             return [];
         }
@@ -97,7 +125,9 @@ public class BankService(IJSRuntime js) : IBankService, IAsyncDisposable
             {
                 Id = r.Id,
                 Pokemon = pkm,
-                SpeciesName = string.IsNullOrEmpty(speciesName) ? "Unknown" : speciesName,
+                SpeciesName = string.IsNullOrEmpty(speciesName)
+                    ? "Unknown"
+                    : speciesName,
                 Tag = r.Meta.Tag,
                 SourceSave = r.Meta.SourceSave,
                 AddedAt = addedAt
@@ -115,35 +145,60 @@ public class BankService(IJSRuntime js) : IBankService, IAsyncDisposable
 
     public async Task DeleteAsync(long id)
     {
-        var module = await GetModuleAsync();
+        await GetModuleAsync();
+        if (module is null)
+        {
+            return;
+        }
+
         await module.InvokeVoidAsync("deletePokemon", id);
     }
 
     public async Task ClearAsync()
     {
-        var module = await GetModuleAsync();
+        await GetModuleAsync();
+        if (module is null)
+        {
+            return;
+        }
+
         await module.InvokeVoidAsync("clearAll");
     }
 
     public async Task<byte[]> ExportAsync()
     {
-        var module = await GetModuleAsync();
+        await GetModuleAsync();
         // JS exportAll() returns a Uint8Array; Blazor marshals it directly to byte[].
+        if (module is null)
+        {
+            return [];
+        }
+
         return await module.InvokeAsync<byte[]>("exportAll");
     }
 
     public async Task ImportAsync(byte[] data)
     {
-        var module = await GetModuleAsync();
+        await GetModuleAsync();
+        if (module is null)
+        {
+            return;
+        }
+
         await module.InvokeVoidAsync("importAll", data);
     }
 
     public async Task<bool> IsDuplicateAsync(PKM pkm)
     {
         var all = await GetAllAsync();
-        var candidateBytes = pkm.DecryptedBoxData;
+        var candidateBytes = new byte[pkm.SIZE_STORED];
+        pkm.WriteDecryptedDataStored(candidateBytes);
         return all.Any(entry =>
-            entry.Pokemon.DecryptedBoxData.AsSpan().SequenceEqual(candidateBytes));
+        {
+            var entryBytes = new byte[entry.Pokemon.SIZE_STORED];
+            entry.Pokemon.WriteDecryptedDataStored(entryBytes);
+            return entryBytes.AsSpan().SequenceEqual(candidateBytes);
+        });
     }
 
     public async Task<(IReadOnlyList<PKM> Unique, IReadOnlyList<PKM> Duplicates)> PartitionDuplicatesAsync(
@@ -151,9 +206,14 @@ public class BankService(IJSRuntime js) : IBankService, IAsyncDisposable
     {
         var all = await GetAllAsync();
 
-        // Build a hash set of existing entries' DecryptedBoxData (base64) for O(1) lookup.
+        // Build a hash set of existing entries' stored data (base64) for O(1) lookup.
         var existingHashes = all
-            .Select(e => Convert.ToBase64String(e.Pokemon.DecryptedBoxData))
+            .Select(e =>
+            {
+                var data = new byte[e.Pokemon.SIZE_STORED];
+                e.Pokemon.WriteDecryptedDataStored(data);
+                return Convert.ToBase64String(data);
+            })
             .ToHashSet();
 
         var unique = new List<PKM>();
@@ -161,7 +221,9 @@ public class BankService(IJSRuntime js) : IBankService, IAsyncDisposable
 
         foreach (var pkm in candidates)
         {
-            if (existingHashes.Contains(Convert.ToBase64String(pkm.DecryptedBoxData)))
+            var storedBytes = new byte[pkm.SIZE_STORED];
+            pkm.WriteDecryptedDataStored(storedBytes);
+            if (existingHashes.Contains(Convert.ToBase64String(storedBytes)))
             {
                 duplicates.Add(pkm);
             }
@@ -174,13 +236,8 @@ public class BankService(IJSRuntime js) : IBankService, IAsyncDisposable
         return (unique, duplicates);
     }
 
-    public async ValueTask DisposeAsync()
-    {
-        if (_module is not null)
-        {
-            await _module.DisposeAsync();
-        }
-    }
+    private async Task GetModuleAsync() =>
+        module ??= await js.InvokeAsync<IJSObjectReference>("import", "./js/bank.js");
 
     // ── Private DTOs for JS deserialization ───────────────────────────────
     // internal so that Pkmds.Tests can reference these types when setting up
@@ -188,37 +245,37 @@ public class BankService(IJSRuntime js) : IBankService, IAsyncDisposable
 
     internal sealed class RawEntry
     {
-        [System.Text.Json.Serialization.JsonPropertyName("id")]
+        [JsonPropertyName("id")]
         public long Id { get; set; }
 
-        [System.Text.Json.Serialization.JsonPropertyName("bytesBase64")]
+        [JsonPropertyName("bytesBase64")]
         public string BytesBase64 { get; set; } = string.Empty;
 
-        [System.Text.Json.Serialization.JsonPropertyName("meta")]
+        [JsonPropertyName("meta")]
         public RawMeta Meta { get; set; } = new();
 
-        [System.Text.Json.Serialization.JsonPropertyName("addedAt")]
+        [JsonPropertyName("addedAt")]
         public string AddedAt { get; set; } = string.Empty;
     }
 
     internal sealed class RawMeta
     {
-        [System.Text.Json.Serialization.JsonPropertyName("species")]
+        [JsonPropertyName("species")]
         public ushort Species { get; set; }
 
-        [System.Text.Json.Serialization.JsonPropertyName("isShiny")]
+        [JsonPropertyName("isShiny")]
         public bool IsShiny { get; set; }
 
-        [System.Text.Json.Serialization.JsonPropertyName("nickname")]
+        [JsonPropertyName("nickname")]
         public string Nickname { get; set; } = string.Empty;
 
-        [System.Text.Json.Serialization.JsonPropertyName("ext")]
+        [JsonPropertyName("ext")]
         public string Ext { get; set; } = string.Empty;
 
-        [System.Text.Json.Serialization.JsonPropertyName("tag")]
+        [JsonPropertyName("tag")]
         public string? Tag { get; set; }
 
-        [System.Text.Json.Serialization.JsonPropertyName("sourceSave")]
+        [JsonPropertyName("sourceSave")]
         public string? SourceSave { get; set; }
     }
 }

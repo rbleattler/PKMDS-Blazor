@@ -17,7 +17,7 @@ public class AdvancedSearchTests
         var data = File.ReadAllBytes(filePath);
         SaveUtil.TryGetSaveFile(data, out var saveFile, fileName).Should().BeTrue();
         var appState = new TestAppState { SaveFile = saveFile };
-        var service = new AppService(appState, new TestRefreshService());
+        var service = new AppService(appState, new TestRefreshService(), new LegalizationService());
         return (service, saveFile!);
     }
 
@@ -243,6 +243,9 @@ public class AdvancedSearchTests
         public bool SelectedSlotsAreValid => true;
         public bool IsHaXEnabled { get; set; }
         public SpriteStyle SpriteStyle { get; set; }
+        public bool ShowLegalIndicator { get; set; } = true;
+        public bool ShowFishyIndicator { get; set; } = true;
+        public bool ShowIllegalIndicator { get; set; } = true;
     }
 
     private sealed class TestRefreshService : IRefreshService

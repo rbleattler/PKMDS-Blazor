@@ -17,7 +17,7 @@ public class AppServiceTests
 
         var appState = new TestAppState();
         var refreshService = new TestRefreshService();
-        var appService = new AppService(appState, refreshService);
+        var appService = new AppService(appState, refreshService, new LegalizationService());
 
         // Act
         var fileName = appService.GetCleanFileName(pokemon!);
@@ -32,7 +32,7 @@ public class AppServiceTests
         // Arrange
         var appState = new TestAppState();
         var refreshService = new TestRefreshService();
-        var appService = new AppService(appState, refreshService);
+        var appService = new AppService(appState, refreshService, new LegalizationService());
 
         // Act
         var result = appService.GetStatModifierString(Nature.Hardy);
@@ -47,7 +47,7 @@ public class AppServiceTests
         // Arrange
         var appState = new TestAppState();
         var refreshService = new TestRefreshService();
-        var appService = new AppService(appState, refreshService);
+        var appService = new AppService(appState, refreshService, new LegalizationService());
 
         // Act - Bold: +Def, -Atk
         var result = appService.GetStatModifierString(Nature.Bold);
@@ -65,7 +65,7 @@ public class AppServiceTests
         // Arrange
         var appState = new TestAppState();
         var refreshService = new TestRefreshService();
-        var appService = new AppService(appState, refreshService);
+        var appService = new AppService(appState, refreshService, new LegalizationService());
         var initialState = appService.IsDrawerOpen;
 
         // Act
@@ -87,7 +87,7 @@ public class AppServiceTests
         var data = File.ReadAllBytes(filePath);
         FileUtil.TryGetPKM(data, out var pokemon, ".pk5").Should().BeTrue();
 
-        var appService = new AppService(appState, refreshService) { EditFormPokemon = pokemon };
+        var appService = new AppService(appState, refreshService, new LegalizationService()) { EditFormPokemon = pokemon };
 
         // Act
         appService.ClearSelection();
@@ -106,7 +106,7 @@ public class AppServiceTests
         // Arrange
         var appState = new TestAppState { SelectedPartySlotNumber = 0 };
         var refreshService = new TestRefreshService();
-        var appService = new AppService(appState, refreshService);
+        var appService = new AppService(appState, refreshService, new LegalizationService());
 
         // Act
         var result = appService.GetSelectedPokemonSlot(out var partySlot, out var boxNumber, out var boxSlot);
@@ -128,7 +128,7 @@ public class AppServiceTests
 
         var appState = new TestAppState();
         var refreshService = new TestRefreshService();
-        var appService = new AppService(appState, refreshService);
+        var appService = new AppService(appState, refreshService, new LegalizationService());
 
         // Act
         var showdown = appService.ExportPokemonAsShowdown(pokemon);
@@ -144,7 +144,7 @@ public class AppServiceTests
         // Arrange
         var appState = new TestAppState();
         var refreshService = new TestRefreshService();
-        var appService = new AppService(appState, refreshService);
+        var appService = new AppService(appState, refreshService, new LegalizationService());
 
         // Act
         var showdown = appService.ExportPokemonAsShowdown(null);
@@ -163,7 +163,7 @@ public class AppServiceTests
 
         var appState = new TestAppState { SaveFile = saveFile };
         var refreshService = new TestRefreshService();
-        var appService = new AppService(appState, refreshService);
+        var appService = new AppService(appState, refreshService, new LegalizationService());
 
         // Act
         var showdown = appService.ExportPartyAsShowdown();
@@ -178,7 +178,7 @@ public class AppServiceTests
         // Arrange
         var appState = new TestAppState { SaveFile = null };
         var refreshService = new TestRefreshService();
-        var appService = new AppService(appState, refreshService);
+        var appService = new AppService(appState, refreshService, new LegalizationService());
 
         // Act
         var showdown = appService.ExportPartyAsShowdown();
@@ -198,7 +198,7 @@ public class AppServiceTests
 
         var appState = new TestAppState { SaveFile = saveFile };
         var refreshService = new TestRefreshService();
-        var appService = new AppService(appState, refreshService);
+        var appService = new AppService(appState, refreshService, new LegalizationService());
 
         // Act
         appService.SetSelectedBoxPokemon(null, 0, 0);
@@ -219,7 +219,7 @@ public class AppServiceTests
 
         var appState = new TestAppState { SaveFile = saveFile };
         var refreshService = new TestRefreshService();
-        var appService = new AppService(appState, refreshService);
+        var appService = new AppService(appState, refreshService, new LegalizationService());
 
         // A PKM with Species=0 represents an empty slot; the template should be applied.
         var emptySlot = saveFile!.BlankPKM;
@@ -239,7 +239,7 @@ public class AppServiceTests
         // Arrange
         var appState = new TestAppState();
         var refreshService = new TestRefreshService();
-        var appService = new AppService(appState, refreshService);
+        var appService = new AppService(appState, refreshService, new LegalizationService());
 
         // Act
         var result = appService.GetConsoleRegionComboItems();
@@ -261,7 +261,7 @@ public class AppServiceTests
         // Arrange
         var appState = new TestAppState { SaveFile = null };
         var refreshService = new TestRefreshService();
-        var appService = new AppService(appState, refreshService);
+        var appService = new AppService(appState, refreshService, new LegalizationService());
 
         // Act
         var result = appService.TrySelectFirstEmptyBoxSlot();
@@ -292,7 +292,7 @@ public class AppServiceTests
 
         var appState = new TestAppState { SaveFile = saveFile };
         var refreshService = new TestRefreshService();
-        var appService = new AppService(appState, refreshService);
+        var appService = new AppService(appState, refreshService, new LegalizationService());
 
         // Act
         var result = appService.TrySelectFirstEmptyBoxSlot();
@@ -325,7 +325,7 @@ public class AppServiceTests
 
         var appState = new TestAppState { SaveFile = saveFile };
         var refreshService = new TestRefreshService();
-        var appService = new AppService(appState, refreshService);
+        var appService = new AppService(appState, refreshService, new LegalizationService());
 
         // Act
         var result = appService.TrySelectFirstEmptyBoxSlot();
@@ -360,7 +360,7 @@ public class AppServiceTests
 
         var appState = new TestAppState { SaveFile = saveFile };
         var refreshService = new TestRefreshService();
-        var appService = new AppService(appState, refreshService);
+        var appService = new AppService(appState, refreshService, new LegalizationService());
 
         // Act
         var result = appService.TrySelectFirstEmptyBoxSlot();
@@ -390,6 +390,9 @@ public class AppServiceTests
         public bool SelectedSlotsAreValid => true;
         public bool IsHaXEnabled { get; set; }
         public SpriteStyle SpriteStyle { get; set; }
+        public bool ShowLegalIndicator { get; set; } = true;
+        public bool ShowFishyIndicator { get; set; } = true;
+        public bool ShowIllegalIndicator { get; set; } = true;
     }
 
     private class TestRefreshService : IRefreshService

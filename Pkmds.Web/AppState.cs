@@ -89,4 +89,13 @@ public record AppState : IAppState
 
     /// <inheritdoc />
     public int? PinnedBoxNumber { get; set; }
+
+    /// <inheritdoc />
+    public bool ShowLegalIndicator { get; set; } = true;
+
+    /// <inheritdoc />
+    public bool ShowFishyIndicator { get; set; } = true;
+
+    /// <inheritdoc />
+    public bool ShowIllegalIndicator { get; set; } = true;
 }

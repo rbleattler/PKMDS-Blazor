@@ -91,7 +91,9 @@
                             <MudChip T="@string"
                                      Size="@Size.Small"
                                      Variant="@Variant.Outlined"
-                                     Color="@(context.Source == "auto" ? Color.Info : Color.Success)">
+                                     Color="@(context.Source == "auto"
+                                                ? Color.Info
+                                                : Color.Success)">
                                 @context.Source
                             </MudChip>
                         </MudTd>

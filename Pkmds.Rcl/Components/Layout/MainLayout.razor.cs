@@ -69,7 +69,7 @@ public partial class MainLayout : IDisposable
                 await Task.Delay(4000);
                 IsUpdateCheckFailed = false;
                 break;
-                // "found": JS already dispatched 'updateAvailable' → ShowUpdateMessage() sets IsUpdateAvailable = true
+            // "found": JS already dispatched 'updateAvailable' → ShowUpdateMessage() sets IsUpdateAvailable = true
         }
 
         StateHasChanged();
@@ -222,33 +222,21 @@ public partial class MainLayout : IDisposable
 
     private async Task ShowSaveFileInfoDialog()
     {
-        var parameters = new DialogParameters
-        {
-            { nameof(SaveFileInfoDialog.SaveFile), AppState.SaveFile }
-        };
+        var parameters = new DialogParameters { { nameof(SaveFileInfoDialog.SaveFile), AppState.SaveFile } };
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
         await DialogService.ShowAsync<SaveFileInfoDialog>("Save File Info", parameters, options);
     }
 
     private async Task ShowSaveFileRepairDialog()
     {
-        var parameters = new DialogParameters
-        {
-            { nameof(SaveFileRepairDialog.SaveFile), AppState.SaveFile }
-        };
+        var parameters = new DialogParameters { { nameof(SaveFileRepairDialog.SaveFile), AppState.SaveFile } };
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
         await DialogService.ShowAsync<SaveFileRepairDialog>("Repair Save File", parameters, options);
     }
 
     private async Task ShowBackupManagerDialog()
     {
-        var parameters = new DialogParameters
-        {
-            { nameof(BackupManagerDialog.SaveFile), AppState.SaveFile },
-            { nameof(BackupManagerDialog.FileName), AppState.SaveFileName },
-            { nameof(BackupManagerDialog.IsManicEmu), manicEmuSaveContext is not null },
-            { nameof(BackupManagerDialog.ManicEmuContext), manicEmuSaveContext }
-        };
+        var parameters = new DialogParameters { { nameof(BackupManagerDialog.SaveFile), AppState.SaveFile }, { nameof(BackupManagerDialog.FileName), AppState.SaveFileName }, { nameof(BackupManagerDialog.IsManicEmu), manicEmuSaveContext is not null }, { nameof(BackupManagerDialog.ManicEmuContext), manicEmuSaveContext } };
         var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = true };
         var dialog = await DialogService.ShowAsync<BackupManagerDialog>("Backup Manager", parameters, options);
         var result = await dialog.Result;
@@ -287,11 +275,29 @@ public partial class MainLayout : IDisposable
             if (restore.Entry.IsManicEmu &&
                 ManicEmuSaveHelper.TryExtractSaveFromZip(data, fileName, out var saveFile, out var manicContext))
             {
+                if (!saveFile.State.Exportable)
+                {
+                    Logger.LogWarning("Manic EMU backup save file is not exportable (unsupported format/ROM hack): {FileName}", fileName);
+                    await DialogService.ShowMessageBoxAsync("Unsupported save file",
+                        "This backup cannot be restored — it may be from an unsupported ROM hack or format.");
+                    AppState.ShowProgressIndicator = false;
+                    return;
+                }
+
                 manicEmuSaveContext = manicContext;
                 FinishLoadingSaveFile(saveFile, fileName);
             }
             else if (SaveUtil.TryGetSaveFile(data, out var rawSave, fileName))
             {
+                if (!rawSave.State.Exportable)
+                {
+                    Logger.LogWarning("Backup save file is not exportable (unsupported format/ROM hack): {FileName}", fileName);
+                    await DialogService.ShowMessageBoxAsync("Unsupported save file",
+                        "This backup cannot be restored — it may be from an unsupported ROM hack or format.");
+                    AppState.ShowProgressIndicator = false;
+                    return;
+                }
+
                 manicEmuSaveContext = null;
                 FinishLoadingSaveFile(rawSave, fileName);
             }
@@ -368,6 +374,7 @@ public partial class MainLayout : IDisposable
         AppService.ClearSelection();
         ParseSettings.ClearActiveTrainer();
         AppState.SaveFile = null;
+        manicEmuSaveContext = null;
         AppState.ShowProgressIndicator = true;
 
         var data = Array.Empty<byte>();
@@ -382,13 +389,30 @@ public partial class MainLayout : IDisposable
             // Try to load the file directly as a raw save.
             if (SaveUtil.TryGetSaveFile(data, out var saveFile, selectedFile.Name))
             {
-                manicEmuSaveContext = null;
+                if (!saveFile.State.Exportable)
+                {
+                    Logger.LogWarning("Save file is not exportable (unsupported format/ROM hack): {FileName}", selectedFile.Name);
+                    await DialogService.ShowMessageBoxAsync("Unsupported save file",
+                        "This save file cannot be loaded — it may be from an unsupported ROM hack or format.");
+                    AppState.ShowProgressIndicator = false;
+                    return;
+                }
+
                 FinishLoadingSaveFile(saveFile, selectedFile.Name);
             }
             // If that fails, check whether this is a Manic EMU .3ds.sav ZIP archive.
             // Manic EMU packages 3DS saves as a ZIP containing sdmc/… directory paths.
             else if (ManicEmuSaveHelper.TryExtractSaveFromZip(data, selectedFile.Name, out saveFile, out var manicContext))
             {
+                if (!saveFile.State.Exportable)
+                {
+                    Logger.LogWarning("Manic EMU save file is not exportable (unsupported format/ROM hack): {FileName}", selectedFile.Name);
+                    await DialogService.ShowMessageBoxAsync("Unsupported save file",
+                        "This save file cannot be loaded — it may be from an unsupported ROM hack or format.");
+                    AppState.ShowProgressIndicator = false;
+                    return;
+                }
+
                 manicEmuSaveContext = manicContext;
                 Logger.LogInformation("Loaded save from Manic EMU .3ds.sav/.3ds.save archive; entry: {EntryPath}", manicContext.SaveEntryPath);
                 FinishLoadingSaveFile(saveFile, selectedFile.Name);
@@ -841,10 +865,17 @@ public partial class MainLayout : IDisposable
         AppState.ShowProgressIndicator = false;
     }
 
-    private static byte[] GetPokemonFileData(PKM? pokemon) =>
-        pokemon is null
-            ? []
-            : pokemon.DecryptedPartyData;
+    private static byte[] GetPokemonFileData(PKM? pokemon)
+    {
+        if (pokemon is null)
+        {
+            return [];
+        }
+
+        var data = new byte[pokemon.SIZE_PARTY];
+        pokemon.WriteDecryptedDataParty(data);
+        return data;
+    }
 
     private async Task WriteFile(byte[] data, string fileName, string fileTypeExtension, string fileTypeDescription)
     {

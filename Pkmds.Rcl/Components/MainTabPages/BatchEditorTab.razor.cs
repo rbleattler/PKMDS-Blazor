@@ -2,30 +2,34 @@ namespace Pkmds.Rcl.Components.MainTabPages;
 
 public partial class BatchEditorTab : RefreshAwareComponent
 {
-    [Inject]
-    private IBatchEditorService BatchEditorService { get; set; } = default!;
-
-    private enum TabMode { Reference, Preview, Apply }
-
-    private string script = string.Empty;
-    private BatchEditorScope scope = BatchEditorScope.All;
-    private bool isBusy;
-    private TabMode mode = TabMode.Reference;
-
-    private List<BatchEditorPreviewEntry> previewResults = [];
-    private bool showUnchanged = true;
-    private bool showPropertiesPanel = true;
-
-    private List<BatchEditorPreset> presets = [];
-    private string? selectedPresetName;
-    private bool showSavePresetDialog;
-    private string newPresetName = string.Empty;
-
-    private string propertySearch = string.Empty;
-
-    private sealed record PropertyRow(string Name, string TypeName);
+    private static readonly IReadOnlyList<(string Name, string Script)> ExampleScripts =
+    [
+        ("Give all boxes Pokérus", ".IsPokerus=True"),
+        ("Max friendship (party)", "=IsPartySlot=True\n.CurrentFriendship=255"),
+        ("Remove held items (boxes)", "=IsBoxSlot=True\n.HeldItem=0"),
+        ("Set all to level 100", ".CurrentLevel=100")
+    ];
 
     private List<PropertyRow> allProperties = [];
+    private bool isBusy;
+    private TabMode mode = TabMode.Reference;
+    private string newPresetName = string.Empty;
+
+    private List<BatchEditorPreset> presets = [];
+
+    private List<BatchEditorPreviewEntry> previewResults = [];
+
+    private string propertySearch = string.Empty;
+    private BatchEditorScope scope = BatchEditorScope.All;
+
+    private string script = string.Empty;
+    private string? selectedPresetName;
+    private bool showPropertiesPanel = true;
+    private bool showSavePresetDialog;
+    private bool showUnchanged = true;
+
+    [Inject]
+    private IBatchEditorService BatchEditorService { get; set; } = default!;
 
     private IEnumerable<BatchEditorPreviewEntry> FilteredPreview =>
         showUnchanged
@@ -38,14 +42,6 @@ public partial class BatchEditorTab : RefreshAwareComponent
             : allProperties.Where(p =>
                 p.Name.Contains(propertySearch, StringComparison.OrdinalIgnoreCase) ||
                 p.TypeName.Contains(propertySearch, StringComparison.OrdinalIgnoreCase));
-
-    private static readonly IReadOnlyList<(string Name, string Script)> ExampleScripts =
-    [
-        ("Give all boxes Pokérus", ".IsPokerus=True"),
-        ("Max friendship (party)", "=IsPartySlot=True\n.CurrentFriendship=255"),
-        ("Remove held items (boxes)", "=IsBoxSlot=True\n.HeldItem=0"),
-        ("Set all to level 100", ".CurrentLevel=100"),
-    ];
 
     protected override async Task OnInitializedAsync()
     {
@@ -220,7 +216,7 @@ public partial class BatchEditorTab : RefreshAwareComponent
             return;
         }
 
-        var preset = new BatchEditorPreset { Name = newPresetName.Trim(), Script = script, SavedAt = DateTimeOffset.UtcNow, };
+        var preset = new BatchEditorPreset { Name = newPresetName.Trim(), Script = script, SavedAt = DateTimeOffset.UtcNow };
 
         await BatchEditorService.SavePresetAsync(preset);
         presets = (await BatchEditorService.GetPresetsAsync()).ToList();
@@ -247,4 +243,8 @@ public partial class BatchEditorTab : RefreshAwareComponent
         entry.HasChanges
             ? string.Empty
             : "opacity: 0.5;";
+
+    private enum TabMode { Reference, Preview, Apply }
+
+    private sealed record PropertyRow(string Name, string TypeName);
 }

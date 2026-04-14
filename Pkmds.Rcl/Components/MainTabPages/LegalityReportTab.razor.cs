@@ -5,8 +5,12 @@ namespace Pkmds.Rcl.Components.MainTabPages;
 public partial class LegalityReportTab : RefreshAwareComponent
 {
     private bool hasRun;
+    private bool isLegalizing;
     private bool isScanning;
     private List<LegalityReportEntry> legalityReportEntries = [];
+    private double legalizationPercent;
+    private string legalizationStatusText = string.Empty;
+    private CancellationTokenSource? legalizeCts;
     private LegalityStatus? statusFilter;
 
     /// <summary>
@@ -18,6 +22,228 @@ public partial class LegalityReportTab : RefreshAwareComponent
     private int LegalCount => legalityReportEntries.Count(e => e.Status == LegalityStatus.Legal);
     private int FishyCount => legalityReportEntries.Count(e => e.Status == LegalityStatus.Fishy);
     private int IllegalCount => legalityReportEntries.Count(e => e.Status == LegalityStatus.Illegal);
+
+    private bool HasIllegalOrFishy => hasRun && legalityReportEntries.Any(e =>
+        e.Status is LegalityStatus.Illegal or LegalityStatus.Fishy);
+
+    private async Task LegalizeAllAsync()
+    {
+        if (AppState.SaveFile is not { } saveFile)
+        {
+            return;
+        }
+
+        // Process Illegal entries before Fishy ones — if the user cancels partway
+        // through a long sweep, the more severe issues are fixed first.
+        var targets = legalityReportEntries
+            .Where(e => e.Status is LegalityStatus.Illegal or LegalityStatus.Fishy)
+            .OrderBy(e => e.Status == LegalityStatus.Illegal
+                ? 0
+                : 1)
+            .ToList();
+
+        if (targets.Count == 0)
+        {
+            return;
+        }
+
+        legalizeCts?.Dispose();
+        legalizeCts = new CancellationTokenSource();
+        var ct = legalizeCts.Token;
+
+        isLegalizing = true;
+        legalizationPercent = 0;
+        legalizationStatusText = $"Legalizing 0/{targets.Count}…";
+        StateHasChanged();
+
+        await Task.Yield();
+
+        var successCount = 0;
+        var fishyCount = 0;
+        var failureCount = 0;
+        var cancelled = false;
+        var processed = 0;
+
+        for (var i = 0; i < targets.Count; i++)
+        {
+            if (ct.IsCancellationRequested)
+            {
+                cancelled = true;
+                break;
+            }
+
+            var entry = targets[i];
+            legalizationStatusText = $"Legalizing {i + 1}/{targets.Count}: {entry.SpeciesName} ({entry.Location})";
+            legalizationPercent = (double)i / targets.Count * 100;
+            StateHasChanged();
+            // Task.Delay(1) rather than Task.Yield(): in Blazor WASM, Yield stays on the
+            // same JS macrotask and the browser never paints. Delay(1) uses setTimeout and
+            // actually releases the main thread so the UI can render and process clicks
+            // (including the Cancel button).
+            try
+            {
+                await Task.Delay(1, ct);
+            }
+            catch (OperationCanceledException)
+            {
+                cancelled = true;
+                break;
+            }
+
+            LegalizationOutcome result;
+            try
+            {
+                // Tighter per-Pokémon timeout for batch runs than the 15s default: a
+                // hundreds-of-Pokémon sweep can't afford to spend 15s apiece, and the
+                // tighter cap also stops any one attempt from monopolising the WASM
+                // thread long enough to trip "Page Unresponsive".
+                result = await LegalizationService.LegalizeAsync(
+                    entry.Pokemon,
+                    saveFile,
+                    progress: null,
+                    ct,
+                    timeoutSeconds: 5);
+            }
+            catch (OperationCanceledException)
+            {
+                cancelled = true;
+                break;
+            }
+            catch
+            {
+                failureCount++;
+                processed++;
+                continue;
+            }
+
+            processed++;
+
+            if (result.Status != LegalizationStatus.Success)
+            {
+                failureCount++;
+                continue;
+            }
+
+            // Pass EntityImportSettings.None to bypass SaveFile.UpdatePKM's "adapt as if
+            // traded in" path. The PKM is already legal for the current save; letting
+            // SetPKM mutate handler/memory/trainer fields can reintroduce illegalities
+            // that our pre-write analysis doesn't see.
+            PKM storedPk;
+            if (entry.IsParty)
+            {
+                saveFile.SetPartySlotAtIndex(result.Pokemon, entry.SlotNumber, EntityImportSettings.None);
+                storedPk = saveFile.GetPartySlotAtIndex(entry.SlotNumber);
+            }
+            else
+            {
+                saveFile.SetBoxSlotAtIndex(result.Pokemon, entry.BoxNumber, entry.SlotNumber, EntityImportSettings.None);
+                storedPk = saveFile.GetBoxSlotAtIndex(entry.BoxNumber, entry.SlotNumber);
+            }
+
+            // Re-read the stored bytes and re-analyse so the table reflects exactly what
+            // the save now contains — if the round trip mutated the PKM, we'll see the
+            // real status here rather than an optimistic pre-write one.
+            var storedLa = AppService.GetLegalityAnalysis(storedPk, isParty: entry.IsParty);
+            var newStatus = GetStatus(storedLa);
+            var updated = entry with
+            {
+                Pokemon = storedPk,
+                Status = newStatus,
+                FirstIssue = newStatus == LegalityStatus.Legal
+                    ? string.Empty
+                    : GetFirstIssue(storedLa)
+            };
+            var idx = legalityReportEntries.IndexOf(entry);
+            if (idx >= 0)
+            {
+                legalityReportEntries[idx] = updated;
+            }
+
+            switch (newStatus)
+            {
+                case LegalityStatus.Legal:
+                    successCount++;
+                    break;
+                case LegalityStatus.Fishy:
+                    // Valid PKHeX-wise but still flagged Fishy — count separately so the
+                    // summary reflects the partial improvement honestly.
+                    fishyCount++;
+                    break;
+                default:
+                    failureCount++;
+                    break;
+            }
+        }
+
+        legalizationPercent = 100;
+        StateHasChanged();
+
+        var summary = BuildLegalizeSummary(targets.Count, processed, successCount, fishyCount, failureCount, cancelled);
+        Snackbar.Add(summary.Message, summary.Severity);
+
+        isLegalizing = false;
+        legalizationStatusText = string.Empty;
+        legalizationPercent = 0;
+        legalizeCts.Dispose();
+        legalizeCts = null;
+
+        RefreshService.Refresh();
+    }
+
+    private void CancelLegalizeAll() => legalizeCts?.Cancel();
+
+    private static (string Message, Severity Severity) BuildLegalizeSummary(
+        int targetCount,
+        int processed,
+        int successCount,
+        int fishyCount,
+        int failureCount,
+        bool cancelled)
+    {
+        var prefix = cancelled
+            ? $"Legalization cancelled ({processed}/{targetCount} processed)."
+            : $"Processed {targetCount} Pokémon.";
+
+        var parts = new List<string>();
+        if (successCount > 0)
+        {
+            parts.Add($"now Legal: {successCount}");
+        }
+
+        if (fishyCount > 0)
+        {
+            parts.Add($"still Fishy: {fishyCount}");
+        }
+
+        if (failureCount > 0)
+        {
+            parts.Add($"could not fix: {failureCount}");
+        }
+
+        var detail = parts.Count > 0
+            ? " " + string.Join(", ", parts) + "."
+            : string.Empty;
+
+        var severity = cancelled
+            ? Severity.Info
+            : failureCount == 0 && fishyCount == 0
+                ? Severity.Success
+                : Severity.Warning;
+
+        return (prefix + detail, severity);
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            legalizeCts?.Cancel();
+            legalizeCts?.Dispose();
+            legalizeCts = null;
+        }
+
+        base.Dispose(disposing);
+    }
 
     private async Task RunScanAsync()
     {
@@ -46,7 +272,7 @@ public partial class LegalityReportTab : RefreshAwareComponent
                 continue;
             }
 
-            var la = AppService.GetLegalityAnalysis(pkm);
+            var la = AppService.GetLegalityAnalysis(pkm, isParty: true);
             entries.Add(BuildEntry(pkm, la, true, 0, i));
         }
 
@@ -117,9 +343,12 @@ public partial class LegalityReportTab : RefreshAwareComponent
     {
         var ctx = LegalityLocalizationContext.Create(la);
 
+        // Prefer Invalid results over Fishy ones so the more severe issue is shown
+        // when both are present. CheckResult.Valid is true for Fishy judgements,
+        // so we have to match on Judgement directly to surface Fishy reasons at all.
         foreach (var result in la.Results)
         {
-            if (!result.Valid)
+            if (result.Judgement == PKHexSeverity.Invalid)
             {
                 return ctx.Humanize(in result);
             }
@@ -133,6 +362,14 @@ public partial class LegalityReportTab : RefreshAwareComponent
         if (!MoveResult.AllValid(la.Info.Relearn))
         {
             return "Invalid relearn move detected.";
+        }
+
+        foreach (var result in la.Results)
+        {
+            if (result.Judgement == PKHexSeverity.Fishy)
+            {
+                return ctx.Humanize(in result);
+            }
         }
 
         return string.Empty;

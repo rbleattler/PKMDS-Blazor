@@ -104,6 +104,9 @@ public sealed class SettingsService(
     {
         appState.IsHaXEnabled = Settings.IsHaXEnabled;
         appState.SpriteStyle = Settings.SpriteStyle;
+        appState.ShowLegalIndicator = Settings.ShowLegalIndicator;
+        appState.ShowFishyIndicator = Settings.ShowFishyIndicator;
+        appState.ShowIllegalIndicator = Settings.ShowIllegalIndicator;
         loggingService.IsVerboseLoggingEnabled = Settings.IsVerboseLoggingEnabled;
     }
 }

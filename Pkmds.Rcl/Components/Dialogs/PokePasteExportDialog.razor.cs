@@ -2,6 +2,11 @@ namespace Pkmds.Rcl.Components.Dialogs;
 
 public partial class PokePasteExportDialog
 {
+    private string author = string.Empty;
+    private string notes = string.Empty;
+
+    private string title = string.Empty;
+
     [CascadingParameter]
     private IMudDialogInstance? MudDialog { get; set; }
 
@@ -10,10 +15,6 @@ public partial class PokePasteExportDialog
     /// </summary>
     [Parameter]
     public PKM? Pokemon { get; set; }
-
-    private string title = string.Empty;
-    private string author = string.Empty;
-    private string notes = string.Empty;
 
     private string ShowdownText => Pokemon is not null
         ? AppService.ExportPokemonAsShowdown(Pokemon)

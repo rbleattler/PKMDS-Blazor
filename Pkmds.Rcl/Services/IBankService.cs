@@ -14,7 +14,7 @@ public interface IBankService
     /// <summary>Adds multiple Pokémon to the bank.</summary>
     Task AddRangeAsync(IEnumerable<PKM> pokemon, string? tag = null, string? sourceSave = null);
 
-    /// <summary>Removes the entry with the given <paramref name="id"/> from the bank.</summary>
+    /// <summary>Removes the entry with the given <paramref name="id" /> from the bank.</summary>
     Task DeleteAsync(long id);
 
     /// <summary>Removes all entries from the bank.</summary>
@@ -30,13 +30,13 @@ public interface IBankService
     Task ImportAsync(byte[] data);
 
     /// <summary>
-    /// Returns <see langword="true"/> if the bank already contains an entry whose
-    /// decrypted box data matches <paramref name="pkm"/>.
+    /// Returns <see langword="true" /> if the bank already contains an entry whose
+    /// decrypted box data matches <paramref name="pkm" />.
     /// </summary>
     Task<bool> IsDuplicateAsync(PKM pkm);
 
     /// <summary>
-    /// Splits <paramref name="candidates"/> into Pokémon not already in the bank
+    /// Splits <paramref name="candidates" /> into Pokémon not already in the bank
     /// (<c>Unique</c>) and those that match an existing entry by decrypted box data
     /// (<c>Duplicates</c>), using a single bank read — O(N+M) instead of O(N×M).
     /// </summary>

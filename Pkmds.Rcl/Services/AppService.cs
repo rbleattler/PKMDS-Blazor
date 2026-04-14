@@ -1,13 +1,38 @@
 ﻿namespace Pkmds.Rcl.Services;
 
-public class AppService(IAppState appState, IRefreshService refreshService) : IAppService
+public class AppService(IAppState appState, IRefreshService refreshService, ILegalizationService legalizationService) : IAppService
 {
     private const string EnglishLang = "en";
     private const string DefaultPkmFileName = "pkm.bin";
 
+    // Block keys duplicated from SaveBlockAccessor8SWSH / SaveBlockAccessor9SV
+    // because they are private in PKHeX.Core. Update if upstream changes.
+    private const uint SwshTeamNamesKey = 0x1920C1E4;
+    private const uint SvTeamNamesKey = 0x1920C1E4;
+
+    private const uint SvRentalTeamsKey = 0x19CB0339;
+
+    private const int TeamCount = 6;
+
+    private const int SlotsPerTeam = 6;
+
+    // Team name: 10 char16 + null terminator = 22 bytes
+    private const int TeamNameByteLength = 22;
+
+    private static readonly uint[] SwshRentalTeamKeys =
+    [
+        0x149A1DD0, // KRentalTeam1
+        0x179A2289, // KRentalTeam2
+        0x169A20F6, // KRentalTeam3
+        0x199A25AF, // KRentalTeam4
+        0x189A241C // KRentalTeam5
+    ];
+
     private IAppState AppState { get; } = appState;
 
     private IRefreshService RefreshService { get; } = refreshService;
+
+    private ILegalizationService LegalizationService { get; } = legalizationService;
 
     private static string[] NatureStatShortNames => ["Atk", "Def", "Spe", "SpA", "SpD"];
 
@@ -25,7 +50,7 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
             //   so party stats including current HP and status condition persist in
             //   the box and should not be reset
             var hasPersistedPartyStats = field is PB7 { PartyStatsPresent: true }
-                || (AppState.IsHaXEnabled && AppState.SelectedPartySlotNumber is not null);
+                                         || AppState.IsHaXEnabled && AppState.SelectedPartySlotNumber is not null;
             if (!hasPersistedPartyStats)
             {
                 LoadPokemonStats(field);
@@ -118,7 +143,9 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
 
         // Preserve current HP for party Pokémon — SetStats overwrites
         // Stat_HPCurrent with Stat_HPMax, losing any user-set value.
-        var previousHp = pokemon.PartyStatsPresent ? pokemon.Stat_HPCurrent : -1;
+        var previousHp = pokemon.PartyStatsPresent
+            ? pokemon.Stat_HPCurrent
+            : -1;
         pokemon.SetStats(stats);
         if (previousHp >= 0)
         {
@@ -162,13 +189,19 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
             .DistinctBy(move => move.Value)
             .FirstOrDefault(m => m.Value == moveId);
         if (item != null)
+        {
             return item;
+        }
+
         // FilteredSources.Moves is capped at the save's MaxMoveID; DLC moves (e.g. Blood Moon
         // for a base-game save) won't be in the list even though the move ID is stored in the
         // PKM. Fall back to the full move string table so the name always displays correctly.
         var strings = GameInfo.Strings;
         if (moveId > 0 && moveId < strings.Move.Count)
+        {
             return new ComboItem(strings.Move[moveId], moveId);
+        }
+
         return null!;
     }
 
@@ -376,227 +409,14 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
             return null;
         }
 
-        var blank = sav.BlankPKM;
-        var destType = blank.GetType();
-
-        // Use EncounterMovesetGenerator to find a legal encounter that supports all of the
-        // requested moves. This is the same pattern used by the Living Dex generator and the
-        // popular Auto Legality Modifier (ALM) plugin: starting from a valid encounter means
-        // the resulting PKM has a correct met location, origin version, and HOME-transfer
-        // chain automatically — resolving "Unable to match an encounter from origin game"
-        // for species like Basculegion that can only reach SV via HOME from PLA.
-        var probe = blank.Clone();
-        probe.Species = set.Species;
-        probe.Form = set.Form;
-        probe.CurrentLevel = set.Level;
-
-        // For Toxtricity, the form is nature-locked: Amped (form 0) or Low-Key (form 1) is
-        // determined by the Pokémon's nature. Override the probe form so the generator searches
-        // the correct form's encounter pool, ensuring form+nature compatibility.
-        if (probe.Species == (int)Species.Toxtricity && set.Nature != Nature.Random)
-            probe.Form = (byte)ToxtricityUtil.GetAmpLowKeyResult(set.Nature);
-
-        EncounterMovesetGenerator.OptimizeCriteria(probe, sav);
-
-        // Search ALL game versions (context=0 = no generation filter) sorted newest-first
-        // (higher GameVersion enum value = newer game, e.g. SL=50, VL=51 vs X=24, Y=25)
-        // so native Gen9 encounters are found before older-gen egg encounters. PLA(47) still
-        // comes before SWSH(44,45) ensuring Hisuian-only Pokémon get their PLA encounter.
-        var versions = GameUtil.GetVersionsWithinRange(probe)
-            .OrderByDescending(v => (int)v)
-            .ToArray();
-
-        // Skip egg and mystery-gift encounters: the generator yields them first (Egg=1, Mystery=2
-        // have the lowest EncounterTypeGroup values = highest priority) but they're unsuitable for
-        // competitive Pokémon imports: eggs produce complex relearn requirements, mystery gifts set
-        // FatefulEncounter + event marks that the Pokémon hasn't actually received.
-        // Fall back to a gift encounter before an egg if no wild/static/trade is found.
-        PKM pkm;
-        IEncounterable? foundEnc = null;
-        IEncounterable? eggFallback = null;
-        IEncounterable? giftFallback = null;
-        foreach (var enc in EncounterMovesetGenerator.GenerateEncounters(probe, set.Moves.AsMemory(), versions))
-        {
-            if (enc is IEncounterEgg) { eggFallback ??= enc; continue; }
-            if (enc is MysteryGift) { giftFallback ??= enc; continue; }
-            foundEnc = enc;
-            break;
-        }
-        foundEnc ??= giftFallback ?? eggFallback;
-
-        if (foundEnc is not null)
-        {
-            var generated = foundEnc.ConvertToPKM(sav);
-            var converted = EntityConverter.ConvertToType(generated, destType, out _);
-            if (converted is not null)
-            {
-                pkm = converted;
-            }
-            else
-            {
-                // Conversion failed: species is likely not in the target game's personal table
-                // (e.g. Hisuian Pokémon like Sneasler that can only enter SV via HOME from PLA).
-                // Seed the blank with origin data so the legality checker can find a matching
-                // encounter in the origin game (EncounterGenerator routes by pk.Version).
-                pkm = blank.Clone();
-                pkm.Version = generated.Version;
-                pkm.MetLocation = generated.MetLocation;
-                pkm.MetLevel = generated.MetLevel;
-                pkm.Ball = generated.Ball;
-            }
-        }
-        else
-        {
-            // No valid encounter found — fall back to a blank template. The import will
-            // succeed but may still have legality issues (e.g. unrecognised species).
-            pkm = blank.Clone();
-        }
-
-        // Overlay the user-specified Showdown details (moves, EVs/IVs, nature, ability,
-        // nickname, shiny, tera type, etc.) on top of the legally-generated base.
-        pkm.ApplySetDetails(set);
-
-        // Ensure CurrentLevel ≥ encounter.LevelMin. ApplySetDetails sets CurrentLevel to the
-        // Showdown set's level (e.g. 50 for competition format), but some encounters have a
-        // fixed minimum (e.g. Ursaluna-Bloodmoon at 70, PLA wild Sneasler at 58+). Raise
-        // CurrentLevel so the encounter verifier's level-range check passes.
-        if (foundEnc is not null && pkm.CurrentLevel < foundEnc.LevelMin)
-            pkm.CurrentLevel = foundEnc.LevelMin;
-
-        // Clamp MetLevel to CurrentLevel (now fully resolved) BEFORE suggesting relearn moves.
-        // This ensures moves learned above the met level get flagged as needing relearn slots
-        // (e.g. Boomburst on a Noivern whose met level is below 62).
-        if (foundEnc is not null && pkm.MetLevel > pkm.CurrentLevel)
-            pkm.MetLevel = pkm.CurrentLevel;
-
-        // Clamp ObedienceLevel alongside MetLevel so Gen9 Pokémon don't fail the
-        // "obedience level exceeds current level" check after the MetLevel is lowered.
-        if (pkm is IObedienceLevel obLevel && obLevel.ObedienceLevel > pkm.CurrentLevel)
-            obLevel.ObedienceLevel = pkm.CurrentLevel;
-
-        // Restore fixed-nature encounters (e.g. Ursaluna-Bloodmoon is always Hardy).
-        // ApplySetDetails may have overwritten the encounter's required nature with the
-        // Showdown set's nature, causing the encounter verifier to reject the match.
-        if (foundEnc is IFixedNature { IsFixedNature: true } fn)
-        {
-            pkm.Nature = fn.Nature;
-            pkm.StatNature = fn.Nature;
-        }
-
-        // Suggest relearn moves now that MetLevel is finalised. With mystery-gift encounters
-        // skipped, the remaining encounter types (wild/static/trade/egg) produce reliable
-        // suggestions and we no longer need a "clear if still invalid" safety net.
-        if (foundEnc is not null && !pkm.FatefulEncounter)
-        {
-            Span<ushort> suggestedRelearn = stackalloc ushort[4];
-            var la = new LegalityAnalysis(pkm);
-            la.GetSuggestedRelearnMovesFromEncounter(suggestedRelearn, foundEnc);
-            pkm.SetRelearnMoves(suggestedRelearn);
-        }
-
-        ApplyPostImportFixes(pkm, sav, foundEnc);
-        return pkm;
+        // Delegate to the Auto-Legality engine, which handles PID/IV correlation for
+        // Gen 3-5, RNG-correlated encounters for Gen 8/9, egg hatching, alternate-form
+        // fallback, and post-generation fixes. On Failed/Timeout, the outcome still
+        // carries the best-effort attempt (with post-generation fixes already applied),
+        // so we return it rather than a raw blank — the user can edit it further.
+        var result = LegalizationService.GenerateFromSetSync(set, sav);
+        return result.Pokemon;
     }
-
-    private static void ApplyPostImportFixes(PKM pkm, SaveFile sav, IEncounterable? enc = null)
-    {
-        // Clear held items not available in this save file's game to prevent null refs
-        // when rendering the slot component and to avoid legality errors.
-        if (pkm.HeldItem != 0 && !sav.HeldItems.Contains((ushort)pkm.HeldItem))
-        {
-            pkm.HeldItem = 0;
-        }
-
-        // Fill in the language so legality checks that key off it (e.g. nickname language)
-        // don't fail with "unknown language".
-        if (pkm.Language <= 0)
-        {
-            pkm.Language = sav.Language > 0 ? sav.Language : (int)LanguageID.English;
-        }
-
-        // Only suggest a met location when we have no valid encounter (blank fallback path).
-        // When enc is not null, ConvertToPKM already set the correct met location and level,
-        // and MetLevel was already clamped to CurrentLevel in ConvertShowdownSetToPkm.
-        if (enc is null)
-        {
-            var suggestedMet = EncounterSuggestion.GetSuggestedMetInfo(pkm);
-            if (suggestedMet is { Location: not 0 })
-            {
-                pkm.MetLocation = suggestedMet.Location;
-                var metLevel = suggestedMet.GetSuggestedMetLevel(pkm);
-                pkm.MetLevel = metLevel;
-                if (pkm.CurrentLevel < metLevel)
-                    pkm.CurrentLevel = metLevel;
-            }
-        }
-
-        // Toxtricity's form is determined by nature (Amped vs Low-Key). After ApplySetDetails
-        // applies the user's requested nature, ensure the form matches that nature.
-        if (pkm.Species == (int)Species.Toxtricity)
-            pkm.Form = (byte)ToxtricityUtil.GetAmpLowKeyResult(pkm.Nature);
-
-        // ApplySetDetails already handles relearn moves when the encounter is parsed;
-        // we intentionally preserve the moves from the Showdown set rather than calling
-        // SetMoveset(), because with an invalid encounter MoveResult.AllValid returns false
-        // even for legitimately learnable moves, and SetMoveset()'s random fallback can
-        // replace valid user-specified moves with moves the species cannot even learn.
-
-        // If the nickname buffer is empty (which LoadString checks directly against the raw
-        // trash bytes, not the IsNicknamed flag), clear it so the verifier sees the species
-        // name instead of an empty slot.
-        if (string.IsNullOrEmpty(pkm.Nickname))
-        {
-            pkm.SetDefaultNickname();
-        }
-
-        // Showdown format has no height/weight data; use average (0x80) to avoid
-        // "improbable height/weight" legality warnings.
-        if (pkm is IScaledSize ss && ss.HeightScalar == 0 && ss.WeightScalar == 0)
-        {
-            ss.HeightScalar = 0x80;
-            ss.WeightScalar = 0x80;
-        }
-
-        // Fix FormArgument for Pokémon that require a non-zero evolution argument
-        // (e.g. Basculegion ≥ 294, Runerigus ≥ 49, Wyrdeer ≥ 20, Annihilape ≥ 20, etc.).
-        // When the encounter species differs from the PKM species, the Pokémon was generated
-        // from a pre-evolution encounter and GetFormArgumentMinEvolution returns the minimum.
-        if (pkm is IFormArgument fa && enc is not null && enc.Species != pkm.Species)
-        {
-            var minArg = GetFormArgumentMinEvolution(pkm.Species, enc.Species);
-            if (fa.FormArgument < minArg)
-                fa.FormArgument = minArg;
-        }
-
-        // Set a non-zero HOME tracker so the "tracker missing" legality error is suppressed.
-        // Also keep Scale == HeightScalar: when HasTracker is true, MiscScaleVerifier requires
-        // HeightScalar == Scale for non-PLA encounters.
-        // Note: PKHeX comments that fake trackers are not ideal, but for import purposes
-        // this avoids the unavoidable "HOME Transfer Tracker is missing" error.
-        if (pkm is IHomeTrack { HasTracker: false } ht)
-        {
-            ht.Tracker = 1;
-            if (pkm is IScaledSize3 ss3 && pkm is IScaledSize ss2)
-                ss3.Scale = ss2.HeightScalar;
-        }
-
-        pkm.RefreshChecksum();
-    }
-
-    // Mirrors IFormArgument.GetFormArgumentMinEvolution from the PKHeX.Core source.
-    // Inlined here because that method uses C#14 extension syntax unavailable in the consumed package.
-    private static uint GetFormArgumentMinEvolution(ushort currentSpecies, ushort originalSpecies) => originalSpecies switch
-    {
-        (int)Species.Yamask when currentSpecies == (int)Species.Runerigus => 49u,
-        (int)Species.Qwilfish when currentSpecies == (int)Species.Overqwil => 20u,
-        (int)Species.Stantler when currentSpecies == (int)Species.Wyrdeer => 20u,
-        (int)Species.Basculin when currentSpecies == (int)Species.Basculegion => 294u,
-        (int)Species.Mankey or (int)Species.Primeape when currentSpecies == (int)Species.Annihilape => 20u,
-        (int)Species.Pawniard or (int)Species.Bisharp when currentSpecies == (int)Species.Kingambit => 3u,
-        (int)Species.Farfetchd when currentSpecies == (int)Species.Sirfetchd => 3u,
-        (int)Species.Gimmighoul when currentSpecies == (int)Species.Gholdengo => 999u,
-        _ => 0u,
-    };
 
     public bool TryPlacePokemonInPartySlot(PKM pkm)
     {
@@ -1200,7 +1020,24 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
     public IReadOnlyList<ComboItem> GetConsoleRegionComboItems() =>
         GameInfo.FilteredSources.ConsoleRegions;
 
-    public LegalityAnalysis GetLegalityAnalysis(PKM pkm) => new(pkm);
+    public LegalityAnalysis GetLegalityAnalysis(PKM pkm, bool isParty = false)
+    {
+        // PKHeX's per-format SetPKM hook (e.g. SAV8BS.SetPKM → pb8.UpdateHandler)
+        // runs on every slot write and normalises CurrentHandler / HT fields to
+        // match the loaded trainer. Raw slots read via GetBoxSlotAtIndex skip
+        // that step, so the report can flag an "Invalid Current handler value"
+        // that will silently disappear the next time anything writes the slot.
+        // Mirror the adapt-on-write behaviour by analysing a cloned-and-adapted
+        // copy so the displayed status matches what the save will actually hold.
+        if (AppState.SaveFile is { } sav && pkm.GetType() == sav.PKMType)
+        {
+            var clone = pkm.Clone();
+            sav.AdaptToSaveFile(clone, isParty);
+            return new LegalityAnalysis(clone);
+        }
+
+        return new LegalityAnalysis(pkm);
+    }
 
     public IEnumerable<AdvancedSearchResult> SearchPokemon(AdvancedSearchFilter filter)
     {
@@ -1376,14 +1213,18 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
     {
         var tree = EvolutionTree.GetEvolutionTree(pkm.Context);
         var methods = tree.Forward.GetForward(pkm.Species, pkm.Form);
+        var canHaveContest = pkm.CanHaveContestStats();
         return
         [
             .. methods.Span
                 .ToArray()
-                .Where(m => m.Species != 0 && m.Method != EvolutionType.LevelUpShedinja)
+                .Where(m => m.Species != 0
+                            && m.Method != EvolutionType.LevelUpShedinja
+                            && (m.Method != EvolutionType.LevelUpBeauty || canHaveContest))
                 .OrderBy(m => m.Species)
         ];
     }
+
 
     public bool TryPlacePokemonInFirstAvailableSlot(PKM pkm)
     {
@@ -1417,6 +1258,415 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         }
 
         return false;
+    }
+
+    public bool HasBattleBox() => AppState.SaveFile is SAV5 or SAV6XY or SAV6AO;
+
+    public IReadOnlyList<PKM> GetBattleBoxPokemon()
+    {
+        var result = new List<PKM>();
+        switch (AppState.SaveFile)
+        {
+            case SAV5 sav5:
+                for (var i = 0; i < BattleBox5.Count; i++)
+                {
+                    var pkm = sav5.GetStoredSlot(sav5.BattleBox[i].Span);
+                    if (pkm.Species > 0)
+                    {
+                        result.Add(pkm);
+                    }
+                }
+
+                break;
+            case SAV6XY xy:
+                for (var i = 0; i < BattleBox6.Count; i++)
+                {
+                    var pkm = xy.GetStoredSlot(xy.BattleBox[i].Span);
+                    if (pkm.Species > 0)
+                    {
+                        result.Add(pkm);
+                    }
+                }
+
+                break;
+            case SAV6AO ao:
+                for (var i = 0; i < BattleBox6.Count; i++)
+                {
+                    var pkm = ao.GetStoredSlot(ao.BattleBox[i].Span);
+                    if (pkm.Species > 0)
+                    {
+                        result.Add(pkm);
+                    }
+                }
+
+                break;
+        }
+
+        return result;
+    }
+
+    public bool IsBattleBoxLocked() => AppState.SaveFile switch
+    {
+        SAV5 sav5 => sav5.BattleBox.BattleBoxLocked,
+        SAV6XY xy => xy.BattleBox.Locked,
+        SAV6AO ao => ao.BattleBox.Locked,
+        _ => false
+    };
+
+    public bool HasBattleTeams() => AppState.SaveFile is SAV7 or SAV8SWSH or SAV8BS or SAV9SV or SAV9ZA;
+
+    public IReadOnlyList<PKM> GetBattleTeamPokemon(int teamIndex)
+    {
+        if (AppState.SaveFile is not { } sav)
+        {
+            return [];
+        }
+
+        var teamSlots = GetTeamSlots(sav);
+        if (teamSlots.Length == 0)
+        {
+            return [];
+        }
+
+        var result = new List<PKM>();
+        var startIdx = teamIndex * SlotsPerTeam;
+        for (var i = 0; i < SlotsPerTeam; i++)
+        {
+            var idx = teamSlots[startIdx + i];
+            if (idx < 0)
+            {
+                continue;
+            }
+
+            sav.GetBoxSlotFromIndex(idx, out var box, out var slot);
+            var pkm = sav.GetBoxSlotAtIndex(box, slot);
+            if (pkm.Species > 0)
+            {
+                result.Add(pkm);
+            }
+        }
+
+        return result;
+    }
+
+    public string GetBattleTeamName(int teamIndex)
+    {
+        switch (AppState.SaveFile)
+        {
+            case SAV8BS s8b:
+                return s8b.BoxLayout.GetTeamName(teamIndex);
+            case SAV8SWSH s8:
+                return ReadTeamNameFromBlock(s8.Blocks.GetBlock(SwshTeamNamesKey).Data, teamIndex);
+            case SAV9SV s9:
+                return ReadTeamNameFromBlock(s9.Blocks.GetBlock(SvTeamNamesKey).Data, teamIndex);
+            default:
+                return $"Team {teamIndex + 1}";
+        }
+    }
+
+    public bool IsBattleTeamLocked(int teamIndex) => AppState.SaveFile switch
+    {
+        SAV7 s7 => s7.BoxLayout.GetIsTeamLocked(teamIndex),
+        SAV8SWSH s8 => s8.TeamIndexes.GetIsTeamLocked(teamIndex),
+        SAV8BS s8b => s8b.BoxLayout.GetIsTeamLocked(teamIndex),
+        SAV9SV s9 => s9.TeamIndexes.GetIsTeamLocked(teamIndex),
+        SAV9ZA s9z => s9z.TeamIndexes.GetIsTeamLocked(teamIndex),
+        _ => false
+    };
+
+    public void SetBattleTeamLocked(int teamIndex, bool locked)
+    {
+        switch (AppState.SaveFile)
+        {
+            case SAV7 s7:
+                s7.BoxLayout.SetIsTeamLocked(teamIndex, locked);
+                break;
+            case SAV8SWSH s8:
+                s8.TeamIndexes.SetIsTeamLocked(teamIndex, locked);
+                break;
+            case SAV8BS s8b:
+                {
+                    // BoxLayout8b only exposes GetIsTeamLocked (bit read) and the LockedTeam byte property.
+                    var current = s8b.BoxLayout.LockedTeam;
+                    s8b.BoxLayout.LockedTeam = locked
+                        ? (byte)(current | 1 << teamIndex)
+                        : (byte)(current & ~(1 << teamIndex));
+                    break;
+                }
+            case SAV9SV s9:
+                s9.TeamIndexes.SetIsTeamLocked(teamIndex, locked);
+                break;
+            case SAV9ZA s9z:
+                s9z.TeamIndexes.SetIsTeamLocked(teamIndex, locked);
+                break;
+        }
+
+        RefreshService.Refresh();
+    }
+
+    public bool HasRentalTeams() => AppState.SaveFile is SAV8SWSH or SAV9SV;
+
+    public int GetRentalTeamCount() => AppState.SaveFile switch
+    {
+        SAV8SWSH => SwshRentalTeamKeys.Length,
+        SAV9SV => RentalTeamSet9.Count,
+        _ => 0
+    };
+
+    public IReadOnlyList<PKM> GetRentalTeamPokemon(int teamIndex)
+    {
+        switch (AppState.SaveFile)
+        {
+            case SAV8SWSH s8:
+                {
+                    if ((uint)teamIndex >= SwshRentalTeamKeys.Length)
+                    {
+                        return [];
+                    }
+
+                    var block = s8.Blocks.GetBlock(SwshRentalTeamKeys[teamIndex]);
+                    var rental = new RentalTeam8(block.Data.ToArray());
+                    return rental.GetTeam().Where(pk => pk.Species > 0).ToArray<PKM>();
+                }
+            case SAV9SV s9:
+                {
+                    if ((uint)teamIndex >= RentalTeamSet9.Count)
+                    {
+                        return [];
+                    }
+
+                    var block = s9.Blocks.GetBlock(SvRentalTeamsKey);
+                    var rentalSet = new RentalTeamSet9(block.Data.ToArray());
+                    var rental = rentalSet.GetRentalTeam(teamIndex);
+                    return rental.GetTeam().Where(pk => pk.Species > 0).ToArray<PKM>();
+                }
+            default:
+                return [];
+        }
+    }
+
+    public string GetRentalTeamName(int teamIndex)
+    {
+        switch (AppState.SaveFile)
+        {
+            case SAV8SWSH s8:
+                {
+                    if ((uint)teamIndex >= SwshRentalTeamKeys.Length)
+                    {
+                        return $"Rental Team {teamIndex + 1}";
+                    }
+
+                    var block = s8.Blocks.GetBlock(SwshRentalTeamKeys[teamIndex]);
+                    var rental = new RentalTeam8(block.Data.ToArray());
+                    var name = rental.TeamName;
+                    return string.IsNullOrWhiteSpace(name)
+                        ? $"Rental Team {teamIndex + 1}"
+                        : name;
+                }
+            case SAV9SV s9:
+                {
+                    if ((uint)teamIndex >= RentalTeamSet9.Count)
+                    {
+                        return $"Rental Team {teamIndex + 1}";
+                    }
+
+                    var block = s9.Blocks.GetBlock(SvRentalTeamsKey);
+                    var rentalSet = new RentalTeamSet9(block.Data.ToArray());
+                    var rental = rentalSet.GetRentalTeam(teamIndex);
+                    var name = rental.TeamName;
+                    return string.IsNullOrWhiteSpace(name)
+                        ? $"Rental Team {teamIndex + 1}"
+                        : name;
+                }
+            default:
+                return $"Rental Team {teamIndex + 1}";
+        }
+    }
+
+    public string GetRentalTeamPlayerName(int teamIndex)
+    {
+        switch (AppState.SaveFile)
+        {
+            case SAV8SWSH s8:
+                {
+                    if ((uint)teamIndex >= SwshRentalTeamKeys.Length)
+                    {
+                        return string.Empty;
+                    }
+
+                    var block = s8.Blocks.GetBlock(SwshRentalTeamKeys[teamIndex]);
+                    var rental = new RentalTeam8(block.Data.ToArray());
+                    return rental.PlayerName;
+                }
+            case SAV9SV s9:
+                {
+                    if ((uint)teamIndex >= RentalTeamSet9.Count)
+                    {
+                        return string.Empty;
+                    }
+
+                    var block = s9.Blocks.GetBlock(SvRentalTeamsKey);
+                    var rentalSet = new RentalTeamSet9(block.Data.ToArray());
+                    return rentalSet.GetRentalTeam(teamIndex).PlayerName;
+                }
+            default:
+                return string.Empty;
+        }
+    }
+
+    public string ExportTeamAsShowdown(IReadOnlyList<PKM> team)
+    {
+        if (team.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var sb = new StringBuilder();
+        foreach (var pkm in team)
+        {
+            if (pkm.Species == 0)
+            {
+                continue;
+            }
+
+            sb.AppendLine(ShowdownParsing.GetShowdownText(pkm)).AppendLine();
+        }
+
+        return sb.ToString().TrimEnd();
+    }
+
+    public void ClearBattleTeam(int teamIndex)
+    {
+        if (AppState.SaveFile is not { } sav)
+        {
+            return;
+        }
+
+        var teamSlots = GetTeamSlots(sav);
+        if (teamSlots.Length == 0)
+        {
+            return;
+        }
+
+        var startIdx = teamIndex * SlotsPerTeam;
+        for (var i = 0; i < SlotsPerTeam; i++)
+        {
+            teamSlots[startIdx + i] = -1;
+        }
+
+        SaveTeamSlots(sav);
+        RefreshService.RefreshBoxState();
+        RefreshService.Refresh();
+    }
+
+    public void ClearAllBattleTeams()
+    {
+        switch (AppState.SaveFile)
+        {
+            case SAV7 s7:
+                s7.BoxLayout.ClearBattleTeams();
+                s7.BoxLayout.SaveBattleTeams();
+                break;
+            case SAV8SWSH s8:
+                s8.TeamIndexes.ClearBattleTeams();
+                s8.TeamIndexes.SaveBattleTeams();
+                break;
+            case SAV8BS s8b:
+                s8b.BoxLayout.ClearBattleTeams();
+                s8b.BoxLayout.SaveBattleTeams();
+                break;
+            case SAV9SV s9:
+                s9.TeamIndexes.ClearBattleTeams();
+                s9.TeamIndexes.SaveBattleTeams();
+                break;
+            case SAV9ZA s9z:
+                s9z.TeamIndexes.ClearBattleTeams();
+                s9z.TeamIndexes.SaveBattleTeams();
+                break;
+            default:
+                return;
+        }
+
+        RefreshService.RefreshBoxState();
+        RefreshService.Refresh();
+    }
+
+    public void UnlockAllBattleTeams()
+    {
+        switch (AppState.SaveFile)
+        {
+            case SAV7 s7:
+                s7.BoxLayout.UnlockAllTeams();
+                break;
+            case SAV8SWSH s8:
+                s8.TeamIndexes.UnlockAllTeams();
+                break;
+            case SAV8BS s8b:
+                s8b.BoxLayout.LockedTeam = 0;
+                break;
+            case SAV9SV s9:
+                s9.TeamIndexes.UnlockAllTeams();
+                break;
+            case SAV9ZA s9z:
+                s9z.TeamIndexes.UnlockAllTeams();
+                break;
+            default:
+                return;
+        }
+
+        RefreshService.Refresh();
+    }
+
+    public void ClearBattleBox()
+    {
+        switch (AppState.SaveFile)
+        {
+            case SAV5 sav5:
+                for (var i = 0; i < BattleBox5.Count; i++)
+                {
+                    sav5.BattleBox[i].Span.Clear();
+                }
+
+                break;
+            case SAV6XY xy:
+                for (var i = 0; i < BattleBox6.Count; i++)
+                {
+                    xy.BattleBox[i].Span.Clear();
+                }
+
+                break;
+            case SAV6AO ao:
+                for (var i = 0; i < BattleBox6.Count; i++)
+                {
+                    ao.BattleBox[i].Span.Clear();
+                }
+
+                break;
+            default:
+                return;
+        }
+
+        RefreshService.Refresh();
+    }
+
+    public void SetBattleBoxLocked(bool locked)
+    {
+        switch (AppState.SaveFile)
+        {
+            case SAV5 sav5:
+                sav5.BattleBox.BattleBoxLocked = locked;
+                break;
+            case SAV6XY xy:
+                xy.BattleBox.Locked = locked;
+                break;
+            case SAV6AO ao:
+                ao.BattleBox.Locked = locked;
+                break;
+            default:
+                return;
+        }
+
+        RefreshService.Refresh();
     }
 
     private AdvancedSearchResult BuildSearchResult(PKM pkm, bool isParty, int box, int slot)
@@ -1802,4 +2052,50 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
         EncounterTypeGroup.Static => "Static",
         _ => "Unknown"
     };
+
+    private static int[] GetTeamSlots(SaveFile sav) => sav switch
+    {
+        SAV7 s7 => s7.BoxLayout.TeamSlots,
+        SAV8SWSH s8 => s8.TeamIndexes.TeamSlots,
+        SAV8BS s8b => s8b.BoxLayout.TeamSlots,
+        SAV9SV s9 => s9.TeamIndexes.TeamSlots,
+        SAV9ZA s9z => s9z.TeamIndexes.TeamSlots,
+        _ => []
+    };
+
+    private static string ReadTeamNameFromBlock(Span<byte> data, int teamIndex)
+    {
+        var offset = teamIndex * TeamNameByteLength;
+        if (offset + TeamNameByteLength > data.Length)
+        {
+            return $"Team {teamIndex + 1}";
+        }
+
+        var name = StringConverter8.GetString(data.Slice(offset, TeamNameByteLength));
+        return string.IsNullOrWhiteSpace(name)
+            ? $"Team {teamIndex + 1}"
+            : name;
+    }
+
+    private static void SaveTeamSlots(SaveFile sav)
+    {
+        switch (sav)
+        {
+            case SAV7 s7:
+                s7.BoxLayout.SaveBattleTeams();
+                break;
+            case SAV8SWSH s8:
+                s8.TeamIndexes.SaveBattleTeams();
+                break;
+            case SAV8BS s8b:
+                s8b.BoxLayout.SaveBattleTeams();
+                break;
+            case SAV9SV s9:
+                s9.TeamIndexes.SaveBattleTeams();
+                break;
+            case SAV9ZA s9z:
+                s9z.TeamIndexes.SaveBattleTeams();
+                break;
+        }
+    }
 }

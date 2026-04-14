@@ -18,7 +18,7 @@ public partial class PokemonSlotComponent : IDisposable
     private ushort lastLoadedSpecies;
     private SpriteStyle lastLoadedSpriteStyle;
 
-    private bool? legalityValid;
+    private LegalityStatus? legalityStatus;
 
     [Parameter]
     [EditorRequired]
@@ -152,14 +152,24 @@ public partial class PokemonSlotComponent : IDisposable
     {
         if (Pokemon is not { Species: > 0 } || AppState.IsHaXEnabled)
         {
-            legalityValid = null;
+            legalityStatus = null;
             return;
         }
 
-        var la = AppService.GetLegalityAnalysis(Pokemon);
-        legalityValid = la.Results.All(r => r.Valid)
-                        && MoveResult.AllValid(la.Info.Moves)
-                        && MoveResult.AllValid(la.Info.Relearn);
+        var la = AppService.GetLegalityAnalysis(Pokemon, isParty: IsPartySlot);
+        var hasInvalid = la.Results.Any(r => r.Judgement == PKHeX.Core.Severity.Invalid)
+                         || !MoveResult.AllValid(la.Info.Moves)
+                         || !MoveResult.AllValid(la.Info.Relearn);
+        if (hasInvalid)
+        {
+            legalityStatus = LegalityStatus.Illegal;
+            return;
+        }
+
+        var hasFishy = la.Results.Any(r => r.Judgement == PKHeX.Core.Severity.Fishy);
+        legalityStatus = hasFishy
+            ? LegalityStatus.Fishy
+            : LegalityStatus.Legal;
     }
 
     private string GetPokemonTitle() => Pokemon is { Species: > 0 }
@@ -178,13 +188,45 @@ public partial class PokemonSlotComponent : IDisposable
     };
 
     /// <returns>
-    /// <see langword="true" /> = legal, <see langword="false" /> = illegal/fishy,
-    /// <see langword="null" /> = no Pokémon in slot (skip indicator).
+    /// The tri-state legality status, or <see langword="null" /> when no Pokémon is in
+    /// the slot, HaX mode is on, or the user has disabled the indicator for this status
+    /// via settings.
     /// </returns>
-    private bool? GetLegalityValid() => legalityValid;
+    private LegalityStatus? GetLegalityStatus() =>
+        legalityStatus switch
+        {
+            LegalityStatus.Legal when AppState.ShowLegalIndicator => LegalityStatus.Legal,
+            LegalityStatus.Fishy when AppState.ShowFishyIndicator => LegalityStatus.Fishy,
+            LegalityStatus.Illegal when AppState.ShowIllegalIndicator => LegalityStatus.Illegal,
+            _ => null
+        };
 
     private string? GetStatusOverlaySpriteFileName() =>
         ImageHelper.GetStatusOverlaySpriteFileName(Pokemon);
+
+    private (int TeamNumber, bool IsLocked)? GetBattleTeamInfo()
+    {
+        // Battle team indicators only apply to box slots, not party slots
+        if (IsPartySlot || BoxNumber is not { } box || Pokemon is not { Species: > 0 })
+        {
+            return null;
+        }
+
+        if (AppState.SaveFile is not { } sav)
+        {
+            return null;
+        }
+
+        var flags = sav.GetBoxSlotFlags(box, SlotNumber);
+        var team = flags.IsBattleTeam();
+        if (team < 0)
+        {
+            return null;
+        }
+
+        var isLocked = flags.HasFlag(StorageSlotSource.Locked);
+        return (team + 1, isLocked); // Convert to 1-based for display
+    }
 
     private int? GetLetsGoPartySlotNumber()
     {
@@ -248,7 +290,9 @@ public partial class PokemonSlotComponent : IDisposable
         // be modified during the synchronous dragstart event handler.
         Pokemon.RefreshChecksum();
         var filename = AppService.GetCleanFileName(Pokemon);
-        var base64 = Convert.ToBase64String(Pokemon.DecryptedPartyData);
+        var partyData = new byte[Pokemon.SIZE_PARTY];
+        Pokemon.WriteDecryptedDataParty(partyData);
+        var base64 = Convert.ToBase64String(partyData);
         if (JSRuntime is IJSInProcessRuntime inProcessRuntime)
         {
             inProcessRuntime.Invoke<bool>("setDragDownloadData", filename, base64);

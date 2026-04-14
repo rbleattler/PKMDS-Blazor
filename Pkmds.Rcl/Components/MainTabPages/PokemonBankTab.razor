@@ -153,7 +153,9 @@
                              @key="@entry.Id">
                         <MudCard Outlined="@isSelected"
                                  Class="bank-card"
-                                 Style="@(isSelected ? "border: 2px solid var(--mud-palette-primary);" : string.Empty)">
+                                 Style="@(isSelected
+                                            ? "border: 2px solid var(--mud-palette-primary);"
+                                            : string.Empty)">
                             <MudCardHeader>
                                 <CardHeaderAvatar>
                                     <MudCheckBox T="bool"

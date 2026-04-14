@@ -4,6 +4,8 @@ namespace Pkmds.Rcl.Components.EditForms.Tabs;
 
 public partial class LegalityTab : IDisposable
 {
+    private string? legalizationProgress;
+
     [Parameter]
     [EditorRequired]
     public PKM? Pokemon { get; set; }
@@ -11,12 +13,29 @@ public partial class LegalityTab : IDisposable
     [Parameter]
     public LegalityAnalysis? Analysis { get; set; }
 
+    /// <summary>
+    /// Callback invoked when legalization replaces the Pokémon with a new legal clone.
+    /// The parent (PokemonEditForm) should update its EditFormPokemon and recompute analysis.
+    /// </summary>
+    [Parameter]
+    public EventCallback<PKM> OnPokemonLegalized { get; set; }
+
+    private bool IsLegalizing { get; set; }
+
     // Moves are validated in la.Info.Moves / la.Info.Relearn (MoveResult[]), not in la.Results.
     // A legal Pokémon must have all of those valid in addition to all CheckResults being valid.
     private bool IsLegal => Analysis is { } la
                             && la.Results.All(r => r.Valid)
                             && MoveResult.AllValid(la.Info.Moves)
                             && MoveResult.AllValid(la.Info.Relearn);
+
+    // Fishy = passes LegalityAnalysis.Valid but at least one CheckResult has a Fishy
+    // judgement. CheckResult.Valid is true for Fishy, so plain IsLegal collapses it
+    // into Legal — distinguish it here so the alert can show a warning severity
+    // matching what the Legality Report tab reports.
+    private bool IsFishy => IsLegal
+                            && Analysis is { } la
+                            && la.Results.Any(r => r.Judgement == PKHexSeverity.Fishy);
 
     private bool HasRibbonIssues => Analysis is { } la &&
                                     la.Results.Any(r => r is
@@ -31,14 +50,14 @@ public partial class LegalityTab : IDisposable
     private bool HasRelearnMoveIssues => Analysis is { } la &&
                                          (!MoveResult.AllValid(la.Info.Relearn) ||
                                           la.Results.Any(r => r is
-                                          { Valid: false, Identifier: CheckIdentifier.RelearnMove }));
+                                              { Valid: false, Identifier: CheckIdentifier.RelearnMove }));
 
     private bool HasBallIssues => Analysis is { } la &&
                                   la.Results.Any(r => r is { Valid: false, Identifier: CheckIdentifier.Ball });
 
     private bool HasEncounterIssues => Analysis is { } la &&
                                        la.Results.Any(r => r is
-                                       { Valid: false, Identifier: CheckIdentifier.Encounter });
+                                           { Valid: false, Identifier: CheckIdentifier.Encounter });
 
     private bool HasMetLocationIssues => Analysis is { } la &&
                                          la.Results.Any(r => r is
@@ -64,6 +83,51 @@ public partial class LegalityTab : IDisposable
 
     public void Dispose() =>
         RefreshService.OnAppStateChanged -= StateHasChanged;
+
+    private async Task LegalizeAsync()
+    {
+        if (Pokemon is null || AppState.SaveFile is not { } sav)
+        {
+            return;
+        }
+
+        IsLegalizing = true;
+        legalizationProgress = null;
+        StateHasChanged();
+
+        try
+        {
+            var progress = new Progress<string>(msg =>
+            {
+                legalizationProgress = msg;
+                StateHasChanged();
+            });
+
+            var result = await LegalizationService.LegalizeAsync(Pokemon, sav, progress);
+
+            switch (result.Status)
+            {
+                case LegalizationStatus.Success:
+                    await OnPokemonLegalized.InvokeAsync(result.Pokemon);
+                    Snackbar.Add("Legalized successfully. Click Save to apply changes.", Severity.Success);
+                    break;
+
+                case LegalizationStatus.Timeout:
+                    Snackbar.Add(result.FailureReason ?? "Legalization timed out.", Severity.Warning);
+                    break;
+
+                case LegalizationStatus.Failed:
+                    Snackbar.Add(result.FailureReason ?? "Could not find a legal encounter.", Severity.Warning);
+                    break;
+            }
+        }
+        finally
+        {
+            IsLegalizing = false;
+            legalizationProgress = null;
+            StateHasChanged();
+        }
+    }
 
     private static bool IsTrashByteResultCode(LegalityCheckResultCode code) => code is
         LegalityCheckResultCode.TrashBytesExpected or

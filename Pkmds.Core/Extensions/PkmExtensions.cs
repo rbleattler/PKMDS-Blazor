@@ -271,5 +271,19 @@ public static class PkmExtensions
                 pkm.SetRandomIVs();
             } while (pkm.GetIsShinySafe());
         }
+
+        /// <summary>
+        /// Checks whether a Pokémon can legally have non-zero contest stats, based on its
+        /// origin generation and format. Used to filter beauty-based evolutions and to
+        /// decide whether to set contest beauty during evolution.
+        /// </summary>
+        public bool CanHaveContestStats() => pkm.Generation switch
+        {
+            3 or 4 => true,
+            5 => pkm.Format >= 6,
+            6 => true,
+            8 => pkm is PB8,
+            _ => false
+        };
     }
 }

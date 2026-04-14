@@ -1,5 +1,3 @@
-using Bunit;
-
 namespace Pkmds.Tests;
 
 /// <summary>
@@ -14,7 +12,7 @@ public class LegalityTabTests
         using var ctx = BunitTestHelpers.CreateBunitContext(appState, refreshService, appService);
 
         var pkm = saveFile.GetPartySlotAtIndex(0);
-        pkm.Species.Should().BeGreaterThan((ushort)0);
+        pkm.Species.Should().BeGreaterThan(0);
 
         var la = appService.GetLegalityAnalysis(pkm);
 

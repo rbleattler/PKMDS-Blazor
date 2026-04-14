@@ -16,7 +16,7 @@ public class LegalityCheckerTests
         var data = File.ReadAllBytes(Path.Combine(TestFilesPath, fileName));
         SaveUtil.TryGetSaveFile(data, out var saveFile, fileName).Should().BeTrue();
         var appState = new TestAppState { SaveFile = saveFile };
-        return (new AppService(appState, new TestRefreshService()), saveFile!);
+        return (new AppService(appState, new TestRefreshService(), new LegalizationService()), saveFile!);
     }
 
     private static PKM LoadPkm(string fileName)
@@ -67,7 +67,7 @@ public class LegalityCheckerTests
         pkm.AbilityNumber = 4; // Hidden Ability — illegal for this specific event Lucario
         pkm.RefreshChecksum();
 
-        var service = new AppService(new TestAppState(), new TestRefreshService());
+        var service = new AppService(new TestAppState(), new TestRefreshService(), new LegalizationService());
         var la = service.GetLegalityAnalysis(pkm);
 
         la.Results.Any(r => !r.Valid && r.Identifier == CheckIdentifier.Ability)
@@ -95,7 +95,8 @@ public class LegalityCheckerTests
                 }
             }
         }
-    foundCandidate:
+
+        foundCandidate:
 
         pkm.Should().NotBeNull("Black full completion save must have at least one non-shiny box Pokémon");
 
@@ -119,11 +120,11 @@ public class LegalityCheckerTests
 
         // Legal Pokémon: every result judgement should be Valid
         var pkm = saveFile.GetPartySlotAtIndex(0);
-        pkm.Species.Should().BeGreaterThan((ushort)0);
+        pkm.Species.Should().BeGreaterThan(0);
 
         var la = service.GetLegalityAnalysis(pkm);
         la.Results.Should().AllSatisfy(r =>
-            r.Judgement.Should().Be(PKHeX.Core.Severity.Valid,
+            r.Judgement.Should().Be(Severity.Valid,
                 "all check results for a known-legal Pokémon should carry Valid judgement"));
 
         // Introduce a violation and confirm at least one Invalid judgement appears
@@ -131,7 +132,7 @@ public class LegalityCheckerTests
         pkm.RefreshChecksum();
 
         var laInvalid = service.GetLegalityAnalysis(pkm);
-        laInvalid.Results.Any(r => r.Judgement == PKHeX.Core.Severity.Invalid)
+        laInvalid.Results.Any(r => r.Judgement == Severity.Invalid)
             .Should().BeTrue("mutating the Pokémon should produce at least one Invalid judgement");
     }
 
@@ -181,7 +182,7 @@ public class LegalityCheckerTests
         ParseSettings.InitFromSaveFileData(saveFile!);
 
         var appState = new TestAppState { SaveFile = saveFile };
-        var service = new AppService(appState, new TestRefreshService());
+        var service = new AppService(appState, new TestRefreshService(), new LegalizationService());
 
         // Pick any non-empty party slot
         PKM? pkm = null;
@@ -245,6 +246,9 @@ public class LegalityCheckerTests
         public bool SelectedSlotsAreValid => true;
         public bool IsHaXEnabled { get; set; }
         public SpriteStyle SpriteStyle { get; set; }
+        public bool ShowLegalIndicator { get; set; } = true;
+        public bool ShowFishyIndicator { get; set; } = true;
+        public bool ShowIllegalIndicator { get; set; } = true;
     }
 
     private class TestRefreshService : IRefreshService
@@ -273,4 +277,6 @@ public class LegalityCheckerTests
 /// Used by <see cref="LegalityCheckerTests" /> to serialize access to <see cref="ParseSettings" /> global state.
 /// </summary>
 [CollectionDefinition("Sequential", DisableParallelization = true)]
-public class SequentialCollection { }
+public class SequentialCollection
+{
+}

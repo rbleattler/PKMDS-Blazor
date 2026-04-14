@@ -67,6 +67,35 @@
                            Class="m-1.5 p-1.5">
             </MudIconButton>
 
+            @{
+                var illegalCount = GetIllegalCountInBox();
+                var legalizeTitle = illegalCount == 0
+                    ? "No illegal Pokémon in this box"
+                    : $"Legalize {illegalCount} illegal Pokémon in this box";
+            }
+
+            <MudIconButton OnClick="@LegalizeBoxAsync"
+                           title="@legalizeTitle"
+                           ButtonType="@ButtonType.Button"
+                           Icon="@Icons.Material.Filled.AutoFixHigh"
+                           Variant="@Variant.Filled"
+                           Color="@Color.Secondary"
+                           Disabled="@(isLegalizingBox || illegalCount == 0)"
+                           Class="m-1.5 p-1.5">
+            </MudIconButton>
+
+            @if (isLegalizingBox)
+            {
+                <MudIconButton OnClick="@CancelLegalizeBox"
+                               title="Cancel legalization"
+                               ButtonType="@ButtonType.Button"
+                               Icon="@Icons.Material.Filled.Cancel"
+                               Variant="@Variant.Outlined"
+                               Color="@Color.Error"
+                               Class="m-1.5 p-1.5">
+                </MudIconButton>
+            }
+
             <MudIconButton OnClick="@TogglePinCurrentBox"
                            title="@(AppState.PinnedBoxNumber == boxEdit.CurrentBox
                                       ? "Unpin Box"
@@ -79,6 +108,17 @@
                            Class="m-1.5 p-1.5">
             </MudIconButton>
         </div>
+
+        @if (isLegalizingBox)
+        {
+            <MudStack Spacing="1"
+                      Class="mx-3">
+                <MudText Typo="@Typo.body2">@legalizeBoxStatusText</MudText>
+                <MudProgressLinear Color="@Color.Secondary"
+                                   Value="@legalizeBoxPercent"
+                                   Max="100"/>
+            </MudStack>
+        }
 
         <BoxComponent BoxNumber="@boxEdit.CurrentBox"/>
     }

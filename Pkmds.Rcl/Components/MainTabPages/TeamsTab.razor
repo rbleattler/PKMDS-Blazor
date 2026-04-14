@@ -1,0 +1,293 @@
+@inherits RefreshAwareComponent
+
+@if (AppState.SaveFile is not null)
+{
+    <MudStack Spacing="4"
+              Class="pa-2">
+
+        @* === BATTLE BOX (Gen 5-6) === *@
+        @if (AppService.HasBattleBox())
+        {
+            var bbPokemon = AppService.GetBattleBoxPokemon();
+            var bbLocked = AppService.IsBattleBoxLocked();
+
+            <MudText Typo="@Typo.h6">Battle Box</MudText>
+
+            <MudCard Elevation="1">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudStack Row
+                                  AlignItems="@AlignItems.Center"
+                                  Spacing="2">
+                            <MudText Typo="@Typo.subtitle1">Battle Box</MudText>
+                            @if (bbLocked)
+                            {
+                                <MudChip T="string"
+                                         Icon="@Icons.Material.Filled.Lock"
+                                         Color="@Color.Warning"
+                                         Size="@Size.Small">
+                                    Locked
+                                </MudChip>
+                            }
+                        </MudStack>
+                    </CardHeaderContent>
+                    <CardHeaderActions>
+                        <MudSwitch T="bool"
+                                   Value="@bbLocked"
+                                   ValueChanged="@(v => AppService.SetBattleBoxLocked(v))"
+                                   Color="@Color.Warning"
+                                   Label="Locked"
+                                   title="Toggle Battle Box lock"/>
+                    </CardHeaderActions>
+                </MudCardHeader>
+                <MudCardContent>
+                    @if (bbPokemon.Count == 0)
+                    {
+                        <MudText Typo="@Typo.body2"
+                                 Class="mud-text-secondary">No Pokémon in Battle Box.
+                        </MudText>
+                    }
+                    else
+                    {
+                        <MudStack Row
+                                  Spacing="1"
+                                  Wrap="@Wrap.Wrap">
+                            @foreach (var pkm in bbPokemon)
+                            {
+                                <MudPaper Elevation="2"
+                                          Class="square-slot"
+                                          Style="width: 68px; height: 68px;">
+                                    <div class="w-full h-full flex items-center justify-center">
+                                        <object class="pkm-sprite w-full h-auto object-contain block"
+                                                type="image/png"
+                                                data="@ImageHelper.GetPokemonSpriteFilename(pkm)"
+                                                title="@(AppService.GetPokemonSpeciesName(pkm.Species))"
+                                                draggable="false">
+                                            <img class="pkm-sprite w-full h-auto object-contain block"
+                                                 src="@ImageHelper.PokemonFallbackImageFileName"
+                                                 alt="@(AppService.GetPokemonSpeciesName(pkm.Species))"
+                                                 draggable="false"/>
+                                        </object>
+                                    </div>
+                                </MudPaper>
+                            }
+                        </MudStack>
+                    }
+                </MudCardContent>
+                <MudCardActions>
+                    @if (bbPokemon.Count > 0)
+                    {
+                        <MudButton Variant="@Variant.Text"
+                                   Color="@Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.ContentCopy"
+                                   OnClick="@(() => CopyTeamToClipboard(bbPokemon))">
+                            Export Showdown
+                        </MudButton>
+                        <MudButton Variant="@Variant.Text"
+                                   Color="@Color.Error"
+                                   StartIcon="@Icons.Material.Filled.Delete"
+                                   OnClick="@(() => AppService.ClearBattleBox())">
+                            Clear
+                        </MudButton>
+                    }
+                </MudCardActions>
+            </MudCard>
+        }
+
+        @* === BATTLE TEAMS (Gen 7+) === *@
+        @if (AppService.HasBattleTeams())
+        {
+            <MudStack Row
+                      AlignItems="@AlignItems.Center"
+                      Spacing="2">
+                <MudText Typo="@Typo.h6">Battle Teams</MudText>
+                <MudSpacer/>
+                <MudButton Variant="@Variant.Text"
+                           Color="@Color.Primary"
+                           StartIcon="@Icons.Material.Filled.LockOpen"
+                           OnClick="@(() => AppService.UnlockAllBattleTeams())"
+                           Size="@Size.Small">
+                    Unlock All
+                </MudButton>
+                <MudButton Variant="@Variant.Text"
+                           Color="@Color.Error"
+                           StartIcon="@Icons.Material.Filled.DeleteSweep"
+                           OnClick="@(() => AppService.ClearAllBattleTeams())"
+                           Size="@Size.Small">
+                    Clear All
+                </MudButton>
+            </MudStack>
+
+            @for (var t = 0; t < 6; t++)
+            {
+                var teamIndex = t;
+                var teamPokemon = AppService.GetBattleTeamPokemon(teamIndex);
+                var teamName = AppService.GetBattleTeamName(teamIndex);
+                var isLocked = AppService.IsBattleTeamLocked(teamIndex);
+
+                <MudCard Elevation="1">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudStack Row
+                                      AlignItems="@AlignItems.Center"
+                                      Spacing="2">
+                                <MudText Typo="@Typo.subtitle1">@teamName</MudText>
+                                @if (isLocked)
+                                {
+                                    <MudIcon Icon="@Icons.Material.Filled.Lock"
+                                             Color="@Color.Warning"
+                                             Size="@Size.Small"
+                                             title="Team is locked"/>
+                                }
+                            </MudStack>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudSwitch T="bool"
+                                       Value="@isLocked"
+                                       ValueChanged="@(v => AppService.SetBattleTeamLocked(teamIndex, v))"
+                                       Color="@Color.Warning"
+                                       Label="Locked"
+                                       title="Toggle team lock"/>
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        @if (teamPokemon.Count == 0)
+                        {
+                            <MudText Typo="@Typo.body2"
+                                     Class="mud-text-secondary">No team configured.
+                            </MudText>
+                        }
+                        else
+                        {
+                            <MudStack Row
+                                      Spacing="1"
+                                      Wrap="@Wrap.Wrap">
+                                @foreach (var pkm in teamPokemon)
+                                {
+                                    <MudPaper Elevation="2"
+                                              Class="square-slot"
+                                              Style="width: 68px; height: 68px;">
+                                        <div class="w-full h-full flex items-center justify-center">
+                                            <object class="pkm-sprite w-full h-auto object-contain block"
+                                                    type="image/png"
+                                                    data="@ImageHelper.GetPokemonSpriteFilename(pkm)"
+                                                    title="@(AppService.GetPokemonSpeciesName(pkm.Species))"
+                                                    draggable="false">
+                                                <img class="pkm-sprite w-full h-auto object-contain block"
+                                                     src="@ImageHelper.PokemonFallbackImageFileName"
+                                                     alt="@(AppService.GetPokemonSpeciesName(pkm.Species))"
+                                                     draggable="false"/>
+                                            </object>
+                                        </div>
+                                    </MudPaper>
+                                }
+                            </MudStack>
+                        }
+                    </MudCardContent>
+                    <MudCardActions>
+                        @if (teamPokemon.Count > 0)
+                        {
+                            <MudButton Variant="@Variant.Text"
+                                       Color="@Color.Primary"
+                                       StartIcon="@Icons.Material.Filled.ContentCopy"
+                                       OnClick="@(() => CopyTeamToClipboard(teamPokemon))">
+                                Export Showdown
+                            </MudButton>
+                            <MudButton Variant="@Variant.Text"
+                                       Color="@Color.Error"
+                                       StartIcon="@Icons.Material.Filled.Delete"
+                                       OnClick="@(() => AppService.ClearBattleTeam(teamIndex))">
+                                Clear
+                            </MudButton>
+                        }
+                    </MudCardActions>
+                </MudCard>
+            }
+        }
+
+        @* === RENTAL TEAMS (Gen 8 SWSH, Gen 9 SV) === *@
+        @if (AppService.HasRentalTeams())
+        {
+            <MudText Typo="@Typo.h6">Rental Teams</MudText>
+
+            @for (var r = 0; r < AppService.GetRentalTeamCount(); r++)
+            {
+                var rentalIndex = r;
+                var rentalPokemon = AppService.GetRentalTeamPokemon(rentalIndex);
+                var rentalName = AppService.GetRentalTeamName(rentalIndex);
+                var playerName = AppService.GetRentalTeamPlayerName(rentalIndex);
+
+                <MudCard Elevation="1">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudStack Row
+                                      AlignItems="@AlignItems.Center"
+                                      Spacing="2">
+                                <MudText Typo="@Typo.subtitle1">@rentalName</MudText>
+                                @if (!string.IsNullOrWhiteSpace(playerName))
+                                {
+                                    <MudText Typo="@Typo.body2"
+                                             Class="mud-text-secondary">
+                                        by @playerName
+                                    </MudText>
+                                }
+                            </MudStack>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        @if (rentalPokemon.Count == 0)
+                        {
+                            <MudText Typo="@Typo.body2"
+                                     Class="mud-text-secondary">No rental team saved.
+                            </MudText>
+                        }
+                        else
+                        {
+                            <MudStack Row
+                                      Spacing="1"
+                                      Wrap="@Wrap.Wrap">
+                                @foreach (var pkm in rentalPokemon)
+                                {
+                                    <MudPaper Elevation="2"
+                                              Class="square-slot"
+                                              Style="width: 68px; height: 68px;">
+                                        <div class="w-full h-full flex items-center justify-center">
+                                            <object class="pkm-sprite w-full h-auto object-contain block"
+                                                    type="image/png"
+                                                    data="@ImageHelper.GetPokemonSpriteFilename(pkm)"
+                                                    title="@(AppService.GetPokemonSpeciesName(pkm.Species))"
+                                                    draggable="false">
+                                                <img class="pkm-sprite w-full h-auto object-contain block"
+                                                     src="@ImageHelper.PokemonFallbackImageFileName"
+                                                     alt="@(AppService.GetPokemonSpeciesName(pkm.Species))"
+                                                     draggable="false"/>
+                                            </object>
+                                        </div>
+                                    </MudPaper>
+                                }
+                            </MudStack>
+                        }
+                    </MudCardContent>
+                    @if (rentalPokemon.Count > 0)
+                    {
+                        <MudCardActions>
+                            <MudButton Variant="@Variant.Text"
+                                       Color="@Color.Primary"
+                                       StartIcon="@Icons.Material.Filled.ContentCopy"
+                                       OnClick="@(() => CopyTeamToClipboard(rentalPokemon))">
+                                Export Showdown
+                            </MudButton>
+                        </MudCardActions>
+                    }
+                </MudCard>
+            }
+        }
+
+        @if (!AppService.HasBattleBox() && !AppService.HasBattleTeams() && !AppService.HasRentalTeams())
+        {
+            <MudAlert Severity="@Severity.Info">
+                This save file does not support battle teams or rental teams.
+            </MudAlert>
+        }
+    </MudStack>
+}

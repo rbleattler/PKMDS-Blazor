@@ -1,4 +1,5 @@
 @inherits BasePkmdsComponent
+@inject ILegalizationService LegalizationService
 
 @if (Pokemon is not null &&
      AppState is { SaveFile: { Context: not (EntityContext.None or EntityContext.SplitInvalid or EntityContext.MaxInvalid) }, SelectedSlotsAreValid: true })
@@ -7,20 +8,26 @@
     {
         <MudStack Class="pa-2">
 
-            <MudAlert Severity="@(IsLegal
-                                    ? Severity.Success
-                                    : Severity.Error)"
-                      Icon="@(IsLegal
-                                ? Icons.Material.Filled.CheckCircle
-                                : Icons.Material.Filled.Cancel)">
-                @(IsLegal
-                    ? "This Pokémon is legal."
-                    : "This Pokémon has legality issues.")
+            <MudAlert Severity="@(IsFishy
+                                    ? Severity.Warning
+                                    : IsLegal
+                                        ? Severity.Success
+                                        : Severity.Error)"
+                      Icon="@(IsFishy
+                                ? Icons.Material.Filled.Warning
+                                : IsLegal
+                                    ? Icons.Material.Filled.CheckCircle
+                                    : Icons.Material.Filled.Cancel)">
+                @(IsFishy
+                    ? "This Pokémon is valid but has fishy details."
+                    : IsLegal
+                        ? "This Pokémon is legal."
+                        : "This Pokémon has legality issues.")
             </MudAlert>
 
             @{
                 var issues = analysis.Results
-                    .Where(r => !r.Valid)
+                    .Where(r => r.Judgement is PKHeX.Core.Severity.Invalid or PKHeX.Core.Severity.Fishy)
                     .ToList();
                 var invalidMoves = GetInvalidMoves();
                 var invalidRelearns = GetInvalidRelearnMoves();
@@ -93,6 +100,33 @@
                         </MudListItem>
                     }
                 </MudList>
+            }
+
+            @if (!IsLegal)
+            {
+                <MudStack Row
+                          AlignItems="@AlignItems.Center"
+                          Class="mt-2"
+                          Spacing="2">
+                    <MudButton Variant="@Variant.Filled"
+                               Color="@Color.Primary"
+                               StartIcon="@Icons.Material.Filled.AutoFixHigh"
+                               OnClick="@LegalizeAsync"
+                               Disabled="@IsLegalizing">
+                        @(IsLegalizing
+                            ? "Legalizing..."
+                            : "Legalize")
+                    </MudButton>
+                    @if (IsLegalizing)
+                    {
+                        <MudProgressCircular Size="@Size.Small"
+                                             Indeterminate/>
+                        @if (!string.IsNullOrEmpty(legalizationProgress))
+                        {
+                            <MudText Typo="@Typo.caption">@legalizationProgress</MudText>
+                        }
+                    }
+                </MudStack>
             }
 
             @if (HasRibbonIssues || HasMoveIssues || HasRelearnMoveIssues || HasBallIssues || HasMetLocationIssues || CanAutoFixTrashBytes || HasPalParkTrashByteIssues)

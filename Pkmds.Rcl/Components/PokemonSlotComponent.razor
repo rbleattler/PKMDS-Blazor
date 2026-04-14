@@ -63,20 +63,29 @@
                 </div>
             }
 
-            @if (!AppState.IsHaXEnabled && GetLegalityValid() is { } isLegal)
+            @if (!AppState.IsHaXEnabled && GetLegalityStatus() is { } status)
             {
                 <div class="legality-indicator-icon"
-                     title="@(isLegal
-                                ? "Legal"
-                                : "Illegal")">
-                    <img src="@(isLegal
-                                  ? ImageHelper.GetLegalityValidSpriteFileName()
-                                  : ImageHelper.GetLegalityWarnSpriteFileName())"
-                         alt="@(isLegal
-                                  ? "Legal"
-                                  : "Illegal")"
-                         class="w-full h-full object-contain"
-                         draggable="false">
+                     title="@(status switch
+                            {
+                                LegalityStatus.Legal => "Legal",
+                                LegalityStatus.Fishy => "Fishy",
+                                _ => "Illegal"
+                            })">
+                    <MudIcon Icon="@(status switch
+                                   {
+                                       LegalityStatus.Legal => Icons.Material.Filled.CheckCircle,
+                                       LegalityStatus.Fishy => Icons.Material.Filled.Warning,
+                                       _ => Icons.Material.Filled.Cancel
+                                   })"
+                             Color="@(status switch
+                                    {
+                                        LegalityStatus.Legal => Color.Success,
+                                        LegalityStatus.Fishy => Color.Warning,
+                                        _ => Color.Error
+                                    })"
+                             Class="w-full h-full"
+                             Style="font-size: 16px;"/>
                 </div>
             }
 
@@ -89,6 +98,27 @@
                          class="w-full h-full object-contain"
                          draggable="false">
                 </div>
+            }
+
+            @if (GetBattleTeamInfo() is var (teamNumber, isTeamLocked))
+            {
+                <div class="battle-team-indicator-icon"
+                     title="@($"Battle Team {teamNumber}{(isTeamLocked ? " (Locked)" : "")}")">
+                    <img src="@ImageHelper.GetTeamIndicatorSpriteFileName()"
+                         alt="@($"Team {teamNumber}")"
+                         class="w-full h-full object-contain"
+                         draggable="false">
+                </div>
+                @if (isTeamLocked)
+                {
+                    <div class="battle-team-lock-icon"
+                         title="Team Locked">
+                        <img src="@ImageHelper.GetLockedOverlaySpriteFileName()"
+                             alt="Locked"
+                             class="w-full h-full object-contain"
+                             draggable="false">
+                    </div>
+                }
             }
 
             @if (GetLetsGoPartySlotNumber() is { } partySlot)

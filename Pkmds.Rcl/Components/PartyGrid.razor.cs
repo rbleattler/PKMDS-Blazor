@@ -2,6 +2,8 @@ namespace Pkmds.Rcl.Components;
 
 public partial class PartyGrid : RefreshAwareComponent
 {
+    private static readonly DialogOptions ImportExportDialogOptions = new() { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+
     protected override RefreshEvents SubscribeTo => RefreshEvents.AppState | RefreshEvents.PartyState;
 
     private void SetSelectedPokemon(PKM? pokemon, int slotNumber) =>
@@ -10,13 +12,6 @@ public partial class PartyGrid : RefreshAwareComponent
     private string GetClass(int slotNumber) => AppState.SelectedPartySlotNumber == slotNumber
         ? Constants.SelectedSlotClass
         : string.Empty;
-
-    private static readonly DialogOptions ImportExportDialogOptions = new()
-    {
-        CloseOnEscapeKey = true,
-        MaxWidth = MaxWidth.Medium,
-        FullWidth = true,
-    };
 
     private void ExportAsShowdown() =>
         DialogService.ShowAsync<ShowdownExportDialog>(
