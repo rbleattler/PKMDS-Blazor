@@ -1020,7 +1020,7 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
     public IReadOnlyList<ComboItem> GetConsoleRegionComboItems() =>
         GameInfo.FilteredSources.ConsoleRegions;
 
-    public LegalityAnalysis GetLegalityAnalysis(PKM pkm)
+    public LegalityAnalysis GetLegalityAnalysis(PKM pkm, bool isParty = false)
     {
         // PKHeX's per-format SetPKM hook (e.g. SAV8BS.SetPKM → pb8.UpdateHandler)
         // runs on every slot write and normalises CurrentHandler / HT fields to
@@ -1032,7 +1032,7 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
         if (AppState.SaveFile is { } sav && pkm.GetType() == sav.PKMType)
         {
             var clone = pkm.Clone();
-            sav.AdaptToSaveFile(clone, isParty: false);
+            sav.AdaptToSaveFile(clone, isParty);
             return new LegalityAnalysis(clone);
         }
 

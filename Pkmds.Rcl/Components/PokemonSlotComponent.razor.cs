@@ -156,7 +156,7 @@ public partial class PokemonSlotComponent : IDisposable
             return;
         }
 
-        var la = AppService.GetLegalityAnalysis(Pokemon);
+        var la = AppService.GetLegalityAnalysis(Pokemon, isParty: IsPartySlot);
         var hasInvalid = la.Results.Any(r => r.Judgement == PKHeX.Core.Severity.Invalid)
                          || !MoveResult.AllValid(la.Info.Moves)
                          || !MoveResult.AllValid(la.Info.Relearn);

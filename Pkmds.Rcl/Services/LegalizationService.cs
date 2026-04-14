@@ -694,8 +694,13 @@ public sealed class LegalizationService : ILegalizationService
                 pk.FatefulEncounter = true;
             }
 
-            // When the gift locks the OT, restore the full trainer tuple. If the
-            // gift has no fixed OT, the receiving trainer's data is correct.
+            // When the gift locks the OT, restore OT name + TID/SID from the
+            // base MysteryGift surface. OT gender / language are subclass-
+            // specific (PGF/WC8/WA8/WA9 expose OTGender with differing
+            // sentinel rules for "use receiving trainer") and are already set
+            // correctly by enc.ConvertToPKM; ApplySetDetails doesn't touch
+            // them. If the gift has no fixed OT, the receiving trainer's
+            // data is correct.
             if (!string.IsNullOrEmpty(mg.OriginalTrainerName))
             {
                 pk.OriginalTrainerName = mg.OriginalTrainerName;

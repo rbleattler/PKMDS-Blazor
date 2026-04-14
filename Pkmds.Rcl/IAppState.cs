@@ -105,11 +105,11 @@ public interface IAppState
     int? PinnedBoxNumber { get; set; }
 
     /// <summary>Whether to render the green "legal" indicator on slots.</summary>
-    bool ShowLegalIndicator { get => true; set { } }
+    bool ShowLegalIndicator { get; set; }
 
     /// <summary>Whether to render the yellow "fishy" indicator on slots.</summary>
-    bool ShowFishyIndicator { get => true; set { } }
+    bool ShowFishyIndicator { get; set; }
 
     /// <summary>Whether to render the red "illegal" indicator on slots.</summary>
-    bool ShowIllegalIndicator { get => true; set { } }
+    bool ShowIllegalIndicator { get; set; }
 }

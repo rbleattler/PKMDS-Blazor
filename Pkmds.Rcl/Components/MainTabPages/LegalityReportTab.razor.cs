@@ -141,7 +141,7 @@ public partial class LegalityReportTab : RefreshAwareComponent
             // Re-read the stored bytes and re-analyse so the table reflects exactly what
             // the save now contains — if the round trip mutated the PKM, we'll see the
             // real status here rather than an optimistic pre-write one.
-            var storedLa = AppService.GetLegalityAnalysis(storedPk);
+            var storedLa = AppService.GetLegalityAnalysis(storedPk, isParty: entry.IsParty);
             var newStatus = GetStatus(storedLa);
             var updated = entry with
             {
@@ -266,7 +266,7 @@ public partial class LegalityReportTab : RefreshAwareComponent
                 continue;
             }
 
-            var la = AppService.GetLegalityAnalysis(pkm);
+            var la = AppService.GetLegalityAnalysis(pkm, isParty: true);
             entries.Add(BuildEntry(pkm, la, true, 0, i));
         }
 
