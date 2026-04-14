@@ -33,8 +33,11 @@ public partial class LegalityReportTab : RefreshAwareComponent
             return;
         }
 
+        // Process Illegal entries before Fishy ones — if the user cancels partway
+        // through a long sweep, the more severe issues are fixed first.
         var targets = legalityReportEntries
             .Where(e => e.Status is LegalityStatus.Illegal or LegalityStatus.Fishy)
+            .OrderBy(e => e.Status == LegalityStatus.Illegal ? 0 : 1)
             .ToList();
 
         if (targets.Count == 0)
