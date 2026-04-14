@@ -100,33 +100,32 @@
 
             </MudStack>
 
-            <MudButtonGroup Variant="@Variant.Outlined"
-                            Size="@Size.Small">
+            <MudButtonGroup Size="@Size.Small">
 
-                <MudButton Color="@(statusFilter is null
-                                      ? Color.Primary
-                                      : Color.Default)"
+                <MudButton Variant="@(statusFilter is null ? Variant.Filled : Variant.Outlined)"
+                           Color="@Color.Primary"
+                           StartIcon="@(statusFilter is null ? Icons.Material.Filled.Check : null)"
                            OnClick="@(() => SetFilter(null))">
                     All
                 </MudButton>
 
-                <MudButton Color="@(statusFilter == LegalityStatus.Legal
-                                      ? Color.Success
-                                      : Color.Default)"
+                <MudButton Variant="@(statusFilter == LegalityStatus.Legal ? Variant.Filled : Variant.Outlined)"
+                           Color="@Color.Success"
+                           StartIcon="@(statusFilter == LegalityStatus.Legal ? Icons.Material.Filled.Check : null)"
                            OnClick="@(() => SetFilter(LegalityStatus.Legal))">
                     Legal Only
                 </MudButton>
 
-                <MudButton Color="@(statusFilter == LegalityStatus.Fishy
-                                      ? Color.Warning
-                                      : Color.Default)"
+                <MudButton Variant="@(statusFilter == LegalityStatus.Fishy ? Variant.Filled : Variant.Outlined)"
+                           Color="@Color.Warning"
+                           StartIcon="@(statusFilter == LegalityStatus.Fishy ? Icons.Material.Filled.Check : null)"
                            OnClick="@(() => SetFilter(LegalityStatus.Fishy))">
                     Fishy Only
                 </MudButton>
 
-                <MudButton Color="@(statusFilter == LegalityStatus.Illegal
-                                      ? Color.Error
-                                      : Color.Default)"
+                <MudButton Variant="@(statusFilter == LegalityStatus.Illegal ? Variant.Filled : Variant.Outlined)"
+                           Color="@Color.Error"
+                           StartIcon="@(statusFilter == LegalityStatus.Illegal ? Icons.Material.Filled.Check : null)"
                            OnClick="@(() => SetFilter(LegalityStatus.Illegal))">
                     Illegal Only
                 </MudButton>
