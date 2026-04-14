@@ -141,7 +141,7 @@ public partial class LegalityReportTab : RefreshAwareComponent
             // Re-read the stored bytes and re-analyse so the table reflects exactly what
             // the save now contains — if the round trip mutated the PKM, we'll see the
             // real status here rather than an optimistic pre-write one.
-            var storedLa = AppService.GetLegalityAnalysis(storedPk);
+            var storedLa = AppService.GetLegalityAnalysis(storedPk, isParty: entry.IsParty);
             var newStatus = GetStatus(storedLa);
             var updated = entry with
             {
@@ -266,7 +266,7 @@ public partial class LegalityReportTab : RefreshAwareComponent
                 continue;
             }
 
-            var la = AppService.GetLegalityAnalysis(pkm);
+            var la = AppService.GetLegalityAnalysis(pkm, isParty: true);
             entries.Add(BuildEntry(pkm, la, true, 0, i));
         }
 
@@ -337,9 +337,12 @@ public partial class LegalityReportTab : RefreshAwareComponent
     {
         var ctx = LegalityLocalizationContext.Create(la);
 
+        // Prefer Invalid results over Fishy ones so the more severe issue is shown
+        // when both are present. CheckResult.Valid is true for Fishy judgements,
+        // so we have to match on Judgement directly to surface Fishy reasons at all.
         foreach (var result in la.Results)
         {
-            if (!result.Valid)
+            if (result.Judgement == PKHexSeverity.Invalid)
             {
                 return ctx.Humanize(in result);
             }
@@ -353,6 +356,14 @@ public partial class LegalityReportTab : RefreshAwareComponent
         if (!MoveResult.AllValid(la.Info.Relearn))
         {
             return "Invalid relearn move detected.";
+        }
+
+        foreach (var result in la.Results)
+        {
+            if (result.Judgement == PKHexSeverity.Fishy)
+            {
+                return ctx.Humanize(in result);
+            }
         }
 
         return string.Empty;

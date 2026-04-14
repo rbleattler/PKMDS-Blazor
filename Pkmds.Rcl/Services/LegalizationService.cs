@@ -683,6 +683,51 @@ public sealed class LegalizationService : ILegalizationService
         IEncounterable enc,
         ShowdownSet set)
     {
+        // Restore event-specific properties that ApplySetDetails (or intermediate
+        // conversions) may have trampled. enc.ConvertToPKM already set these once,
+        // but SetRandomEC / SetIsShiny / IV writes can knock them out of alignment
+        // with the event constraints enforced by LegalityAnalysis.
+        if (enc is MysteryGift mg)
+        {
+            if (mg.FatefulEncounter)
+            {
+                pk.FatefulEncounter = true;
+            }
+
+            // When the gift locks the OT, restore OT name + TID/SID from the
+            // base MysteryGift surface. OT gender / language are subclass-
+            // specific (PGF/WC8/WA8/WA9 expose OTGender with differing
+            // sentinel rules for "use receiving trainer") and are already set
+            // correctly by enc.ConvertToPKM; ApplySetDetails doesn't touch
+            // them. If the gift has no fixed OT, the receiving trainer's
+            // data is correct.
+            if (!string.IsNullOrEmpty(mg.OriginalTrainerName))
+            {
+                pk.OriginalTrainerName = mg.OriginalTrainerName;
+                pk.TID16 = mg.TID16;
+                pk.SID16 = mg.SID16;
+            }
+
+            // PGF (Gen 5 events) has partially-fixed IVs: values >31 are sentinels
+            // meaning "random — keep the caller's IV". ApplySetDetails overwrote
+            // every slot with set.IVs; merge the PGF-locked slots back in.
+            if (mg is PGF pgf)
+            {
+                Span<int> ivs = stackalloc int[6];
+                pk.GetIVs(ivs);
+                var pgfIvs = pgf.IVs;
+                for (var i = 0; i < pgfIvs.Length && i < ivs.Length; i++)
+                {
+                    if (pgfIvs[i] <= 31)
+                    {
+                        ivs[i] = pgfIvs[i];
+                    }
+                }
+
+                pk.SetIVs(ivs);
+            }
+        }
+
         // Clamp level to encounter minimum.
         if (pk.CurrentLevel < enc.LevelMin)
         {

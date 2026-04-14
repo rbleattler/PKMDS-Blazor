@@ -103,4 +103,13 @@ public interface IAppState
     /// Null when no box is pinned. Pinning a box replaces the Pokémon editor in the right column.
     /// </summary>
     int? PinnedBoxNumber { get; set; }
+
+    /// <summary>Whether to render the green "legal" indicator on slots.</summary>
+    bool ShowLegalIndicator { get; set; }
+
+    /// <summary>Whether to render the yellow "fishy" indicator on slots.</summary>
+    bool ShowFishyIndicator { get; set; }
+
+    /// <summary>Whether to render the red "illegal" indicator on slots.</summary>
+    bool ShowIllegalIndicator { get; set; }
 }

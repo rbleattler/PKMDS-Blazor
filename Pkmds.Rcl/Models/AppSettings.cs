@@ -57,4 +57,19 @@ public record AppSettings
     /// Maximum number of save file backups to retain. Oldest backups are pruned when this limit is exceeded.
     /// </summary>
     public int MaxBackupCount { get; init; } = 10;
+
+    /// <summary>
+    /// Whether to show the green "legal" indicator on box/party slots.
+    /// </summary>
+    public bool ShowLegalIndicator { get; init; } = true;
+
+    /// <summary>
+    /// Whether to show the yellow "fishy" indicator on box/party slots.
+    /// </summary>
+    public bool ShowFishyIndicator { get; init; } = true;
+
+    /// <summary>
+    /// Whether to show the red "illegal" indicator on box/party slots.
+    /// </summary>
+    public bool ShowIllegalIndicator { get; init; } = true;
 }

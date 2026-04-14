@@ -1020,7 +1020,24 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
     public IReadOnlyList<ComboItem> GetConsoleRegionComboItems() =>
         GameInfo.FilteredSources.ConsoleRegions;
 
-    public LegalityAnalysis GetLegalityAnalysis(PKM pkm) => new(pkm);
+    public LegalityAnalysis GetLegalityAnalysis(PKM pkm, bool isParty = false)
+    {
+        // PKHeX's per-format SetPKM hook (e.g. SAV8BS.SetPKM → pb8.UpdateHandler)
+        // runs on every slot write and normalises CurrentHandler / HT fields to
+        // match the loaded trainer. Raw slots read via GetBoxSlotAtIndex skip
+        // that step, so the report can flag an "Invalid Current handler value"
+        // that will silently disappear the next time anything writes the slot.
+        // Mirror the adapt-on-write behaviour by analysing a cloned-and-adapted
+        // copy so the displayed status matches what the save will actually hold.
+        if (AppState.SaveFile is { } sav && pkm.GetType() == sav.PKMType)
+        {
+            var clone = pkm.Clone();
+            sav.AdaptToSaveFile(clone, isParty);
+            return new LegalityAnalysis(clone);
+        }
+
+        return new LegalityAnalysis(pkm);
+    }
 
     public IEnumerable<AdvancedSearchResult> SearchPokemon(AdvancedSearchFilter filter)
     {

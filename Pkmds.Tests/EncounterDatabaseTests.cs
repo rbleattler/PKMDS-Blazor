@@ -215,6 +215,9 @@ public class EncounterDatabaseTests
         public bool SelectedSlotsAreValid => true;
         public bool IsHaXEnabled { get; set; }
         public SpriteStyle SpriteStyle { get; set; }
+        public bool ShowLegalIndicator { get; set; } = true;
+        public bool ShowFishyIndicator { get; set; } = true;
+        public bool ShowIllegalIndicator { get; set; } = true;
     }
 
     private sealed class TestRefreshService : IRefreshService

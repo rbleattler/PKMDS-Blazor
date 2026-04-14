@@ -339,8 +339,12 @@ public interface IAppService
     /// <see cref="LegalityAnalysis" /> engine.
     /// </summary>
     /// <param name="pkm">The Pokémon to analyse.</param>
+    /// <param name="isParty">True if <paramref name="pkm" /> lives in (or is
+    /// about to be written to) a party slot. Forwarded to
+    /// <see cref="SaveFile.AdaptToSaveFile" /> so the adapt step matches what
+    /// the eventual SetPartySlotAtIndex / SetBoxSlotAtIndex call will do.</param>
     /// <returns>A <see cref="LegalityAnalysis" /> result.</returns>
-    LegalityAnalysis GetLegalityAnalysis(PKM pkm);
+    LegalityAnalysis GetLegalityAnalysis(PKM pkm, bool isParty = false);
 
     /// <summary>
     /// Sweeps all party and box slots and returns every Pokémon that satisfies
