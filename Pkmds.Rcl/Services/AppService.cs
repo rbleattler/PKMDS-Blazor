@@ -1,6 +1,6 @@
 ﻿namespace Pkmds.Rcl.Services;
 
-public class AppService(IAppState appState, IRefreshService refreshService) : IAppService
+public class AppService(IAppState appState, IRefreshService refreshService, ILegalizationService? legalizationService = null) : IAppService
 {
     private const string EnglishLang = "en";
     private const string DefaultPkmFileName = "pkm.bin";
@@ -31,6 +31,8 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
     private IAppState AppState { get; } = appState;
 
     private IRefreshService RefreshService { get; } = refreshService;
+
+    private ILegalizationService LegalizationService { get; } = legalizationService ?? new LegalizationService();
 
     private static string[] NatureStatShortNames => ["Atk", "Def", "Spe", "SpA", "SpD"];
 
@@ -407,144 +409,21 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
             return null;
         }
 
-        var blank = sav.BlankPKM;
-        var destType = blank.GetType();
-
-        // Use EncounterMovesetGenerator to find a legal encounter that supports all of the
-        // requested moves. This is the same pattern used by the Living Dex generator and the
-        // popular Auto Legality Modifier (ALM) plugin: starting from a valid encounter means
-        // the resulting PKM has a correct met location, origin version, and HOME-transfer
-        // chain automatically — resolving "Unable to match an encounter from origin game"
-        // for species like Basculegion that can only reach SV via HOME from PLA.
-        var probe = blank.Clone();
-        probe.Species = set.Species;
-        probe.Form = set.Form;
-        probe.CurrentLevel = set.Level;
-
-        // For Toxtricity, the form is nature-locked: Amped (form 0) or Low-Key (form 1) is
-        // determined by the Pokémon's nature. Override the probe form so the generator searches
-        // the correct form's encounter pool, ensuring form+nature compatibility.
-        if (probe.Species == (int)Species.Toxtricity && set.Nature != Nature.Random)
+        // Delegate to the Auto-Legality engine, which handles PID/IV correlation for
+        // Gen 3-5, RNG-correlated encounters for Gen 8/9, egg hatching, alternate-form
+        // fallback, and post-generation fixes.
+        var result = LegalizationService.GenerateFromSetSync(set, sav);
+        if (result.Status == LegalizationStatus.Success)
         {
-            probe.Form = (byte)ToxtricityUtil.GetAmpLowKeyResult(set.Nature);
+            return result.Pokemon;
         }
 
-        EncounterMovesetGenerator.OptimizeCriteria(probe, sav);
-
-        // Search ALL game versions (context=0 = no generation filter) sorted newest-first
-        // (higher GameVersion enum value = newer game, e.g. SL=50, VL=51 vs X=24, Y=25)
-        // so native Gen9 encounters are found before older-gen egg encounters. PLA(47) still
-        // comes before SWSH(44,45) ensuring Hisuian-only Pokémon get their PLA encounter.
-        var versions = GameUtil.GetVersionsWithinRange(probe)
-            .OrderByDescending(v => (int)v)
-            .ToArray();
-
-        // Skip egg and mystery-gift encounters: the generator yields them first (Egg=1, Mystery=2
-        // have the lowest EncounterTypeGroup values = highest priority) but they're unsuitable for
-        // competitive Pokémon imports: eggs produce complex relearn requirements, mystery gifts set
-        // FatefulEncounter + event marks that the Pokémon hasn't actually received.
-        // Fall back to a gift encounter before an egg if no wild/static/trade is found.
-        PKM pkm;
-        IEncounterable? foundEnc = null;
-        IEncounterable? eggFallback = null;
-        IEncounterable? giftFallback = null;
-        foreach (var enc in EncounterMovesetGenerator.GenerateEncounters(probe, set.Moves.AsMemory(), versions))
-        {
-            if (enc is IEncounterEgg)
-            {
-                eggFallback ??= enc;
-                continue;
-            }
-
-            if (enc is MysteryGift)
-            {
-                giftFallback ??= enc;
-                continue;
-            }
-
-            foundEnc = enc;
-            break;
-        }
-
-        foundEnc ??= giftFallback ?? eggFallback;
-
-        if (foundEnc is not null)
-        {
-            var generated = foundEnc.ConvertToPKM(sav);
-            var converted = EntityConverter.ConvertToType(generated, destType, out _);
-            if (converted is not null)
-            {
-                pkm = converted;
-            }
-            else
-            {
-                // Conversion failed: species is likely not in the target game's personal table
-                // (e.g. Hisuian Pokémon like Sneasler that can only enter SV via HOME from PLA).
-                // Seed the blank with origin data so the legality checker can find a matching
-                // encounter in the origin game (EncounterGenerator routes by pk.Version).
-                pkm = blank.Clone();
-                pkm.Version = generated.Version;
-                pkm.MetLocation = generated.MetLocation;
-                pkm.MetLevel = generated.MetLevel;
-                pkm.Ball = generated.Ball;
-            }
-        }
-        else
-        {
-            // No valid encounter found — fall back to a blank template. The import will
-            // succeed but may still have legality issues (e.g. unrecognised species).
-            pkm = blank.Clone();
-        }
-
-        // Overlay the user-specified Showdown details (moves, EVs/IVs, nature, ability,
-        // nickname, shiny, tera type, etc.) on top of the legally-generated base.
+        // Fallback: produce a blank template with the Showdown details applied so imports
+        // never silently produce nothing. The result may have legality issues, but the user
+        // can edit it further.
+        var pkm = sav.BlankPKM.Clone();
         pkm.ApplySetDetails(set);
-
-        // Ensure CurrentLevel ≥ encounter.LevelMin. ApplySetDetails sets CurrentLevel to the
-        // Showdown set's level (e.g. 50 for competition format), but some encounters have a
-        // fixed minimum (e.g. Ursaluna-Bloodmoon at 70, PLA wild Sneasler at 58+). Raise
-        // CurrentLevel so the encounter verifier's level-range check passes.
-        if (foundEnc is not null && pkm.CurrentLevel < foundEnc.LevelMin)
-        {
-            pkm.CurrentLevel = foundEnc.LevelMin;
-        }
-
-        // Clamp MetLevel to CurrentLevel (now fully resolved) BEFORE suggesting relearn moves.
-        // This ensures moves learned above the met level get flagged as needing relearn slots
-        // (e.g. Boomburst on a Noivern whose met level is below 62).
-        if (foundEnc is not null && pkm.MetLevel > pkm.CurrentLevel)
-        {
-            pkm.MetLevel = pkm.CurrentLevel;
-        }
-
-        // Clamp ObedienceLevel alongside MetLevel so Gen9 Pokémon don't fail the
-        // "obedience level exceeds current level" check after the MetLevel is lowered.
-        if (pkm is IObedienceLevel obLevel && obLevel.ObedienceLevel > pkm.CurrentLevel)
-        {
-            obLevel.ObedienceLevel = pkm.CurrentLevel;
-        }
-
-        // Restore fixed-nature encounters (e.g. Ursaluna-Bloodmoon is always Hardy).
-        // ApplySetDetails may have overwritten the encounter's required nature with the
-        // Showdown set's nature, causing the encounter verifier to reject the match.
-        if (foundEnc is IFixedNature { IsFixedNature: true } fn)
-        {
-            pkm.Nature = fn.Nature;
-            pkm.StatNature = fn.Nature;
-        }
-
-        // Suggest relearn moves now that MetLevel is finalised. With mystery-gift encounters
-        // skipped, the remaining encounter types (wild/static/trade/egg) produce reliable
-        // suggestions and we no longer need a "clear if still invalid" safety net.
-        if (foundEnc is not null && !pkm.FatefulEncounter)
-        {
-            Span<ushort> suggestedRelearn = stackalloc ushort[4];
-            var la = new LegalityAnalysis(pkm);
-            la.GetSuggestedRelearnMovesFromEncounter(suggestedRelearn, foundEnc);
-            pkm.SetRelearnMoves(suggestedRelearn);
-        }
-
-        ApplyPostImportFixes(pkm, sav, foundEnc);
+        pkm.RefreshChecksum();
         return pkm;
     }
 
@@ -1781,116 +1660,6 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
 
         RefreshService.Refresh();
     }
-
-    private static void ApplyPostImportFixes(PKM pkm, SaveFile sav, IEncounterable? enc = null)
-    {
-        // Clear held items not available in this save file's game to prevent null refs
-        // when rendering the slot component and to avoid legality errors.
-        if (pkm.HeldItem != 0 && !sav.HeldItems.Contains((ushort)pkm.HeldItem))
-        {
-            pkm.HeldItem = 0;
-        }
-
-        // Fill in the language so legality checks that key off it (e.g. nickname language)
-        // don't fail with "unknown language".
-        if (pkm.Language <= 0)
-        {
-            pkm.Language = sav.Language > 0
-                ? sav.Language
-                : (int)LanguageID.English;
-        }
-
-        // Only suggest a met location when we have no valid encounter (blank fallback path).
-        // When enc is not null, ConvertToPKM already set the correct met location and level,
-        // and MetLevel was already clamped to CurrentLevel in ConvertShowdownSetToPkm.
-        if (enc is null)
-        {
-            var suggestedMet = EncounterSuggestion.GetSuggestedMetInfo(pkm);
-            if (suggestedMet is { Location: not 0 })
-            {
-                pkm.MetLocation = suggestedMet.Location;
-                var metLevel = suggestedMet.GetSuggestedMetLevel(pkm);
-                pkm.MetLevel = metLevel;
-                if (pkm.CurrentLevel < metLevel)
-                {
-                    pkm.CurrentLevel = metLevel;
-                }
-            }
-        }
-
-        // Toxtricity's form is determined by nature (Amped vs Low-Key). After ApplySetDetails
-        // applies the user's requested nature, ensure the form matches that nature.
-        if (pkm.Species == (int)Species.Toxtricity)
-        {
-            pkm.Form = (byte)ToxtricityUtil.GetAmpLowKeyResult(pkm.Nature);
-        }
-
-        // ApplySetDetails already handles relearn moves when the encounter is parsed;
-        // we intentionally preserve the moves from the Showdown set rather than calling
-        // SetMoveset(), because with an invalid encounter MoveResult.AllValid returns false
-        // even for legitimately learnable moves, and SetMoveset()'s random fallback can
-        // replace valid user-specified moves with moves the species cannot even learn.
-
-        // If the nickname buffer is empty (which LoadString checks directly against the raw
-        // trash bytes, not the IsNicknamed flag), clear it so the verifier sees the species
-        // name instead of an empty slot.
-        if (string.IsNullOrEmpty(pkm.Nickname))
-        {
-            pkm.SetDefaultNickname();
-        }
-
-        // Showdown format has no height/weight data; use average (0x80) to avoid
-        // "improbable height/weight" legality warnings.
-        if (pkm is IScaledSize ss && ss.HeightScalar == 0 && ss.WeightScalar == 0)
-        {
-            ss.HeightScalar = 0x80;
-            ss.WeightScalar = 0x80;
-        }
-
-        // Fix FormArgument for Pokémon that require a non-zero evolution argument
-        // (e.g. Basculegion ≥ 294, Runerigus ≥ 49, Wyrdeer ≥ 20, Annihilape ≥ 20, etc.).
-        // When the encounter species differs from the PKM species, the Pokémon was generated
-        // from a pre-evolution encounter and GetFormArgumentMinEvolution returns the minimum.
-        if (pkm is IFormArgument fa && enc is not null && enc.Species != pkm.Species)
-        {
-            var minArg = GetFormArgumentMinEvolution(pkm.Species, enc.Species);
-            if (fa.FormArgument < minArg)
-            {
-                fa.FormArgument = minArg;
-            }
-        }
-
-        // Set a non-zero HOME tracker so the "tracker missing" legality error is suppressed.
-        // Also keep Scale == HeightScalar: when HasTracker is true, MiscScaleVerifier requires
-        // HeightScalar == Scale for non-PLA encounters.
-        // Note: PKHeX comments that fake trackers are not ideal, but for import purposes
-        // this avoids the unavoidable "HOME Transfer Tracker is missing" error.
-        if (pkm is IHomeTrack { HasTracker: false } ht)
-        {
-            ht.Tracker = 1;
-            if (pkm is IScaledSize3 ss3 && pkm is IScaledSize ss2)
-            {
-                ss3.Scale = ss2.HeightScalar;
-            }
-        }
-
-        pkm.RefreshChecksum();
-    }
-
-    // Mirrors IFormArgument.GetFormArgumentMinEvolution from the PKHeX.Core source.
-    // Inlined here because that method uses C#14 extension syntax unavailable in the consumed package.
-    private static uint GetFormArgumentMinEvolution(ushort currentSpecies, ushort originalSpecies) => originalSpecies switch
-    {
-        (int)Species.Yamask when currentSpecies == (int)Species.Runerigus => 49u,
-        (int)Species.Qwilfish when currentSpecies == (int)Species.Overqwil => 20u,
-        (int)Species.Stantler when currentSpecies == (int)Species.Wyrdeer => 20u,
-        (int)Species.Basculin when currentSpecies == (int)Species.Basculegion => 294u,
-        (int)Species.Mankey or (int)Species.Primeape when currentSpecies == (int)Species.Annihilape => 20u,
-        (int)Species.Pawniard or (int)Species.Bisharp when currentSpecies == (int)Species.Kingambit => 3u,
-        (int)Species.Farfetchd when currentSpecies == (int)Species.Sirfetchd => 3u,
-        (int)Species.Gimmighoul when currentSpecies == (int)Species.Gholdengo => 999u,
-        _ => 0u
-    };
 
     private AdvancedSearchResult BuildSearchResult(PKM pkm, bool isParty, int box, int slot)
     {
