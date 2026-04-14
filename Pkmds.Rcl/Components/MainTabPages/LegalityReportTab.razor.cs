@@ -109,13 +109,17 @@ public partial class LegalityReportTab : RefreshAwareComponent
                 continue;
             }
 
+            // Pass EntityImportSettings.None to bypass SaveFile.UpdatePKM's "adapt as if
+            // traded in" path. The PKM is already legal for the current save; letting
+            // SetPKM mutate handler/memory/trainer fields can reintroduce illegalities
+            // that our pre-write analysis doesn't see.
             if (entry.IsParty)
             {
-                saveFile.SetPartySlotAtIndex(result.Pokemon, entry.SlotNumber);
+                saveFile.SetPartySlotAtIndex(result.Pokemon, entry.SlotNumber, EntityImportSettings.None);
             }
             else
             {
-                saveFile.SetBoxSlotAtIndex(result.Pokemon, entry.BoxNumber, entry.SlotNumber);
+                saveFile.SetBoxSlotAtIndex(result.Pokemon, entry.BoxNumber, entry.SlotNumber, EntityImportSettings.None);
             }
 
             // Update the report entry in place so the table reflects the newly legal
