@@ -9,6 +9,7 @@ public partial class LegalityReportTab : RefreshAwareComponent
     private bool isLegalizing;
     private double legalizationPercent;
     private string legalizationStatusText = string.Empty;
+    private CancellationTokenSource? legalizeCts;
     private List<LegalityReportEntry> legalityReportEntries = [];
     private LegalityStatus? statusFilter;
 
@@ -41,6 +42,10 @@ public partial class LegalityReportTab : RefreshAwareComponent
             return;
         }
 
+        legalizeCts?.Dispose();
+        legalizeCts = new CancellationTokenSource();
+        var ct = legalizeCts.Token;
+
         isLegalizing = true;
         legalizationPercent = 0;
         legalizationStatusText = $"Legalizing 0/{targets.Count}…";
@@ -50,9 +55,17 @@ public partial class LegalityReportTab : RefreshAwareComponent
 
         var successCount = 0;
         var failureCount = 0;
+        var cancelled = false;
+        var processed = 0;
 
         for (var i = 0; i < targets.Count; i++)
         {
+            if (ct.IsCancellationRequested)
+            {
+                cancelled = true;
+                break;
+            }
+
             var entry = targets[i];
             legalizationStatusText = $"Legalizing {i + 1}/{targets.Count}: {entry.SpeciesName} ({entry.Location})";
             legalizationPercent = (double)i / targets.Count * 100;
@@ -62,13 +75,21 @@ public partial class LegalityReportTab : RefreshAwareComponent
             LegalizationOutcome result;
             try
             {
-                result = await LegalizationService.LegalizeAsync(entry.Pokemon, saveFile);
+                result = await LegalizationService.LegalizeAsync(entry.Pokemon, saveFile, progress: null, ct);
+            }
+            catch (OperationCanceledException)
+            {
+                cancelled = true;
+                break;
             }
             catch
             {
                 failureCount++;
+                processed++;
                 continue;
             }
+
+            processed++;
 
             if (result.Status != LegalizationStatus.Success)
             {
@@ -91,19 +112,44 @@ public partial class LegalityReportTab : RefreshAwareComponent
         legalizationPercent = 100;
         StateHasChanged();
 
-        Snackbar.Add(
-            failureCount == 0
-                ? $"Legalized {successCount}/{targets.Count} Pokémon."
-                : $"Legalized {successCount}/{targets.Count} Pokémon. {failureCount} could not be fixed.",
-            failureCount == 0 ? Severity.Success : Severity.Warning);
+        if (cancelled)
+        {
+            Snackbar.Add(
+                $"Legalization cancelled. Legalized {successCount}/{targets.Count} Pokémon before cancelling ({processed} processed).",
+                Severity.Info);
+        }
+        else
+        {
+            Snackbar.Add(
+                failureCount == 0
+                    ? $"Legalized {successCount}/{targets.Count} Pokémon."
+                    : $"Legalized {successCount}/{targets.Count} Pokémon. {failureCount} could not be fixed.",
+                failureCount == 0 ? Severity.Success : Severity.Warning);
+        }
 
         isLegalizing = false;
         legalizationStatusText = string.Empty;
         legalizationPercent = 0;
+        legalizeCts.Dispose();
+        legalizeCts = null;
 
         RefreshService.Refresh();
 
         await RunScanAsync();
+    }
+
+    private void CancelLegalizeAll() => legalizeCts?.Cancel();
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            legalizeCts?.Cancel();
+            legalizeCts?.Dispose();
+            legalizeCts = null;
+        }
+
+        base.Dispose(disposing);
     }
 
     private async Task RunScanAsync()

@@ -36,6 +36,16 @@
                     : "Legalize All Illegal")
             </MudButton>
 
+            @if (isLegalizing)
+            {
+                <MudButton Variant="@Variant.Outlined"
+                           Color="@Color.Error"
+                           StartIcon="@Icons.Material.Filled.Cancel"
+                           OnClick="@CancelLegalizeAll">
+                    Cancel
+                </MudButton>
+            }
+
             @if (isScanning)
             {
                 <MudProgressCircular Indeterminate
