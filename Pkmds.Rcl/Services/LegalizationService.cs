@@ -24,7 +24,30 @@ public sealed class LegalizationService : ILegalizationService
         // Build a ShowdownSet from the existing PKM so the core loop can treat both
         // "legalize existing" and "generate from set" uniformly.
         var set = new ShowdownSet(ShowdownParsing.GetShowdownText(pk));
-        return await CoreLegalizeAsync(set, pk, sav, progress, ct, timeoutSeconds ?? DefaultTimeoutSeconds);
+        var budget = timeoutSeconds ?? DefaultTimeoutSeconds;
+
+        // Preserve-details pass first: keep EC/PID/memories/height-weight/ribbons/etc.
+        // intact and only patch what LegalityAnalysis flags as Invalid. Allocate half
+        // the timeout budget so a rebuild fallback still has time to run.
+        var preserveBudget = Math.Max(1, budget / 2);
+        var preserveOutcome = await CoreLegalizeAsync(
+            set, pk, sav, progress, ct, preserveBudget, preserveDetails: true);
+
+        if (preserveOutcome.Status == LegalizationStatus.Success)
+        {
+            return preserveOutcome;
+        }
+
+        if (ct.IsCancellationRequested)
+        {
+            return preserveOutcome;
+        }
+
+        // Fallback: rebuild via enc.ConvertToPKM + ApplySetDetails. Lossy, but gets
+        // the user a legal result when preserve-mode cannot.
+        var rebuildBudget = Math.Max(1, budget - preserveBudget);
+        return await CoreLegalizeAsync(
+            set, pk, sav, progress, ct, rebuildBudget, preserveDetails: false);
     }
 
     public async Task<LegalizationOutcome> GenerateFromSetAsync(
@@ -33,7 +56,7 @@ public sealed class LegalizationService : ILegalizationService
         IProgress<string>? progress = null,
         CancellationToken ct = default)
     {
-        return await CoreLegalizeAsync(set, template: null, sav, progress, ct, DefaultTimeoutSeconds);
+        return await CoreLegalizeAsync(set, template: null, sav, progress, ct, DefaultTimeoutSeconds, preserveDetails: false);
     }
 
     public LegalizationOutcome GenerateFromSetSync(ShowdownSet set, SaveFile sav)
@@ -54,11 +77,12 @@ public sealed class LegalizationService : ILegalizationService
         SaveFile sav,
         IProgress<string>? progress,
         CancellationToken ct,
-        int timeoutSeconds)
+        int timeoutSeconds,
+        bool preserveDetails)
     {
         // In Blazor WASM, responsiveness comes from cooperative yielding inside the
         // legalization loop rather than wrapping the work in Task.Run.
-        return await RunLegalizationLoop(set, template, sav, progress, ct, async: true, timeoutSeconds);
+        return await RunLegalizationLoop(set, template, sav, progress, ct, async: true, timeoutSeconds, preserveDetails);
     }
 
     private LegalizationOutcome CoreLegalizeSync(
@@ -67,7 +91,7 @@ public sealed class LegalizationService : ILegalizationService
         SaveFile sav,
         int timeoutSeconds)
     {
-        return RunLegalizationLoop(set, template, sav, progress: null, ct: default, async: false, timeoutSeconds)
+        return RunLegalizationLoop(set, template, sav, progress: null, ct: default, async: false, timeoutSeconds, preserveDetails: false)
             .GetAwaiter().GetResult();
     }
 
@@ -78,7 +102,8 @@ public sealed class LegalizationService : ILegalizationService
         IProgress<string>? progress,
         CancellationToken ct,
         bool @async,
-        int timeoutSeconds)
+        int timeoutSeconds,
+        bool preserveDetails)
     {
         if (set.Species == 0)
         {
@@ -182,38 +207,58 @@ public sealed class LegalizationService : ILegalizationService
 
             try
             {
-                // Generate PKM from encounter.
-                var adjustedCriteria = AdjustCriteriaForEncounter(criteria, enc, set);
-                var raw = enc.ConvertToPKM(sav, adjustedCriteria);
+                PKM? pk;
 
-                // Restore OT if blank.
-                if (raw.OriginalTrainerName.Length == 0)
+                if (preserveDetails && existingPkm is not null)
                 {
-                    raw.Language = sav.Language;
-                    sav.ApplyTo(raw);
-                }
+                    // Preserve-details mode: start from a clone of the existing PKM and
+                    // only patch what LegalityAnalysis flags as Invalid. EC/PID/memories/
+                    // height-weight/ribbons/contest stats/met date stay intact.
+                    pk = EntityConverter.ConvertToType(existingPkm.Clone(), destType, out _);
+                    if (pk is null)
+                    {
+                        continue;
+                    }
 
-                // Handle egg encounters.
-                if (raw.IsEgg)
+                    ApplyPreserveModeFixes(pk, sav, enc);
+                }
+                else
                 {
-                    HatchEgg(raw, sav);
+                    // Rebuild mode: generate a fresh PKM from the encounter and overlay
+                    // the Showdown set. Authoritative for generate-from-set; lossy for
+                    // legalize-existing (used only as a fallback after preserve-mode fails).
+                    var adjustedCriteria = AdjustCriteriaForEncounter(criteria, enc, set);
+                    var raw = enc.ConvertToPKM(sav, adjustedCriteria);
+
+                    // Restore OT if blank.
+                    if (raw.OriginalTrainerName.Length == 0)
+                    {
+                        raw.Language = sav.Language;
+                        sav.ApplyTo(raw);
+                    }
+
+                    // Handle egg encounters.
+                    if (raw.IsEgg)
+                    {
+                        HatchEgg(raw, sav);
+                    }
+
+                    // Apply RNG-correlated PID/IV for encounter types that require it.
+                    PreSetPidIv(raw, enc, set, adjustedCriteria, budgetCt);
+
+                    // Convert to target format.
+                    pk = EntityConverter.ConvertToType(raw, destType, out _);
+                    if (pk is null)
+                    {
+                        continue;
+                    }
+
+                    // Apply the user's requested details on top of the legal base.
+                    pk.ApplySetDetails(set);
+
+                    // Post-application fixes.
+                    ApplyPostGenerationFixes(pk, sav, enc, set);
                 }
-
-                // Apply RNG-correlated PID/IV for encounter types that require it.
-                PreSetPidIv(raw, enc, set, adjustedCriteria, budgetCt);
-
-                // Convert to target format.
-                var pk = EntityConverter.ConvertToType(raw, destType, out _);
-                if (pk is null)
-                {
-                    continue;
-                }
-
-                // Apply the user's requested details on top of the legal base.
-                pk.ApplySetDetails(set);
-
-                // Post-application fixes.
-                ApplyPostGenerationFixes(pk, sav, enc, set);
 
                 // Validate the result.
                 var la = new LegalityAnalysis(pk);
@@ -844,6 +889,154 @@ public sealed class LegalizationService : ILegalizationService
         }
 
         pk.RefreshChecksum();
+    }
+
+    // ──────────────────────────────────────────────────────────────────────
+    //  Preserve-details mode (legalize existing PKM)
+    // ──────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Preserve-details legalization path: mutate <paramref name="pk"/> only where
+    /// required to match <paramref name="enc"/>'s constraints or to fix specific
+    /// <see cref="LegalityAnalysis"/> failures. Fields that don't round-trip through
+    /// ShowdownSet (EC, PID, memories, height/weight, ribbons, contest stats,
+    /// fullness/enjoyment, HOME tracker, met date, affixed ribbon) are left alone.
+    /// </summary>
+    private static void ApplyPreserveModeFixes(PKM pk, SaveFile sav, IEncounterable enc)
+    {
+        // Encounter-forced properties: these must match the encounter regardless of
+        // what the user had. Keep the allow-list tight.
+        if (enc is MysteryGift mg)
+        {
+            if (mg.FatefulEncounter)
+            {
+                pk.FatefulEncounter = true;
+            }
+
+            if (!string.IsNullOrEmpty(mg.OriginalTrainerName))
+            {
+                pk.OriginalTrainerName = mg.OriginalTrainerName;
+                pk.TID16 = mg.TID16;
+                pk.SID16 = mg.SID16;
+            }
+        }
+
+        if (enc is IFixedNature { IsFixedNature: true } fn)
+        {
+            pk.Nature = fn.Nature;
+            pk.StatNature = fn.Nature;
+        }
+
+        // Clamp level bounds to the encounter — these are safe to enforce because
+        // values outside the encounter's range are definitionally illegal.
+        if (pk.CurrentLevel < enc.LevelMin)
+        {
+            pk.CurrentLevel = enc.LevelMin;
+        }
+
+        if (pk.MetLevel > pk.CurrentLevel)
+        {
+            pk.MetLevel = pk.CurrentLevel;
+        }
+
+        if (pk is IObedienceLevel ob && ob.ObedienceLevel > pk.CurrentLevel)
+        {
+            ob.ObedienceLevel = pk.CurrentLevel;
+        }
+
+        // FormArgument minimums for cross-evolution encounters.
+        if (pk is IFormArgument fa && enc.Species != pk.Species)
+        {
+            var minArg = GetFormArgumentMinEvolution(pk.Species, enc.Species);
+            if (fa.FormArgument < minArg)
+            {
+                fa.FormArgument = minArg;
+            }
+        }
+
+        // Iteratively apply targeted fixes driven by the LegalityAnalysis check
+        // results. Bounded to a few passes in case one fix enables another.
+        for (var pass = 0; pass < 3; pass++)
+        {
+            var la = new LegalityAnalysis(pk);
+            if (la.Valid)
+            {
+                break;
+            }
+
+            var changed = ApplyTargetedFixesFromAnalysis(pk, la, enc);
+            if (!changed)
+            {
+                break;
+            }
+        }
+
+        pk.RefreshChecksum();
+    }
+
+    /// <summary>
+    /// Applies targeted fixes for each Invalid <see cref="CheckResult"/> in
+    /// <paramref name="la"/>. Returns true if any fix was applied.
+    /// </summary>
+    private static bool ApplyTargetedFixesFromAnalysis(PKM pk, LegalityAnalysis la, IEncounterable enc)
+    {
+        var changed = false;
+
+        // Moves: replace only if any current move is invalid.
+        if (!MoveResult.AllValid(la.Info.Moves))
+        {
+            Span<ushort> suggestedMoves = stackalloc ushort[4];
+            la.GetSuggestedCurrentMoves(suggestedMoves);
+            pk.SetMoves(suggestedMoves);
+            pk.FixMoves();
+            pk.HealPP();
+            changed = true;
+        }
+
+        // Relearn (non-fateful only — fateful encounters lock relearn to the gift).
+        if (!pk.FatefulEncounter && !MoveResult.AllValid(la.Info.Relearn))
+        {
+            Span<ushort> suggestedRelearn = stackalloc ushort[4];
+            la.GetSuggestedRelearnMovesFromEncounter(suggestedRelearn, enc);
+            pk.SetRelearnMoves(suggestedRelearn);
+            changed = true;
+        }
+
+        foreach (var result in la.Results)
+        {
+            if (result.Judgement != PKHeX.Core.Severity.Invalid)
+            {
+                continue;
+            }
+
+            switch (result.Identifier)
+            {
+                case CheckIdentifier.Ball:
+                    BallApplicator.ApplyBallLegalByColor(pk);
+                    changed = true;
+                    break;
+
+                case CheckIdentifier.Form
+                    when pk.Species == (int)Species.Toxtricity:
+                    pk.Form = (byte)ToxtricityUtil.GetAmpLowKeyResult(pk.Nature);
+                    changed = true;
+                    break;
+
+                case CheckIdentifier.Misc
+                    when pk is IHomeTrack { HasTracker: false } ht:
+                    ht.Tracker = 1;
+                    changed = true;
+                    break;
+
+                case CheckIdentifier.HeldItem
+                    when pk.HeldItem != 0:
+                    pk.HeldItem = 0;
+                    changed = true;
+                    break;
+            }
+        }
+
+        return changed;
     }
 
     /// <summary>
