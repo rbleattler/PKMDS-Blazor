@@ -647,6 +647,36 @@ public partial class MainTab : IDisposable
             Pokemon.Gender = targetGender;
         }
 
+        // Beauty-based evolutions (e.g. Feebas→Milotic): ensure the contest beauty stat
+        // meets the required threshold so the evolution is legal.
+        // Only set beauty when the Pokémon can legally have contest stats:
+        // - Gen 3–4 origin: always (RSE/DPPt have contests)
+        // - Gen 5–6 origin in Gen 6+ format: yes (ORAS contests / transfer)
+        // - Gen 8b (BDSP): yes (BD/SP has contests)
+        // Gen 7+ origin otherwise cannot have contest stats, but PKHeX's reverse evolution
+        // checker skips the beauty requirement, so the evolution chain still validates.
+        if (method.Method == EvolutionType.LevelUpBeauty
+            && Pokemon.CanHaveContestStats()
+            && Pokemon is IContestStats contestStats
+            && contestStats.ContestBeauty < method.Argument)
+        {
+            contestStats.ContestBeauty = (byte)method.Argument;
+        }
+
+        // Trade evolutions (e.g. Feebas→Milotic via Prism Scale, Machoke→Machamp):
+        // simulate a trade by setting the handling trainer from the save file so the
+        // Pokémon is no longer flagged as "untraded".
+        if (method.Method.IsTrade
+            && Pokemon is IHandlerUpdate
+            && Pokemon.IsUntraded
+            && AppState.SaveFile is { } sav)
+        {
+            Pokemon.HandlingTrainerName = sav.OT;
+            Pokemon.HandlingTrainerGender = sav.Gender;
+            Pokemon.HandlingTrainerFriendship = Pokemon.PersonalInfo.BaseFriendship;
+            Pokemon.CurrentHandler = 1;
+        }
+
         // Bump level to the minimum required for this evolution.
         if (method.Level > 0 && Pokemon.CurrentLevel < method.Level)
         {
@@ -671,6 +701,17 @@ public partial class MainTab : IDisposable
         Pokemon.Species = method.Species;
         Pokemon.Form = destForm;
         Pokemon.Gender = Pokemon.GetSaneGender();
+
+        // Refresh ability: preserve the ability slot index but update the ability ID
+        // to match the new species' ability at that slot (e.g. Feebas slot 0 = Swift Swim
+        // → Milotic slot 0 = Marvel Scale).
+        var abilityIndex = Pokemon.AbilityNumber switch
+        {
+            2 => 1,
+            4 => 2,
+            _ => 0
+        };
+        Pokemon.RefreshAbility(abilityIndex);
 
         if (!wasNicknamed)
         {

@@ -1326,14 +1326,18 @@ public class AppService(IAppState appState, IRefreshService refreshService) : IA
     {
         var tree = EvolutionTree.GetEvolutionTree(pkm.Context);
         var methods = tree.Forward.GetForward(pkm.Species, pkm.Form);
+        var canHaveContest = pkm.CanHaveContestStats();
         return
         [
             .. methods.Span
                 .ToArray()
-                .Where(m => m.Species != 0 && m.Method != EvolutionType.LevelUpShedinja)
+                .Where(m => m.Species != 0
+                            && m.Method != EvolutionType.LevelUpShedinja
+                            && (m.Method != EvolutionType.LevelUpBeauty || canHaveContest))
                 .OrderBy(m => m.Species)
         ];
     }
+
 
     public bool TryPlacePokemonInFirstAvailableSlot(PKM pkm)
     {

@@ -1,3 +1,5 @@
+using Pkmds.Rcl.Models;
+
 using PKHexSeverity = PKHeX.Core.Severity;
 
 namespace Pkmds.Rcl.Components.EditForms.Tabs;
@@ -10,6 +12,17 @@ public partial class LegalityTab : IDisposable
 
     [Parameter]
     public LegalityAnalysis? Analysis { get; set; }
+
+    /// <summary>
+    /// Callback invoked when legalization replaces the Pokémon with a new legal clone.
+    /// The parent (PokemonEditForm) should update its EditFormPokemon and recompute analysis.
+    /// </summary>
+    [Parameter]
+    public EventCallback<PKM> OnPokemonLegalized { get; set; }
+
+    private bool IsLegalizing { get; set; }
+
+    private string? legalizationProgress;
 
     // Moves are validated in la.Info.Moves / la.Info.Relearn (MoveResult[]), not in la.Results.
     // A legal Pokémon must have all of those valid in addition to all CheckResults being valid.
@@ -61,6 +74,51 @@ public partial class LegalityTab : IDisposable
                                          (la.EncounterMatch is PCD ||
                                           Pokemon.Format >= 8 ||
                                           Pokemon.Context == EntityContext.Gen7b);
+
+    private async Task LegalizeAsync()
+    {
+        if (Pokemon is null || AppState.SaveFile is not { } sav)
+        {
+            return;
+        }
+
+        IsLegalizing = true;
+        legalizationProgress = null;
+        StateHasChanged();
+
+        try
+        {
+            var progress = new Progress<string>(msg =>
+            {
+                legalizationProgress = msg;
+                StateHasChanged();
+            });
+
+            var result = await LegalizationService.LegalizeAsync(Pokemon, sav, progress);
+
+            switch (result.Status)
+            {
+                case LegalizationStatus.Success:
+                    await OnPokemonLegalized.InvokeAsync(result.Pokemon);
+                    Snackbar.Add("Legalized successfully. Click Save to apply changes.", Severity.Success);
+                    break;
+
+                case LegalizationStatus.Timeout:
+                    Snackbar.Add(result.FailureReason ?? "Legalization timed out.", Severity.Warning);
+                    break;
+
+                case LegalizationStatus.Failed:
+                    Snackbar.Add(result.FailureReason ?? "Could not find a legal encounter.", Severity.Warning);
+                    break;
+            }
+        }
+        finally
+        {
+            IsLegalizing = false;
+            legalizationProgress = null;
+            StateHasChanged();
+        }
+    }
 
     public void Dispose() =>
         RefreshService.OnAppStateChanged -= StateHasChanged;

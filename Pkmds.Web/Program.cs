@@ -46,6 +46,7 @@ services
     .AddSingleton<IBugReportService, BugReportService>()
     .AddSingleton<IDescriptionService, DescriptionService>()
     .AddSingleton<IBatchEditorService, BatchEditorService>()
+    .AddSingleton<ILegalizationService, LegalizationService>()
     .AddScoped<IBankService, BankService>()
     .AddScoped<IBackupService, BackupService>();
 

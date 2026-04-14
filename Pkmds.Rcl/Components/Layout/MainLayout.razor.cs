@@ -69,7 +69,7 @@ public partial class MainLayout : IDisposable
                 await Task.Delay(4000);
                 IsUpdateCheckFailed = false;
                 break;
-            // "found": JS already dispatched 'updateAvailable' → ShowUpdateMessage() sets IsUpdateAvailable = true
+                // "found": JS already dispatched 'updateAvailable' → ShowUpdateMessage() sets IsUpdateAvailable = true
         }
 
         StateHasChanged();

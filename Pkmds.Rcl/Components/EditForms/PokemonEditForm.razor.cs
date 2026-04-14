@@ -30,6 +30,15 @@ public partial class PokemonEditForm : IDisposable
             ? AppService.GetLegalityAnalysis(Pokemon)
             : null;
 
+    private void OnPokemonLegalized(PKM legalPkm)
+    {
+        // Replace the edit form's Pokémon with the legalized clone and recompute analysis.
+        Pokemon = legalPkm;
+        AppService.EditFormPokemon = legalPkm;
+        ComputeAnalysis();
+        RefreshService.Refresh();
+    }
+
     private static readonly DialogOptions ImportExportDialogOptions = new()
     {
         CloseOnEscapeKey = true,
