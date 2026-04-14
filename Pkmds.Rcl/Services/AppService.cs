@@ -1,6 +1,6 @@
 ﻿namespace Pkmds.Rcl.Services;
 
-public class AppService(IAppState appState, IRefreshService refreshService, ILegalizationService? legalizationService = null) : IAppService
+public class AppService(IAppState appState, IRefreshService refreshService, ILegalizationService legalizationService) : IAppService
 {
     private const string EnglishLang = "en";
     private const string DefaultPkmFileName = "pkm.bin";
@@ -32,7 +32,7 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
 
     private IRefreshService RefreshService { get; } = refreshService;
 
-    private ILegalizationService LegalizationService { get; } = legalizationService ?? new LegalizationService();
+    private ILegalizationService LegalizationService { get; } = legalizationService;
 
     private static string[] NatureStatShortNames => ["Atk", "Def", "Spe", "SpA", "SpD"];
 
@@ -411,20 +411,11 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
 
         // Delegate to the Auto-Legality engine, which handles PID/IV correlation for
         // Gen 3-5, RNG-correlated encounters for Gen 8/9, egg hatching, alternate-form
-        // fallback, and post-generation fixes.
+        // fallback, and post-generation fixes. On Failed/Timeout, the outcome still
+        // carries the best-effort attempt (with post-generation fixes already applied),
+        // so we return it rather than a raw blank — the user can edit it further.
         var result = LegalizationService.GenerateFromSetSync(set, sav);
-        if (result.Status == LegalizationStatus.Success)
-        {
-            return result.Pokemon;
-        }
-
-        // Fallback: produce a blank template with the Showdown details applied so imports
-        // never silently produce nothing. The result may have legality issues, but the user
-        // can edit it further.
-        var pkm = sav.BlankPKM.Clone();
-        pkm.ApplySetDetails(set);
-        pkm.RefreshChecksum();
-        return pkm;
+        return result.Pokemon;
     }
 
     public bool TryPlacePokemonInPartySlot(PKM pkm)
