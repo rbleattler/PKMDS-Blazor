@@ -60,7 +60,7 @@ Publish locally (static site)
 
 Runtime wiring (Web)
 - Serilog to Browser Console with adjustable level (via `LoggingLevelSwitch`).
-- DI: `IAppState`, `IRefreshService`, `IAppService`, drag/drop, logging service, File System Access, MudBlazor, JS interop.
+- DI: `IAppState`, `IRefreshService`, `IAppService`, `ILegalizationService` (Auto-Legality engine; singleton), `IBackupService` (IndexedDB save backups), `IBankService` (IndexedDB Pokémon bank), drag/drop, logging service, File System Access, MudBlazor, JS interop.
 - PKHeX crypto bridged to JS: `RuntimeCryptographyProvider.Aes/Md5` set to Blazor providers at startup.
 
 ## CI/CD (GitHub Actions)
