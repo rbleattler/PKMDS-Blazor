@@ -6,6 +6,9 @@ public partial class LegalityReportTab : RefreshAwareComponent
 {
     private bool hasRun;
     private bool isScanning;
+    private bool isLegalizing;
+    private double legalizationPercent;
+    private string legalizationStatusText = string.Empty;
     private List<LegalityReportEntry> legalityReportEntries = [];
     private LegalityStatus? statusFilter;
 
@@ -18,6 +21,90 @@ public partial class LegalityReportTab : RefreshAwareComponent
     private int LegalCount => legalityReportEntries.Count(e => e.Status == LegalityStatus.Legal);
     private int FishyCount => legalityReportEntries.Count(e => e.Status == LegalityStatus.Fishy);
     private int IllegalCount => legalityReportEntries.Count(e => e.Status == LegalityStatus.Illegal);
+
+    private bool HasIllegalOrFishy => hasRun && legalityReportEntries.Any(e =>
+        e.Status is LegalityStatus.Illegal or LegalityStatus.Fishy);
+
+    private async Task LegalizeAllAsync()
+    {
+        if (AppState.SaveFile is not { } saveFile)
+        {
+            return;
+        }
+
+        var targets = legalityReportEntries
+            .Where(e => e.Status is LegalityStatus.Illegal or LegalityStatus.Fishy)
+            .ToList();
+
+        if (targets.Count == 0)
+        {
+            return;
+        }
+
+        isLegalizing = true;
+        legalizationPercent = 0;
+        legalizationStatusText = $"Legalizing 0/{targets.Count}…";
+        StateHasChanged();
+
+        await Task.Yield();
+
+        var successCount = 0;
+        var failureCount = 0;
+
+        for (var i = 0; i < targets.Count; i++)
+        {
+            var entry = targets[i];
+            legalizationStatusText = $"Legalizing {i + 1}/{targets.Count}: {entry.SpeciesName} ({entry.Location})";
+            legalizationPercent = (double)i / targets.Count * 100;
+            StateHasChanged();
+            await Task.Yield();
+
+            LegalizationOutcome result;
+            try
+            {
+                result = await LegalizationService.LegalizeAsync(entry.Pokemon, saveFile);
+            }
+            catch
+            {
+                failureCount++;
+                continue;
+            }
+
+            if (result.Status != LegalizationStatus.Success)
+            {
+                failureCount++;
+                continue;
+            }
+
+            if (entry.IsParty)
+            {
+                saveFile.SetPartySlotAtIndex(result.Pokemon, entry.SlotNumber);
+            }
+            else
+            {
+                saveFile.SetBoxSlotAtIndex(result.Pokemon, entry.BoxNumber, entry.SlotNumber);
+            }
+
+            successCount++;
+        }
+
+        legalizationPercent = 100;
+        StateHasChanged();
+
+        Snackbar.Add(
+            failureCount == 0
+                ? $"Legalized {successCount}/{targets.Count} Pokémon."
+                : $"Legalized {successCount}/{targets.Count} Pokémon. {failureCount} could not be fixed.",
+            failureCount == 0 ? Severity.Success : Severity.Warning);
+
+        isLegalizing = false;
+        legalizationStatusText = string.Empty;
+        legalizationPercent = 0;
+
+        RefreshService.Refresh();
+
+        await RunScanAsync();
+    }
 
     private async Task RunScanAsync()
     {
