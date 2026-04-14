@@ -118,6 +118,23 @@ public partial class LegalityReportTab : RefreshAwareComponent
                 saveFile.SetBoxSlotAtIndex(result.Pokemon, entry.BoxNumber, entry.SlotNumber);
             }
 
+            // Update the report entry in place so the table reflects the newly legal
+            // status immediately, and the state is preserved across cancellation without
+            // needing a full re-scan.
+            var freshLa = AppService.GetLegalityAnalysis(result.Pokemon);
+            var newStatus = GetStatus(freshLa);
+            var updated = entry with
+            {
+                Pokemon = result.Pokemon,
+                Status = newStatus,
+                FirstIssue = newStatus == LegalityStatus.Legal ? string.Empty : GetFirstIssue(freshLa),
+            };
+            var idx = legalityReportEntries.IndexOf(entry);
+            if (idx >= 0)
+            {
+                legalityReportEntries[idx] = updated;
+            }
+
             successCount++;
         }
 
@@ -146,8 +163,6 @@ public partial class LegalityReportTab : RefreshAwareComponent
         legalizeCts = null;
 
         RefreshService.Refresh();
-
-        await RunScanAsync();
     }
 
     private void CancelLegalizeAll() => legalizeCts?.Cancel();
