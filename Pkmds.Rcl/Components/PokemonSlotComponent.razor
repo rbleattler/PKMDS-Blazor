@@ -67,23 +67,23 @@
             {
                 <div class="legality-indicator-icon"
                      title="@(status switch
-                              {
-                                  LegalityStatus.Legal => "Legal",
-                                  LegalityStatus.Fishy => "Fishy",
-                                  _ => "Illegal"
-                              })">
+                            {
+                                LegalityStatus.Legal => "Legal",
+                                LegalityStatus.Fishy => "Fishy",
+                                _ => "Illegal"
+                            })">
                     <MudIcon Icon="@(status switch
-                                     {
-                                         LegalityStatus.Legal => Icons.Material.Filled.CheckCircle,
-                                         LegalityStatus.Fishy => Icons.Material.Filled.Warning,
-                                         _ => Icons.Material.Filled.Cancel
-                                     })"
+                                   {
+                                       LegalityStatus.Legal => Icons.Material.Filled.CheckCircle,
+                                       LegalityStatus.Fishy => Icons.Material.Filled.Warning,
+                                       _ => Icons.Material.Filled.Cancel
+                                   })"
                              Color="@(status switch
-                                      {
-                                          LegalityStatus.Legal => Color.Success,
-                                          LegalityStatus.Fishy => Color.Warning,
-                                          _ => Color.Error
-                                      })"
+                                    {
+                                        LegalityStatus.Legal => Color.Success,
+                                        LegalityStatus.Fishy => Color.Warning,
+                                        _ => Color.Error
+                                    })"
                              Class="w-full h-full"
                              Style="font-size: 16px;"/>
                 </div>

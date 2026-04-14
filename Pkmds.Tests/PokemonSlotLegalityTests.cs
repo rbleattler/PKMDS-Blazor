@@ -1,4 +1,3 @@
-using Bunit;
 using Microsoft.AspNetCore.Components;
 
 namespace Pkmds.Tests;
@@ -15,7 +14,7 @@ public class PokemonSlotLegalityTests
         using var ctx = BunitTestHelpers.CreateBunitContext(appState, refreshService, appService);
 
         var pkm = saveFile.GetPartySlotAtIndex(0);
-        pkm.Species.Should().BeGreaterThan((ushort)0, "need a real Pokémon for the legality overlay to appear");
+        pkm.Species.Should().BeGreaterThan(0, "need a real Pokémon for the legality overlay to appear");
 
         var cut = ctx.Render<PokemonSlotComponent>(p => p
             .Add(c => c.SlotNumber, 0)

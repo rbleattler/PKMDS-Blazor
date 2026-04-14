@@ -1,7 +1,5 @@
 using System.Diagnostics;
 
-using Pkmds.Rcl.Models;
-
 namespace Pkmds.Rcl.Services;
 
 /// <summary>
@@ -54,18 +52,14 @@ public sealed class LegalizationService : ILegalizationService
         ShowdownSet set,
         SaveFile sav,
         IProgress<string>? progress = null,
-        CancellationToken ct = default)
-    {
-        return await CoreLegalizeAsync(set, template: null, sav, progress, ct, DefaultTimeoutSeconds, preserveDetails: false);
-    }
+        CancellationToken ct = default) =>
+        await CoreLegalizeAsync(set, template: null, sav, progress, ct, DefaultTimeoutSeconds, preserveDetails: false);
 
-    public LegalizationOutcome GenerateFromSetSync(ShowdownSet set, SaveFile sav)
-    {
+    public LegalizationOutcome GenerateFromSetSync(ShowdownSet set, SaveFile sav) =>
         // Synchronous path: run the core loop without yielding. Acceptable because
         // most generation completes in <100ms and the caller (ConvertShowdownSetToPkm)
         // is already synchronous.
-        return CoreLegalizeSync(set, template: null, sav, DefaultTimeoutSeconds);
-    }
+        CoreLegalizeSync(set, template: null, sav, DefaultTimeoutSeconds);
 
     // ──────────────────────────────────────────────────────────────────────
     //  Core legalization loop
@@ -78,22 +72,18 @@ public sealed class LegalizationService : ILegalizationService
         IProgress<string>? progress,
         CancellationToken ct,
         int timeoutSeconds,
-        bool preserveDetails)
-    {
+        bool preserveDetails) =>
         // In Blazor WASM, responsiveness comes from cooperative yielding inside the
         // legalization loop rather than wrapping the work in Task.Run.
-        return await RunLegalizationLoop(set, template, sav, progress, ct, async: true, timeoutSeconds, preserveDetails);
-    }
+        await RunLegalizationLoop(set, template, sav, progress, ct, async: true, timeoutSeconds, preserveDetails);
 
     private LegalizationOutcome CoreLegalizeSync(
         ShowdownSet set,
         PKM? template,
         SaveFile sav,
-        int timeoutSeconds)
-    {
-        return RunLegalizationLoop(set, template, sav, progress: null, ct: default, async: false, timeoutSeconds, preserveDetails: false)
+        int timeoutSeconds) =>
+        RunLegalizationLoop(set, template, sav, progress: null, ct: default, async: false, timeoutSeconds, preserveDetails: false)
             .GetAwaiter().GetResult();
-    }
 
     private async Task<LegalizationOutcome> RunLegalizationLoop(
         ShowdownSet set,
@@ -101,7 +91,7 @@ public sealed class LegalizationService : ILegalizationService
         SaveFile sav,
         IProgress<string>? progress,
         CancellationToken ct,
-        bool @async,
+        bool async,
         int timeoutSeconds,
         bool preserveDetails)
     {
@@ -136,7 +126,7 @@ public sealed class LegalizationService : ILegalizationService
             .ToArray();
 
         // Build encounter criteria from the set.
-        var allowed = EncounterMutationUtil.GetSuggested(probe.Context, (byte)set.Level);
+        var allowed = EncounterMutationUtil.GetSuggested(probe.Context, set.Level);
         var criteria = EncounterCriteria.GetCriteria(set, probe.PersonalInfo, allowed);
 
         // When legalizing an existing Pokémon, don't constrain the encounter search by
@@ -200,7 +190,7 @@ public sealed class LegalizationService : ILegalizationService
             // In Blazor WASM, Task.Yield() re-queues on the same JS macrotask without giving
             // the browser a chance to render or process input — use Task.Delay(1) instead,
             // which schedules via setTimeout and actually releases the main thread.
-            if (@async)
+            if (async)
             {
                 await Task.Delay(1, ct);
             }
@@ -290,7 +280,6 @@ public sealed class LegalizationService : ILegalizationService
             catch
             {
                 // Encounter conversion can throw for incompatible formats; skip silently.
-                continue;
             }
         }
 
@@ -441,8 +430,12 @@ public sealed class LegalizationService : ILegalizationService
         {
             if (ow.GetRequirement(pk8) == OverworldCorrelation8Requirement.MustHave)
             {
-                var flawless = enc is IFlawlessIVCount f ? f.FlawlessIVCount : 0;
-                var shiny = set.Shiny ? Shiny.Always : Shiny.Never;
+                var flawless = enc is IFlawlessIVCount f
+                    ? f.FlawlessIVCount
+                    : 0;
+                var shiny = set.Shiny
+                    ? Shiny.Always
+                    : Shiny.Never;
                 FindWildPidIv8(pk8, shiny, flawless, ct);
             }
 
@@ -454,8 +447,12 @@ public sealed class LegalizationService : ILegalizationService
         {
             if (sc.GetRequirement(pb8) == StaticCorrelation8bRequirement.MustHave)
             {
-                var flawless = enc is IFlawlessIVCount f ? f.FlawlessIVCount : 0;
-                var shiny = set.Shiny ? Shiny.Always : Shiny.Never;
+                var flawless = enc is IFlawlessIVCount f
+                    ? f.FlawlessIVCount
+                    : 0;
+                var shiny = set.Shiny
+                    ? Shiny.Always
+                    : Shiny.Never;
                 Roaming8bRNG.ApplyDetails(pb8, EncounterCriteria.Unrestricted, shiny, flawless);
             }
 
@@ -563,7 +560,7 @@ public sealed class LegalizationService : ILegalizationService
             Shiny.AlwaysSquare => xor == 0,
             Shiny.AlwaysStar => xor is > 0 and < 16,
             Shiny.Always => xor < 16,
-            _ => true,
+            _ => true
         };
 
         // Search for a seed whose EC→PID satisfies the shiny constraint.
@@ -583,7 +580,7 @@ public sealed class LegalizationService : ILegalizationService
 
             var ec = (uint)rng.NextInt();
             var pid = (uint)rng.NextInt();
-            var xor = (uint)(((pid >> 16) ^ (pid & 0xFFFF) ^ pk.TID16 ^ pk.SID16) & 0xFFFF);
+            var xor = (pid >> 16 ^ pid & 0xFFFF ^ pk.TID16 ^ pk.SID16) & 0xFFFF;
             if (!MatchesShinyConstraint(shiny, xor))
             {
                 continue;
@@ -700,7 +697,7 @@ public sealed class LegalizationService : ILegalizationService
 
             // Unown form must match.
             if (pk.Species == (int)Species.Unown && enc.Generation == 3
-                && pk.Form != EntityPID.GetUnownForm3(pid))
+                                                 && pk.Form != EntityPID.GetUnownForm3(pid))
             {
                 continue;
             }
@@ -719,7 +716,7 @@ public sealed class LegalizationService : ILegalizationService
     // ──────────────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Applies fixes after <see cref="CommonEdits.ApplySetDetails"/> to ensure legality.
+    /// Applies fixes after <see cref="CommonEdits.ApplySetDetails" /> to ensure legality.
     /// Mirrors AppService.ApplyPostImportFixes + ALM's ApplySetDetails final tweaks.
     /// </summary>
     private static void ApplyPostGenerationFixes(
@@ -833,7 +830,9 @@ public sealed class LegalizationService : ILegalizationService
         // Fill language.
         if (pk.Language <= 0)
         {
-            pk.Language = sav.Language > 0 ? sav.Language : (int)LanguageID.English;
+            pk.Language = sav.Language > 0
+                ? sav.Language
+                : (int)LanguageID.English;
         }
 
         // Clear invalid held items.
@@ -896,9 +895,9 @@ public sealed class LegalizationService : ILegalizationService
     // ──────────────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Preserve-details legalization path: mutate <paramref name="pk"/> only where
-    /// required to match <paramref name="enc"/>'s constraints or to fix specific
-    /// <see cref="LegalityAnalysis"/> failures. Fields that don't round-trip through
+    /// Preserve-details legalization path: mutate <paramref name="pk" /> only where
+    /// required to match <paramref name="enc" />'s constraints or to fix specific
+    /// <see cref="LegalityAnalysis" /> failures. Fields that don't round-trip through
     /// ShowdownSet (EC, PID, memories, height/weight, ribbons, contest stats,
     /// fullness/enjoyment, HOME tracker, met date, affixed ribbon) are left alone.
     /// </summary>
@@ -975,8 +974,8 @@ public sealed class LegalizationService : ILegalizationService
     }
 
     /// <summary>
-    /// Applies targeted fixes for each Invalid <see cref="CheckResult"/> in
-    /// <paramref name="la"/>. Returns true if any fix was applied.
+    /// Applies targeted fixes for each Invalid <see cref="CheckResult" /> in
+    /// <paramref name="la" />. Returns true if any fix was applied.
     /// </summary>
     private static bool ApplyTargetedFixesFromAnalysis(PKM pk, LegalityAnalysis la, IEncounterable enc)
     {
@@ -1095,7 +1094,7 @@ public sealed class LegalizationService : ILegalizationService
     /// Forces a PID to be shiny with the given XOR target.
     /// </summary>
     internal static uint GetShinyPid(int tid, int sid, uint pid, int type) =>
-        (uint)(((tid ^ sid ^ (pid & 0xFFFF) ^ type) << 16) | (pid & 0xFFFF));
+        (uint)((tid ^ sid ^ pid & 0xFFFF ^ type) << 16 | pid & 0xFFFF);
 
     /// <summary>
     /// Mirrors IFormArgument.GetFormArgumentMinEvolution.
@@ -1112,6 +1111,6 @@ public sealed class LegalizationService : ILegalizationService
             (int)Species.Pawniard or (int)Species.Bisharp when currentSpecies == (int)Species.Kingambit => 3u,
             (int)Species.Farfetchd when currentSpecies == (int)Species.Sirfetchd => 3u,
             (int)Species.Gimmighoul when currentSpecies == (int)Species.Gholdengo => 999u,
-            _ => 0u,
+            _ => 0u
         };
 }

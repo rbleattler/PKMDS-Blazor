@@ -2,6 +2,8 @@ namespace Pkmds.Rcl.Components.EditForms;
 
 public partial class PokemonEditForm : IDisposable
 {
+    private static readonly DialogOptions ImportExportDialogOptions = new() { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+
     [Parameter]
     [EditorRequired]
     public PKM? Pokemon { get; set; }
@@ -38,13 +40,6 @@ public partial class PokemonEditForm : IDisposable
         ComputeAnalysis();
         RefreshService.Refresh();
     }
-
-    private static readonly DialogOptions ImportExportDialogOptions = new()
-    {
-        CloseOnEscapeKey = true,
-        MaxWidth = MaxWidth.Medium,
-        FullWidth = true,
-    };
 
     private void ExportAsShowdown() =>
         DialogService.ShowAsync<ShowdownExportDialog>(

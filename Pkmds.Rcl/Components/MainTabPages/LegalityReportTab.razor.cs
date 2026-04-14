@@ -5,12 +5,12 @@ namespace Pkmds.Rcl.Components.MainTabPages;
 public partial class LegalityReportTab : RefreshAwareComponent
 {
     private bool hasRun;
-    private bool isScanning;
     private bool isLegalizing;
+    private bool isScanning;
+    private List<LegalityReportEntry> legalityReportEntries = [];
     private double legalizationPercent;
     private string legalizationStatusText = string.Empty;
     private CancellationTokenSource? legalizeCts;
-    private List<LegalityReportEntry> legalityReportEntries = [];
     private LegalityStatus? statusFilter;
 
     /// <summary>
@@ -37,7 +37,9 @@ public partial class LegalityReportTab : RefreshAwareComponent
         // through a long sweep, the more severe issues are fixed first.
         var targets = legalityReportEntries
             .Where(e => e.Status is LegalityStatus.Illegal or LegalityStatus.Fishy)
-            .OrderBy(e => e.Status == LegalityStatus.Illegal ? 0 : 1)
+            .OrderBy(e => e.Status == LegalityStatus.Illegal
+                ? 0
+                : 1)
             .ToList();
 
         if (targets.Count == 0)
@@ -147,7 +149,9 @@ public partial class LegalityReportTab : RefreshAwareComponent
             {
                 Pokemon = storedPk,
                 Status = newStatus,
-                FirstIssue = newStatus == LegalityStatus.Legal ? string.Empty : GetFirstIssue(storedLa),
+                FirstIssue = newStatus == LegalityStatus.Legal
+                    ? string.Empty
+                    : GetFirstIssue(storedLa)
             };
             var idx = legalityReportEntries.IndexOf(entry);
             if (idx >= 0)
@@ -216,7 +220,9 @@ public partial class LegalityReportTab : RefreshAwareComponent
             parts.Add($"could not fix: {failureCount}");
         }
 
-        var detail = parts.Count > 0 ? " " + string.Join(", ", parts) + "." : string.Empty;
+        var detail = parts.Count > 0
+            ? " " + string.Join(", ", parts) + "."
+            : string.Empty;
 
         var severity = cancelled
             ? Severity.Info

@@ -4,8 +4,13 @@ public class BackupService(IJSRuntime js) : IBackupService, IAsyncDisposable
 {
     private IJSObjectReference? _module;
 
-    private async Task<IJSObjectReference> GetModuleAsync() =>
-        _module ??= await js.InvokeAsync<IJSObjectReference>("import", "./js/backup.js");
+    public async ValueTask DisposeAsync()
+    {
+        if (_module is not null)
+        {
+            await _module.DisposeAsync();
+        }
+    }
 
     public async Task<long> CreateBackupAsync(byte[] saveBytes, SaveFile saveFile, string? fileName, bool isManicEmu, string source)
     {
@@ -105,59 +110,54 @@ public class BackupService(IJSRuntime js) : IBackupService, IAsyncDisposable
         var oldestIds = await module.InvokeAsync<long[]>("getOldestIds", excess);
         if (oldestIds.Length > 0)
         {
-            await module.InvokeVoidAsync("deleteMultiple", (object)oldestIds);
+            await module.InvokeVoidAsync("deleteMultiple", oldestIds);
         }
     }
 
-    public async ValueTask DisposeAsync()
-    {
-        if (_module is not null)
-        {
-            await _module.DisposeAsync();
-        }
-    }
+    private async Task<IJSObjectReference> GetModuleAsync() =>
+        _module ??= await js.InvokeAsync<IJSObjectReference>("import", "./js/backup.js");
 
     // ── Internal DTOs for JS deserialization (internal for test/mocking support) ──
 
     internal sealed class RawBackupEntry
     {
-        [System.Text.Json.Serialization.JsonPropertyName("id")]
+        [JsonPropertyName("id")]
         public long Id { get; set; }
 
-        [System.Text.Json.Serialization.JsonPropertyName("bytesBase64")]
+        [JsonPropertyName("bytesBase64")]
         public string? BytesBase64 { get; set; }
 
-        [System.Text.Json.Serialization.JsonPropertyName("meta")]
+        [JsonPropertyName("meta")]
         public RawBackupMeta? Meta { get; set; }
 
-        [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+        [JsonPropertyName("createdAt")]
         public string CreatedAt { get; set; } = string.Empty;
 
-        [System.Text.Json.Serialization.JsonPropertyName("source")]
+        [JsonPropertyName("source")]
         public string? Source { get; set; }
     }
 
     internal sealed class RawBackupMeta
     {
-        [System.Text.Json.Serialization.JsonPropertyName("fileName")]
+        [JsonPropertyName("fileName")]
         public string? FileName { get; set; }
 
-        [System.Text.Json.Serialization.JsonPropertyName("saveType")]
+        [JsonPropertyName("saveType")]
         public string? SaveType { get; set; }
 
-        [System.Text.Json.Serialization.JsonPropertyName("generation")]
+        [JsonPropertyName("generation")]
         public int? Generation { get; set; }
 
-        [System.Text.Json.Serialization.JsonPropertyName("gameVersion")]
+        [JsonPropertyName("gameVersion")]
         public string? GameVersion { get; set; }
 
-        [System.Text.Json.Serialization.JsonPropertyName("trainerName")]
+        [JsonPropertyName("trainerName")]
         public string? TrainerName { get; set; }
 
-        [System.Text.Json.Serialization.JsonPropertyName("sizeBytes")]
+        [JsonPropertyName("sizeBytes")]
         public long? SizeBytes { get; set; }
 
-        [System.Text.Json.Serialization.JsonPropertyName("isManicEmu")]
+        [JsonPropertyName("isManicEmu")]
         public bool? IsManicEmu { get; set; }
     }
 }

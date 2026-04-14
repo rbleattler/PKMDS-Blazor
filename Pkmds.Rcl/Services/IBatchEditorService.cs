@@ -6,6 +6,9 @@ public sealed record BatchEditorSummary(int Modified, int Skipped);
 
 public interface IBatchEditorService
 {
+    /// <summary>Whether a snapshot is available for undo.</summary>
+    bool HasSnapshot { get; }
+
     /// <summary>Dry-run: returns preview of what would change, without mutating save data.</summary>
     Task<IReadOnlyList<BatchEditorPreviewEntry>> PreviewAsync(string script, BatchEditorScope scope);
 
@@ -17,9 +20,6 @@ public interface IBatchEditorService
 
     /// <summary>Restores save state from the most recent snapshot.</summary>
     bool RestoreSnapshot();
-
-    /// <summary>Whether a snapshot is available for undo.</summary>
-    bool HasSnapshot { get; }
 
     /// <summary>Preset management (localStorage).</summary>
     Task<IReadOnlyList<BatchEditorPreset>> GetPresetsAsync();

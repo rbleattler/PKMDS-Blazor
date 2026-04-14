@@ -2,7 +2,6 @@ using Bunit;
 using KristofferStrube.Blazor.FileSystem;
 using KristofferStrube.Blazor.FileSystemAccess;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.JSInterop;
 using MudBlazor.Services;
 using Pkmds.Rcl.Models;
 using Serilog.Events;
@@ -138,8 +137,6 @@ internal class NullDragDropService : IDragDropService
 /// </summary>
 internal class NullFileSystemAccessService : IFileSystemAccessService
 {
-    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
-
     public Task<bool> IsSupportedAsync() => Task.FromResult(false);
 
     public Task<FileSystemFileHandle[]> ShowOpenFilePickerAsync(OpenFilePickerOptions? options = null)
@@ -150,4 +147,6 @@ internal class NullFileSystemAccessService : IFileSystemAccessService
 
     public Task<FileSystemDirectoryHandle> ShowDirectoryPickerAsync(DirectoryPickerOptions? options = null)
         => throw new NotSupportedException();
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }

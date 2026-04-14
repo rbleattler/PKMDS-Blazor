@@ -36,12 +36,16 @@
                         {
                             <MudButton Variant="@Variant.Outlined"
                                        Size="@Size.Small"
-                                       Color="@(SaveFile.ChecksumsValid ? Color.Success : Color.Warning)"
+                                       Color="@(SaveFile.ChecksumsValid
+                                                  ? Color.Success
+                                                  : Color.Warning)"
                                        StartIcon="@(SaveFile.ChecksumsValid
-                                                       ? Icons.Material.Filled.CheckCircle
-                                                       : Icons.Material.Filled.Warning)"
+                                                      ? Icons.Material.Filled.CheckCircle
+                                                      : Icons.Material.Filled.Warning)"
                                        OnClick="@OnFixChecksums">
-                                @(SaveFile.ChecksumsValid ? "Valid" : "Fix")
+                                @(SaveFile.ChecksumsValid
+                                    ? "Valid"
+                                    : "Fix")
                             </MudButton>
                         }
                         else

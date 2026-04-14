@@ -22,8 +22,8 @@
          Usage: dotnet build ... -p:UseLocalPKHeX=true
          Override path: -p:PKHeXSourcePath=/path/to/PKHeX.Core.csproj -->
     <ItemGroup Condition="'$(UseLocalPKHeX)' == 'true' And '$(_HasPKHeXCoreRef)' == 'true'">
-        <PackageReference Remove="PKHeX.Core" />
-        <ProjectReference Include="$(PKHeXSourcePath)" />
+        <PackageReference Remove="PKHeX.Core"/>
+        <ProjectReference Include="$(PKHeXSourcePath)"/>
     </ItemGroup>
 
 </Project>

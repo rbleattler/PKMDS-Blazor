@@ -1,5 +1,3 @@
-using Pkmds.Rcl.Models;
-
 namespace Pkmds.Rcl.Services;
 
 /// <summary>
@@ -17,7 +15,7 @@ public interface ILegalizationService
     /// <param name="progress">Optional progress reporter for UI feedback.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <param name="timeoutSeconds">Optional wall-clock cap for this call. Null uses the default.</param>
-    /// <returns>A <see cref="LegalizationOutcome"/> with the result.</returns>
+    /// <returns>A <see cref="LegalizationOutcome" /> with the result.</returns>
     Task<LegalizationOutcome> LegalizeAsync(
         PKM pk,
         SaveFile sav,
@@ -33,7 +31,7 @@ public interface ILegalizationService
     /// <param name="sav">The save file providing trainer context.</param>
     /// <param name="progress">Optional progress reporter for UI feedback.</param>
     /// <param name="ct">Cancellation token.</param>
-    /// <returns>A <see cref="LegalizationOutcome"/> with the result.</returns>
+    /// <returns>A <see cref="LegalizationOutcome" /> with the result.</returns>
     Task<LegalizationOutcome> GenerateFromSetAsync(
         ShowdownSet set,
         SaveFile sav,
@@ -41,7 +39,7 @@ public interface ILegalizationService
         CancellationToken ct = default);
 
     /// <summary>
-    /// Synchronous wrapper for <see cref="GenerateFromSetAsync"/> for use in non-async call sites.
+    /// Synchronous wrapper for <see cref="GenerateFromSetAsync" /> for use in non-async call sites.
     /// Runs the generation loop cooperatively on the current thread.
     /// </summary>
     LegalizationOutcome GenerateFromSetSync(ShowdownSet set, SaveFile sav);

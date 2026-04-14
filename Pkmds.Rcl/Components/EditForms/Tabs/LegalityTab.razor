@@ -113,12 +113,14 @@
                                StartIcon="@Icons.Material.Filled.AutoFixHigh"
                                OnClick="@LegalizeAsync"
                                Disabled="@IsLegalizing">
-                        @(IsLegalizing ? "Legalizing..." : "Legalize")
+                        @(IsLegalizing
+                            ? "Legalizing..."
+                            : "Legalize")
                     </MudButton>
                     @if (IsLegalizing)
                     {
                         <MudProgressCircular Size="@Size.Small"
-                                             Indeterminate />
+                                             Indeterminate/>
                         @if (!string.IsNullOrEmpty(legalizationProgress))
                         {
                             <MudText Typo="@Typo.caption">@legalizationProgress</MudText>

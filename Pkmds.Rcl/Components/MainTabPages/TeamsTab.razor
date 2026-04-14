@@ -2,7 +2,8 @@
 
 @if (AppState.SaveFile is not null)
 {
-    <MudStack Spacing="4" Class="pa-2">
+    <MudStack Spacing="4"
+              Class="pa-2">
 
         @* === BATTLE BOX (Gen 5-6) === *@
         @if (AppService.HasBattleBox())
@@ -15,14 +16,16 @@
             <MudCard Elevation="1">
                 <MudCardHeader>
                     <CardHeaderContent>
-                        <MudStack Row AlignItems="@AlignItems.Center" Spacing="2">
+                        <MudStack Row
+                                  AlignItems="@AlignItems.Center"
+                                  Spacing="2">
                             <MudText Typo="@Typo.subtitle1">Battle Box</MudText>
                             @if (bbLocked)
                             {
                                 <MudChip T="string"
                                          Icon="@Icons.Material.Filled.Lock"
                                          Color="@Color.Warning"
-                                         Size="@MudBlazor.Size.Small">
+                                         Size="@Size.Small">
                                     Locked
                                 </MudChip>
                             }
@@ -40,14 +43,20 @@
                 <MudCardContent>
                     @if (bbPokemon.Count == 0)
                     {
-                        <MudText Typo="@Typo.body2" Class="mud-text-secondary">No Pokémon in Battle Box.</MudText>
+                        <MudText Typo="@Typo.body2"
+                                 Class="mud-text-secondary">No Pokémon in Battle Box.
+                        </MudText>
                     }
                     else
                     {
-                        <MudStack Row Spacing="1" Wrap="@Wrap.Wrap">
+                        <MudStack Row
+                                  Spacing="1"
+                                  Wrap="@Wrap.Wrap">
                             @foreach (var pkm in bbPokemon)
                             {
-                                <MudPaper Elevation="2" Class="square-slot" Style="width: 68px; height: 68px;">
+                                <MudPaper Elevation="2"
+                                          Class="square-slot"
+                                          Style="width: 68px; height: 68px;">
                                     <div class="w-full h-full flex items-center justify-center">
                                         <object class="pkm-sprite w-full h-auto object-contain block"
                                                 type="image/png"
@@ -88,21 +97,23 @@
         @* === BATTLE TEAMS (Gen 7+) === *@
         @if (AppService.HasBattleTeams())
         {
-            <MudStack Row AlignItems="@AlignItems.Center" Spacing="2">
+            <MudStack Row
+                      AlignItems="@AlignItems.Center"
+                      Spacing="2">
                 <MudText Typo="@Typo.h6">Battle Teams</MudText>
                 <MudSpacer/>
                 <MudButton Variant="@Variant.Text"
                            Color="@Color.Primary"
                            StartIcon="@Icons.Material.Filled.LockOpen"
                            OnClick="@(() => AppService.UnlockAllBattleTeams())"
-                           Size="@MudBlazor.Size.Small">
+                           Size="@Size.Small">
                     Unlock All
                 </MudButton>
                 <MudButton Variant="@Variant.Text"
                            Color="@Color.Error"
                            StartIcon="@Icons.Material.Filled.DeleteSweep"
                            OnClick="@(() => AppService.ClearAllBattleTeams())"
-                           Size="@MudBlazor.Size.Small">
+                           Size="@Size.Small">
                     Clear All
                 </MudButton>
             </MudStack>
@@ -117,13 +128,15 @@
                 <MudCard Elevation="1">
                     <MudCardHeader>
                         <CardHeaderContent>
-                            <MudStack Row AlignItems="@AlignItems.Center" Spacing="2">
+                            <MudStack Row
+                                      AlignItems="@AlignItems.Center"
+                                      Spacing="2">
                                 <MudText Typo="@Typo.subtitle1">@teamName</MudText>
                                 @if (isLocked)
                                 {
                                     <MudIcon Icon="@Icons.Material.Filled.Lock"
                                              Color="@Color.Warning"
-                                             Size="@MudBlazor.Size.Small"
+                                             Size="@Size.Small"
                                              title="Team is locked"/>
                                 }
                             </MudStack>
@@ -140,14 +153,20 @@
                     <MudCardContent>
                         @if (teamPokemon.Count == 0)
                         {
-                            <MudText Typo="@Typo.body2" Class="mud-text-secondary">No team configured.</MudText>
+                            <MudText Typo="@Typo.body2"
+                                     Class="mud-text-secondary">No team configured.
+                            </MudText>
                         }
                         else
                         {
-                            <MudStack Row Spacing="1" Wrap="@Wrap.Wrap">
+                            <MudStack Row
+                                      Spacing="1"
+                                      Wrap="@Wrap.Wrap">
                                 @foreach (var pkm in teamPokemon)
                                 {
-                                    <MudPaper Elevation="2" Class="square-slot" Style="width: 68px; height: 68px;">
+                                    <MudPaper Elevation="2"
+                                              Class="square-slot"
+                                              Style="width: 68px; height: 68px;">
                                         <div class="w-full h-full flex items-center justify-center">
                                             <object class="pkm-sprite w-full h-auto object-contain block"
                                                     type="image/png"
@@ -201,11 +220,14 @@
                 <MudCard Elevation="1">
                     <MudCardHeader>
                         <CardHeaderContent>
-                            <MudStack Row AlignItems="@AlignItems.Center" Spacing="2">
+                            <MudStack Row
+                                      AlignItems="@AlignItems.Center"
+                                      Spacing="2">
                                 <MudText Typo="@Typo.subtitle1">@rentalName</MudText>
                                 @if (!string.IsNullOrWhiteSpace(playerName))
                                 {
-                                    <MudText Typo="@Typo.body2" Class="mud-text-secondary">
+                                    <MudText Typo="@Typo.body2"
+                                             Class="mud-text-secondary">
                                         by @playerName
                                     </MudText>
                                 }
@@ -215,14 +237,20 @@
                     <MudCardContent>
                         @if (rentalPokemon.Count == 0)
                         {
-                            <MudText Typo="@Typo.body2" Class="mud-text-secondary">No rental team saved.</MudText>
+                            <MudText Typo="@Typo.body2"
+                                     Class="mud-text-secondary">No rental team saved.
+                            </MudText>
                         }
                         else
                         {
-                            <MudStack Row Spacing="1" Wrap="@Wrap.Wrap">
+                            <MudStack Row
+                                      Spacing="1"
+                                      Wrap="@Wrap.Wrap">
                                 @foreach (var pkm in rentalPokemon)
                                 {
-                                    <MudPaper Elevation="2" Class="square-slot" Style="width: 68px; height: 68px;">
+                                    <MudPaper Elevation="2"
+                                              Class="square-slot"
+                                              Style="width: 68px; height: 68px;">
                                         <div class="w-full h-full flex items-center justify-center">
                                             <object class="pkm-sprite w-full h-auto object-contain block"
                                                     type="image/png"

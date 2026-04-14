@@ -22,8 +22,8 @@ function openDb() {
 
             // v1: initial schema
             if (oldVersion < 1) {
-                const store = db.createObjectStore(STORE, { keyPath: "id", autoIncrement: true });
-                store.createIndex("createdAt", "createdAt", { unique: false });
+                const store = db.createObjectStore(STORE, {keyPath: "id", autoIncrement: true});
+                store.createIndex("createdAt", "createdAt", {unique: false});
             }
 
             // Future versions: add migration steps here, e.g.:
@@ -34,7 +34,9 @@ function openDb() {
             const db = event.target.result;
 
             // Reset when the DB is closed externally (e.g., browser clears storage).
-            db.onclose = () => { _dbPromise = null; };
+            db.onclose = () => {
+                _dbPromise = null;
+            };
 
             // Allow other tabs to upgrade the schema without being blocked by
             // this open connection.
@@ -61,11 +63,13 @@ export async function addBackup(bytesBase64, meta, source) {
         const tx = db.transaction(STORE, "readwrite");
         const store = tx.objectStore(STORE);
         const createdAt = new Date().toISOString();
-        const request = store.add({ bytesBase64, meta, createdAt, source });
+        const request = store.add({bytesBase64, meta, createdAt, source});
         let newId;
         // Capture the auto-assigned ID from the request, but resolve only after
         // the transaction commits so callers observe durable state.
-        request.onsuccess = (event) => { newId = event.target.result; };
+        request.onsuccess = (event) => {
+            newId = event.target.result;
+        };
         tx.oncomplete = () => resolve(newId);
         tx.onerror = (event) => reject(event.target.error);
         tx.onabort = (event) => reject(event.target.error ?? new Error("Transaction aborted"));
@@ -89,7 +93,7 @@ export async function getBackupMetadata() {
                 return;
             }
 
-            const { bytesBase64: _bytes, ...rest } = cursor.value;
+            const {bytesBase64: _bytes, ...rest} = cursor.value;
             results.push(rest);
             cursor.continue();
         };
