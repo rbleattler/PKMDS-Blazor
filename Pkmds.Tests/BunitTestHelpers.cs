@@ -29,7 +29,7 @@ internal static class BunitTestHelpers
         ParseSettings.InitFromSaveFileData(saveFile!);
         var appState = new TestAppState { SaveFile = saveFile };
         var refreshService = new TestRefreshService();
-        var appService = new AppService(appState, refreshService);
+        var appService = new AppService(appState, refreshService, new LegalizationService());
         return (saveFile!, appState, refreshService, appService);
     }
 
