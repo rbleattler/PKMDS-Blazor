@@ -122,25 +122,28 @@ public partial class LegalityReportTab : RefreshAwareComponent
             // traded in" path. The PKM is already legal for the current save; letting
             // SetPKM mutate handler/memory/trainer fields can reintroduce illegalities
             // that our pre-write analysis doesn't see.
+            PKM storedPk;
             if (entry.IsParty)
             {
                 saveFile.SetPartySlotAtIndex(result.Pokemon, entry.SlotNumber, EntityImportSettings.None);
+                storedPk = saveFile.GetPartySlotAtIndex(entry.SlotNumber);
             }
             else
             {
                 saveFile.SetBoxSlotAtIndex(result.Pokemon, entry.BoxNumber, entry.SlotNumber, EntityImportSettings.None);
+                storedPk = saveFile.GetBoxSlotAtIndex(entry.BoxNumber, entry.SlotNumber);
             }
 
-            // Update the report entry in place so the table reflects the newly legal
-            // status immediately, and the state is preserved across cancellation without
-            // needing a full re-scan.
-            var freshLa = AppService.GetLegalityAnalysis(result.Pokemon);
-            var newStatus = GetStatus(freshLa);
+            // Re-read the stored bytes and re-analyse so the table reflects exactly what
+            // the save now contains — if the round trip mutated the PKM, we'll see the
+            // real status here rather than an optimistic pre-write one.
+            var storedLa = AppService.GetLegalityAnalysis(storedPk);
+            var newStatus = GetStatus(storedLa);
             var updated = entry with
             {
-                Pokemon = result.Pokemon,
+                Pokemon = storedPk,
                 Status = newStatus,
-                FirstIssue = newStatus == LegalityStatus.Legal ? string.Empty : GetFirstIssue(freshLa),
+                FirstIssue = newStatus == LegalityStatus.Legal ? string.Empty : GetFirstIssue(storedLa),
             };
             var idx = legalityReportEntries.IndexOf(entry);
             if (idx >= 0)
@@ -148,7 +151,16 @@ public partial class LegalityReportTab : RefreshAwareComponent
                 legalityReportEntries[idx] = updated;
             }
 
-            successCount++;
+            if (newStatus == LegalityStatus.Legal)
+            {
+                successCount++;
+            }
+            else
+            {
+                // Write succeeded from the service's perspective but the save-file round
+                // trip left the PKM non-legal. Count as failure so the summary is honest.
+                failureCount++;
+            }
         }
 
         legalizationPercent = 100;
