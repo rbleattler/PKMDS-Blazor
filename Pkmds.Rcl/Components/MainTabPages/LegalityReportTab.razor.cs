@@ -337,9 +337,12 @@ public partial class LegalityReportTab : RefreshAwareComponent
     {
         var ctx = LegalityLocalizationContext.Create(la);
 
+        // Prefer Invalid results over Fishy ones so the more severe issue is shown
+        // when both are present. CheckResult.Valid is true for Fishy judgements,
+        // so we have to match on Judgement directly to surface Fishy reasons at all.
         foreach (var result in la.Results)
         {
-            if (!result.Valid)
+            if (result.Judgement == PKHexSeverity.Invalid)
             {
                 return ctx.Humanize(in result);
             }
@@ -353,6 +356,14 @@ public partial class LegalityReportTab : RefreshAwareComponent
         if (!MoveResult.AllValid(la.Info.Relearn))
         {
             return "Invalid relearn move detected.";
+        }
+
+        foreach (var result in la.Results)
+        {
+            if (result.Judgement == PKHexSeverity.Fishy)
+            {
+                return ctx.Humanize(in result);
+            }
         }
 
         return string.Empty;
