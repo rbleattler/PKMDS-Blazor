@@ -15,6 +15,50 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
     private string legalizeBoxStatusText = string.Empty;
     private CancellationTokenSource? legalizeBoxCts;
 
+    private int illegalCountInBox;
+    private int cachedBoxNumber = -1;
+
+    protected override RefreshEvents SubscribeTo =>
+        RefreshEvents.AppState | RefreshEvents.BoxState;
+
+    private int GetIllegalCountInBox()
+    {
+        if (AppState.SaveFile is not { } saveFile || AppState.BoxEdit is not { } boxEdit)
+        {
+            illegalCountInBox = 0;
+            cachedBoxNumber = -1;
+            return 0;
+        }
+
+        var box = boxEdit.CurrentBox;
+        if (box == cachedBoxNumber && !isLegalizingBox)
+        {
+            return illegalCountInBox;
+        }
+
+        var count = 0;
+        for (var slot = 0; slot < saveFile.BoxSlotCount; slot++)
+        {
+            var pkm = saveFile.GetBoxSlotAtIndex(box, slot);
+            if (pkm is not { Species: > 0 })
+            {
+                continue;
+            }
+
+            var la = AppService.GetLegalityAnalysis(pkm);
+            if (GetStatus(la) == LegalityStatus.Illegal)
+            {
+                count++;
+            }
+        }
+
+        illegalCountInBox = count;
+        cachedBoxNumber = box;
+        return count;
+    }
+
+    private void InvalidateIllegalCount() => cachedBoxNumber = -1;
+
     private void GoToNextBox()
     {
         if (AppState.SaveFile is null || AppState.BoxEdit is null)
@@ -126,7 +170,10 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
             }
 
             var la = AppService.GetLegalityAnalysis(pkm);
-            if (GetStatus(la) == LegalityStatus.Legal)
+            // Only target Illegal entries. Fishy is Valid per PKHeX — users expect the
+            // box-level action to leave those alone. (The Legality Report tab still
+            // lets users opt in to running Fishy through the engine.)
+            if (GetStatus(la) != LegalityStatus.Illegal)
             {
                 continue;
             }
@@ -134,9 +181,12 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
             targets.Add((slot, pkm));
         }
 
+        illegalCountInBox = targets.Count;
+        cachedBoxNumber = box;
+
         if (targets.Count == 0)
         {
-            Snackbar.Add("No illegal or fishy Pokémon in this box.", Severity.Info);
+            Snackbar.Add("No illegal Pokémon in this box.", Severity.Info);
             return;
         }
 
@@ -195,7 +245,7 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
                     saveFile,
                     progress: null,
                     ct,
-                    timeoutSeconds: 5);
+                    timeoutSeconds: 3);
             }
             catch (OperationCanceledException)
             {
@@ -250,6 +300,7 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
         legalizeBoxCts.Dispose();
         legalizeBoxCts = null;
 
+        InvalidateIllegalCount();
         RefreshService.RefreshBoxState();
     }
 

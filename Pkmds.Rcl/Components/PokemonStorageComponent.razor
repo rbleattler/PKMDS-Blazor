@@ -67,13 +67,20 @@
                            Class="m-1.5 p-1.5">
             </MudIconButton>
 
+            @{
+                var illegalCount = GetIllegalCountInBox();
+                var legalizeTitle = illegalCount == 0
+                    ? "No illegal Pokémon in this box"
+                    : $"Legalize {illegalCount} illegal Pokémon in this box";
+            }
+
             <MudIconButton OnClick="@LegalizeBoxAsync"
-                           title="Legalize all in this box"
+                           title="@legalizeTitle"
                            ButtonType="@ButtonType.Button"
                            Icon="@Icons.Material.Filled.AutoFixHigh"
                            Variant="@Variant.Filled"
                            Color="@Color.Secondary"
-                           Disabled="@isLegalizingBox"
+                           Disabled="@(isLegalizingBox || illegalCount == 0)"
                            Class="m-1.5 p-1.5">
             </MudIconButton>
 
