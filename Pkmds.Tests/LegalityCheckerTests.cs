@@ -96,7 +96,7 @@ public class LegalityCheckerTests
             }
         }
 
-        foundCandidate:
+    foundCandidate:
 
         pkm.Should().NotBeNull("Black full completion save must have at least one non-shiny box Pokémon");
 
@@ -249,6 +249,12 @@ public class LegalityCheckerTests
         public bool ShowLegalIndicator { get; set; } = true;
         public bool ShowFishyIndicator { get; set; } = true;
         public bool ShowIllegalIndicator { get; set; } = true;
+        public SaveFile? SaveFileB { get; set; }
+        public string? SaveFileNameB { get; set; }
+        public BoxEdit? BoxEditB => null;
+        public int? SelectedBoxNumberB { get; set; }
+        public int? SelectedBoxSlotNumberB { get; set; }
+        public int? SelectedPartySlotNumberB { get; set; }
     }
 
     private class TestRefreshService : IRefreshService

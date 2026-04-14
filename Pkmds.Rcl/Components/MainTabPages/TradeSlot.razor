@@ -1,0 +1,46 @@
+@inherits RefreshAwareComponent
+
+<MudPaper Elevation="3"
+          @onclick="@HandleClick"
+          Class="@($"square-slot {(IsSelected ? Constants.SelectedSlotClass : string.Empty)} {ImageHelper.GetSpriteCssClass(Pokemon)}")">
+    <div class="w-full h-full aspect-square flex items-center justify-center overflow-hidden p-0 box-border border border-transparent relative">
+        @if (Pokemon is { Species: > 0 })
+        {
+            var title = AppService.GetPokemonSpeciesName(Pokemon.Species) ?? "Unknown";
+            var isShiny = Pokemon.GetIsShinySafe();
+            <object class="pkm-sprite w-full h-auto object-contain block"
+                    type="image/png"
+                    data="@ImageHelper.GetPokemonSpriteFilename(Pokemon)"
+                    title="@title"
+                    draggable="false">
+                <img class="pkm-sprite w-full h-auto object-contain block"
+                     src="@ImageHelper.PokemonFallbackImageFileName"
+                     title="@title"
+                     alt="@title"
+                     draggable="false">
+            </object>
+
+            @if (isShiny)
+            {
+                <div class="shiny-indicator-icon"
+                     title="Shiny">
+                    <img src="@ImageHelper.GetShinyIndicatorSpriteFileName(ShinyExtensions.GetType(Pokemon) is Shiny.AlwaysSquare)"
+                         alt="Shiny"
+                         class="w-full h-full object-contain"
+                         draggable="false">
+                </div>
+            }
+
+            @if (!AppState.IsHaXEnabled && legalityStatus is { } status && ShouldShow(status))
+            {
+                <div class="legality-indicator-icon"
+                     title="@StatusTitle(status)">
+                    <MudIcon Icon="@StatusIcon(status)"
+                             Color="@StatusColor(status)"
+                             Class="w-full h-full"
+                             Style="font-size: 16px;"/>
+                </div>
+            }
+        }
+    </div>
+</MudPaper>

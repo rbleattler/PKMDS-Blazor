@@ -1,0 +1,59 @@
+@inherits RefreshAwareComponent
+
+@if (SaveFile is { } saveFile)
+{
+    <MudStack Spacing="2">
+
+        <MudText Typo="@Typo.subtitle1">@Title</MudText>
+
+        @* Party row *@
+        <MudGrid Spacing="1"
+                 Justify="@Justify.FlexStart">
+            @for (var i = 0; i < 6; i++)
+            {
+                var slotNum = i;
+                var pkm = i < saveFile.PartyCount
+                    ? saveFile.GetPartySlotAtIndex(slotNum)
+                    : null;
+                <MudItem xs="2">
+                    <TradeSlot Pokemon="@pkm"
+                               IsSelected="@(SelectedPartySlot == slotNum)"
+                               OnSlotClick="@(() => SelectParty(slotNum))"/>
+                </MudItem>
+            }
+        </MudGrid>
+
+        @* Box selector — Let's Go saves only have a single 1000-slot storage; gate behind BoxCount > 0 *@
+        @if (saveFile.BoxCount > 0)
+        {
+            var currentBox = SelectedBox ?? saveFile.CurrentBox;
+            <MudSelect T="@int"
+                       Value="@currentBox"
+                       ValueChanged="@SelectBox"
+                       Dense>
+                @for (var boxId = 0; boxId < saveFile.BoxCount; boxId++)
+                {
+                    var localBoxId = boxId;
+                    var boxName = saveFile is IBoxDetailNameRead boxDetailNameRead
+                        ? boxDetailNameRead.GetBoxName(localBoxId)
+                        : string.Empty;
+                    <MudSelectItem Value="@localBoxId"
+                                   @key="@localBoxId">
+                        @($"Box {localBoxId + 1}: {boxName}")
+                    </MudSelectItem>
+                }
+            </MudSelect>
+
+            <div class="@BoxGridClass(saveFile)">
+                @for (var i = 0; i < saveFile.BoxSlotCount; i++)
+                {
+                    var slotNum = i;
+                    var pkm = saveFile.GetBoxSlotAtIndex(currentBox, slotNum);
+                    <TradeSlot Pokemon="@pkm"
+                               IsSelected="@(SelectedBox == currentBox && SelectedBoxSlot == slotNum)"
+                               OnSlotClick="@(() => SelectBoxSlot(currentBox, slotNum))"/>
+                }
+            </div>
+        }
+    </MudStack>
+}

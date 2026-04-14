@@ -171,5 +171,11 @@ public class HaXModeTests
         public bool ShowLegalIndicator { get; set; } = true;
         public bool ShowFishyIndicator { get; set; } = true;
         public bool ShowIllegalIndicator { get; set; } = true;
+        public SaveFile? SaveFileB { get; set; }
+        public string? SaveFileNameB { get; set; }
+        public BoxEdit? BoxEditB => null;
+        public int? SelectedBoxNumberB { get; set; }
+        public int? SelectedBoxSlotNumberB { get; set; }
+        public int? SelectedPartySlotNumberB { get; set; }
     }
 }
