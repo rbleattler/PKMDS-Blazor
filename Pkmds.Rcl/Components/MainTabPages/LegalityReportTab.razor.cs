@@ -54,6 +54,7 @@ public partial class LegalityReportTab : RefreshAwareComponent
         await Task.Yield();
 
         var successCount = 0;
+        var fishyCount = 0;
         var failureCount = 0;
         var cancelled = false;
         var processed = 0;
@@ -151,35 +152,27 @@ public partial class LegalityReportTab : RefreshAwareComponent
                 legalityReportEntries[idx] = updated;
             }
 
-            if (newStatus == LegalityStatus.Legal)
+            switch (newStatus)
             {
-                successCount++;
-            }
-            else
-            {
-                // Write succeeded from the service's perspective but the save-file round
-                // trip left the PKM non-legal. Count as failure so the summary is honest.
-                failureCount++;
+                case LegalityStatus.Legal:
+                    successCount++;
+                    break;
+                case LegalityStatus.Fishy:
+                    // Valid PKHeX-wise but still flagged Fishy — count separately so the
+                    // summary reflects the partial improvement honestly.
+                    fishyCount++;
+                    break;
+                default:
+                    failureCount++;
+                    break;
             }
         }
 
         legalizationPercent = 100;
         StateHasChanged();
 
-        if (cancelled)
-        {
-            Snackbar.Add(
-                $"Legalization cancelled. Legalized {successCount}/{targets.Count} Pokémon before cancelling ({processed} processed).",
-                Severity.Info);
-        }
-        else
-        {
-            Snackbar.Add(
-                failureCount == 0
-                    ? $"Legalized {successCount}/{targets.Count} Pokémon."
-                    : $"Legalized {successCount}/{targets.Count} Pokémon. {failureCount} could not be fixed.",
-                failureCount == 0 ? Severity.Success : Severity.Warning);
-        }
+        var summary = BuildLegalizeSummary(targets.Count, processed, successCount, fishyCount, failureCount, cancelled);
+        Snackbar.Add(summary.Message, summary.Severity);
 
         isLegalizing = false;
         legalizationStatusText = string.Empty;
@@ -191,6 +184,45 @@ public partial class LegalityReportTab : RefreshAwareComponent
     }
 
     private void CancelLegalizeAll() => legalizeCts?.Cancel();
+
+    private static (string Message, Severity Severity) BuildLegalizeSummary(
+        int targetCount,
+        int processed,
+        int successCount,
+        int fishyCount,
+        int failureCount,
+        bool cancelled)
+    {
+        var prefix = cancelled
+            ? $"Legalization cancelled ({processed}/{targetCount} processed)."
+            : $"Processed {targetCount} Pokémon.";
+
+        var parts = new List<string>();
+        if (successCount > 0)
+        {
+            parts.Add($"now Legal: {successCount}");
+        }
+
+        if (fishyCount > 0)
+        {
+            parts.Add($"still Fishy: {fishyCount}");
+        }
+
+        if (failureCount > 0)
+        {
+            parts.Add($"could not fix: {failureCount}");
+        }
+
+        var detail = parts.Count > 0 ? " " + string.Join(", ", parts) + "." : string.Empty;
+
+        var severity = cancelled
+            ? Severity.Info
+            : failureCount == 0 && fishyCount == 0
+                ? Severity.Success
+                : Severity.Warning;
+
+        return (prefix + detail, severity);
+    }
 
     protected override void Dispose(bool disposing)
     {

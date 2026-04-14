@@ -126,7 +126,15 @@ public sealed class LegalizationService : ILegalizationService
 
         var timer = Stopwatch.StartNew();
         PKM? bestAttempt = null;
+        PKM? bestFishyAttempt = null;
         var attemptCount = 0;
+
+        // Linked token that also fires when the per-call timeout elapses so inner sync
+        // hot loops (Gen 9 Tera seed search etc.) can bail out instead of monopolising
+        // the thread for the full upper bound of their iteration cap.
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        timeoutCts.CancelAfter(TimeSpan.FromSeconds(timeoutSeconds));
+        var budgetCt = timeoutCts.Token;
 
         foreach (var enc in encounters)
         {
@@ -140,6 +148,13 @@ public sealed class LegalizationService : ILegalizationService
 
             if (timer.Elapsed.TotalSeconds >= timeoutSeconds)
             {
+                // If we have a Valid-but-Fishy attempt, return it as Success — better
+                // than reporting Timeout when we actually produced a usable PKM.
+                if (bestFishyAttempt is not null)
+                {
+                    return new LegalizationOutcome(bestFishyAttempt, LegalizationStatus.Success);
+                }
+
                 return new LegalizationOutcome(
                     bestAttempt ?? blank,
                     LegalizationStatus.Timeout,
@@ -185,7 +200,7 @@ public sealed class LegalizationService : ILegalizationService
                 }
 
                 // Apply RNG-correlated PID/IV for encounter types that require it.
-                PreSetPidIv(raw, enc, set, adjustedCriteria);
+                PreSetPidIv(raw, enc, set, adjustedCriteria, budgetCt);
 
                 // Convert to target format.
                 var pk = EntityConverter.ConvertToType(raw, destType, out _);
@@ -205,16 +220,40 @@ public sealed class LegalizationService : ILegalizationService
                 if (la.Valid && pk.Species == set.Species)
                 {
                     pk.RefreshChecksum();
-                    return new LegalizationOutcome(pk, LegalizationStatus.Success);
+
+                    // la.Valid is also true for Fishy results. Prefer a fully-legal
+                    // (no Fishy) result — keep a Fishy one as a fallback and keep
+                    // searching. This avoids the batch path showing "0 legalized" when
+                    // every attempt returned a still-Fishy PKM.
+                    var hasFishy = la.Results.Any(r => r.Judgement == PKHeX.Core.Severity.Fishy);
+                    if (!hasFishy)
+                    {
+                        return new LegalizationOutcome(pk, LegalizationStatus.Success);
+                    }
+
+                    bestFishyAttempt ??= pk;
+                    continue;
                 }
 
                 bestAttempt = pk;
+            }
+            catch (OperationCanceledException)
+            {
+                // Either the user cancelled or the per-call timeout fired mid-attempt.
+                // Let the outer loop guards handle it on the next iteration.
             }
             catch
             {
                 // Encounter conversion can throw for incompatible formats; skip silently.
                 continue;
             }
+        }
+
+        // Exhausted all encounters. If we found a Valid-but-Fishy PKM earlier, return it
+        // as Success rather than Failed.
+        if (bestFishyAttempt is not null)
+        {
+            return new LegalizationOutcome(bestFishyAttempt, LegalizationStatus.Success);
         }
 
         return new LegalizationOutcome(
@@ -342,12 +381,13 @@ public sealed class LegalizationService : ILegalizationService
         PKM pk,
         IEncounterable enc,
         ShowdownSet set,
-        EncounterCriteria criteria)
+        EncounterCriteria criteria,
+        CancellationToken ct)
     {
         // Gen 9 Tera Raids: use PKHeX.Core's built-in TryApply.
         if (enc is ITeraRaid9)
         {
-            ApplyTeraRaidPidIv(pk, enc, set, criteria);
+            ApplyTeraRaidPidIv(pk, enc, set, criteria, ct);
             return;
         }
 
@@ -358,7 +398,7 @@ public sealed class LegalizationService : ILegalizationService
             {
                 var flawless = enc is IFlawlessIVCount f ? f.FlawlessIVCount : 0;
                 var shiny = set.Shiny ? Shiny.Always : Shiny.Never;
-                FindWildPidIv8(pk8, shiny, flawless);
+                FindWildPidIv8(pk8, shiny, flawless, ct);
             }
 
             return;
@@ -380,7 +420,7 @@ public sealed class LegalizationService : ILegalizationService
         // Gen 3-5: PID↔IV↔Nature correlation via LCRNG.
         if (enc.Generation is 3 or 4 or 5 && enc is not MysteryGift && enc is not IEncounterEgg)
         {
-            ApplyClassicPidIv(pk, enc, set);
+            ApplyClassicPidIv(pk, enc, set, ct);
         }
     }
 
@@ -391,7 +431,8 @@ public sealed class LegalizationService : ILegalizationService
         PKM pk,
         IEncounterable enc,
         ShowdownSet set,
-        EncounterCriteria criteria)
+        EncounterCriteria criteria,
+        CancellationToken ct)
     {
         if (pk is not PK9 pk9)
         {
@@ -401,6 +442,11 @@ public sealed class LegalizationService : ILegalizationService
         // Try up to 15,000 seeds to find one that satisfies the criteria.
         for (var i = 0; i < 15_000; i++)
         {
+            if ((i & 0x3F) == 0)
+            {
+                ct.ThrowIfCancellationRequested();
+            }
+
             var seed = (ulong)Random.Shared.NextInt64();
             switch (enc)
             {
@@ -464,7 +510,7 @@ public sealed class LegalizationService : ILegalizationService
     /// The entire EC→PID→IV→Height→Weight sequence must derive from the same original seed
     /// to satisfy the overworld correlation legality checks.
     /// </summary>
-    private static void FindWildPidIv8(PK8 pk, Shiny shiny, int flawless)
+    private static void FindWildPidIv8(PK8 pk, Shiny shiny, int flawless, CancellationToken ct)
     {
         static bool MatchesShinyConstraint(Shiny s, uint xor) => s switch
         {
@@ -479,8 +525,14 @@ public sealed class LegalizationService : ILegalizationService
         uint matchedSeed;
         uint matchedEc;
         uint matchedPid;
+        var iter = 0;
         while (true)
         {
+            if ((iter++ & 0xFF) == 0)
+            {
+                ct.ThrowIfCancellationRequested();
+            }
+
             var seed = (uint)Random.Shared.Next();
             var rng = new Xoroshiro128Plus(seed);
 
@@ -548,7 +600,7 @@ public sealed class LegalizationService : ILegalizationService
     /// then derives IVs from the same RNG sequence.
     /// Uses the same approach as PidEcDialog.GenerateWithMethod.
     /// </summary>
-    private static void ApplyClassicPidIv(PKM pk, IEncounterable enc, ShowdownSet set)
+    private static void ApplyClassicPidIv(PKM pk, IEncounterable enc, ShowdownSet set, CancellationToken ct)
     {
         // Gen 5 PID is not RNG-correlated.
         if (enc.Generation == 5)
@@ -569,6 +621,11 @@ public sealed class LegalizationService : ILegalizationService
         const int maxAttempts = 1_000_000;
         for (var count = 0; count < maxAttempts; count++)
         {
+            if ((count & 0xFFF) == 0)
+            {
+                ct.ThrowIfCancellationRequested();
+            }
+
             var seed = (uint)Random.Shared.Next();
             var pid = ClassicEraRNG.GetSequentialPID(ref seed);
 
