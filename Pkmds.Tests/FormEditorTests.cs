@@ -111,8 +111,7 @@ public class FormEditorTests
     {
         var pk = new PK6
         {
-            Species = (ushort)Species.Vivillon,
-            Form = 99 // out of range
+            Species = (ushort)Species.Vivillon, Form = 99 // out of range
         };
 
         var la = new LegalityAnalysis(pk);

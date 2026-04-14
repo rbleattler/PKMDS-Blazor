@@ -29,43 +29,43 @@
                                     Elevation="0"
                                     Style="background: transparent;">
                         <tbody>
+                        <tr>
+                            <td><strong>Save Type</strong></td>
+                            <td>@SaveFile.GetType().Name</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Generation</strong></td>
+                            <td>@SaveFile.Generation</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Game</strong></td>
+                            <td>@SaveFileNameDisplay.FriendlyGameName(SaveFile.Version)</td>
+                        </tr>
+                        @if (RevisionString is not null)
+                        {
                             <tr>
-                                <td><strong>Save Type</strong></td>
-                                <td>@SaveFile.GetType().Name</td>
+                                <td><strong>Revision</strong></td>
+                                <td>@RevisionString</td>
                             </tr>
+                        }
+                        <tr>
+                            <td><strong>File Size</strong></td>
+                            <td>@FormatSize(FileSize)</td>
+                        </tr>
+                        @if (SaveFile.Metadata.HasHeader)
+                        {
                             <tr>
-                                <td><strong>Generation</strong></td>
-                                <td>@SaveFile.Generation</td>
+                                <td><strong>Header</strong></td>
+                                <td>Present</td>
                             </tr>
+                        }
+                        @if (SaveFile.Metadata.HasFooter)
+                        {
                             <tr>
-                                <td><strong>Game</strong></td>
-                                <td>@SaveFileNameDisplay.FriendlyGameName(SaveFile.Version)</td>
+                                <td><strong>Footer</strong></td>
+                                <td>Present</td>
                             </tr>
-                            @if (RevisionString is not null)
-                            {
-                                <tr>
-                                    <td><strong>Revision</strong></td>
-                                    <td>@RevisionString</td>
-                                </tr>
-                            }
-                            <tr>
-                                <td><strong>File Size</strong></td>
-                                <td>@FormatSize(FileSize)</td>
-                            </tr>
-                            @if (SaveFile.Metadata.HasHeader)
-                            {
-                                <tr>
-                                    <td><strong>Header</strong></td>
-                                    <td>Present</td>
-                                </tr>
-                            }
-                            @if (SaveFile.Metadata.HasFooter)
-                            {
-                                <tr>
-                                    <td><strong>Footer</strong></td>
-                                    <td>Present</td>
-                                </tr>
-                            }
+                        }
                         </tbody>
                     </MudSimpleTable>
                 </MudStack>
@@ -78,11 +78,15 @@
                              Color="@Color.Primary">
                         Checksum Status
                     </MudText>
-                    <MudAlert Severity="@(SaveFile.ChecksumsValid ? Severity.Success : Severity.Error)"
+                    <MudAlert Severity="@(SaveFile.ChecksumsValid
+                                            ? Severity.Success
+                                            : Severity.Error)"
                               Variant="@Variant.Outlined"
                               Dense
                               NoIcon="false">
-                        @(SaveFile.ChecksumsValid ? "All checksums are valid." : "One or more checksums are invalid.")
+                        @(SaveFile.ChecksumsValid
+                            ? "All checksums are valid."
+                            : "One or more checksums are invalid.")
                     </MudAlert>
                     @if (!string.IsNullOrWhiteSpace(SaveFile.ChecksumInfo))
                     {
@@ -104,56 +108,56 @@
                                     Elevation="0"
                                     Style="background: transparent;">
                         <tbody>
-                            <tr>
-                                <td><strong>Format Encryption</strong></td>
-                                <td>@GetEncryptionDescription()</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Exportable</strong></td>
-                                <td>
-                                    @if (SaveFile.State.Exportable)
-                                    {
-                                        <MudChip T="@string"
-                                                 Size="@Size.Small"
-                                                 Color="@Color.Success"
-                                                 Variant="@Variant.Outlined">
-                                            Yes
-                                        </MudChip>
-                                    }
-                                    else
-                                    {
-                                        <MudChip T="@string"
-                                                 Size="@Size.Small"
-                                                 Color="@Color.Warning"
-                                                 Variant="@Variant.Outlined">
-                                            No (blank save)
-                                        </MudChip>
-                                    }
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><strong>Modified</strong></td>
-                                <td>
-                                    @if (SaveFile.State.Edited)
-                                    {
-                                        <MudChip T="@string"
-                                                 Size="@Size.Small"
-                                                 Color="@Color.Info"
-                                                 Variant="@Variant.Outlined">
-                                            Yes
-                                        </MudChip>
-                                    }
-                                    else
-                                    {
-                                        <MudChip T="@string"
-                                                 Size="@Size.Small"
-                                                 Color="@Color.Default"
-                                                 Variant="@Variant.Outlined">
-                                            No
-                                        </MudChip>
-                                    }
-                                </td>
-                            </tr>
+                        <tr>
+                            <td><strong>Format Encryption</strong></td>
+                            <td>@GetEncryptionDescription()</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Exportable</strong></td>
+                            <td>
+                                @if (SaveFile.State.Exportable)
+                                {
+                                    <MudChip T="@string"
+                                             Size="@Size.Small"
+                                             Color="@Color.Success"
+                                             Variant="@Variant.Outlined">
+                                        Yes
+                                    </MudChip>
+                                }
+                                else
+                                {
+                                    <MudChip T="@string"
+                                             Size="@Size.Small"
+                                             Color="@Color.Warning"
+                                             Variant="@Variant.Outlined">
+                                        No (blank save)
+                                    </MudChip>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Modified</strong></td>
+                            <td>
+                                @if (SaveFile.State.Edited)
+                                {
+                                    <MudChip T="@string"
+                                             Size="@Size.Small"
+                                             Color="@Color.Info"
+                                             Variant="@Variant.Outlined">
+                                        Yes
+                                    </MudChip>
+                                }
+                                else
+                                {
+                                    <MudChip T="@string"
+                                             Size="@Size.Small"
+                                             Color="@Color.Default"
+                                             Variant="@Variant.Outlined">
+                                        No
+                                    </MudChip>
+                                }
+                            </td>
+                        </tr>
                         </tbody>
                     </MudSimpleTable>
                 </MudStack>
@@ -171,32 +175,32 @@
                                     Elevation="0"
                                     Style="background: transparent;">
                         <tbody>
-                            @if (SaveFile.HasBox)
-                            {
-                                <tr>
-                                    <td><strong>Boxes</strong></td>
-                                    <td>@SaveFile.BoxCount (@SaveFile.BoxSlotCount slots each)</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Total Box Slots</strong></td>
-                                    <td>@SaveFile.SlotCount</td>
-                                </tr>
-                            }
+                        @if (SaveFile.HasBox)
+                        {
                             <tr>
-                                <td><strong>Party</strong></td>
-                                <td>@SaveFile.PartyCount / 6</td>
+                                <td><strong>Boxes</strong></td>
+                                <td>@SaveFile.BoxCount (@SaveFile.BoxSlotCount slots each)</td>
                             </tr>
-                            @if (SaveFile.HasPokeDex)
-                            {
-                                <tr>
-                                    <td><strong>Seen</strong></td>
-                                    <td>@SaveFile.SeenCount</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Caught</strong></td>
-                                    <td>@SaveFile.CaughtCount</td>
-                                </tr>
-                            }
+                            <tr>
+                                <td><strong>Total Box Slots</strong></td>
+                                <td>@SaveFile.SlotCount</td>
+                            </tr>
+                        }
+                        <tr>
+                            <td><strong>Party</strong></td>
+                            <td>@SaveFile.PartyCount / 6</td>
+                        </tr>
+                        @if (SaveFile.HasPokeDex)
+                        {
+                            <tr>
+                                <td><strong>Seen</strong></td>
+                                <td>@SaveFile.SeenCount</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Caught</strong></td>
+                                <td>@SaveFile.CaughtCount</td>
+                            </tr>
+                        }
                         </tbody>
                     </MudSimpleTable>
                 </MudStack>

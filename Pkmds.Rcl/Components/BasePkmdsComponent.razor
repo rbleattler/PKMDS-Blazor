@@ -2,7 +2,9 @@
     protected const string ColumnClass = "d-flex align-center justify-center";
 
     private static string GetTypeName(byte type) =>
-        type < GameInfo.Strings.Types.Count ? GameInfo.Strings.Types[type] : "???";
+        type < GameInfo.Strings.Types.Count
+            ? GameInfo.Strings.Types[type]
+            : "???";
 
     private static RenderFragment TypeSummary(byte type1, byte type2) =>
         @<MudStack Row

@@ -47,7 +47,7 @@ public static partial class ImageHelper
                 _ when (condition & StatusCondition.Burn) != 0 => StatusKind.Burn,
                 _ when (condition & StatusCondition.Freeze) != 0 => StatusKind.Freeze,
                 _ when (condition & StatusCondition.Paralysis) != 0 => StatusKind.Paralysis,
-                _ => StatusKind.None,
+                _ => StatusKind.None
             };
         }
 
@@ -59,7 +59,7 @@ public static partial class ImageHelper
             StatusType.Burn => StatusKind.Burn,
             StatusType.Freeze => StatusKind.Freeze,
             StatusType.Paralysis => StatusKind.Paralysis,
-            _ => StatusKind.None,
+            _ => StatusKind.None
         };
     }
 
@@ -73,7 +73,7 @@ public static partial class ImageHelper
         StatusKind.Burn => GetBurnStatusSpriteFileName(),
         StatusKind.Freeze => GetFrostbiteStatusSpriteFileName(),
         StatusKind.Paralysis => GetParalysisStatusSpriteFileName(),
-        _ => null,
+        _ => null
     };
 
     public static string? GetStatusOverlaySpriteFileName(PKM? pokemon)
@@ -101,5 +101,5 @@ public enum StatusKind
     Toxic,
     Burn,
     Freeze,
-    Paralysis,
+    Paralysis
 }

@@ -167,7 +167,9 @@ public partial class PokemonSlotComponent : IDisposable
         }
 
         var hasFishy = la.Results.Any(r => r.Judgement == PKHeX.Core.Severity.Fishy);
-        legalityStatus = hasFishy ? LegalityStatus.Fishy : LegalityStatus.Legal;
+        legalityStatus = hasFishy
+            ? LegalityStatus.Fishy
+            : LegalityStatus.Legal;
     }
 
     private string GetPokemonTitle() => Pokemon is { Species: > 0 }
@@ -190,16 +192,14 @@ public partial class PokemonSlotComponent : IDisposable
     /// the slot, HaX mode is on, or the user has disabled the indicator for this status
     /// via settings.
     /// </returns>
-    private LegalityStatus? GetLegalityStatus()
-    {
-        return legalityStatus switch
+    private LegalityStatus? GetLegalityStatus() =>
+        legalityStatus switch
         {
             LegalityStatus.Legal when AppState.ShowLegalIndicator => LegalityStatus.Legal,
             LegalityStatus.Fishy when AppState.ShowFishyIndicator => LegalityStatus.Fishy,
             LegalityStatus.Illegal when AppState.ShowIllegalIndicator => LegalityStatus.Illegal,
             _ => null
         };
-    }
 
     private string? GetStatusOverlaySpriteFileName() =>
         ImageHelper.GetStatusOverlaySpriteFileName(Pokemon);

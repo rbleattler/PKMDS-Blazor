@@ -12,7 +12,7 @@ public enum LegalizationStatus
     Failed,
 
     /// <summary>The legalization attempt exceeded the time limit.</summary>
-    Timeout,
+    Timeout
 }
 
 /// <summary>
@@ -20,7 +20,10 @@ public enum LegalizationStatus
 /// </summary>
 /// <param name="Pokemon">The resulting Pokémon (legal on Success, best-effort otherwise).</param>
 /// <param name="Status">Whether the attempt succeeded, failed, or timed out.</param>
-/// <param name="FailureReason">Human-readable explanation when <see cref="Status"/> is not <see cref="LegalizationStatus.Success"/>.</param>
+/// <param name="FailureReason">
+/// Human-readable explanation when <see cref="Status" /> is not
+/// <see cref="LegalizationStatus.Success" />.
+/// </param>
 public record LegalizationOutcome(
     PKM Pokemon,
     LegalizationStatus Status,

@@ -22,10 +22,10 @@ function openDb() {
 
             // v1: initial schema
             if (oldVersion < 1) {
-                const store = db.createObjectStore(STORE, { keyPath: "id", autoIncrement: true });
-                store.createIndex("species", "meta.species", { unique: false });
-                store.createIndex("isShiny", "meta.isShiny", { unique: false });
-                store.createIndex("tag", "meta.tag", { unique: false });
+                const store = db.createObjectStore(STORE, {keyPath: "id", autoIncrement: true});
+                store.createIndex("species", "meta.species", {unique: false});
+                store.createIndex("isShiny", "meta.isShiny", {unique: false});
+                store.createIndex("tag", "meta.tag", {unique: false});
             }
 
             // Future versions: add migration steps here, e.g.:
@@ -36,7 +36,9 @@ function openDb() {
             const db = event.target.result;
 
             // Reset when the DB is closed externally (e.g., browser clears storage).
-            db.onclose = () => { _dbPromise = null; };
+            db.onclose = () => {
+                _dbPromise = null;
+            };
 
             // Allow other tabs to upgrade the schema without being blocked by
             // this open connection.
@@ -63,11 +65,13 @@ export async function addPokemon(bytesBase64, meta) {
         const tx = db.transaction(STORE, "readwrite");
         const store = tx.objectStore(STORE);
         const addedAt = new Date().toISOString();
-        const request = store.add({ bytesBase64, meta, addedAt });
+        const request = store.add({bytesBase64, meta, addedAt});
         let newId;
         // Capture the auto-assigned ID from the request, but resolve only after
         // the transaction commits so callers observe durable state.
-        request.onsuccess = (event) => { newId = event.target.result; };
+        request.onsuccess = (event) => {
+            newId = event.target.result;
+        };
         tx.oncomplete = () => resolve(newId);
         tx.onerror = (event) => reject(event.target.error);
         tx.onabort = (event) => reject(event.target.error ?? new Error("Transaction aborted"));
@@ -82,8 +86,8 @@ export async function addRange(entries) {
         const tx = db.transaction(STORE, "readwrite");
         const store = tx.objectStore(STORE);
         const addedAt = new Date().toISOString();
-        for (const { bytesBase64, meta } of entries) {
-            store.add({ bytesBase64, meta, addedAt });
+        for (const {bytesBase64, meta} of entries) {
+            store.add({bytesBase64, meta, addedAt});
         }
         tx.oncomplete = () => resolve(entries.length);
         tx.onerror = (event) => reject(event.target.error);
@@ -174,11 +178,11 @@ export async function importAll(jsonBytes) {
             // Normalize addedAt to an ISO string — a non-string value (e.g. a number
             // from an older or hand-edited export) would survive isValidEntry but
             // then fail RawEntry.AddedAt deserialization in C#, preventing bank load.
-            const { id: _id, addedAt: rawAddedAt, ...rest } = entry;
+            const {id: _id, addedAt: rawAddedAt, ...rest} = entry;
             const addedAt = (typeof rawAddedAt === "string" && rawAddedAt.trim() !== "")
                 ? rawAddedAt
                 : new Date().toISOString();
-            store.add({ ...rest, addedAt });
+            store.add({...rest, addedAt});
         }
 
         tx.oncomplete = () => resolve(valid.length);

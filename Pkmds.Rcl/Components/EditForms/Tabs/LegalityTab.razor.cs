@@ -1,11 +1,11 @@
-using Pkmds.Rcl.Models;
-
 using PKHexSeverity = PKHeX.Core.Severity;
 
 namespace Pkmds.Rcl.Components.EditForms.Tabs;
 
 public partial class LegalityTab : IDisposable
 {
+    private string? legalizationProgress;
+
     [Parameter]
     [EditorRequired]
     public PKM? Pokemon { get; set; }
@@ -22,8 +22,6 @@ public partial class LegalityTab : IDisposable
 
     private bool IsLegalizing { get; set; }
 
-    private string? legalizationProgress;
-
     // Moves are validated in la.Info.Moves / la.Info.Relearn (MoveResult[]), not in la.Results.
     // A legal Pokémon must have all of those valid in addition to all CheckResults being valid.
     private bool IsLegal => Analysis is { } la
@@ -37,7 +35,7 @@ public partial class LegalityTab : IDisposable
     // matching what the Legality Report tab reports.
     private bool IsFishy => IsLegal
                             && Analysis is { } la
-                            && la.Results.Any(r => r.Judgement == PKHeX.Core.Severity.Fishy);
+                            && la.Results.Any(r => r.Judgement == PKHexSeverity.Fishy);
 
     private bool HasRibbonIssues => Analysis is { } la &&
                                     la.Results.Any(r => r is
@@ -52,14 +50,14 @@ public partial class LegalityTab : IDisposable
     private bool HasRelearnMoveIssues => Analysis is { } la &&
                                          (!MoveResult.AllValid(la.Info.Relearn) ||
                                           la.Results.Any(r => r is
-                                          { Valid: false, Identifier: CheckIdentifier.RelearnMove }));
+                                              { Valid: false, Identifier: CheckIdentifier.RelearnMove }));
 
     private bool HasBallIssues => Analysis is { } la &&
                                   la.Results.Any(r => r is { Valid: false, Identifier: CheckIdentifier.Ball });
 
     private bool HasEncounterIssues => Analysis is { } la &&
                                        la.Results.Any(r => r is
-                                       { Valid: false, Identifier: CheckIdentifier.Encounter });
+                                           { Valid: false, Identifier: CheckIdentifier.Encounter });
 
     private bool HasMetLocationIssues => Analysis is { } la &&
                                          la.Results.Any(r => r is
@@ -82,6 +80,9 @@ public partial class LegalityTab : IDisposable
                                          (la.EncounterMatch is PCD ||
                                           Pokemon.Format >= 8 ||
                                           Pokemon.Context == EntityContext.Gen7b);
+
+    public void Dispose() =>
+        RefreshService.OnAppStateChanged -= StateHasChanged;
 
     private async Task LegalizeAsync()
     {
@@ -127,9 +128,6 @@ public partial class LegalityTab : IDisposable
             StateHasChanged();
         }
     }
-
-    public void Dispose() =>
-        RefreshService.OnAppStateChanged -= StateHasChanged;
 
     private static bool IsTrashByteResultCode(LegalityCheckResultCode code) => code is
         LegalityCheckResultCode.TrashBytesExpected or

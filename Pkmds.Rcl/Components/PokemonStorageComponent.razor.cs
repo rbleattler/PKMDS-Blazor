@@ -4,19 +4,20 @@ namespace Pkmds.Rcl.Components;
 
 public partial class PokemonStorageComponent : RefreshAwareComponent
 {
+    private int cachedBoxNumber = -1;
+
+    private int illegalCountInBox;
+
+    private bool isLegalizingBox;
+    private CancellationTokenSource? legalizeBoxCts;
+    private double legalizeBoxPercent;
+    private string legalizeBoxStatusText = string.Empty;
+
     [Inject]
     private IBrowserViewportService BrowserViewportService { get; set; } = null!;
 
     [Inject]
     private ILegalizationService LegalizationService { get; set; } = null!;
-
-    private bool isLegalizingBox;
-    private double legalizeBoxPercent;
-    private string legalizeBoxStatusText = string.Empty;
-    private CancellationTokenSource? legalizeBoxCts;
-
-    private int illegalCountInBox;
-    private int cachedBoxNumber = -1;
 
     protected override RefreshEvents SubscribeTo =>
         RefreshEvents.AppState | RefreshEvents.BoxState;
@@ -318,7 +319,9 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
         }
 
         var hasFishy = la.Results.Any(r => r.Judgement == PKHexSeverity.Fishy);
-        return hasFishy ? LegalityStatus.Fishy : LegalityStatus.Legal;
+        return hasFishy
+            ? LegalityStatus.Fishy
+            : LegalityStatus.Legal;
     }
 
     private static (string Message, Severity Severity) BuildLegalizeSummary(
@@ -349,7 +352,9 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
             parts.Add($"could not fix: {failureCount}");
         }
 
-        var detail = parts.Count > 0 ? " " + string.Join(", ", parts) + "." : string.Empty;
+        var detail = parts.Count > 0
+            ? " " + string.Join(", ", parts) + "."
+            : string.Empty;
 
         var severity = cancelled
             ? Severity.Info

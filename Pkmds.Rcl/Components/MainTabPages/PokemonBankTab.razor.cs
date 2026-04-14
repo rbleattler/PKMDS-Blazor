@@ -5,21 +5,21 @@ public partial class PokemonBankTab : RefreshAwareComponent
     private const string BackupReminderDismissedKey = "pkmds.bank.backup-reminder-dismissed";
 
     private static readonly int[] PageSizes = [20, 50, 100];
+    private readonly HashSet<long> selectedIds = [];
+    private int currentPage = 1;
 
     private List<BankEntry> entries = [];
     private List<BankEntry> filteredEntries = [];
-    private List<BankEntry> paginatedEntries = [];
-    private readonly HashSet<long> selectedIds = [];
 
     private IBrowserFile? importFile;
-    private bool isLoading = true;
     private bool isBusy;
-    private bool showBackupReminder;
-    private int currentPage = 1;
+    private bool isLoading = true;
     private int pageSize = 20;
+    private List<BankEntry> paginatedEntries = [];
 
     private string searchText = string.Empty;
     private bool shinyOnly;
+    private bool showBackupReminder;
 
     private int TotalPages => Math.Max(1, (int)Math.Ceiling((double)filteredEntries.Count / pageSize));
 
@@ -193,14 +193,13 @@ public partial class PokemonBankTab : RefreshAwareComponent
 
     private async Task OnImportFileAsync(IBrowserFile file)
     {
-
         isBusy = true;
         StateHasChanged();
 
         try
         {
             using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
-            using var ms = new System.IO.MemoryStream();
+            using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
             var data = ms.ToArray();
 
@@ -301,7 +300,9 @@ public partial class PokemonBankTab : RefreshAwareComponent
         var (success, message) = TrySendToSaveCore(entry, saveFile);
 
         isBusy = false;
-        Snackbar.Add(message, success ? Severity.Success : Severity.Warning);
+        Snackbar.Add(message, success
+            ? Severity.Success
+            : Severity.Warning);
         StateHasChanged();
     }
 
@@ -371,7 +372,7 @@ public partial class PokemonBankTab : RefreshAwareComponent
         await ReloadAsync();
 
         isBusy = false;
-        Snackbar.Add($"{entry.SpeciesName} removed from bank.", Severity.Normal);
+        Snackbar.Add($"{entry.SpeciesName} removed from bank.");
     }
 
     private async Task DeleteSelectedAsync()
@@ -404,6 +405,6 @@ public partial class PokemonBankTab : RefreshAwareComponent
         await ReloadAsync();
 
         isBusy = false;
-        Snackbar.Add("Selected Pokémon removed from bank.", Severity.Normal);
+        Snackbar.Add("Selected Pokémon removed from bank.");
     }
 }

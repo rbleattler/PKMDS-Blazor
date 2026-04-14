@@ -54,7 +54,7 @@ public sealed class BatchEditorService(
                     select $"{cmd.PropertyName}: {before} → {after}")
                 .ToList();
 
-            results.Add(new BatchEditorPreviewEntry { SpeciesName = GetSpeciesName(pkm), Location = location, Changes = changes, });
+            results.Add(new BatchEditorPreviewEntry { SpeciesName = GetSpeciesName(pkm), Location = location, Changes = changes });
         }
 
         return results;

@@ -2,25 +2,23 @@ namespace Pkmds.Rcl.Components.Dialogs;
 
 public partial class ShowdownImportDialog
 {
+    private string? fetchError;
+    private bool importToParty;
+
+    private string inputText = string.Empty;
+    private bool isFetching;
+    private List<ShowdownSet> parsedSets = [];
+    private string? pasteInfo;
+
     [CascadingParameter]
     private IMudDialogInstance? MudDialog { get; set; }
 
     [Inject]
     private HttpClient Http { get; set; } = null!;
 
-    private string inputText = string.Empty;
-    private bool isFetching;
-    private string? fetchError;
-    private string? pasteInfo;
-    private List<ShowdownSet> parsedSets = [];
-    private bool importToParty;
-
     private bool IsUrl => PokepasteTeam.IsURL(inputText, out _);
 
-    private void ParseText()
-    {
-        parsedSets = [.. AppService.ParseShowdownText(inputText)];
-    }
+    private void ParseText() => parsedSets = [.. AppService.ParseShowdownText(inputText)];
 
     private async Task FetchUrlAsync()
     {
@@ -79,7 +77,9 @@ public partial class ShowdownImportDialog
             parts.Add($"Author: {response.Author}");
         }
 
-        return parts.Count > 0 ? string.Join(" | ", parts) : null;
+        return parts.Count > 0
+            ? string.Join(" | ", parts)
+            : null;
     }
 
     private string GetSetSummary(ShowdownSet set)
@@ -112,7 +112,7 @@ public partial class ShowdownImportDialog
 
     private static string GetWarnings(ShowdownSet set)
     {
-        var localization = BattleTemplateParseErrorLocalization.Get(GameLanguage.DefaultLanguage);
+        var localization = BattleTemplateParseErrorLocalization.Get();
         return string.Join("\n", set.InvalidLines.Select(e => e.Humanize(localization)));
     }
 
@@ -217,7 +217,9 @@ public partial class ShowdownImportDialog
             return;
         }
 
-        var severity = failed == 0 ? Severity.Success : Severity.Warning;
+        var severity = failed == 0
+            ? Severity.Success
+            : Severity.Warning;
         var message = failed == 0
             ? $"Imported {imported} Pokémon."
             : $"Imported {imported} Pokémon. {failed} could not be placed.";

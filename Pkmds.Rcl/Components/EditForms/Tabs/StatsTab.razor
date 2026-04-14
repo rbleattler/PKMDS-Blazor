@@ -672,12 +672,15 @@
 
     @if (IsPartyPokemon)
     {
-        <MudPaper Class="pa-4 mt-2" Elevation="1">
+        <MudPaper Class="pa-4 mt-2"
+                  Elevation="1">
             <MudText Typo="Typo.h6">Party Stats</MudText>
 
             <MudGrid Class="mt-2">
                 <MudItem xs="6">
-                    <MudStack Row AlignItems="@AlignItems.Center" Spacing="2">
+                    <MudStack Row
+                              AlignItems="@AlignItems.Center"
+                              Spacing="2">
                         <MudNumericField T="@int"
                                          Label="Current HP"
                                          title="Current HP"
@@ -686,7 +689,8 @@
                                          Max="@Pokemon.Stat_HPMax"
                                          Value="@Pokemon.Stat_HPCurrent"
                                          ValueChanged="@OnCurrentHpChanged"/>
-                        <MudText Typo="Typo.body1" Class="mt-4">
+                        <MudText Typo="Typo.body1"
+                                 Class="mt-4">
                             / @Pokemon.Stat_HPMax
                         </MudText>
                         @if (Pokemon.Stat_HPCurrent == 0)
@@ -702,7 +706,9 @@
                 </MudItem>
 
                 <MudItem xs="6">
-                    <MudStack Row AlignItems="@AlignItems.Center" Spacing="2">
+                    <MudStack Row
+                              AlignItems="@AlignItems.Center"
+                              Spacing="2">
                         @{
                             var statusSprite = GetCurrentStatusSpriteFileName();
                         }
@@ -724,7 +730,9 @@
                                 <MudSelectItem T="@int"
                                                Value="@option.Value"
                                                @key="@option.Value">
-                                    <MudStack Row AlignItems="@AlignItems.Center" Spacing="1">
+                                    <MudStack Row
+                                              AlignItems="@AlignItems.Center"
+                                              Spacing="1">
                                         @if (option.SpriteFileName is not null)
                                         {
                                             <MudImage Src="@option.SpriteFileName"
