@@ -16,12 +16,14 @@ public interface ILegalizationService
     /// <param name="sav">The save file providing trainer context.</param>
     /// <param name="progress">Optional progress reporter for UI feedback.</param>
     /// <param name="ct">Cancellation token.</param>
+    /// <param name="timeoutSeconds">Optional wall-clock cap for this call. Null uses the default.</param>
     /// <returns>A <see cref="LegalizationOutcome"/> with the result.</returns>
     Task<LegalizationOutcome> LegalizeAsync(
         PKM pk,
         SaveFile sav,
         IProgress<string>? progress = null,
-        CancellationToken ct = default);
+        CancellationToken ct = default,
+        int? timeoutSeconds = null);
 
     /// <summary>
     /// Generates a fully legal Pokémon from a Showdown set by finding the best matching
