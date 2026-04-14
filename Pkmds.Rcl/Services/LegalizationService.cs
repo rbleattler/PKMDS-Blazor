@@ -11,19 +11,20 @@ namespace Pkmds.Rcl.Services;
 /// </summary>
 public sealed class LegalizationService : ILegalizationService
 {
-    /// <summary>Maximum wall-clock time (seconds) for a single legalization attempt.</summary>
-    private const int TimeoutSeconds = 15;
+    /// <summary>Default maximum wall-clock time (seconds) for a single legalization attempt.</summary>
+    private const int DefaultTimeoutSeconds = 15;
 
     public async Task<LegalizationOutcome> LegalizeAsync(
         PKM pk,
         SaveFile sav,
         IProgress<string>? progress = null,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        int? timeoutSeconds = null)
     {
         // Build a ShowdownSet from the existing PKM so the core loop can treat both
         // "legalize existing" and "generate from set" uniformly.
         var set = new ShowdownSet(ShowdownParsing.GetShowdownText(pk));
-        return await CoreLegalizeAsync(set, pk, sav, progress, ct);
+        return await CoreLegalizeAsync(set, pk, sav, progress, ct, timeoutSeconds ?? DefaultTimeoutSeconds);
     }
 
     public async Task<LegalizationOutcome> GenerateFromSetAsync(
@@ -32,7 +33,7 @@ public sealed class LegalizationService : ILegalizationService
         IProgress<string>? progress = null,
         CancellationToken ct = default)
     {
-        return await CoreLegalizeAsync(set, template: null, sav, progress, ct);
+        return await CoreLegalizeAsync(set, template: null, sav, progress, ct, DefaultTimeoutSeconds);
     }
 
     public LegalizationOutcome GenerateFromSetSync(ShowdownSet set, SaveFile sav)
@@ -40,7 +41,7 @@ public sealed class LegalizationService : ILegalizationService
         // Synchronous path: run the core loop without yielding. Acceptable because
         // most generation completes in <100ms and the caller (ConvertShowdownSetToPkm)
         // is already synchronous.
-        return CoreLegalizeSync(set, template: null, sav);
+        return CoreLegalizeSync(set, template: null, sav, DefaultTimeoutSeconds);
     }
 
     // ──────────────────────────────────────────────────────────────────────
@@ -52,19 +53,21 @@ public sealed class LegalizationService : ILegalizationService
         PKM? template,
         SaveFile sav,
         IProgress<string>? progress,
-        CancellationToken ct)
+        CancellationToken ct,
+        int timeoutSeconds)
     {
         // In Blazor WASM, responsiveness comes from cooperative yielding inside the
         // legalization loop rather than wrapping the work in Task.Run.
-        return await RunLegalizationLoop(set, template, sav, progress, ct, async: true);
+        return await RunLegalizationLoop(set, template, sav, progress, ct, async: true, timeoutSeconds);
     }
 
     private LegalizationOutcome CoreLegalizeSync(
         ShowdownSet set,
         PKM? template,
-        SaveFile sav)
+        SaveFile sav,
+        int timeoutSeconds)
     {
-        return RunLegalizationLoop(set, template, sav, progress: null, ct: default, async: false)
+        return RunLegalizationLoop(set, template, sav, progress: null, ct: default, async: false, timeoutSeconds)
             .GetAwaiter().GetResult();
     }
 
@@ -74,7 +77,8 @@ public sealed class LegalizationService : ILegalizationService
         SaveFile sav,
         IProgress<string>? progress,
         CancellationToken ct,
-        bool @async)
+        bool @async,
+        int timeoutSeconds)
     {
         if (set.Species == 0)
         {
@@ -134,12 +138,12 @@ public sealed class LegalizationService : ILegalizationService
                     "Cancelled.");
             }
 
-            if (timer.Elapsed.TotalSeconds >= TimeoutSeconds)
+            if (timer.Elapsed.TotalSeconds >= timeoutSeconds)
             {
                 return new LegalizationOutcome(
                     bestAttempt ?? blank,
                     LegalizationStatus.Timeout,
-                    $"Timed out after {TimeoutSeconds}s ({attemptCount} encounters tried).");
+                    $"Timed out after {timeoutSeconds}s ({attemptCount} encounters tried).");
             }
 
             attemptCount++;

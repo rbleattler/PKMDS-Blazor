@@ -87,7 +87,16 @@ public partial class LegalityReportTab : RefreshAwareComponent
             LegalizationOutcome result;
             try
             {
-                result = await LegalizationService.LegalizeAsync(entry.Pokemon, saveFile, progress: null, ct);
+                // Tighter per-Pokémon timeout for batch runs than the 15s default: a
+                // hundreds-of-Pokémon sweep can't afford to spend 15s apiece, and the
+                // tighter cap also stops any one attempt from monopolising the WASM
+                // thread long enough to trip "Page Unresponsive".
+                result = await LegalizationService.LegalizeAsync(
+                    entry.Pokemon,
+                    saveFile,
+                    progress: null,
+                    ct,
+                    timeoutSeconds: 5);
             }
             catch (OperationCanceledException)
             {
