@@ -8,20 +8,26 @@
     {
         <MudStack Class="pa-2">
 
-            <MudAlert Severity="@(IsLegal
-                                    ? Severity.Success
-                                    : Severity.Error)"
-                      Icon="@(IsLegal
-                                ? Icons.Material.Filled.CheckCircle
-                                : Icons.Material.Filled.Cancel)">
-                @(IsLegal
-                    ? "This Pokémon is legal."
-                    : "This Pokémon has legality issues.")
+            <MudAlert Severity="@(IsFishy
+                                    ? Severity.Warning
+                                    : IsLegal
+                                        ? Severity.Success
+                                        : Severity.Error)"
+                      Icon="@(IsFishy
+                                ? Icons.Material.Filled.Warning
+                                : IsLegal
+                                    ? Icons.Material.Filled.CheckCircle
+                                    : Icons.Material.Filled.Cancel)">
+                @(IsFishy
+                    ? "This Pokémon is valid but has fishy details."
+                    : IsLegal
+                        ? "This Pokémon is legal."
+                        : "This Pokémon has legality issues.")
             </MudAlert>
 
             @{
                 var issues = analysis.Results
-                    .Where(r => !r.Valid)
+                    .Where(r => r.Judgement is PKHeX.Core.Severity.Invalid or PKHeX.Core.Severity.Fishy)
                     .ToList();
                 var invalidMoves = GetInvalidMoves();
                 var invalidRelearns = GetInvalidRelearnMoves();

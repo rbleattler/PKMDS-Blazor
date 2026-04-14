@@ -18,7 +18,7 @@ public partial class PokemonSlotComponent : IDisposable
     private ushort lastLoadedSpecies;
     private SpriteStyle lastLoadedSpriteStyle;
 
-    private bool? legalityValid;
+    private LegalityStatus? legalityStatus;
 
     [Parameter]
     [EditorRequired]
@@ -152,14 +152,22 @@ public partial class PokemonSlotComponent : IDisposable
     {
         if (Pokemon is not { Species: > 0 } || AppState.IsHaXEnabled)
         {
-            legalityValid = null;
+            legalityStatus = null;
             return;
         }
 
         var la = AppService.GetLegalityAnalysis(Pokemon);
-        legalityValid = la.Results.All(r => r.Valid)
-                        && MoveResult.AllValid(la.Info.Moves)
-                        && MoveResult.AllValid(la.Info.Relearn);
+        var hasInvalid = la.Results.Any(r => r.Judgement == PKHeX.Core.Severity.Invalid)
+                         || !MoveResult.AllValid(la.Info.Moves)
+                         || !MoveResult.AllValid(la.Info.Relearn);
+        if (hasInvalid)
+        {
+            legalityStatus = LegalityStatus.Illegal;
+            return;
+        }
+
+        var hasFishy = la.Results.Any(r => r.Judgement == PKHeX.Core.Severity.Fishy);
+        legalityStatus = hasFishy ? LegalityStatus.Fishy : LegalityStatus.Legal;
     }
 
     private string GetPokemonTitle() => Pokemon is { Species: > 0 }
@@ -178,10 +186,20 @@ public partial class PokemonSlotComponent : IDisposable
     };
 
     /// <returns>
-    /// <see langword="true" /> = legal, <see langword="false" /> = illegal/fishy,
-    /// <see langword="null" /> = no Pokémon in slot (skip indicator).
+    /// The tri-state legality status, or <see langword="null" /> when no Pokémon is in
+    /// the slot, HaX mode is on, or the user has disabled the indicator for this status
+    /// via settings.
     /// </returns>
-    private bool? GetLegalityValid() => legalityValid;
+    private LegalityStatus? GetLegalityStatus()
+    {
+        return legalityStatus switch
+        {
+            LegalityStatus.Legal when AppState.ShowLegalIndicator => LegalityStatus.Legal,
+            LegalityStatus.Fishy when AppState.ShowFishyIndicator => LegalityStatus.Fishy,
+            LegalityStatus.Illegal when AppState.ShowIllegalIndicator => LegalityStatus.Illegal,
+            _ => null
+        };
+    }
 
     private string? GetStatusOverlaySpriteFileName() =>
         ImageHelper.GetStatusOverlaySpriteFileName(Pokemon);

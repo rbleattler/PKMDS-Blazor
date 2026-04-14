@@ -31,6 +31,14 @@ public partial class LegalityTab : IDisposable
                             && MoveResult.AllValid(la.Info.Moves)
                             && MoveResult.AllValid(la.Info.Relearn);
 
+    // Fishy = passes LegalityAnalysis.Valid but at least one CheckResult has a Fishy
+    // judgement. CheckResult.Valid is true for Fishy, so plain IsLegal collapses it
+    // into Legal — distinguish it here so the alert can show a warning severity
+    // matching what the Legality Report tab reports.
+    private bool IsFishy => IsLegal
+                            && Analysis is { } la
+                            && la.Results.Any(r => r.Judgement == PKHeX.Core.Severity.Fishy);
+
     private bool HasRibbonIssues => Analysis is { } la &&
                                     la.Results.Any(r => r is
                                     {
