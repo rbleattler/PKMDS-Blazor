@@ -1,9 +1,19 @@
+using PKHexSeverity = PKHeX.Core.Severity;
+
 namespace Pkmds.Rcl.Components;
 
 public partial class PokemonStorageComponent : RefreshAwareComponent
 {
     [Inject]
     private IBrowserViewportService BrowserViewportService { get; set; } = null!;
+
+    [Inject]
+    private ILegalizationService LegalizationService { get; set; } = null!;
+
+    private bool isLegalizingBox;
+    private double legalizeBoxPercent;
+    private string legalizeBoxStatusText = string.Empty;
+    private CancellationTokenSource? legalizeBoxCts;
 
     private void GoToNextBox()
     {
@@ -94,6 +104,221 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
                 BackdropClick = true,
                 CloseOnEscapeKey = true
             });
+    }
+
+    private async Task LegalizeBoxAsync()
+    {
+        if (AppState.SaveFile is not { } saveFile || AppState.BoxEdit is not { } boxEdit)
+        {
+            return;
+        }
+
+        var box = boxEdit.CurrentBox;
+
+        // Collect illegal or fishy slots in this box — skip empties and already-Legal ones.
+        var targets = new List<(int Slot, PKM Pokemon)>();
+        for (var slot = 0; slot < saveFile.BoxSlotCount; slot++)
+        {
+            var pkm = saveFile.GetBoxSlotAtIndex(box, slot);
+            if (pkm is not { Species: > 0 })
+            {
+                continue;
+            }
+
+            var la = AppService.GetLegalityAnalysis(pkm);
+            if (GetStatus(la) == LegalityStatus.Legal)
+            {
+                continue;
+            }
+
+            targets.Add((slot, pkm));
+        }
+
+        if (targets.Count == 0)
+        {
+            Snackbar.Add("No illegal or fishy Pokémon in this box.", Severity.Info);
+            return;
+        }
+
+        legalizeBoxCts?.Dispose();
+        legalizeBoxCts = new CancellationTokenSource();
+        var ct = legalizeBoxCts.Token;
+
+        isLegalizingBox = true;
+        legalizeBoxPercent = 0;
+        legalizeBoxStatusText = $"Legalizing 0/{targets.Count}…";
+        StateHasChanged();
+
+        await Task.Yield();
+
+        var successCount = 0;
+        var fishyCount = 0;
+        var failureCount = 0;
+        var processed = 0;
+        var cancelled = false;
+
+        for (var i = 0; i < targets.Count; i++)
+        {
+            if (ct.IsCancellationRequested)
+            {
+                cancelled = true;
+                break;
+            }
+
+            var (slot, pkm) = targets[i];
+            var speciesName = AppService.GetPokemonSpeciesName(pkm.Species) ??
+                              pkm.Species.ToString(CultureInfo.InvariantCulture);
+            legalizeBoxStatusText =
+                $"Legalizing {i + 1}/{targets.Count}: {speciesName} (Slot {slot + 1})";
+            legalizeBoxPercent = (double)i / targets.Count * 100;
+            StateHasChanged();
+
+            // Task.Delay(1), not Task.Yield(): WASM single-threaded; Yield stays on the
+            // same JS macrotask so the browser can't paint or process the Cancel click.
+            try
+            {
+                await Task.Delay(1, ct);
+            }
+            catch (OperationCanceledException)
+            {
+                cancelled = true;
+                break;
+            }
+
+            LegalizationOutcome result;
+            try
+            {
+                // Tighter per-Pokémon timeout than the default 15s so a single slow
+                // encounter search can't stall the sweep.
+                result = await LegalizationService.LegalizeAsync(
+                    pkm,
+                    saveFile,
+                    progress: null,
+                    ct,
+                    timeoutSeconds: 5);
+            }
+            catch (OperationCanceledException)
+            {
+                cancelled = true;
+                break;
+            }
+            catch
+            {
+                failureCount++;
+                processed++;
+                continue;
+            }
+
+            processed++;
+
+            if (result.Status != LegalizationStatus.Success)
+            {
+                failureCount++;
+                continue;
+            }
+
+            // EntityImportSettings.None skips UpdatePKM's "adapt as if traded in" path,
+            // which can re-break handler/memory/trainer fields on a PKM we just made legal.
+            saveFile.SetBoxSlotAtIndex(result.Pokemon, box, slot, EntityImportSettings.None);
+
+            // Re-analyse the stored bytes so the counters match what the save actually holds.
+            var storedPk = saveFile.GetBoxSlotAtIndex(box, slot);
+            var storedLa = AppService.GetLegalityAnalysis(storedPk);
+            switch (GetStatus(storedLa))
+            {
+                case LegalityStatus.Legal:
+                    successCount++;
+                    break;
+                case LegalityStatus.Fishy:
+                    fishyCount++;
+                    break;
+                default:
+                    failureCount++;
+                    break;
+            }
+        }
+
+        legalizeBoxPercent = 100;
+        StateHasChanged();
+
+        var summary = BuildLegalizeSummary(targets.Count, processed, successCount, fishyCount, failureCount, cancelled);
+        Snackbar.Add(summary.Message, summary.Severity);
+
+        isLegalizingBox = false;
+        legalizeBoxStatusText = string.Empty;
+        legalizeBoxPercent = 0;
+        legalizeBoxCts.Dispose();
+        legalizeBoxCts = null;
+
+        RefreshService.RefreshBoxState();
+    }
+
+    private void CancelLegalizeBox() => legalizeBoxCts?.Cancel();
+
+    private static LegalityStatus GetStatus(LegalityAnalysis la)
+    {
+        var hasInvalid = la.Results.Any(r => r.Judgement == PKHexSeverity.Invalid)
+                         || !MoveResult.AllValid(la.Info.Moves)
+                         || !MoveResult.AllValid(la.Info.Relearn);
+
+        if (hasInvalid)
+        {
+            return LegalityStatus.Illegal;
+        }
+
+        var hasFishy = la.Results.Any(r => r.Judgement == PKHexSeverity.Fishy);
+        return hasFishy ? LegalityStatus.Fishy : LegalityStatus.Legal;
+    }
+
+    private static (string Message, Severity Severity) BuildLegalizeSummary(
+        int targetCount,
+        int processed,
+        int successCount,
+        int fishyCount,
+        int failureCount,
+        bool cancelled)
+    {
+        var prefix = cancelled
+            ? $"Legalization cancelled ({processed}/{targetCount} processed)."
+            : $"Processed {targetCount} Pokémon.";
+
+        var parts = new List<string>();
+        if (successCount > 0)
+        {
+            parts.Add($"now Legal: {successCount}");
+        }
+
+        if (fishyCount > 0)
+        {
+            parts.Add($"still Fishy: {fishyCount}");
+        }
+
+        if (failureCount > 0)
+        {
+            parts.Add($"could not fix: {failureCount}");
+        }
+
+        var detail = parts.Count > 0 ? " " + string.Join(", ", parts) + "." : string.Empty;
+
+        var severity = cancelled
+            ? Severity.Info
+            : failureCount == 0 && fishyCount == 0
+                ? Severity.Success
+                : Severity.Warning;
+
+        return (prefix + detail, severity);
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            legalizeBoxCts?.Cancel();
+            legalizeBoxCts?.Dispose();
+            legalizeBoxCts = null;
+        }
+
+        base.Dispose(disposing);
     }
 
     private void TogglePinCurrentBox()
