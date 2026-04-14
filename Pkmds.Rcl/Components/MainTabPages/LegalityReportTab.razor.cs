@@ -70,7 +70,19 @@ public partial class LegalityReportTab : RefreshAwareComponent
             legalizationStatusText = $"Legalizing {i + 1}/{targets.Count}: {entry.SpeciesName} ({entry.Location})";
             legalizationPercent = (double)i / targets.Count * 100;
             StateHasChanged();
-            await Task.Yield();
+            // Task.Delay(1) rather than Task.Yield(): in Blazor WASM, Yield stays on the
+            // same JS macrotask and the browser never paints. Delay(1) uses setTimeout and
+            // actually releases the main thread so the UI can render and process clicks
+            // (including the Cancel button).
+            try
+            {
+                await Task.Delay(1, ct);
+            }
+            catch (OperationCanceledException)
+            {
+                cancelled = true;
+                break;
+            }
 
             LegalizationOutcome result;
             try

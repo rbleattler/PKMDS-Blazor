@@ -153,9 +153,12 @@ public sealed class LegalizationService : ILegalizationService
             progress?.Report($"Trying encounter {attemptCount}: {enc.GetType().Name}...");
 
             // Yield to the browser event loop every encounter attempt (each is expensive).
+            // In Blazor WASM, Task.Yield() re-queues on the same JS macrotask without giving
+            // the browser a chance to render or process input — use Task.Delay(1) instead,
+            // which schedules via setTimeout and actually releases the main thread.
             if (@async)
             {
-                await Task.Yield();
+                await Task.Delay(1, ct);
             }
 
             try
