@@ -64,6 +64,19 @@ public partial class TradePane : RefreshAwareComponent
     // (e.g. Japanese names for a JP Blue save when the user's app is English).
     private static GameStrings AppStrings => GameInfo.GetStrings(GameInfo.CurrentLanguage);
 
+    private static int GetBoxPokemonCount(SaveFile saveFile, int boxNumber)
+    {
+        var count = 0;
+        for (var i = 0; i < saveFile.BoxSlotCount; i++)
+        {
+            if (saveFile.GetBoxSlotAtIndex(boxNumber, i) is { Species: > 0 })
+            {
+                count++;
+            }
+        }
+        return count;
+    }
+
     internal PKM? SelectedPokemon
     {
         get

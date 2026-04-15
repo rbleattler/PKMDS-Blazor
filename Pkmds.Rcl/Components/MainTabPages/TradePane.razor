@@ -27,22 +27,38 @@
         @if (saveFile.BoxCount > 0)
         {
             var currentBox = SelectedBox ?? saveFile.CurrentBox;
-            <MudSelect T="@int"
-                       Value="@currentBox"
-                       ValueChanged="@SelectBox"
-                       Dense>
-                @for (var boxId = 0; boxId < saveFile.BoxCount; boxId++)
-                {
-                    var localBoxId = boxId;
-                    var boxName = saveFile is IBoxDetailNameRead boxDetailNameRead
-                        ? boxDetailNameRead.GetBoxName(localBoxId)
-                        : string.Empty;
-                    <MudSelectItem Value="@localBoxId"
-                                   @key="@localBoxId">
-                        @($"Box {localBoxId + 1}: {boxName}")
-                    </MudSelectItem>
-                }
-            </MudSelect>
+            <div class="flex items-center gap-1">
+                <MudIconButton OnClick="@(() => SelectBox((currentBox - 1 + saveFile.BoxCount) % saveFile.BoxCount))"
+                               title="Previous Box"
+                               ButtonType="@ButtonType.Button"
+                               Icon="@Icons.Material.Filled.ArrowLeft"
+                               Variant="@Variant.Filled"
+                               Size="@Size.Small"/>
+                <div class="flex-1 min-w-0">
+                    <MudSelect T="@int"
+                               Value="@currentBox"
+                               ValueChanged="@SelectBox"
+                               Dense>
+                        @for (var boxId = 0; boxId < saveFile.BoxCount; boxId++)
+                        {
+                            var localBoxId = boxId;
+                            var boxName = saveFile is IBoxDetailNameRead boxDetailNameRead
+                                ? boxDetailNameRead.GetBoxName(localBoxId)
+                                : string.Empty;
+                            <MudSelectItem Value="@localBoxId"
+                                           @key="@localBoxId">
+                                @($"Box {localBoxId + 1}: {boxName} ({GetBoxPokemonCount(saveFile, localBoxId)}/{saveFile.BoxSlotCount})")
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+                </div>
+                <MudIconButton OnClick="@(() => SelectBox((currentBox + 1) % saveFile.BoxCount))"
+                               title="Next Box"
+                               ButtonType="@ButtonType.Button"
+                               Icon="@Icons.Material.Filled.ArrowRight"
+                               Variant="@Variant.Filled"
+                               Size="@Size.Small"/>
+            </div>
 
             <div class="@BoxGridClass(saveFile)">
                 @for (var i = 0; i < saveFile.BoxSlotCount; i++)
