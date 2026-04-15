@@ -17,6 +17,7 @@
                     : null;
                 <div class="min-w-0">
                     <TradeSlot Pokemon="@pkm"
+                               OwnerVersion="@saveFile.Version"
                                IsSelected="@(SelectedPartySlot == slotNum)"
                                OnSlotClick="@(() => SelectParty(slotNum))"/>
                 </div>
@@ -67,6 +68,7 @@
                     var pkm = saveFile.GetBoxSlotAtIndex(currentBox, slotNum);
                     <div class="min-w-0">
                         <TradeSlot Pokemon="@pkm"
+                                   OwnerVersion="@saveFile.Version"
                                    IsSelected="@(SelectedBox == currentBox && SelectedBoxSlot == slotNum)"
                                    OnSlotClick="@(() => SelectBoxSlot(currentBox, slotNum))"/>
                     </div>

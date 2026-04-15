@@ -8,7 +8,13 @@
         {
             var title = GetSpeciesTitle(Pokemon.Species);
             var isShiny = Pokemon.GetIsShinySafe();
+            var highResUrl = AppState.SpriteStyle == SpriteStyle.Game
+                ? ImageHelper.GetPokeApiVersionSpriteUrl(Pokemon.Species, Pokemon.Form,
+                    Pokemon.GetFormArgument(0), isShiny, Pokemon.Gender, OwnerVersion)
+                : ImageHelper.GetPokeApiHomeSpriteUrl(Pokemon.Species, Pokemon.Form,
+                    Pokemon.GetFormArgument(0), isShiny, Pokemon.Gender);
             <object class="pkm-sprite w-full h-auto object-contain block"
+                    style="@(highResLoaded ? "display:none" : string.Empty)"
                     type="image/png"
                     data="@ImageHelper.GetPokemonSpriteFilename(Pokemon)"
                     title="@title"
@@ -19,6 +25,17 @@
                      alt="@title"
                      draggable="false">
             </object>
+            @if (highResUrl is not null)
+            {
+                <img @key="@((Pokemon.Species, Pokemon.Form, Pokemon.GetFormArgument(0), isShiny, lastLoadedIsFemale, AppState.SpriteStyle))"
+                     class="@($"pkm-sprite-hires {GetHiResSizeClass()} {(highResLoaded ? "pkm-sprite-hires--loaded" : string.Empty)}")"
+                     src="@highResUrl"
+                     title="@title"
+                     alt="@title"
+                     draggable="false"
+                     @onload="OnHighResSpriteLoaded"
+                     @onerror="OnHighResSpriteError"/>
+            }
 
             @if (isShiny)
             {

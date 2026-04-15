@@ -2,6 +2,21 @@ namespace Pkmds.Rcl.Components.MainTabPages;
 
 public partial class TradeSlot : RefreshAwareComponent
 {
+    // Tracks which sprite combos have loaded high-res in this session to avoid re-flashing
+    // the bundled fallback when re-rendering. Shared with PokemonSlotComponent's tracking semantics
+    // but kept independent so a separate (species, ..., style) can be cached without stepping on it.
+    private static readonly
+        HashSet<(ushort Species, byte Form, uint FormArg, bool IsShiny, bool IsFemale, SpriteStyle Style)>
+        HighResLoadedSpecies = [];
+
+    private bool highResLoaded;
+    private byte lastLoadedForm;
+    private uint lastLoadedFormArg;
+    private bool lastLoadedIsFemale;
+    private bool lastLoadedIsShiny;
+    private ushort lastLoadedSpecies;
+    private SpriteStyle lastLoadedSpriteStyle;
+
     private LegalityStatus? legalityStatus;
 
     [Parameter]
@@ -13,6 +28,12 @@ public partial class TradeSlot : RefreshAwareComponent
     [Parameter]
     public EventCallback OnSlotClick { get; set; }
 
+    // Version of the save file owning this slot — Game-style high-res sprites are version-specific
+    // (e.g. RB vs YW Gen 1 art) so each pane passes its own save's Version instead of piggybacking
+    // on AppState.SaveFile which always points at Save A.
+    [Parameter]
+    public GameVersion OwnerVersion { get; set; } = GameVersion.Any;
+
     // Resolve a species name via the full per-language table (GameInfo.GetStrings),
     // bypassing GameInfo.FilteredSources — the filtered source is pinned to whichever
     // save PKHeX last initialized against, so Gen 5 species render blank when Save A
@@ -23,7 +44,78 @@ public partial class TradeSlot : RefreshAwareComponent
         return species < names.Length ? names[species] : "Unknown";
     }
 
-    protected override void OnParametersSet() => ComputeLegality();
+    protected override void OnParametersSet()
+    {
+        ComputeLegality();
+        UpdateSpriteState();
+    }
+
+    private void UpdateSpriteState()
+    {
+        var currentIsShiny = Pokemon?.GetIsShinySafe() ?? false;
+        var currentForm = Pokemon?.Form ?? 0;
+        var currentFormArg = Pokemon?.GetFormArgument(0) ?? 0;
+        var currentIsFemale = Pokemon is not null && ImageHelper.HasFemaleHomeSprite(Pokemon.Species, Pokemon.Gender);
+        var currentSpriteStyle = AppState.SpriteStyle;
+        if (Pokemon?.Species == lastLoadedSpecies
+            && currentForm == lastLoadedForm
+            && currentFormArg == lastLoadedFormArg
+            && currentIsShiny == lastLoadedIsShiny
+            && currentIsFemale == lastLoadedIsFemale
+            && currentSpriteStyle == lastLoadedSpriteStyle)
+        {
+            return;
+        }
+
+        lastLoadedSpecies = Pokemon?.Species ?? 0;
+        lastLoadedForm = currentForm;
+        lastLoadedFormArg = currentFormArg;
+        lastLoadedIsShiny = currentIsShiny;
+        lastLoadedIsFemale = currentIsFemale;
+        lastLoadedSpriteStyle = currentSpriteStyle;
+        highResLoaded = lastLoadedSpecies > 0
+                        && HighResLoadedSpecies.Contains((lastLoadedSpecies, lastLoadedForm, lastLoadedFormArg,
+                            lastLoadedIsShiny, lastLoadedIsFemale, lastLoadedSpriteStyle));
+    }
+
+    // Gen 1/2 sprites are 40×40 and upscale; XY/ORAS are tightly cropped 60×60 and downscale slightly.
+    private string GetHiResSizeClass()
+    {
+        if (AppState.SpriteStyle != SpriteStyle.Game)
+        {
+            return string.Empty;
+        }
+
+        return OwnerVersion switch
+        {
+            GameVersion.RD or GameVersion.GN or GameVersion.BU
+                or GameVersion.RB or GameVersion.RBY or GameVersion.YW
+                or GameVersion.GD or GameVersion.GS or GameVersion.SI or GameVersion.C
+                => "pkm-sprite-hires--lg",
+            GameVersion.X or GameVersion.Y or GameVersion.OR or GameVersion.AS
+                => "pkm-sprite-hires--sm",
+            _ => string.Empty
+        };
+    }
+
+    // ReSharper disable once UnusedMember.Local
+    private void OnHighResSpriteLoaded()
+    {
+        highResLoaded = true;
+        if (lastLoadedSpecies > 0)
+        {
+            HighResLoadedSpecies.Add((lastLoadedSpecies, lastLoadedForm, lastLoadedFormArg, lastLoadedIsShiny,
+                lastLoadedIsFemale, lastLoadedSpriteStyle));
+        }
+
+        StateHasChanged();
+    }
+
+    // ReSharper disable once UnusedMember.Local
+    private static void OnHighResSpriteError()
+    {
+        /* keep showing the bundled sprite — highResLoaded is already false */
+    }
 
     private async Task HandleClick() => await OnSlotClick.InvokeAsync();
 
