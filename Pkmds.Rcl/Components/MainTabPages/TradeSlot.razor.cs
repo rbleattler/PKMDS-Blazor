@@ -2,13 +2,8 @@ namespace Pkmds.Rcl.Components.MainTabPages;
 
 public partial class TradeSlot : RefreshAwareComponent
 {
-    // Tracks which sprite combos have loaded high-res in this session to avoid re-flashing
-    // the bundled fallback when re-rendering. Shared with PokemonSlotComponent's tracking semantics
-    // but kept independent so a separate (species, ..., style) can be cached without stepping on it.
-    private static readonly
-        HashSet<(ushort Species, byte Form, uint FormArg, bool IsShiny, bool IsFemale, SpriteStyle Style)>
-        HighResLoadedSpecies = [];
-
+    // Sprite cache is shared with PokemonSlotComponent via static helpers so the settings
+    // "Clear Sprite Cache" action (which targets PokemonSlotComponent) clears this too.
     private bool highResLoaded;
     private byte lastLoadedForm;
     private uint lastLoadedFormArg;
@@ -33,6 +28,14 @@ public partial class TradeSlot : RefreshAwareComponent
     // on AppState.SaveFile which always points at Save A.
     [Parameter]
     public GameVersion OwnerVersion { get; set; } = GameVersion.Any;
+
+    // Owning save file — used for legality analysis so Save B slots aren't adapted against
+    // AppState.SaveFile (which is always Save A).
+    [Parameter]
+    public SaveFile? OwnerSaveFile { get; set; }
+
+    [Parameter]
+    public bool IsPartySlot { get; set; }
 
     // Resolve a species name via the full per-language table (GameInfo.GetStrings),
     // bypassing GameInfo.FilteredSources — the filtered source is pinned to whichever
@@ -74,8 +77,8 @@ public partial class TradeSlot : RefreshAwareComponent
         lastLoadedIsFemale = currentIsFemale;
         lastLoadedSpriteStyle = currentSpriteStyle;
         highResLoaded = lastLoadedSpecies > 0
-                        && HighResLoadedSpecies.Contains((lastLoadedSpecies, lastLoadedForm, lastLoadedFormArg,
-                            lastLoadedIsShiny, lastLoadedIsFemale, lastLoadedSpriteStyle));
+                        && PokemonSlotComponent.IsHighResLoaded(lastLoadedSpecies, lastLoadedForm, lastLoadedFormArg,
+                            lastLoadedIsShiny, lastLoadedIsFemale, lastLoadedSpriteStyle);
     }
 
     // ReSharper disable once UnusedMember.Local
@@ -84,8 +87,8 @@ public partial class TradeSlot : RefreshAwareComponent
         highResLoaded = true;
         if (lastLoadedSpecies > 0)
         {
-            HighResLoadedSpecies.Add((lastLoadedSpecies, lastLoadedForm, lastLoadedFormArg, lastLoadedIsShiny,
-                lastLoadedIsFemale, lastLoadedSpriteStyle));
+            PokemonSlotComponent.MarkHighResLoaded(lastLoadedSpecies, lastLoadedForm, lastLoadedFormArg,
+                lastLoadedIsShiny, lastLoadedIsFemale, lastLoadedSpriteStyle);
         }
 
         StateHasChanged();
@@ -139,7 +142,19 @@ public partial class TradeSlot : RefreshAwareComponent
             return;
         }
 
-        var la = AppService.GetLegalityAnalysis(Pokemon);
+        // Analyse against the owning save so Save B slots aren't adapted to Save A.
+        // Mirrors AppService.GetLegalityAnalysis's adapt-on-write behaviour locally.
+        LegalityAnalysis la;
+        if (OwnerSaveFile is { } owner && Pokemon.GetType() == owner.PKMType)
+        {
+            var clone = Pokemon.Clone();
+            owner.AdaptToSaveFile(clone, IsPartySlot);
+            la = new LegalityAnalysis(clone);
+        }
+        else
+        {
+            la = new LegalityAnalysis(Pokemon);
+        }
         var hasInvalid = la.Results.Any(r => r.Judgement == PKHeX.Core.Severity.Invalid)
                          || !MoveResult.AllValid(la.Info.Moves)
                          || !MoveResult.AllValid(la.Info.Relearn);
