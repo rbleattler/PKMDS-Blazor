@@ -78,26 +78,6 @@ public partial class TradeSlot : RefreshAwareComponent
                             lastLoadedIsShiny, lastLoadedIsFemale, lastLoadedSpriteStyle));
     }
 
-    // Gen 1/2 sprites are 40×40 and upscale; XY/ORAS are tightly cropped 60×60 and downscale slightly.
-    private string GetHiResSizeClass()
-    {
-        if (AppState.SpriteStyle != SpriteStyle.Game)
-        {
-            return string.Empty;
-        }
-
-        return OwnerVersion switch
-        {
-            GameVersion.RD or GameVersion.GN or GameVersion.BU
-                or GameVersion.RB or GameVersion.RBY or GameVersion.YW
-                or GameVersion.GD or GameVersion.GS or GameVersion.SI or GameVersion.C
-                => "pkm-sprite-hires--lg",
-            GameVersion.X or GameVersion.Y or GameVersion.OR or GameVersion.AS
-                => "pkm-sprite-hires--sm",
-            _ => string.Empty
-        };
-    }
-
     // ReSharper disable once UnusedMember.Local
     private void OnHighResSpriteLoaded()
     {

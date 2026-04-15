@@ -28,7 +28,7 @@
             @if (highResUrl is not null)
             {
                 <img @key="@((Pokemon.Species, Pokemon.Form, Pokemon.GetFormArgument(0), isShiny, lastLoadedIsFemale, AppState.SpriteStyle))"
-                     class="@($"pkm-sprite-hires {GetHiResSizeClass()} {(highResLoaded ? "pkm-sprite-hires--loaded" : string.Empty)}")"
+                     class="@($"pkm-sprite-hires {(highResLoaded ? "pkm-sprite-hires--loaded" : string.Empty)}")"
                      src="@highResUrl"
                      title="@title"
                      alt="@title"
