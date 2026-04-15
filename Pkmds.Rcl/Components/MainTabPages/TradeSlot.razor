@@ -50,12 +50,10 @@
 
             @if (!AppState.IsHaXEnabled && legalityStatus is { } status && ShouldShow(status))
             {
-                <div class="legality-indicator-icon"
+                <div class="@($"legality-indicator-icon {StatusClass(status)}")"
                      title="@StatusTitle(status)">
                     <MudIcon Icon="@StatusIcon(status)"
-                             Color="@StatusColor(status)"
-                             Class="w-full h-full"
-                             Style="font-size: 16px;"/>
+                             Style="font-size: 14px; color: white;"/>
                 </div>
             }
         }

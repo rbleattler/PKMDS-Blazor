@@ -114,18 +114,21 @@ public partial class TradeSlot : RefreshAwareComponent
         _ => "Illegal"
     };
 
+    // Use solid glyphs rather than the *Circle / Cancel variants — those are drawn as
+    // cutouts and inherit the sprite behind them. The coloured disc comes from the
+    // wrapper's CSS class, so the glyph itself just needs to be a solid white symbol.
     private static string StatusIcon(LegalityStatus status) => status switch
     {
-        LegalityStatus.Legal => Icons.Material.Filled.CheckCircle,
-        LegalityStatus.Fishy => Icons.Material.Filled.Warning,
-        _ => Icons.Material.Filled.Cancel
+        LegalityStatus.Legal => Icons.Material.Filled.Check,
+        LegalityStatus.Fishy => Icons.Material.Filled.PriorityHigh,
+        _ => Icons.Material.Filled.Close
     };
 
-    private static Color StatusColor(LegalityStatus status) => status switch
+    private static string StatusClass(LegalityStatus status) => status switch
     {
-        LegalityStatus.Legal => Color.Success,
-        LegalityStatus.Fishy => Color.Warning,
-        _ => Color.Error
+        LegalityStatus.Legal => "legality-indicator-icon--legal",
+        LegalityStatus.Fishy => "legality-indicator-icon--fishy",
+        _ => "legality-indicator-icon--illegal"
     };
 
     private void ComputeLegality()
