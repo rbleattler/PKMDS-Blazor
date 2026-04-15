@@ -55,5 +55,59 @@
                 }
             </div>
         }
+
+        @if (SelectedPokemon is { Species: > 0 } selected)
+        {
+            <MudPaper Elevation="1"
+                      Class="pa-2 mt-2">
+                @{
+                    var strings = GameInfo.Strings;
+                    var speciesName = AppService.GetPokemonSpeciesName(selected.Species) ?? "Unknown";
+                    var nickname = string.IsNullOrEmpty(selected.Nickname) ? speciesName : selected.Nickname;
+                    var natureName = strings.Natures.Count > (int)selected.Nature
+                        ? strings.Natures[(int)selected.Nature]
+                        : selected.Nature.ToString();
+                    var abilityName = strings.Ability.Count > selected.Ability
+                        ? strings.Ability[selected.Ability]
+                        : selected.Ability.ToString();
+                    var heldItemName = selected.HeldItem > 0 && strings.Item.Count > selected.HeldItem
+                        ? strings.Item[selected.HeldItem]
+                        : "(none)";
+                }
+                <MudText Typo="@Typo.subtitle2">
+                    @nickname
+                    @if (!string.Equals(nickname, speciesName, StringComparison.Ordinal))
+                    {
+                        <span> (@speciesName)</span>
+                    }
+                    <span> · Lv. @selected.CurrentLevel</span>
+                    @if (selected.IsShiny)
+                    {
+                        <span> · ★</span>
+                    }
+                    @if (selected.IsEgg)
+                    {
+                        <span> · Egg</span>
+                    }
+                </MudText>
+                <MudText Typo="@Typo.body2">
+                    Nature: @natureName · Ability: @abilityName · Held: @heldItemName
+                </MudText>
+                <MudText Typo="@Typo.body2">
+                    OT: @selected.OriginalTrainerName · TID: @selected.TID16 · SID: @selected.SID16
+                </MudText>
+                <MudText Typo="@Typo.body2"
+                         Class="mt-1">
+                    Moves:
+                    @{
+                        var moves = new[] { selected.Move1, selected.Move2, selected.Move3, selected.Move4 }
+                            .Where(m => m > 0)
+                            .Select(m => strings.Move.Count > m ? strings.Move[m] : m.ToString())
+                            .ToArray();
+                    }
+                    @(moves.Length == 0 ? "(none)" : string.Join(", ", moves))
+                </MudText>
+            </MudPaper>
+        }
     </MudStack>
 }

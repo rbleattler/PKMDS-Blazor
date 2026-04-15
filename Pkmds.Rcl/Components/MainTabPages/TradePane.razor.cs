@@ -55,6 +55,29 @@ public partial class TradePane : RefreshAwareComponent
 
     private static string BoxGridClass(SaveFile saveFile) =>
         saveFile.BoxSlotCount == 20
-            ? "w-80 grid grid-cols-4 grid-rows-5 gap-1"
+            ? "grid grid-cols-4 grid-rows-5 gap-1 w-full max-w-80 mx-auto"
             : "grid grid-cols-6 gap-1 w-full aspect-[6/5] mx-auto";
+
+    internal PKM? SelectedPokemon
+    {
+        get
+        {
+            if (SaveFile is not { } sav)
+            {
+                return null;
+            }
+
+            if (SelectedPartySlot is { } partySlot && partySlot < sav.PartyCount)
+            {
+                return sav.GetPartySlotAtIndex(partySlot);
+            }
+
+            if (SelectedBox is { } boxNum && SelectedBoxSlot is { } boxSlot)
+            {
+                return sav.GetBoxSlotAtIndex(boxNum, boxSlot);
+            }
+
+            return null;
+        }
+    }
 }
