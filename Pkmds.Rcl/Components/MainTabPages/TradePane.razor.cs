@@ -55,8 +55,8 @@ public partial class TradePane : RefreshAwareComponent
 
     private static string BoxGridClass(SaveFile saveFile) =>
         saveFile.BoxSlotCount == 20
-            ? "grid grid-cols-4 grid-rows-5 gap-1 w-full max-w-80 mx-auto"
-            : "grid grid-cols-6 gap-1 w-full aspect-[6/5] mx-auto";
+            ? "grid grid-cols-4 gap-1 w-full max-w-80 mx-auto"
+            : "grid grid-cols-6 gap-1 w-full mx-auto";
 
     // Bypass GameInfo.FilteredSources (pinned to whichever save PKHeX last initialized
     // against) by going through the raw GameStrings table. Always use the app's current
