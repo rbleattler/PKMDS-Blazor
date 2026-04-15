@@ -58,12 +58,11 @@ public partial class TradePane : RefreshAwareComponent
             ? "grid grid-cols-4 grid-rows-5 gap-1 w-full max-w-80 mx-auto"
             : "grid grid-cols-6 gap-1 w-full aspect-[6/5] mx-auto";
 
-    // SaveFile.Language is -1 for Gen 1/2 (no language field); fall back to the current
-    // app language so name lookups still succeed for those saves.
-    private static GameStrings GetStringsForSave(SaveFile saveFile) =>
-        GameInfo.GetStrings(saveFile.Language >= 0
-            ? GameLanguage.LanguageCode(saveFile.Language)
-            : GameInfo.CurrentLanguage);
+    // Bypass GameInfo.FilteredSources (pinned to whichever save PKHeX last initialized
+    // against) by going through the raw GameStrings table. Always use the app's current
+    // language — we don't want info-panel labels showing in the save's *game* language
+    // (e.g. Japanese names for a JP Blue save when the user's app is English).
+    private static GameStrings AppStrings => GameInfo.GetStrings(GameInfo.CurrentLanguage);
 
     internal PKM? SelectedPokemon
     {

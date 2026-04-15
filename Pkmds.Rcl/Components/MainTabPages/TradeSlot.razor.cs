@@ -13,23 +13,13 @@ public partial class TradeSlot : RefreshAwareComponent
     [Parameter]
     public EventCallback OnSlotClick { get; set; }
 
-    [Parameter]
-    public SaveFile? OwnerSave { get; set; }
-
-    // Resolve a species name using the owner save's language, bypassing
-    // GameInfo.FilteredSources (which is pinned to whichever save PKHeX last
-    // initialized against — can't name Gen 5 species when Save A is Gen 1).
-    internal string GetSpeciesTitle(ushort species)
+    // Resolve a species name via the full per-language table (GameInfo.GetStrings),
+    // bypassing GameInfo.FilteredSources — the filtered source is pinned to whichever
+    // save PKHeX last initialized against, so Gen 5 species render blank when Save A
+    // is Gen 1. Always use the app language, not the save's game language.
+    private static string GetSpeciesTitle(ushort species)
     {
-        if (OwnerSave is null)
-        {
-            return AppService.GetPokemonSpeciesName(species) ?? "Unknown";
-        }
-
-        var lang = OwnerSave.Language >= 0
-            ? GameLanguage.LanguageCode(OwnerSave.Language)
-            : GameInfo.CurrentLanguage;
-        var names = GameInfo.GetStrings(lang).specieslist;
+        var names = GameInfo.GetStrings(GameInfo.CurrentLanguage).specieslist;
         return species < names.Length ? names[species] : "Unknown";
     }
 

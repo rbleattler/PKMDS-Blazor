@@ -17,7 +17,6 @@
                     : null;
                 <div class="min-w-0">
                     <TradeSlot Pokemon="@pkm"
-                               OwnerSave="@saveFile"
                                IsSelected="@(SelectedPartySlot == slotNum)"
                                OnSlotClick="@(() => SelectParty(slotNum))"/>
                 </div>
@@ -52,7 +51,6 @@
                     var pkm = saveFile.GetBoxSlotAtIndex(currentBox, slotNum);
                     <div class="min-w-0">
                         <TradeSlot Pokemon="@pkm"
-                                   OwnerSave="@saveFile"
                                    IsSelected="@(SelectedBox == currentBox && SelectedBoxSlot == slotNum)"
                                    OnSlotClick="@(() => SelectBoxSlot(currentBox, slotNum))"/>
                     </div>
@@ -65,14 +63,15 @@
             <MudPaper Elevation="1"
                       Class="pa-2 mt-2">
                 @{
-                    // Per-save string tables — GameInfo.Strings / FilteredSources are filtered to
-                    // whichever save PKHeX last initialized against, so a Gen 1 Save A would mask
-                    // Gen 5 species in Save B. Look up names using each save's own language.
-                    var strings = GetStringsForSave(saveFile);
+                    var strings = AppStrings;
                     var speciesName = selected.Species < strings.specieslist.Length
                         ? strings.specieslist[selected.Species]
                         : "Unknown";
-                    var nickname = string.IsNullOrEmpty(selected.Nickname) ? speciesName : selected.Nickname;
+                    // Use IsNicknamed rather than comparing strings — Gen 1/2 auto-nicknames are
+                    // stored in all-caps ("EXEGGCUTE") so a case-sensitive compare against the
+                    // mixed-case species name would wrongly treat them as custom nicknames.
+                    var hasCustomNickname = selected.IsNicknamed && !string.IsNullOrEmpty(selected.Nickname);
+                    var nickname = hasCustomNickname ? selected.Nickname : speciesName;
                     var natureIdx = (int)selected.Nature;
                     var natureName = natureIdx >= 0 && natureIdx < strings.Natures.Count
                         ? strings.Natures[natureIdx]
@@ -89,7 +88,7 @@
                 }
                 <MudText Typo="@Typo.subtitle2">
                     @nickname
-                    @if (!string.Equals(nickname, speciesName, StringComparison.Ordinal))
+                    @if (hasCustomNickname)
                     {
                         <span> (@speciesName)</span>
                     }
