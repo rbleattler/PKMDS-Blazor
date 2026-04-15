@@ -1,0 +1,61 @@
+@inherits RefreshAwareComponent
+
+<MudPaper Elevation="3"
+          @onclick="@HandleClick"
+          Class="@($"square-slot {(IsSelected ? Constants.SelectedSlotClass : string.Empty)} {ImageHelper.GetSpriteCssClass(Pokemon)}")">
+    <div class="w-full h-full aspect-square flex items-center justify-center overflow-hidden p-0 box-border border border-transparent relative">
+        @if (Pokemon is { Species: > 0 })
+        {
+            var title = GetSpeciesTitle(Pokemon.Species);
+            var isShiny = Pokemon.GetIsShinySafe();
+            var highResUrl = AppState.SpriteStyle == SpriteStyle.Game
+                ? ImageHelper.GetPokeApiVersionSpriteUrl(Pokemon.Species, Pokemon.Form,
+                    Pokemon.GetFormArgument(0), isShiny, Pokemon.Gender, OwnerVersion)
+                : ImageHelper.GetPokeApiHomeSpriteUrl(Pokemon.Species, Pokemon.Form,
+                    Pokemon.GetFormArgument(0), isShiny, Pokemon.Gender);
+            <object class="pkm-sprite w-full h-auto object-contain block"
+                    style="@(highResLoaded ? "display:none" : string.Empty)"
+                    type="image/png"
+                    data="@ImageHelper.GetPokemonSpriteFilename(Pokemon)"
+                    title="@title"
+                    draggable="false">
+                <img class="pkm-sprite w-full h-auto object-contain block"
+                     src="@ImageHelper.PokemonFallbackImageFileName"
+                     title="@title"
+                     alt="@title"
+                     draggable="false">
+            </object>
+            @if (highResUrl is not null)
+            {
+                <img @key="@((Pokemon.Species, Pokemon.Form, Pokemon.GetFormArgument(0), isShiny, lastLoadedIsFemale, AppState.SpriteStyle))"
+                     class="@($"pkm-sprite-hires {(highResLoaded ? "pkm-sprite-hires--loaded" : string.Empty)}")"
+                     src="@highResUrl"
+                     title="@title"
+                     alt="@title"
+                     draggable="false"
+                     @onload="OnHighResSpriteLoaded"
+                     @onerror="OnHighResSpriteError"/>
+            }
+
+            @if (isShiny)
+            {
+                <div class="shiny-indicator-icon"
+                     title="Shiny">
+                    <img src="@ImageHelper.GetShinyIndicatorSpriteFileName(ShinyExtensions.GetType(Pokemon) is Shiny.AlwaysSquare)"
+                         alt="Shiny"
+                         class="w-full h-full object-contain"
+                         draggable="false">
+                </div>
+            }
+
+            @if (!AppState.IsHaXEnabled && legalityStatus is { } status && ShouldShow(status))
+            {
+                <div class="@($"legality-indicator-icon {StatusClass(status)}")"
+                     title="@StatusTitle(status)">
+                    <MudIcon Icon="@StatusIcon(status)"
+                             Style="font-size: 14px; color: white;"/>
+                </div>
+            }
+        }
+    </div>
+</MudPaper>

@@ -50,7 +50,35 @@ public record AppState : IAppState
     public string? SaveFileName { get; set; }
 
     /// <inheritdoc />
+    public SaveFile? SaveFileB
+    {
+        get;
+        set
+        {
+            field = value;
+
+            BoxEditB = field is not null
+                ? new(field)
+                : null;
+
+            if (field is null)
+            {
+                SaveFileNameB = null;
+                SelectedBoxNumberB = null;
+                SelectedBoxSlotNumberB = null;
+                SelectedPartySlotNumberB = null;
+            }
+        }
+    }
+
+    /// <inheritdoc />
+    public string? SaveFileNameB { get; set; }
+
+    /// <inheritdoc />
     public BoxEdit? BoxEdit { get; private set; }
+
+    /// <inheritdoc />
+    public BoxEdit? BoxEditB { get; private set; }
 
     /// <inheritdoc />
     public int CurrentLanguageId => SaveFile?.Language ?? (int)LanguageID.English;
@@ -63,6 +91,15 @@ public record AppState : IAppState
 
     /// <inheritdoc />
     public int? SelectedPartySlotNumber { get; set; }
+
+    /// <inheritdoc />
+    public int? SelectedBoxNumberB { get; set; }
+
+    /// <inheritdoc />
+    public int? SelectedBoxSlotNumberB { get; set; }
+
+    /// <inheritdoc />
+    public int? SelectedPartySlotNumberB { get; set; }
 
     /// <inheritdoc />
     public bool ShowProgressIndicator { get; set; }

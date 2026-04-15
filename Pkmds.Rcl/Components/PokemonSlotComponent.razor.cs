@@ -50,6 +50,16 @@ public partial class PokemonSlotComponent : IDisposable
     /// <summary>Clears the session sprite cache, forcing all high-res sprites to reload.</summary>
     public static void ClearSpriteCache() => HighResLoadedSpecies.Clear();
 
+    /// <summary>Returns whether the given sprite combo has loaded high-res in this session.</summary>
+    public static bool IsHighResLoaded(ushort species, byte form, uint formArg, bool isShiny, bool isFemale,
+        SpriteStyle style) =>
+        HighResLoadedSpecies.Contains((species, form, formArg, isShiny, isFemale, style));
+
+    /// <summary>Marks the given sprite combo as high-res-loaded for this session.</summary>
+    public static void MarkHighResLoaded(ushort species, byte form, uint formArg, bool isShiny, bool isFemale,
+        SpriteStyle style) =>
+        HighResLoadedSpecies.Add((species, form, formArg, isShiny, isFemale, style));
+
     private async Task HandleClick() =>
         await OnSlotClick.InvokeAsync();
 
@@ -97,8 +107,8 @@ public partial class PokemonSlotComponent : IDisposable
         lastLoadedSpriteStyle = currentSpriteStyle;
         // If this combo has already loaded high-res in this session, skip the bundled sprite entirely.
         highResLoaded = lastLoadedSpecies > 0
-                        && HighResLoadedSpecies.Contains((lastLoadedSpecies, lastLoadedForm, lastLoadedFormArg,
-                            lastLoadedIsShiny, lastLoadedIsFemale, lastLoadedSpriteStyle));
+                        && IsHighResLoaded(lastLoadedSpecies, lastLoadedForm, lastLoadedFormArg,
+                            lastLoadedIsShiny, lastLoadedIsFemale, lastLoadedSpriteStyle);
     }
 
     // Gen I/II transparent sprites are 40×40 px — scale up to fill the slot.
@@ -128,8 +138,8 @@ public partial class PokemonSlotComponent : IDisposable
         highResLoaded = true;
         if (lastLoadedSpecies > 0)
         {
-            HighResLoadedSpecies.Add((lastLoadedSpecies, lastLoadedForm, lastLoadedFormArg, lastLoadedIsShiny,
-                lastLoadedIsFemale, lastLoadedSpriteStyle));
+            MarkHighResLoaded(lastLoadedSpecies, lastLoadedForm, lastLoadedFormArg, lastLoadedIsShiny,
+                lastLoadedIsFemale, lastLoadedSpriteStyle);
         }
 
         StateHasChanged();

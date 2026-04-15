@@ -1,0 +1,93 @@
+@inherits RefreshAwareComponent
+
+@if (AppState.SaveFile is null)
+{
+    <MudAlert Severity="@Severity.Info">
+        Load a save file first to use the Trade tab.
+    </MudAlert>
+}
+else
+{
+    <MudAlert Severity="@Severity.Info"
+              Class="mb-2">
+        This tab is read-only for now — you can view both saves side-by-side, but
+        transfers between them will arrive in a future update.
+    </MudAlert>
+
+    <MudGrid Spacing="2"
+             Justify="@Justify.FlexStart">
+
+        @* ── Slot A (read-only Phase 1) ── *@
+        <MudItem xs="12"
+                 lg="6"
+                 Style="max-width: 480px; min-width: 0;">
+            <MudPaper Elevation="0"
+                      Class="min-w-0">
+                <TradePane Title="@SlotATitle"
+                           SaveFile="@AppState.SaveFile"
+                           SelectedBox="@AppState.SelectedBoxNumber"
+                           SelectedBoxChanged="@(b => AppState.SelectedBoxNumber = b)"
+                           SelectedBoxSlot="@AppState.SelectedBoxSlotNumber"
+                           SelectedBoxSlotChanged="@(s => AppState.SelectedBoxSlotNumber = s)"
+                           SelectedPartySlot="@AppState.SelectedPartySlotNumber"
+                           SelectedPartySlotChanged="@(s => AppState.SelectedPartySlotNumber = s)"/>
+            </MudPaper>
+        </MudItem>
+
+        @* ── Slot B ── *@
+        <MudItem xs="12"
+                 lg="6"
+                 Style="max-width: 480px; min-width: 0;">
+            <MudPaper Elevation="0"
+                      Class="min-w-0">
+                @if (AppState.SaveFileB is null)
+                {
+                    <MudStack Spacing="2"
+                              AlignItems="@AlignItems.Start"
+                              Class="pa-3">
+                        <MudText Typo="@Typo.subtitle1">Second save</MudText>
+                        <MudText Typo="@Typo.body2">
+                            Load a second save file to view its party and boxes side-by-side
+                            with the first save. Phase 1 is read-only — transfers will arrive
+                            in a future update.
+                        </MudText>
+                        <MudButton Variant="@Variant.Filled"
+                                   Color="@Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.UploadFile"
+                                   OnClick="@LoadSecondarySaveAsync"
+                                   Disabled="@isLoading">
+                            Load second save
+                        </MudButton>
+                    </MudStack>
+                }
+                else
+                {
+                    <MudStack Spacing="1">
+                        <MudStack Row
+                                  AlignItems="@AlignItems.Center"
+                                  Spacing="1">
+                            <MudSpacer/>
+                            <MudIconButton Icon="@Icons.Material.Filled.SwapHoriz"
+                                           OnClick="@LoadSecondarySaveAsync"
+                                           Disabled="@isLoading"
+                                           title="Replace second save"
+                                           Size="@Size.Small"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                           OnClick="@UnloadSecondarySave"
+                                           title="Close second save"
+                                           Size="@Size.Small"/>
+                        </MudStack>
+                        <TradePane Title="@SlotBTitle"
+                                   SaveFile="@AppState.SaveFileB"
+                                   SelectedBox="@AppState.SelectedBoxNumberB"
+                                   SelectedBoxChanged="@(b => AppState.SelectedBoxNumberB = b)"
+                                   SelectedBoxSlot="@AppState.SelectedBoxSlotNumberB"
+                                   SelectedBoxSlotChanged="@(s => AppState.SelectedBoxSlotNumberB = s)"
+                                   SelectedPartySlot="@AppState.SelectedPartySlotNumberB"
+                                   SelectedPartySlotChanged="@(s => AppState.SelectedPartySlotNumberB = s)"/>
+                    </MudStack>
+                }
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}

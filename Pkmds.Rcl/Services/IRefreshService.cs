@@ -59,6 +59,18 @@ public interface IRefreshService
     void RefreshTheme(bool isDarkMode);
 
     /// <summary>
+    /// Event triggered when the OS-level dark mode preference changes. Raised by the
+    /// top-level MudThemeProvider watcher so layouts can recompute their effective theme.
+    /// </summary>
+    event Action<bool>? OnSystemThemeChanged;
+
+    /// <summary>
+    /// Broadcasts a change to the OS-level dark mode preference.
+    /// </summary>
+    /// <param name="systemIsDarkMode">True if the OS is in dark mode.</param>
+    void RefreshSystemTheme(bool systemIsDarkMode);
+
+    /// <summary>
     /// Event triggered when a component should navigate to the Party/Box tab.
     /// </summary>
     event Action? OnRequestJumpToPartyBox;

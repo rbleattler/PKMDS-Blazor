@@ -107,6 +107,12 @@ public class BoxManagementTests
         public bool ShowLegalIndicator { get; set; } = true;
         public bool ShowFishyIndicator { get; set; } = true;
         public bool ShowIllegalIndicator { get; set; } = true;
+        public SaveFile? SaveFileB { get; set; }
+        public string? SaveFileNameB { get; set; }
+        public BoxEdit? BoxEditB => null;
+        public int? SelectedBoxNumberB { get; set; }
+        public int? SelectedBoxSlotNumberB { get; set; }
+        public int? SelectedPartySlotNumberB { get; set; }
     }
 
     private class TestRefreshService : IRefreshService
@@ -125,6 +131,10 @@ public class BoxManagementTests
         {
         }
 
+        public void RefreshSystemTheme(bool systemIsDarkMode)
+        {
+        }
+
         public void ShowUpdateMessage()
         {
         }
@@ -139,6 +149,7 @@ public class BoxManagementTests
         public event Action? OnPartyStateChanged;
         public event Action? OnUpdateAvailable;
         public event Action<bool>? OnThemeChanged;
+        public event Action<bool>? OnSystemThemeChanged;
         public event Action? OnRequestJumpToPartyBox;
 #pragma warning restore CS0067
     }

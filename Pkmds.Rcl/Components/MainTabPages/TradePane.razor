@@ -1,0 +1,155 @@
+@inherits RefreshAwareComponent
+
+@if (SaveFile is { } saveFile)
+{
+    <MudStack Spacing="2"
+              Class="min-w-0">
+
+        <MudText Typo="@Typo.subtitle1">@Title</MudText>
+
+        @* Party row *@
+        <div class="grid grid-cols-6 gap-1 w-full min-w-0">
+            @for (var i = 0; i < 6; i++)
+            {
+                var slotNum = i;
+                var pkm = i < saveFile.PartyCount
+                    ? saveFile.GetPartySlotAtIndex(slotNum)
+                    : null;
+                <div class="min-w-0">
+                    <TradeSlot Pokemon="@pkm"
+                               OwnerSaveFile="@saveFile"
+                               OwnerVersion="@saveFile.Version"
+                               IsPartySlot="true"
+                               IsSelected="@(SelectedPartySlot == slotNum)"
+                               OnSlotClick="@(() => SelectParty(slotNum))"/>
+                </div>
+            }
+        </div>
+
+        @* Box selector — Let's Go saves only have a single 1000-slot storage; gate behind BoxCount > 0 *@
+        @if (saveFile.BoxCount > 0)
+        {
+            var currentBox = SelectedBox ?? saveFile.CurrentBox;
+            <div class="flex items-center gap-1">
+                <MudIconButton OnClick="@(() => SelectBox((currentBox - 1 + saveFile.BoxCount) % saveFile.BoxCount))"
+                               title="Previous Box"
+                               ButtonType="@ButtonType.Button"
+                               Icon="@Icons.Material.Filled.ArrowLeft"
+                               Variant="@Variant.Filled"
+                               Size="@Size.Small"/>
+                <div class="flex-1 min-w-0">
+                    <MudSelect T="@int"
+                               Value="@currentBox"
+                               ValueChanged="@SelectBox"
+                               Dense>
+                        @for (var boxId = 0; boxId < saveFile.BoxCount; boxId++)
+                        {
+                            var localBoxId = boxId;
+                            var boxName = saveFile is IBoxDetailNameRead boxDetailNameRead
+                                ? boxDetailNameRead.GetBoxName(localBoxId)
+                                : string.Empty;
+                            <MudSelectItem Value="@localBoxId"
+                                           @key="@localBoxId">
+                                @($"Box {localBoxId + 1}: {boxName} ({GetBoxPokemonCount(saveFile, localBoxId)}/{saveFile.BoxSlotCount})")
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+                </div>
+                <MudIconButton OnClick="@(() => SelectBox((currentBox + 1) % saveFile.BoxCount))"
+                               title="Next Box"
+                               ButtonType="@ButtonType.Button"
+                               Icon="@Icons.Material.Filled.ArrowRight"
+                               Variant="@Variant.Filled"
+                               Size="@Size.Small"/>
+            </div>
+
+            <div class="@BoxGridClass(saveFile)">
+                @for (var i = 0; i < saveFile.BoxSlotCount; i++)
+                {
+                    var slotNum = i;
+                    var pkm = saveFile.GetBoxSlotAtIndex(currentBox, slotNum);
+                    <div class="min-w-0">
+                        <TradeSlot Pokemon="@pkm"
+                                   OwnerSaveFile="@saveFile"
+                                   OwnerVersion="@saveFile.Version"
+                                   IsSelected="@(SelectedBox == currentBox && SelectedBoxSlot == slotNum)"
+                                   OnSlotClick="@(() => SelectBoxSlot(currentBox, slotNum))"/>
+                    </div>
+                }
+            </div>
+        }
+
+        @if (SelectedPokemon is { Species: > 0 } selected)
+        {
+            <MudPaper Elevation="1"
+                      Class="pa-2 mt-2">
+                @{
+                    var strings = AppStrings;
+                    var speciesName = selected.Species < strings.specieslist.Length
+                        ? strings.specieslist[selected.Species]
+                        : "Unknown";
+                    // Use IsNicknamed rather than comparing strings — Gen 1/2 auto-nicknames are
+                    // stored in all-caps ("EXEGGCUTE") so a case-sensitive compare against the
+                    // mixed-case species name would wrongly treat them as custom nicknames.
+                    var hasCustomNickname = selected.IsNicknamed && !string.IsNullOrEmpty(selected.Nickname);
+                    var nickname = hasCustomNickname ? selected.Nickname : speciesName;
+                    var natureIdx = (int)selected.Nature;
+                    var natureName = natureIdx >= 0 && natureIdx < strings.Natures.Count
+                        ? strings.Natures[natureIdx]
+                        : null;
+                    var abilityName = selected.Ability >= 0 && selected.Ability < strings.Ability.Count
+                        ? strings.Ability[selected.Ability]
+                        : null;
+                    var heldItemName = selected.HeldItem > 0 && selected.HeldItem < strings.Item.Count
+                        ? strings.Item[selected.HeldItem]
+                        : null;
+                    var hasNature = natureName is not null;
+                    var hasAbility = abilityName is not null;
+                    var hasHeldItem = heldItemName is not null;
+                }
+                <MudText Typo="@Typo.subtitle2">
+                    @nickname
+                    @if (hasCustomNickname)
+                    {
+                        <span> (@speciesName)</span>
+                    }
+                    <span> · Lv. @selected.CurrentLevel</span>
+                    @if (selected.IsShiny)
+                    {
+                        <span> · ★</span>
+                    }
+                    @if (selected.IsEgg)
+                    {
+                        <span> · Egg</span>
+                    }
+                </MudText>
+                @if (hasNature || hasAbility || hasHeldItem)
+                {
+                    <MudText Typo="@Typo.body2">
+                        @{
+                            var parts = new List<string>();
+                            if (hasNature) parts.Add($"Nature: {natureName}");
+                            if (hasAbility) parts.Add($"Ability: {abilityName}");
+                            parts.Add($"Held: {(hasHeldItem ? heldItemName : "(none)")}");
+                        }
+                        @string.Join(" · ", parts)
+                    </MudText>
+                }
+                <MudText Typo="@Typo.body2">
+                    OT: @selected.OriginalTrainerName · TID: @selected.TID16@(selected.SID16 > 0 ? $" · SID: {selected.SID16}" : string.Empty)
+                </MudText>
+                <MudText Typo="@Typo.body2"
+                         Class="mt-1">
+                    Moves:
+                    @{
+                        var moves = new[] { selected.Move1, selected.Move2, selected.Move3, selected.Move4 }
+                            .Where(m => m > 0)
+                            .Select(m => strings.Move.Count > m ? strings.Move[m] : m.ToString())
+                            .ToArray();
+                    }
+                    @(moves.Length == 0 ? "(none)" : string.Join(", ", moves))
+                </MudText>
+            </MudPaper>
+        }
+    </MudStack>
+}

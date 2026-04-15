@@ -6,6 +6,16 @@
 @inject IDialogService DialogService
 @inject IAppState AppState
 
+@* Mud providers live OUTSIDE the ErrorBoundary so dialogs/snackbars/popovers      *@
+@* (and their themed styling) survive the ErrorBoundary firing. Without this, the *@
+@* crash-report dialog would have no provider to render into when the child tree  *@
+@* is unmounted, and would also lose theme CSS so it'd render unstyled.           *@
+<MudThemeProvider @ref="@mudThemeProvider"
+                  IsDarkMode="@isDarkMode"/>
+<MudPopoverProvider/>
+<MudDialogProvider BackdropClick="false"/>
+<MudSnackbarProvider/>
+
 <ErrorBoundary @ref="errorBoundary">
     <ChildContent>
         <Router AppAssembly="@typeof(MainLayout).Assembly"
