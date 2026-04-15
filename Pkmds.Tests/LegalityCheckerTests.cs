@@ -264,6 +264,7 @@ public class LegalityCheckerTests
         public void RefreshPartyState() { }
         public void RefreshBoxAndPartyState() { }
         public void RefreshTheme(bool isDarkMode) { }
+        public void RefreshSystemTheme(bool systemIsDarkMode) { }
         public void ShowUpdateMessage() { }
         public void RequestJumpToPartyBox() { }
 
@@ -273,6 +274,7 @@ public class LegalityCheckerTests
         public event Action? OnPartyStateChanged;
         public event Action? OnUpdateAvailable;
         public event Action<bool>? OnThemeChanged;
+        public event Action<bool>? OnSystemThemeChanged;
         public event Action? OnRequestJumpToPartyBox;
 #pragma warning restore CS0067
     }

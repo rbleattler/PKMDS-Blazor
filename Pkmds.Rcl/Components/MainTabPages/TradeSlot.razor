@@ -6,7 +6,7 @@
     <div class="w-full h-full aspect-square flex items-center justify-center overflow-hidden p-0 box-border border border-transparent relative">
         @if (Pokemon is { Species: > 0 })
         {
-            var title = AppService.GetPokemonSpeciesName(Pokemon.Species) ?? "Unknown";
+            var title = GetSpeciesTitle(Pokemon.Species);
             var isShiny = Pokemon.GetIsShinySafe();
             <object class="pkm-sprite w-full h-auto object-contain block"
                     type="image/png"

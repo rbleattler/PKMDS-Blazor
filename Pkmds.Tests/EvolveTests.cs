@@ -416,6 +416,7 @@ public class EvolveTests
         public event Action? OnPartyStateChanged { add { } remove { } }
         public event Action? OnUpdateAvailable { add { } remove { } }
         public event Action<bool>? OnThemeChanged { add { } remove { } }
+        public event Action<bool>? OnSystemThemeChanged { add { } remove { } }
         public event Action? OnRequestJumpToPartyBox { add { } remove { } }
 
         public void Refresh() { }
@@ -423,6 +424,7 @@ public class EvolveTests
         public void RefreshPartyState() { }
         public void RefreshBoxAndPartyState() { }
         public void RefreshTheme(bool isDarkMode) { }
+        public void RefreshSystemTheme(bool systemIsDarkMode) { }
         public void ShowUpdateMessage() { }
         public void RequestJumpToPartyBox() { }
     }

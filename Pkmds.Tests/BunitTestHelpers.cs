@@ -94,6 +94,7 @@ internal class TestRefreshService : IRefreshService
     public void RefreshPartyState() { }
     public void RefreshBoxAndPartyState() { }
     public void RefreshTheme(bool isDarkMode) { }
+    public void RefreshSystemTheme(bool systemIsDarkMode) { }
     public void ShowUpdateMessage() { }
     public void RequestJumpToPartyBox() { }
 
@@ -103,6 +104,7 @@ internal class TestRefreshService : IRefreshService
     public event Action? OnPartyStateChanged;
     public event Action? OnUpdateAvailable;
     public event Action<bool>? OnThemeChanged;
+    public event Action<bool>? OnSystemThemeChanged;
     public event Action? OnRequestJumpToPartyBox;
 #pragma warning restore CS0067
 }

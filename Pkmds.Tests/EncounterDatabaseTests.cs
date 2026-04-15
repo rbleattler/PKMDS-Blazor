@@ -248,6 +248,10 @@ public class EncounterDatabaseTests
         {
         }
 
+        public void RefreshSystemTheme(bool systemIsDarkMode)
+        {
+        }
+
         public void ShowUpdateMessage()
         {
         }
@@ -262,6 +266,7 @@ public class EncounterDatabaseTests
         public event Action? OnPartyStateChanged;
         public event Action? OnUpdateAvailable;
         public event Action<bool>? OnThemeChanged;
+        public event Action<bool>? OnSystemThemeChanged;
         public event Action? OnRequestJumpToPartyBox;
 #pragma warning restore CS0067
     }

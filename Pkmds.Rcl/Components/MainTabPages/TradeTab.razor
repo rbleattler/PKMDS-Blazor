@@ -14,8 +14,9 @@ else
         @* ── Slot A (read-only Phase 1) ── *@
         <MudItem xs="12"
                  lg="6"
-                 Style="max-width: 480px;">
-            <MudPaper Elevation="0">
+                 Style="max-width: 480px; min-width: 0;">
+            <MudPaper Elevation="0"
+                      Class="min-w-0">
                 <TradePane Title="@SlotATitle"
                            SaveFile="@AppState.SaveFile"
                            SelectedBox="@AppState.SelectedBoxNumber"
@@ -30,8 +31,9 @@ else
         @* ── Slot B ── *@
         <MudItem xs="12"
                  lg="6"
-                 Style="max-width: 480px;">
-            <MudPaper Elevation="0">
+                 Style="max-width: 480px; min-width: 0;">
+            <MudPaper Elevation="0"
+                      Class="min-w-0">
                 @if (AppState.SaveFileB is null)
                 {
                     <MudStack Spacing="2"

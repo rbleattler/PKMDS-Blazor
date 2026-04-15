@@ -10,7 +10,6 @@ public partial class MainLayout : IDisposable
     private IBrowserFile? browserLoadSaveFile;
     private bool isDarkMode;
     private ManicEmuSaveHelper.ManicEmuSaveContext? manicEmuSaveContext;
-    private MudThemeProvider? mudThemeProvider;
     private bool systemIsDarkMode;
     private ThemeMode themeMode = ThemeMode.System;
 
@@ -29,12 +28,14 @@ public partial class MainLayout : IDisposable
     {
         RefreshService.OnAppStateChanged -= StateHasChanged;
         RefreshService.OnUpdateAvailable -= ShowUpdateMessage;
+        RefreshService.OnSystemThemeChanged -= OnSystemPreferenceChanged;
     }
 
     protected override void OnInitialized()
     {
         RefreshService.OnAppStateChanged += StateHasChanged;
         RefreshService.OnUpdateAvailable += ShowUpdateMessage;
+        RefreshService.OnSystemThemeChanged += OnSystemPreferenceChanged;
     }
 
     private void ShowUpdateMessage()
@@ -87,13 +88,10 @@ public partial class MainLayout : IDisposable
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || mudThemeProvider is null)
+        if (!firstRender)
         {
             return;
         }
-
-        systemIsDarkMode = await mudThemeProvider.GetSystemDarkModeAsync();
-        await mudThemeProvider.WatchSystemDarkModeAsync(OnSystemPreferenceChanged);
 
         // Warn users who are running inside a known in-app browser (e.g. Google Search App,
         // Facebook) whose WebView typically blocks file downloads.
@@ -125,7 +123,7 @@ public partial class MainLayout : IDisposable
         StateHasChanged();
     }
 
-    private async Task OnSystemPreferenceChanged(bool newValue)
+    private async void OnSystemPreferenceChanged(bool newValue)
     {
         systemIsDarkMode = newValue;
         if (themeMode == ThemeMode.System)
@@ -171,6 +169,17 @@ public partial class MainLayout : IDisposable
     }
 
     private void DrawerToggle() => AppService.ToggleDrawer();
+
+#if DEBUG
+    private static bool IsDebugBuild => true;
+
+    private static void TriggerCrash() =>
+        throw new InvalidOperationException("Manually triggered crash (DEBUG build only) to test the ErrorBoundary + crash-report dialog.");
+#else
+    private static bool IsDebugBuild => false;
+
+    private static void TriggerCrash() { }
+#endif
 
     private async Task ShowBugReportDialog()
     {

@@ -58,6 +58,13 @@ public partial class TradePane : RefreshAwareComponent
             ? "grid grid-cols-4 grid-rows-5 gap-1 w-full max-w-80 mx-auto"
             : "grid grid-cols-6 gap-1 w-full aspect-[6/5] mx-auto";
 
+    // SaveFile.Language is -1 for Gen 1/2 (no language field); fall back to the current
+    // app language so name lookups still succeed for those saves.
+    private static GameStrings GetStringsForSave(SaveFile saveFile) =>
+        GameInfo.GetStrings(saveFile.Language >= 0
+            ? GameLanguage.LanguageCode(saveFile.Language)
+            : GameInfo.CurrentLanguage);
+
     internal PKM? SelectedPokemon
     {
         get
