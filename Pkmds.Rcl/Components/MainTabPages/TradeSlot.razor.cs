@@ -206,6 +206,29 @@ public partial class TradeSlot : RefreshAwareComponent
             return;
         }
 
+        // Silently reject drops of cross-save incompatible Pokémon — the source pane already
+        // dims these with a Block badge, so firing an error snackbar on drop would be noise.
+        // Same format-level rule as ComputeTransferEligibility; HaX mode bypasses the block
+        // to match the source-side dim behaviour.
+        if (!AppState.IsHaXEnabled
+            && DragDropService.DraggedPokemon is { Species: > 0 } dragged
+            && DragDropService.DragSourceSaveFile is { } dragSource
+            && !ReferenceEquals(dragSource, OwnerSaveFile))
+        {
+            if (dragSource is SAV7b || OwnerSaveFile is SAV7b)
+            {
+                DragDropService.ClearDrag();
+                return;
+            }
+
+            if (dragged.GetType() != OwnerSaveFile.PKMType
+                && !EntityConverter.IsConvertibleToFormat(dragged, OwnerSaveFile.Generation))
+            {
+                DragDropService.ClearDrag();
+                return;
+            }
+        }
+
         var target = new TradeSlotTarget(OwnerSaveFile, IsPartySlot, BoxNumber, SlotNumber);
         await OnDrop.InvokeAsync(target);
     }
