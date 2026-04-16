@@ -140,7 +140,7 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
         var abilityResults = await Task.WhenAll(
             distinctAbilityIds.Select(async id => (id, info: await DescriptionService.GetAbilityInfoAsync(id, version))));
         var heldItemResults = await Task.WhenAll(
-            distinctHeldItemIds.Select(async id => (id, info: await DescriptionService.GetItemInfoAsync(itemlist[id], version))));
+            distinctHeldItemIds.Select(async id => (id, info: await DescriptionService.GetItemInfoAsync(SafeNameLookup.Item(itemlist, id), version))));
         var ballResults = await Task.WhenAll(
             distinctBallIds.Select(async id =>
             {

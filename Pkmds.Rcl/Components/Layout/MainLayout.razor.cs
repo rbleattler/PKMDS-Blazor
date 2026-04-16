@@ -669,12 +669,12 @@ public partial class MainLayout : IDisposable
             var la = new LegalityAnalysis(editedPkm);
             if (la.Valid)
             {
-                Snackbar.Add($"{title}: {GameInfo.Strings.Species[editedPkm.Species]} imported successfully.", Severity.Success);
+                Snackbar.Add($"{title}: {SafeNameLookup.Species(editedPkm.Species)} imported successfully.", Severity.Success);
             }
             else
             {
                 Snackbar.Add(
-                    $"{title}: {GameInfo.Strings.Species[editedPkm.Species]} imported, but legality check flagged issues. " +
+                    $"{title}: {SafeNameLookup.Species(editedPkm.Species)} imported, but legality check flagged issues. " +
                     "Review the Pokémon in the editor.",
                     Severity.Warning);
             }
@@ -774,7 +774,7 @@ public partial class MainLayout : IDisposable
                 Logger.LogInformation("Mystery Gift Pokémon placed in slot successfully");
 
                 var la = new LegalityAnalysis(editedPkm);
-                var speciesName = GameInfo.Strings.Species[editedPkm.Species];
+                var speciesName = SafeNameLookup.Species(editedPkm.Species);
                 if (la.Valid)
                 {
                     Snackbar.Add($"{speciesName} received from Mystery Gift.", Severity.Success);
@@ -823,7 +823,7 @@ public partial class MainLayout : IDisposable
                 return true;
             }
 
-            var occupantName = GameInfo.Strings.Species[AppService.EditFormPokemon!.Species];
+            var occupantName = SafeNameLookup.Species(AppService.EditFormPokemon!.Species);
             var confirmed = await DialogService.ShowMessageBoxAsync(
                 "Overwrite Pokémon?",
                 $"The selected slot contains {occupantName}. Overwrite it?",

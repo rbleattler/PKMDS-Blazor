@@ -185,7 +185,7 @@ public partial class EncounterDatabaseTab : RefreshAwareComponent
                 return true;
             }
 
-            var occupantName = GameInfo.Strings.Species[AppService.EditFormPokemon!.Species];
+            var occupantName = SafeNameLookup.Species(AppService.EditFormPokemon!.Species);
             var confirmed = await DialogService.ShowMessageBoxAsync(
                 "Overwrite Pokémon?",
                 $"The selected slot contains {occupantName}. Overwrite it?",

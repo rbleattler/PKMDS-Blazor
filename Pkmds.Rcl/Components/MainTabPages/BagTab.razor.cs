@@ -136,6 +136,12 @@ public partial class BagTab
         ?? ItemComboCache.GetValueOrDefault(0)
         ?? FallbackComboItem;
 
+    // ROM hacks can reference item IDs outside the vanilla item table; guard against out-of-range indices.
+    private string GetItemName(int index) =>
+        index >= 0 && index < ItemList.Length
+            ? ItemList[index]
+            : $"(Item #{index:000})";
+
     private static void SetItem(CellContext<InventoryItem> context, ComboItem item) =>
         context.Item.Index = item.Value;
 

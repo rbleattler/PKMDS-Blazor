@@ -344,11 +344,11 @@
                                  Color="@Color.Secondary">Ability
                         </MudText>
                         <MudText Typo="@Typo.body2">
-                            <b>@GameInfo.Strings.Ability[Pokemon.Ability]</b>
+                            <b>@SafeNameLookup.Ability(Pokemon.Ability)</b>
                         </MudText>
                         <InfoButton>
                             <MudStack Spacing="2">
-                                <MudText Typo="@Typo.subtitle2">@(abilityInfo?.Name ?? GameInfo.Strings.Ability[Pokemon.Ability])</MudText>
+                                <MudText Typo="@Typo.subtitle2">@(abilityInfo?.Name ?? SafeNameLookup.Ability(Pokemon.Ability))</MudText>
                                 <MudText Typo="@Typo.body2">@(abilityInfo is { Description: { Length: > 0 } desc }
                                         ? desc
                                         : "No description available.")</MudText>
@@ -365,7 +365,7 @@
                                  Color="@Color.Secondary">Nature
                         </MudText>
                         <MudText Typo="@Typo.body2">
-                            <b>@GameInfo.Strings.natures[(int)statNature]</b>
+                            <b>@SafeNameLookup.Nature((int)statNature)</b>
                         </MudText>
                         <MudText Typo="@Typo.caption">@AppService.GetStatModifierString(statNature)</MudText>
                     </MudStack>
