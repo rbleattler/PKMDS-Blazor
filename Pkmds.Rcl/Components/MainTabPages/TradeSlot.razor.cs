@@ -14,6 +14,9 @@ public partial class TradeSlot : RefreshAwareComponent
 
     private LegalityStatus? legalityStatus;
 
+    [Inject]
+    private IDragDropService DragDropService { get; set; } = null!;
+
     [Parameter]
     public PKM? Pokemon { get; set; }
 
@@ -36,6 +39,19 @@ public partial class TradeSlot : RefreshAwareComponent
 
     [Parameter]
     public bool IsPartySlot { get; set; }
+
+    // Box/slot coordinates used by drag/drop. Box slots pass a non-null BoxNumber; party
+    // slots leave it null. SlotNumber is the index within that box or the party.
+    [Parameter]
+    public int? BoxNumber { get; set; }
+
+    [Parameter]
+    public int SlotNumber { get; set; }
+
+    // Fired when a Pokémon is dropped onto this slot. The receiver (TradeTab) reads the
+    // drag source from IDragDropService and routes to the transfer logic.
+    [Parameter]
+    public EventCallback<TradeSlotTarget> OnDrop { get; set; }
 
     // Resolve a species name via the full per-language table (GameInfo.GetStrings),
     // bypassing GameInfo.FilteredSources — the filtered source is pinned to whichever
@@ -101,6 +117,74 @@ public partial class TradeSlot : RefreshAwareComponent
     }
 
     private async Task HandleClick() => await OnSlotClick.InvokeAsync();
+
+    private bool IsDraggable()
+    {
+        if (Pokemon is not { Species: > 0 } || OwnerSaveFile is null)
+        {
+            return false;
+        }
+
+        // Drag and drop is not supported for Let's Go — mirrors PokemonSlotComponent.
+        if (OwnerSaveFile is SAV7b)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private void HandleDragStart(DragEventArgs e)
+    {
+        if (Pokemon is not { Species: > 0 } || OwnerSaveFile is null)
+        {
+            return;
+        }
+
+        DragDropService.StartDrag(Pokemon, OwnerSaveFile, BoxNumber, SlotNumber, IsPartySlot);
+        e.DataTransfer.EffectAllowed = "move";
+    }
+
+    private void HandleDragEnd(DragEventArgs e) => DragDropService.ClearDrag();
+
+    private async Task HandleDrop(DragEventArgs e)
+    {
+        if (!DragDropService.IsDragging || OwnerSaveFile is null)
+        {
+            return;
+        }
+
+        // Don't fire when dropping onto the exact same slot that the drag started from.
+        if (ReferenceEquals(DragDropService.DragSourceSaveFile, OwnerSaveFile)
+            && DragDropService.IsDragSourceParty == IsPartySlot
+            && DragDropService.DragSourceBoxNumber == BoxNumber
+            && DragDropService.DragSourceSlotNumber == SlotNumber)
+        {
+            DragDropService.ClearDrag();
+            return;
+        }
+
+        var target = new TradeSlotTarget(OwnerSaveFile, IsPartySlot, BoxNumber, SlotNumber);
+        await OnDrop.InvokeAsync(target);
+    }
+
+    private string GetDragClass()
+    {
+        if (!DragDropService.IsDragging)
+        {
+            return string.Empty;
+        }
+
+        if (ReferenceEquals(DragDropService.DragSourceSaveFile, OwnerSaveFile)
+            && DragDropService.IsDragSourceParty == IsPartySlot
+            && DragDropService.DragSourceBoxNumber == BoxNumber
+            && DragDropService.DragSourceSlotNumber == SlotNumber)
+        {
+            return "slot-dragging";
+        }
+
+        return string.Empty;
+    }
 
     private bool ShouldShow(LegalityStatus status) => status switch
     {

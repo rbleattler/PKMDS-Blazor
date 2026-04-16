@@ -27,6 +27,11 @@ public partial class TradePane : RefreshAwareComponent
     [Parameter]
     public EventCallback<int?> SelectedPartySlotChanged { get; set; }
 
+    // Fired when a Pokémon is dropped onto any slot in this pane. Propagated up to
+    // TradeTab, which reads the drag source from IDragDropService and runs the transfer.
+    [Parameter]
+    public EventCallback<TradeSlotTarget> OnSlotDrop { get; set; }
+
     private async Task SelectBox(int boxNum)
     {
         SelectedBox = boxNum;

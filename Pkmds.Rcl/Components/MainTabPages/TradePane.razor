@@ -20,8 +20,11 @@
                                OwnerSaveFile="@saveFile"
                                OwnerVersion="@saveFile.Version"
                                IsPartySlot="true"
+                               BoxNumber="@((int?)null)"
+                               SlotNumber="@slotNum"
                                IsSelected="@(SelectedPartySlot == slotNum)"
-                               OnSlotClick="@(() => SelectParty(slotNum))"/>
+                               OnSlotClick="@(() => SelectParty(slotNum))"
+                               OnDrop="@OnSlotDrop"/>
                 </div>
             }
         </div>
@@ -72,8 +75,11 @@
                         <TradeSlot Pokemon="@pkm"
                                    OwnerSaveFile="@saveFile"
                                    OwnerVersion="@saveFile.Version"
+                                   BoxNumber="@currentBox"
+                                   SlotNumber="@slotNum"
                                    IsSelected="@(SelectedBox == currentBox && SelectedBoxSlot == slotNum)"
-                                   OnSlotClick="@(() => SelectBoxSlot(currentBox, slotNum))"/>
+                                   OnSlotClick="@(() => SelectBoxSlot(currentBox, slotNum))"
+                                   OnDrop="@OnSlotDrop"/>
                     </div>
                 }
             </div>

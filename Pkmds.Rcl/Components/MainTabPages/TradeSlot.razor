@@ -2,8 +2,15 @@
 
 <MudPaper Elevation="3"
           @onclick="@HandleClick"
-          Class="@($"square-slot {(IsSelected ? Constants.SelectedSlotClass : string.Empty)} {ImageHelper.GetSpriteCssClass(Pokemon)}")">
-    <div class="w-full h-full aspect-square flex items-center justify-center overflow-hidden p-0 box-border border border-transparent relative">
+          Class="@($"square-slot {(IsSelected ? Constants.SelectedSlotClass : string.Empty)} {GetDragClass()} {ImageHelper.GetSpriteCssClass(Pokemon)}")">
+    <div draggable="@(IsDraggable() ? "true" : "false")"
+         @ondragstart="@HandleDragStart"
+         @ondragend="@HandleDragEnd"
+         @ondragover:preventDefault="true"
+         @ondrop="@HandleDrop"
+         @ondrop:preventDefault="true"
+         @ondrop:stopPropagation="true"
+         class="w-full h-full aspect-square flex items-center justify-center overflow-hidden p-0 box-border border border-transparent relative">
         @if (Pokemon is { Species: > 0 })
         {
             var title = GetSpeciesTitle(Pokemon.Species);

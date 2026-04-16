@@ -129,12 +129,14 @@ internal class NullDescriptionService : IDescriptionService
 internal class NullDragDropService : IDragDropService
 {
     public PKM? DraggedPokemon { get; set; }
+    public SaveFile? DragSourceSaveFile { get; set; }
     public int? DragSourceBoxNumber { get; set; }
     public int DragSourceSlotNumber { get; set; }
     public bool IsDragSourceParty { get; set; }
     public bool IsDragging => false;
 
     public void StartDrag(PKM? pokemon, int? boxNumber, int slotNumber, bool isParty) { }
+    public void StartDrag(PKM? pokemon, SaveFile? sourceSaveFile, int? boxNumber, int slotNumber, bool isParty) { }
     public void EndDrag() { }
     public void ClearDrag() { }
 }

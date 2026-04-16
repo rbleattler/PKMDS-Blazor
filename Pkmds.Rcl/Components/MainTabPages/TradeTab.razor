@@ -8,16 +8,10 @@
 }
 else
 {
-    <MudAlert Severity="@Severity.Info"
-              Class="mb-2">
-        This tab is read-only for now — you can view both saves side-by-side, but
-        transfers between them will arrive in a future update.
-    </MudAlert>
-
     <MudGrid Spacing="2"
              Justify="@Justify.FlexStart">
 
-        @* ── Slot A (read-only Phase 1) ── *@
+        @* ── Slot A ── *@
         <MudItem xs="12"
                  lg="6"
                  Style="max-width: 480px; min-width: 0;">
@@ -30,7 +24,8 @@ else
                            SelectedBoxSlot="@AppState.SelectedBoxSlotNumber"
                            SelectedBoxSlotChanged="@(s => AppState.SelectedBoxSlotNumber = s)"
                            SelectedPartySlot="@AppState.SelectedPartySlotNumber"
-                           SelectedPartySlotChanged="@(s => AppState.SelectedPartySlotNumber = s)"/>
+                           SelectedPartySlotChanged="@(s => AppState.SelectedPartySlotNumber = s)"
+                           OnSlotDrop="@HandleSlotDropAsync"/>
             </MudPaper>
         </MudItem>
 
@@ -66,6 +61,16 @@ else
                         <MudStack Row
                                   AlignItems="@AlignItems.Center"
                                   Spacing="1">
+                            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack"
+                                           OnClick="@(() => TransferSelectedAsync(fromA: false))"
+                                           Disabled="@(!CanTransferFromB())"
+                                           title="Send selected Pokémon from Slot B to Slot A"
+                                           Size="@Size.Small"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.ArrowForward"
+                                           OnClick="@(() => TransferSelectedAsync(fromA: true))"
+                                           Disabled="@(!CanTransferFromA())"
+                                           title="Send selected Pokémon from Slot A to Slot B"
+                                           Size="@Size.Small"/>
                             <MudSpacer/>
                             <MudIconButton Icon="@Icons.Material.Filled.SwapHoriz"
                                            OnClick="@LoadSecondarySaveAsync"
@@ -84,7 +89,8 @@ else
                                    SelectedBoxSlot="@AppState.SelectedBoxSlotNumberB"
                                    SelectedBoxSlotChanged="@(s => AppState.SelectedBoxSlotNumberB = s)"
                                    SelectedPartySlot="@AppState.SelectedPartySlotNumberB"
-                                   SelectedPartySlotChanged="@(s => AppState.SelectedPartySlotNumberB = s)"/>
+                                   SelectedPartySlotChanged="@(s => AppState.SelectedPartySlotNumberB = s)"
+                                   OnSlotDrop="@HandleSlotDropAsync"/>
                     </MudStack>
                 }
             </MudPaper>
