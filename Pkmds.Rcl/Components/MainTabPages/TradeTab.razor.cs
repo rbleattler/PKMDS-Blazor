@@ -513,12 +513,14 @@ public partial class TradeTab : RefreshAwareComponent
             return;
         }
 
-        // Held-item handling: the mon leaves its save, so its held item goes back to the
-        // source bag rather than riding along (EntityConverter can silently strip incompatible
-        // items across generations). We pre-check returnability so we can warn about losses
-        // up-front and let the user cancel to free up bag space; the actual deposit is deferred
-        // to the final commit so a cancellation at the legality step doesn't leave the bag
-        // out of sync with the slot state.
+        // Held-item handling: the mon leaves its save, so we strip its held item and return
+        // it to that same save's bag. The item came from that game's item table in the first
+        // place, so it normally fits — the failure cases are (1) the bag is full (no empty
+        // slot and the existing stack is already at max), or (2) a HaX-edited nonsense item
+        // ID no pouch recognizes. We pre-check returnability so we can warn the user up-front
+        // and let them cancel to free up bag space, and defer the actual deposit to the final
+        // commit so a cancellation at the legality step doesn't leave the bag out of sync
+        // with the slot state.
         var srcHeldItem = (ushort)Math.Max(0, srcPkm.HeldItem);
         var destHeldItem = destPkmPrev.Species > 0
             ? (ushort)Math.Max(0, destPkmPrev.HeldItem)
