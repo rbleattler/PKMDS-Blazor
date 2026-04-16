@@ -513,8 +513,41 @@ public partial class TradeTab : RefreshAwareComponent
             return;
         }
 
+        // Held-item handling: the mon leaves its save, so its held item goes back to the
+        // source bag rather than riding along (EntityConverter can silently strip incompatible
+        // items across generations). We pre-check returnability so we can warn about losses
+        // up-front and let the user cancel to free up bag space; the actual deposit is deferred
+        // to the final commit so a cancellation at the legality step doesn't leave the bag
+        // out of sync with the slot state.
+        var srcHeldItem = (ushort)Math.Max(0, srcPkm.HeldItem);
+        var destHeldItem = destPkmPrev.Species > 0
+            ? (ushort)Math.Max(0, destPkmPrev.HeldItem)
+            : (ushort)0;
+
+        var itemLossLines = new List<string>(2);
+        if (srcHeldItem > 0 && !CanReturnItemToBag(srcSave, srcHeldItem))
+        {
+            itemLossLines.Add(DescribeHeldItem(srcPkm, srcSave, srcHeldItem));
+        }
+        if (destHeldItem > 0 && !CanReturnItemToBag(destSave, destHeldItem))
+        {
+            itemLossLines.Add(DescribeHeldItem(destPkmPrev, destSave, destHeldItem));
+        }
+
+        if (itemLossLines.Count > 0)
+        {
+            var proceedLoss = await ConfirmHeldItemLossAsync(itemLossLines);
+            if (!proceedLoss)
+            {
+                return;
+            }
+        }
+
         var haxEnabled = AppState.IsHaXEnabled;
-        var converted = ConvertForSave(srcPkm.Clone(), destSave, haxEnabled, out var forwardMessage);
+        var srcClone = srcPkm.Clone();
+        srcClone.HeldItem = 0;
+
+        var converted = ConvertForSave(srcClone, destSave, haxEnabled, out var forwardMessage);
         if (converted is null)
         {
             ShowTransferIssueSnackbar("Could not transfer", forwardMessage,
@@ -529,7 +562,9 @@ public partial class TradeTab : RefreshAwareComponent
         PKM? convertedBack = null;
         if (destPkmPrev.Species > 0)
         {
-            convertedBack = ConvertForSave(destPkmPrev.Clone(), srcSave, haxEnabled, out var reverseMessage);
+            var destClone = destPkmPrev.Clone();
+            destClone.HeldItem = 0;
+            convertedBack = ConvertForSave(destClone, srcSave, haxEnabled, out var reverseMessage);
             if (convertedBack is null)
             {
                 ShowTransferIssueSnackbar("Swap not possible", reverseMessage,
@@ -565,6 +600,18 @@ public partial class TradeTab : RefreshAwareComponent
                 RefreshService.Refresh();
                 return;
             }
+        }
+
+        // Transfer is committed — now deposit the held items we pre-checked. Items the user
+        // agreed to lose (CanReturnItemToBag returned false) are simply dropped: HeldItem was
+        // already cleared on the clones, so they don't ride along to the destination save.
+        if (srcHeldItem > 0)
+        {
+            ReturnItemToBag(srcSave, srcHeldItem);
+        }
+        if (destHeldItem > 0)
+        {
+            ReturnItemToBag(destSave, destHeldItem);
         }
 
         if (!string.IsNullOrEmpty(forwardMessage))
@@ -614,6 +661,108 @@ public partial class TradeTab : RefreshAwareComponent
         bullets.Append("</ul>");
 
         Snackbar.Add(new MarkupString(bullets.ToString()), severity);
+    }
+
+    // ── Held-item handoff ─────────────────────────────────────────────────────
+
+    // Pre-flight check: is there room in any compatible pouch of `save` to receive one more
+    // copy of `itemId`? Matches InventoryPouch.GiveItem's placement rules (existing slot with
+    // room, or first empty slot in a pouch that accepts the item). No side effects.
+    private static bool CanReturnItemToBag(SaveFile save, ushort itemId)
+    {
+        if (itemId == 0)
+        {
+            return true;
+        }
+
+        var bag = save.Inventory;
+        foreach (var pouch in bag.Pouches)
+        {
+            if (!pouch.CanContain(itemId))
+            {
+                continue;
+            }
+
+            var max = bag.GetMaxCount(pouch.Type, itemId);
+            if (max <= 0)
+            {
+                return false;
+            }
+
+            foreach (var item in pouch.Items)
+            {
+                if (item.Index == itemId && item.Count < max)
+                {
+                    return true;
+                }
+                if (item.Index == 0)
+                {
+                    return true;
+                }
+            }
+
+            // Item is allowed in this pouch but every eligible slot is taken or maxed out.
+            return false;
+        }
+
+        // No pouch in the bag accepts this item id (unsupported save or cross-gen item).
+        return false;
+    }
+
+    // Deposits one unit of `itemId` back into `save`'s bag and persists it. Assumed to be
+    // called only after CanReturnItemToBag returned true for the same (save, itemId) pair.
+    private static void ReturnItemToBag(SaveFile save, ushort itemId)
+    {
+        if (itemId == 0)
+        {
+            return;
+        }
+
+        var bag = save.Inventory;
+        foreach (var pouch in bag.Pouches)
+        {
+            if (!pouch.CanContain(itemId))
+            {
+                continue;
+            }
+
+            pouch.GiveItem(bag, itemId, 1);
+            bag.CopyTo(save);
+            return;
+        }
+    }
+
+    private string DescribeHeldItem(PKM pkm, SaveFile save, ushort itemId)
+    {
+        var strings = GameInfo.GetStrings(GameInfo.CurrentLanguage);
+        var speciesName = pkm.Species < strings.specieslist.Length
+            ? strings.specieslist[pkm.Species]
+            : $"Species #{pkm.Species}";
+        var itemName = itemId < strings.Item.Count
+            ? strings.Item[itemId]
+            : $"Item #{itemId}";
+        var bagLabel = ReferenceEquals(save, AppState.SaveFile) ? "Slot A" : "Slot B";
+        return $"{speciesName}’s {itemName} (from {bagLabel}’s bag)";
+    }
+
+    private async Task<bool> ConfirmHeldItemLossAsync(IReadOnlyList<string> lines)
+    {
+        var bullets = new StringBuilder();
+        bullets.Append("<p>These held items can’t be returned to their save’s bag and will be lost if you continue:</p>");
+        bullets.Append("<ul style=\"margin:8px 0 0 0;padding-left:1.25rem;\">");
+        foreach (var line in lines)
+        {
+            bullets.Append("<li>").Append(WebUtility.HtmlEncode(line)).Append("</li>");
+        }
+        bullets.Append("</ul>");
+        bullets.Append("<p>Cancel and make room in the bag to keep the item, or continue to transfer anyway.</p>");
+
+        var result = await DialogService.ShowMessageBoxAsync(
+            "Held items will be lost",
+            new MarkupString(bullets.ToString()),
+            yesText: "Continue",
+            cancelText: "Cancel");
+        return result == true;
     }
 
     private static PKM? ConvertForSave(PKM pkm, SaveFile destSave, bool haxEnabled, out string message)
