@@ -384,6 +384,14 @@ public partial class TradeTab : RefreshAwareComponent
         }
 
         // Cross-save transfer.
+        // Keep the destination party compact: if the user dropped past PartyCount on an
+        // empty slot, clamp to PartyCount so SetPartySlotAtIndex appends rather than
+        // leaving a gap (mirrors the intra-save clamp in MoveWithinSave).
+        if (destIsParty && destSlot >= destSave.PartyCount)
+        {
+            destSlot = destSave.PartyCount;
+        }
+
         var destPkmPrev = destIsParty
             ? destSave.GetPartySlotAtIndex(destSlot)
             : destBox.HasValue
