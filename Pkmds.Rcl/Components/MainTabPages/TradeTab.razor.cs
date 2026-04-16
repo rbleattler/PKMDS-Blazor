@@ -28,6 +28,21 @@ public partial class TradeTab : RefreshAwareComponent
 
     private async Task LoadSecondarySaveAsync()
     {
+        // Guard the replace path: if slot B has uncommitted transfers, give the user
+        // a chance to back out before the picker opens and we tear down the save.
+        if (AppState.SaveFileB is not null && AppState.HasUnsavedChangesB)
+        {
+            var proceed = await DialogService.ShowMessageBoxAsync(
+                "Unsaved changes in Slot B",
+                "Slot B has transfers that haven't been exported yet. Replacing it will discard those changes.",
+                yesText: "Discard and replace",
+                cancelText: "Cancel");
+            if (proceed != true)
+            {
+                return;
+            }
+        }
+
         const string message = "Choose a second save file";
         var dialogParameters = new DialogParameters
         {
@@ -162,8 +177,21 @@ public partial class TradeTab : RefreshAwareComponent
         }
     }
 
-    private void UnloadSecondarySave()
+    private async Task UnloadSecondarySaveAsync()
     {
+        if (AppState.HasUnsavedChangesB)
+        {
+            var proceed = await DialogService.ShowMessageBoxAsync(
+                "Unsaved changes in Slot B",
+                "Slot B has transfers that haven't been exported yet. Closing it will discard those changes.",
+                yesText: "Discard and close",
+                cancelText: "Cancel");
+            if (proceed != true)
+            {
+                return;
+            }
+        }
+
         AppState.SaveFileB = null;
         AppState.SaveFileNameB = null;
         manicEmuSaveContextB = null;
@@ -181,28 +209,36 @@ public partial class TradeTab : RefreshAwareComponent
         var rawSaveBytes = saveB.Write().ToArray();
         var originalName = AppState.SaveFileNameB;
 
+        bool wrote;
         // Same branching as MainLayout.ExportSaveFile — rebuild the Manic EMU ZIP
         // when the slot-B save came from one, otherwise preserve the original name.
         if (manicEmuSaveContextB is not null)
         {
             var (exportName, compoundExt) = ManicEmuSaveHelper.GetExportFileName(originalName);
             var zipBytes = ManicEmuSaveHelper.RebuildZip(manicEmuSaveContextB, rawSaveBytes);
-            await WriteSlotBFileAsync(zipBytes, exportName, compoundExt);
+            wrote = await WriteSlotBFileAsync(zipBytes, exportName, compoundExt);
         }
         else if (string.IsNullOrWhiteSpace(originalName))
         {
-            await WriteSlotBFileAsync(rawSaveBytes, "save.sav", ".sav");
+            wrote = await WriteSlotBFileAsync(rawSaveBytes, "save.sav", ".sav");
         }
         else
         {
             var ext = Path.GetExtension(originalName);
-            await WriteSlotBFileAsync(rawSaveBytes, originalName, ext);
+            wrote = await WriteSlotBFileAsync(rawSaveBytes, originalName, ext);
+        }
+
+        if (wrote)
+        {
+            AppState.HasUnsavedChangesB = false;
         }
     }
 
     // Minimal duplicate of MainLayout's WriteFile: File System Access API when supported,
-    // fall back to an anchor click for legacy browsers.
-    private async Task WriteSlotBFileAsync(byte[] data, string fileName, string fileTypeExtension)
+    // fall back to an anchor click for legacy browsers. Returns whether the file was
+    // actually written (false on user cancel or failure) so the caller knows whether
+    // to clear the dirty flag.
+    private async Task<bool> WriteSlotBFileAsync(byte[] data, string fileName, string fileTypeExtension)
     {
         if (!await FileSystemAccessService.IsSupportedAsync())
         {
@@ -214,23 +250,26 @@ public partial class TradeTab : RefreshAwareComponent
                 $"data:application/x-pokemon-savedata;base64,{base64}");
             await element.InvokeVoidAsync("setAttribute", "download", finalName);
             await element.InvokeVoidAsync("click");
-            return;
+            return true;
         }
 
         try
         {
             await JSRuntime.InvokeVoidAsync("showFilePickerAndWrite",
                 fileName, data, fileTypeExtension, "Save File");
+            return true;
         }
         catch (JSException ex) when (ex.Message.Contains("AbortError", StringComparison.OrdinalIgnoreCase)
                                      || ex.Message.Contains("aborted a request", StringComparison.OrdinalIgnoreCase))
         {
             // User dismissed the picker — not an error.
+            return false;
         }
         catch (JSException ex)
         {
             Logger.LogError(ex, "Error exporting slot-B save file: {FileName}", fileName);
             Snackbar.Add("Export failed. Please try again or use a different browser.", Severity.Error);
+            return false;
         }
     }
 
@@ -450,6 +489,7 @@ public partial class TradeTab : RefreshAwareComponent
                 return;
             }
 
+            MarkSlotBDirtyIfInvolved(srcSave, destSave);
             RefreshService.Refresh();
             return;
         }
@@ -536,7 +576,17 @@ public partial class TradeTab : RefreshAwareComponent
             Snackbar.Add($"Warning: {forwardMessage}", Severity.Warning);
         }
 
+        MarkSlotBDirtyIfInvolved(srcSave, destSave);
         RefreshService.Refresh();
+    }
+
+    private void MarkSlotBDirtyIfInvolved(SaveFile srcSave, SaveFile destSave)
+    {
+        if (AppState.SaveFileB is { } slotB
+            && (ReferenceEquals(srcSave, slotB) || ReferenceEquals(destSave, slotB)))
+        {
+            AppState.HasUnsavedChangesB = true;
+        }
     }
 
     private static PKM? ConvertForSave(PKM pkm, SaveFile destSave, bool haxEnabled, out string message)

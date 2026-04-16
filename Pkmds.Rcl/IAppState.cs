@@ -42,6 +42,13 @@ public interface IAppState
     string? SaveFileNameB { get; set; }
 
     /// <summary>
+    /// Gets or sets whether the secondary (slot-B) save file has uncommitted edits
+    /// from the Trade tab that have not yet been exported. Reset to false when slot B
+    /// is loaded, replaced, exported, or unloaded.
+    /// </summary>
+    bool HasUnsavedChangesB { get; set; }
+
+    /// <summary>
     /// Gets the box editor interface for the current save file.
     /// This provides access to box manipulation operations.
     /// </summary>

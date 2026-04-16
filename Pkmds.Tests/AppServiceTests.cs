@@ -395,6 +395,7 @@ public class AppServiceTests
         public bool ShowIllegalIndicator { get; set; } = true;
         public SaveFile? SaveFileB { get; set; }
         public string? SaveFileNameB { get; set; }
+        public bool HasUnsavedChangesB { get; set; }
         public BoxEdit? BoxEditB => null;
         public int? SelectedBoxNumberB { get; set; }
         public int? SelectedBoxSlotNumberB { get; set; }
