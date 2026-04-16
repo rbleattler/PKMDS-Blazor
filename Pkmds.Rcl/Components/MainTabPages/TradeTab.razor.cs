@@ -871,12 +871,28 @@ public partial class TradeTab : RefreshAwareComponent
         _ = destSave;
 
         var severity = invalid ? "illegal" : "fishy";
-        var body = messages.Count > 0
-            ? $"The converted Pokémon is {severity}:\n\n• {string.Join("\n• ", messages)}\n\nProceed with the transfer?"
-            : $"The converted Pokémon is {severity}. Proceed with the transfer?";
+        // MudBlazor's message box collapses whitespace in plain strings, so a bulleted list
+        // has to be rendered as HTML via the MarkupString overload (same pattern as
+        // ConfirmHeldItemLossAsync) — otherwise the bullets all wrap onto one line.
+        var body = new StringBuilder();
+        if (messages.Count > 0)
+        {
+            body.Append("<p>The converted Pokémon is ").Append(severity).Append(":</p>");
+            body.Append("<ul style=\"margin:8px 0 0 0;padding-left:1.25rem;\">");
+            foreach (var msg in messages)
+            {
+                body.Append("<li>").Append(WebUtility.HtmlEncode(msg)).Append("</li>");
+            }
+            body.Append("</ul>");
+            body.Append("<p>Proceed with the transfer?</p>");
+        }
+        else
+        {
+            body.Append("<p>The converted Pokémon is ").Append(severity).Append(". Proceed with the transfer?</p>");
+        }
         var result = await DialogService.ShowMessageBoxAsync(
             invalid ? "Illegal after conversion" : "Fishy after conversion",
-            body,
+            new MarkupString(body.ToString()),
             yesText: "Transfer anyway",
             cancelText: "Cancel");
         return result == true;
