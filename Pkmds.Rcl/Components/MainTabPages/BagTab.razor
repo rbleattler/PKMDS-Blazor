@@ -88,16 +88,16 @@
                                                         type="image/png"
                                                         style="object-fit: contain;"
                                                         data="@ImageHelper.GetItemSpriteFilename(context.Item.Index, saveFile.Context)"
-                                                        title="@ItemList[context.Item.Index]">
+                                                        title="@GetItemName(context.Item.Index)">
                                                     <img class="pkm-sprite"
                                                          src="@ImageHelper.ItemFallbackImageFileName"
-                                                         title="@ItemList[context.Item.Index]"
-                                                         alt="@ItemList[context.Item.Index]">
+                                                         title="@GetItemName(context.Item.Index)"
+                                                         alt="@GetItemName(context.Item.Index)">
                                                 </object>
                                             }
-                                            <MudText>@ItemList[context.Item.Index]</MudText>
+                                            <MudText>@GetItemName(context.Item.Index)</MudText>
                                             <BagItemInfoButton ItemIndex="@context.Item.Index"
-                                                               ItemName="@ItemList[context.Item.Index]"
+                                                               ItemName="@GetItemName(context.Item.Index)"
                                                                PouchType="@pouch.Type"
                                                                Context="@saveFile.Context"
                                                                Version="@saveFile.Version"/>
@@ -112,7 +112,7 @@
                                                              Value="@GetItem(context)"
                                                              ValueChanged="@(newItem => SetItem(context, newItem))"
                                                              SearchFunc="@((searchString, _) => SearchItemNames(pouch, searchString))"
-                                                             ToStringFunc="@(_ => ItemList[context.Item.Index])">
+                                                             ToStringFunc="@(_ => GetItemName(context.Item.Index))">
                                                 <ItemTemplate Context="item">
                                                     <MudStack Row>
                                                         @if (item.Value != 0)
@@ -135,7 +135,7 @@
                                                 </ItemTemplate>
                                             </MudAutocomplete>
                                             <BagItemInfoButton ItemIndex="@context.Item.Index"
-                                                               ItemName="@ItemList[context.Item.Index]"
+                                                               ItemName="@GetItemName(context.Item.Index)"
                                                                PouchType="@pouch.Type"
                                                                Context="@saveFile.Context"
                                                                Version="@saveFile.Version"/>

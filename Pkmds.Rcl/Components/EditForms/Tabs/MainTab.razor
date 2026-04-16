@@ -456,7 +456,7 @@
                     Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Ability))"/>
                 <InfoButton>
                     <MudStack Spacing="2">
-                        <MudText Typo="@Typo.subtitle2">@(abilityInfo?.Name ?? GameInfo.Strings.abilitylist[Pokemon!.Ability])</MudText>
+                        <MudText Typo="@Typo.subtitle2">@(abilityInfo?.Name ?? SafeNameLookup.Ability(Pokemon!.Ability))</MudText>
                         <MudText Typo="@Typo.body2">@(abilityInfo is { Description: { Length: > 0 } desc }
                                 ? desc
                                 : "No description available.")</MudText>
@@ -489,7 +489,7 @@
                     Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Ability))"/>
                 <InfoButton>
                     <MudStack Spacing="2">
-                        <MudText Typo="@Typo.subtitle2">@(abilityInfo?.Name ?? GameInfo.Strings.abilitylist[Pokemon!.Ability])</MudText>
+                        <MudText Typo="@Typo.subtitle2">@(abilityInfo?.Name ?? SafeNameLookup.Ability(Pokemon!.Ability))</MudText>
                         <MudText Typo="@Typo.body2">@(abilityInfo is { Description: { Length: > 0 } desc }
                                 ? desc
                                 : "No description available.")</MudText>

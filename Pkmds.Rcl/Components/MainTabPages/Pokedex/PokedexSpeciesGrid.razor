@@ -81,7 +81,7 @@
                  RowClassFunc="@((_, i) => i % 2 != 0
                                    ? "row-alt"
                                    : string.Empty)"
-                 Height="@($"calc(100dvh - {(regionalDexDefinitions.Count > 0 ? 400 : 350)}px)")">
+                 Class="pokedex-species-grid">
 
         <Columns>
             <PropertyColumn Property="@(r => r.SpeciesId)"
