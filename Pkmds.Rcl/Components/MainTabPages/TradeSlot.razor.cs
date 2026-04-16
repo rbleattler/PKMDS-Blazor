@@ -99,15 +99,21 @@ public partial class TradeSlot : RefreshAwareComponent
             return;
         }
 
-        if (pk.GetType() == counterpart.PKMType)
-        {
-            return;
-        }
-
-        if (!EntityConverter.IsConvertibleToFormat(pk, counterpart.Generation))
+        if (pk.GetType() != counterpart.PKMType
+            && !EntityConverter.IsConvertibleToFormat(pk, counterpart.Generation))
         {
             transferIneligibleReason =
                 $"Can’t transfer {pk.GetType().Name} to {counterpart.PKMType.Name} (incompatible generation).";
+            return;
+        }
+
+        // Species/form availability in the destination game. IsConvertibleToFormat only
+        // covers the format-level transition (e.g. PK7→PK9); species that don't exist in
+        // the destination's dex (e.g. Zygarde in Scarlet/Violet) still need to be blocked.
+        if (!counterpart.Personal.IsPresentInGame(pk.Species, pk.Form))
+        {
+            transferIneligibleReason =
+                $"{GetSpeciesTitle(pk.Species)} can’t exist in {counterpart.Version} — species/form isn’t in that game’s dex.";
         }
     }
 
@@ -223,6 +229,12 @@ public partial class TradeSlot : RefreshAwareComponent
 
             if (dragged.GetType() != OwnerSaveFile.PKMType
                 && !EntityConverter.IsConvertibleToFormat(dragged, OwnerSaveFile.Generation))
+            {
+                DragDropService.ClearDrag();
+                return;
+            }
+
+            if (!OwnerSaveFile.Personal.IsPresentInGame(dragged.Species, dragged.Form))
             {
                 DragDropService.ClearDrag();
                 return;
