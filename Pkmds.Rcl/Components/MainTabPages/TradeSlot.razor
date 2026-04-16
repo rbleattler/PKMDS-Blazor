@@ -2,7 +2,7 @@
 
 <MudPaper Elevation="3"
           @onclick="@HandleClick"
-          Class="@($"square-slot {(IsSelected ? Constants.SelectedSlotClass : string.Empty)} {GetDragClass()} {ImageHelper.GetSpriteCssClass(Pokemon)}")">
+          Class="@($"square-slot {(IsSelected ? Constants.SelectedSlotClass : string.Empty)} {GetDragClass()} {(transferIneligibleReason is not null ? "slot-ineligible-transfer" : string.Empty)} {ImageHelper.GetSpriteCssClass(Pokemon)}")">
     <div draggable="@(IsDraggable() ? "true" : "false")"
          @ondragstart="@HandleDragStart"
          @ondragend="@HandleDragEnd"
@@ -10,6 +10,8 @@
          @ondrop="@HandleDrop"
          @ondrop:preventDefault="true"
          @ondrop:stopPropagation="true"
+         title="@transferIneligibleReason"
+         aria-label="@transferIneligibleReason"
          class="w-full h-full aspect-square flex items-center justify-center overflow-hidden p-0 box-border border border-transparent relative">
         @if (Pokemon is { Species: > 0 })
         {
@@ -60,6 +62,15 @@
                 <div class="@($"legality-indicator-icon {StatusClass(status)}")"
                      title="@StatusTitle(status)">
                     <MudIcon Icon="@StatusIcon(status)"
+                             Style="font-size: 14px; color: white;"/>
+                </div>
+            }
+
+            @if (transferIneligibleReason is { } ineligibleReason)
+            {
+                <div class="transfer-block-indicator-icon"
+                     title="@ineligibleReason">
+                    <MudIcon Icon="@Icons.Material.Filled.Block"
                              Style="font-size: 14px; color: white;"/>
                 </div>
             }

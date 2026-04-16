@@ -124,6 +124,33 @@ body, html {
 .legality-indicator-icon--fishy { background: var(--mud-palette-warning); }
 .legality-indicator-icon--illegal { background: var(--mud-palette-error); }
 
+/* Trade tab: dim the sprite (but not the indicator badges) so the user sees at a glance
+   which Pokémon can't be transferred to the other save, while keeping the legality
+   indicator readable. The .transfer-block-indicator-icon sits in the bottom-left corner
+   opposite the shiny/legality badges. */
+.slot-ineligible-transfer .pkm-sprite,
+.slot-ineligible-transfer .pkm-sprite-hires {
+    opacity: 0.4;
+    filter: grayscale(0.7);
+}
+
+.transfer-block-indicator-icon {
+    position: absolute;
+    bottom: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    pointer-events: none;
+    z-index: 10;
+    border-radius: 50%;
+    background: var(--mud-palette-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+}
+
 .egg-indicator-icon {
     position: absolute;
     bottom: 2px;

@@ -9,6 +9,11 @@ public partial class TradePane : RefreshAwareComponent
     [Parameter]
     public SaveFile? SaveFile { get; set; }
 
+    // The paired save in the Trade tab — forwarded to each TradeSlot so it can indicate
+    // which Pokémon are ineligible to transfer to the other pane.
+    [Parameter]
+    public SaveFile? CounterpartSaveFile { get; set; }
+
     [Parameter]
     public int? SelectedBox { get; set; }
 

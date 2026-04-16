@@ -19,6 +19,7 @@ else
                       Class="min-w-0">
                 <TradePane Title="@SlotATitle"
                            SaveFile="@AppState.SaveFile"
+                           CounterpartSaveFile="@AppState.SaveFileB"
                            SelectedBox="@AppState.SelectedBoxNumber"
                            SelectedBoxChanged="@(b => AppState.SelectedBoxNumber = b)"
                            SelectedBoxSlot="@AppState.SelectedBoxSlotNumber"
@@ -88,6 +89,7 @@ else
                         </MudStack>
                         <TradePane Title="@SlotBTitle"
                                    SaveFile="@AppState.SaveFileB"
+                                   CounterpartSaveFile="@AppState.SaveFile"
                                    SelectedBox="@AppState.SelectedBoxNumberB"
                                    SelectedBoxChanged="@(b => AppState.SelectedBoxNumberB = b)"
                                    SelectedBoxSlot="@AppState.SelectedBoxSlotNumberB"

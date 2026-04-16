@@ -13,6 +13,7 @@ public partial class TradeSlot : RefreshAwareComponent
     private SpriteStyle lastLoadedSpriteStyle;
 
     private LegalityStatus? legalityStatus;
+    private string? transferIneligibleReason;
 
     [Inject]
     private IDragDropService DragDropService { get; set; } = null!;
@@ -36,6 +37,11 @@ public partial class TradeSlot : RefreshAwareComponent
     // AppState.SaveFile (which is always Save A).
     [Parameter]
     public SaveFile? OwnerSaveFile { get; set; }
+
+    // The paired save in the Trade tab (if any). When set, the slot computes whether this
+    // Pokémon can be transferred to it and paints a dimmed / badged state when it can't.
+    [Parameter]
+    public SaveFile? CounterpartSaveFile { get; set; }
 
     [Parameter]
     public bool IsPartySlot { get; set; }
@@ -66,7 +72,43 @@ public partial class TradeSlot : RefreshAwareComponent
     protected override void OnParametersSet()
     {
         ComputeLegality();
+        ComputeTransferEligibility();
         UpdateSpriteState();
+    }
+
+    // Proactive eligibility hint. Only flags cases where the conversion is impossible at
+    // the *type/format* level — the user still sees an error snackbar for per-mon failures
+    // (e.g. DLC-gated species) that only surface during a real ConvertToType call. HaX mode
+    // disables the hint because the reflection fallback can force some of these through.
+    private void ComputeTransferEligibility()
+    {
+        transferIneligibleReason = null;
+
+        if (Pokemon is not { Species: > 0 } pk
+            || OwnerSaveFile is null
+            || CounterpartSaveFile is not { } counterpart
+            || AppState.IsHaXEnabled)
+        {
+            return;
+        }
+
+        // Let's Go transfers aren't wired up in either direction (see TradeTab.ExecuteTransferAsync).
+        if (OwnerSaveFile is SAV7b || counterpart is SAV7b)
+        {
+            transferIneligibleReason = "Transfers involving Let’s Go saves aren’t supported.";
+            return;
+        }
+
+        if (pk.GetType() == counterpart.PKMType)
+        {
+            return;
+        }
+
+        if (!EntityConverter.IsConvertibleToFormat(pk, counterpart.Generation))
+        {
+            transferIneligibleReason =
+                $"Can’t transfer {pk.GetType().Name} to {counterpart.PKMType.Name} (incompatible generation).";
+        }
     }
 
     private void UpdateSpriteState()

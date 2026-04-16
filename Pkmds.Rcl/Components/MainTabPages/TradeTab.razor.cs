@@ -517,10 +517,8 @@ public partial class TradeTab : RefreshAwareComponent
         var converted = ConvertForSave(srcPkm.Clone(), destSave, haxEnabled, out var forwardMessage);
         if (converted is null)
         {
-            Snackbar.Add(
-                string.IsNullOrEmpty(forwardMessage)
-                    ? "Could not convert the source Pokémon to the destination's format."
-                    : $"Could not transfer: {forwardMessage}",
+            ShowTransferIssueSnackbar("Could not transfer", forwardMessage,
+                "Could not convert the source Pokémon to the destination's format.",
                 Severity.Error);
             return;
         }
@@ -534,10 +532,8 @@ public partial class TradeTab : RefreshAwareComponent
             convertedBack = ConvertForSave(destPkmPrev.Clone(), srcSave, haxEnabled, out var reverseMessage);
             if (convertedBack is null)
             {
-                Snackbar.Add(
-                    string.IsNullOrEmpty(reverseMessage)
-                        ? "Could not convert the destination Pokémon back to the source's format for a swap."
-                        : $"Swap not possible: {reverseMessage}",
+                ShowTransferIssueSnackbar("Swap not possible", reverseMessage,
+                    "Could not convert the destination Pokémon back to the source's format for a swap.",
                     Severity.Error);
                 return;
             }
@@ -573,7 +569,8 @@ public partial class TradeTab : RefreshAwareComponent
 
         if (!string.IsNullOrEmpty(forwardMessage))
         {
-            Snackbar.Add($"Warning: {forwardMessage}", Severity.Warning);
+            ShowTransferIssueSnackbar("Warning", forwardMessage,
+                "The transfer succeeded with warnings.", Severity.Warning);
         }
 
         MarkSlotBDirtyIfInvolved(srcSave, destSave);
@@ -587,6 +584,36 @@ public partial class TradeTab : RefreshAwareComponent
         {
             AppState.HasUnsavedChangesB = true;
         }
+    }
+
+    // Render conversion errors/warnings as a bulleted list when PKHeX returns a multi-line
+    // message (e.g. "Cannot convert a PK7 to PK3\nCannot transfer this format..."). A plain
+    // snackbar string collapses the newline and looks like one run-on sentence, which is what
+    // prompted this. Falls back to a single-line snackbar when there's only one line.
+    private static readonly string[] MessageLineSeparators = ["\r\n", "\n", "\r"];
+
+    private void ShowTransferIssueSnackbar(string heading, string? details, string fallback, Severity severity)
+    {
+        var lines = string.IsNullOrWhiteSpace(details)
+            ? [fallback]
+            : details.Split(MessageLineSeparators, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        if (lines.Length <= 1)
+        {
+            Snackbar.Add($"{heading}: {lines[0]}", severity);
+            return;
+        }
+
+        var bullets = new StringBuilder();
+        bullets.Append("<strong>").Append(WebUtility.HtmlEncode(heading)).Append(":</strong>");
+        bullets.Append("<ul style=\"margin:4px 0 0 0;padding-left:1.25rem;\">");
+        foreach (var line in lines)
+        {
+            bullets.Append("<li>").Append(WebUtility.HtmlEncode(line)).Append("</li>");
+        }
+        bullets.Append("</ul>");
+
+        Snackbar.Add(new MarkupString(bullets.ToString()), severity);
     }
 
     private static PKM? ConvertForSave(PKM pkm, SaveFile destSave, bool haxEnabled, out string message)
