@@ -301,6 +301,11 @@ body, html {
         overflow: hidden;
     }
 
+    .pokedex-grid-wrapper .pokedex-species-grid,
+    .pokedex-grid-wrapper .pokedex-species-grid > .mud-table-container {
+        height: 100%;
+    }
+
     /* Teams tab content: simple vertical scroll for team cards */
     .teams-tab-content {
         height: 100%;
