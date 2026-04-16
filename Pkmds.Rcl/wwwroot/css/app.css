@@ -299,11 +299,21 @@ body, html {
         flex: 1;
         min-height: 0;
         overflow: hidden;
+        display: flex;
+        flex-direction: column;
     }
 
-    .pokedex-grid-wrapper .pokedex-species-grid,
+    .pokedex-grid-wrapper .pokedex-species-grid {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
     .pokedex-grid-wrapper .pokedex-species-grid > .mud-table-container {
-        height: 100%;
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
     }
 
     /* Teams tab content: simple vertical scroll for team cards */
