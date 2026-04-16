@@ -32,7 +32,7 @@ public interface IAppState
     /// <summary>
     /// Gets or sets the secondary save file used by the cross-save Trade tab.
     /// Independent from <see cref="SaveFile" />; remains null until the user explicitly
-    /// loads a second save from the Trade tab. Read-only in Phase 1 of the cross-save trade work.
+    /// loads a second save from the Trade tab.
     /// </summary>
     SaveFile? SaveFileB { get; set; }
 

@@ -42,9 +42,9 @@ else
                               Class="pa-3">
                         <MudText Typo="@Typo.subtitle1">Second save</MudText>
                         <MudText Typo="@Typo.body2">
-                            Load a second save file to view its party and boxes side-by-side
-                            with the first save. Phase 1 is read-only — transfers will arrive
-                            in a future update.
+                            Load a second save file to transfer Pokémon side-by-side with the
+                            first save. Drag a Pokémon between panes, or select one and use
+                            the arrow buttons to move it across.
                         </MudText>
                         <MudButton Variant="@Variant.Filled"
                                    Color="@Color.Primary"
@@ -72,6 +72,10 @@ else
                                            title="Send selected Pokémon from Slot A to Slot B"
                                            Size="@Size.Small"/>
                             <MudSpacer/>
+                            <MudIconButton Icon="@Icons.Material.Filled.IosShare"
+                                           OnClick="@ExportSecondarySaveAsync"
+                                           title="Export second save"
+                                           Size="@Size.Small"/>
                             <MudIconButton Icon="@Icons.Material.Filled.SwapHoriz"
                                            OnClick="@LoadSecondarySaveAsync"
                                            Disabled="@isLoading"

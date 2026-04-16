@@ -4,6 +4,10 @@ public partial class TradeTab : RefreshAwareComponent
 {
     private bool isLoading;
 
+    // Preserve the slot-B Manic EMU ZIP context across the session so Export Slot B
+    // can rebuild the .3ds.sav/.3ds.save ZIP without requiring the user to re-upload.
+    private ManicEmuSaveHelper.ManicEmuSaveContext? manicEmuSaveContextB;
+
     [Inject]
     private IBackupService BackupService { get; set; } = null!;
 
@@ -107,9 +111,10 @@ public partial class TradeTab : RefreshAwareComponent
 
             // NOTE: Do NOT call ParseSettings.InitFromSaveFileData(loadedSave) here.
             // That mutates global ParseSettings.ActiveTrainer and would break legality
-            // analysis on slot A. Slot B legality is read using the global settings already
-            // tuned to slot A's trainer; some handler-state checks may be slightly off for
-            // slot B Pokémon but Phase 1 is read-only so this is acceptable.
+            // analysis on slot A. Slot B legality is read using the global settings
+            // already tuned to slot A's trainer; some handler-state checks may be
+            // slightly off for slot B Pokémon but the post-transfer confirmation dialog
+            // picks up the important cases.
 
             AppState.SaveFileB = loadedSave;
             AppState.SaveFileNameB = selectedFile.Name;
@@ -117,12 +122,12 @@ public partial class TradeTab : RefreshAwareComponent
             AppState.SelectedBoxNumberB = loadedSave.CurrentBox;
             AppState.SelectedBoxSlotNumberB = null;
             AppState.SelectedPartySlotNumberB = null;
+            manicEmuSaveContextB = manicContext;
 
             // Per-slot on-load backup. Identical contract to the slot-A load path:
             // bytes come from the freshly loaded SaveFile (handles Manic EMU rebuild),
             // metadata is keyed by filename + save metadata + source so slot A and slot B
-            // backups coexist in IndexedDB. EnforceRetentionAsync remains global —
-            // Phase 1 only ever produces one slot-B backup so the shared pool is fine.
+            // backups coexist in IndexedDB.
             if (SettingsService.Settings.IsAutoBackupEnabled)
             {
                 try
@@ -160,7 +165,73 @@ public partial class TradeTab : RefreshAwareComponent
     private void UnloadSecondarySave()
     {
         AppState.SaveFileB = null;
+        AppState.SaveFileNameB = null;
+        manicEmuSaveContextB = null;
         RefreshService.Refresh();
+    }
+
+    private async Task ExportSecondarySaveAsync()
+    {
+        if (AppState.SaveFileB is not { } saveB)
+        {
+            return;
+        }
+
+        Logger.LogInformation("Exporting slot-B save file");
+        var rawSaveBytes = saveB.Write().ToArray();
+        var originalName = AppState.SaveFileNameB;
+
+        // Same branching as MainLayout.ExportSaveFile — rebuild the Manic EMU ZIP
+        // when the slot-B save came from one, otherwise preserve the original name.
+        if (manicEmuSaveContextB is not null)
+        {
+            var (exportName, compoundExt) = ManicEmuSaveHelper.GetExportFileName(originalName);
+            var zipBytes = ManicEmuSaveHelper.RebuildZip(manicEmuSaveContextB, rawSaveBytes);
+            await WriteSlotBFileAsync(zipBytes, exportName, compoundExt);
+        }
+        else if (string.IsNullOrWhiteSpace(originalName))
+        {
+            await WriteSlotBFileAsync(rawSaveBytes, "save.sav", ".sav");
+        }
+        else
+        {
+            var ext = Path.GetExtension(originalName);
+            await WriteSlotBFileAsync(rawSaveBytes, originalName, ext);
+        }
+    }
+
+    // Minimal duplicate of MainLayout's WriteFile: File System Access API when supported,
+    // fall back to an anchor click for legacy browsers.
+    private async Task WriteSlotBFileAsync(byte[] data, string fileName, string fileTypeExtension)
+    {
+        if (!await FileSystemAccessService.IsSupportedAsync())
+        {
+            var finalName = string.IsNullOrWhiteSpace(fileName) ? "save.sav" : fileName;
+            var base64 = Convert.ToBase64String(data);
+            var element = await JSRuntime.InvokeAsync<IJSObjectReference>(
+                "eval", "document.createElement('a')");
+            await element.InvokeVoidAsync("setAttribute", "href",
+                $"data:application/x-pokemon-savedata;base64,{base64}");
+            await element.InvokeVoidAsync("setAttribute", "download", finalName);
+            await element.InvokeVoidAsync("click");
+            return;
+        }
+
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("showFilePickerAndWrite",
+                fileName, data, fileTypeExtension, "Save File");
+        }
+        catch (JSException ex) when (ex.Message.Contains("AbortError", StringComparison.OrdinalIgnoreCase)
+                                     || ex.Message.Contains("aborted a request", StringComparison.OrdinalIgnoreCase))
+        {
+            // User dismissed the picker — not an error.
+        }
+        catch (JSException ex)
+        {
+            Logger.LogError(ex, "Error exporting slot-B save file: {FileName}", fileName);
+            Snackbar.Add("Export failed. Please try again or use a different browser.", Severity.Error);
+        }
     }
 
     // ── Transfer logic ────────────────────────────────────────────────────────
