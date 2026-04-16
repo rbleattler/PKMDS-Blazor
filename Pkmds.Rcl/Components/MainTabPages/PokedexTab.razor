@@ -3,7 +3,7 @@
 @if (AppState.SaveFile is { HasPokeDex: true })
 {
     <div class="pokedex-tab-content">
-        <MudStack>
+        <MudStack Style="height: 100%">
             <MudText Typo="@Typo.body2">Seen: @displaySeenCount / @dexTotal</MudText>
             <MudProgressLinear Color="@Color.Info"
                                Value="@seenPercent"/>
@@ -178,15 +178,17 @@
                     break;
             }
 
-            @if (AppState.SaveFile is SAV8LA)
-            {
-                <PokedexLaResearchPanel RefreshToken="@gridRefreshToken"/>
-            }
-            else
-            {
-                <PokedexSpeciesGrid RefreshToken="@gridRefreshToken"
-                                    OnSpeciesChanged="@OnSpeciesChangedInGrid"/>
-            }
+            <div class="pokedex-grid-wrapper">
+                @if (AppState.SaveFile is SAV8LA)
+                {
+                    <PokedexLaResearchPanel RefreshToken="@gridRefreshToken"/>
+                }
+                else
+                {
+                    <PokedexSpeciesGrid RefreshToken="@gridRefreshToken"
+                                        OnSpeciesChanged="@OnSpeciesChangedInGrid"/>
+                }
+            </div>
         </MudStack>
     </div>
 }

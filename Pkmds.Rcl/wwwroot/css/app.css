@@ -295,6 +295,12 @@ body, html {
         overflow: hidden;
     }
 
+    .pokedex-grid-wrapper {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+    }
+
     /* Teams tab content: simple vertical scroll for team cards */
     .teams-tab-content {
         height: 100%;
