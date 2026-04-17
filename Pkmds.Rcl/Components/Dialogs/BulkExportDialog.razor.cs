@@ -6,12 +6,15 @@ public partial class BulkExportDialog
 {
     public enum BulkExportScope
     {
+        Party,
         CurrentBox,
-        AllBoxes
+        AllBoxes,
+        Everything
     }
 
     private int currentBoxCount;
     private bool isExporting;
+    private int partyCount;
     private BulkExportScope scope = BulkExportScope.CurrentBox;
     private int totalBoxCount;
 
@@ -35,11 +38,20 @@ public partial class BulkExportDialog
         }
 
         totalBoxCount = total;
+        partyCount = CountParty(sav);
 
-        // If the current box is empty but other boxes have Pokémon, default to All boxes.
-        if (currentBoxCount == 0 && totalBoxCount > 0)
+        // Default scope: prefer current box, then any box, then party.
+        if (currentBoxCount > 0)
+        {
+            scope = BulkExportScope.CurrentBox;
+        }
+        else if (totalBoxCount > 0)
         {
             scope = BulkExportScope.AllBoxes;
+        }
+        else if (partyCount > 0)
+        {
+            scope = BulkExportScope.Party;
         }
     }
 
@@ -57,10 +69,26 @@ public partial class BulkExportDialog
         return count;
     }
 
+    private static int CountParty(SaveFile sav)
+    {
+        var count = 0;
+        for (var i = 0; i < sav.PartyCount; i++)
+        {
+            if (sav.GetPartySlotAtIndex(i).Species != 0)
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
     private int GetScopedCount() => scope switch
     {
+        BulkExportScope.Party => partyCount,
         BulkExportScope.CurrentBox => currentBoxCount,
         BulkExportScope.AllBoxes => totalBoxCount,
+        BulkExportScope.Everything => partyCount + totalBoxCount,
         _ => 0
     };
 
@@ -84,9 +112,15 @@ public partial class BulkExportDialog
         try
         {
             var zipBytes = BuildZip(pokemonToExport);
-            var fileName = scope == BulkExportScope.CurrentBox
-                ? $"pokemon_export_box{(AppState.BoxEdit?.CurrentBox ?? sav.CurrentBox) + 1}.zip"
-                : "pokemon_export.zip";
+            var fileName = scope switch
+            {
+                BulkExportScope.Party => "pokemon_export_party.zip",
+                BulkExportScope.CurrentBox =>
+                    $"pokemon_export_box{(AppState.BoxEdit?.CurrentBox ?? sav.CurrentBox) + 1}.zip",
+                BulkExportScope.AllBoxes => "pokemon_export_boxes.zip",
+                BulkExportScope.Everything => "pokemon_export.zip",
+                _ => "pokemon_export.zip"
+            };
 
             await WriteZipAsync(zipBytes, fileName);
 
@@ -106,11 +140,27 @@ public partial class BulkExportDialog
 
     private List<PKM> CollectPokemon(SaveFile sav)
     {
-        var boxes = scope == BulkExportScope.CurrentBox
-            ? new[] { AppState.BoxEdit?.CurrentBox ?? sav.CurrentBox }
-            : Enumerable.Range(0, sav.BoxCount).ToArray();
-
         var result = new List<PKM>();
+
+        if (scope is BulkExportScope.Party or BulkExportScope.Everything)
+        {
+            for (var i = 0; i < sav.PartyCount; i++)
+            {
+                var pkm = sav.GetPartySlotAtIndex(i);
+                if (pkm.Species != 0)
+                {
+                    result.Add(pkm);
+                }
+            }
+        }
+
+        var boxes = scope switch
+        {
+            BulkExportScope.CurrentBox => new[] { AppState.BoxEdit?.CurrentBox ?? sav.CurrentBox },
+            BulkExportScope.AllBoxes or BulkExportScope.Everything => Enumerable.Range(0, sav.BoxCount).ToArray(),
+            _ => []
+        };
+
         foreach (var box in boxes)
         {
             for (var slot = 0; slot < sav.BoxSlotCount; slot++)

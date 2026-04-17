@@ -1,16 +1,22 @@
 <MudDialog>
     <TitleContent>
-        <MudText Typo="@Typo.h6">Export Box(es) as .pk* Files</MudText>
+        <MudText Typo="@Typo.h6">Export Pokémon as .pk* Files</MudText>
     </TitleContent>
     <DialogContent>
         <MudStack Spacing="3">
             <MudText Typo="@Typo.body2"
                      Color="@Color.Secondary">
-                Downloads a single zip containing a .pk* file for each non-empty box slot.
+                Downloads a single zip containing a .pk* file for each non-empty slot.
             </MudText>
 
             <MudRadioGroup T="BulkExportDialog.BulkExportScope"
                            @bind-Value="scope">
+                <MudRadio T="BulkExportDialog.BulkExportScope"
+                          Value="@BulkExportDialog.BulkExportScope.Party"
+                          Color="@Color.Primary"
+                          Disabled="@(partyCount == 0)">
+                    Party (@partyCount Pokémon)
+                </MudRadio>
                 <MudRadio T="BulkExportDialog.BulkExportScope"
                           Value="@BulkExportDialog.BulkExportScope.CurrentBox"
                           Color="@Color.Primary"
@@ -22,6 +28,12 @@
                           Color="@Color.Primary"
                           Disabled="@(totalBoxCount == 0)">
                     All boxes (@totalBoxCount Pokémon)
+                </MudRadio>
+                <MudRadio T="BulkExportDialog.BulkExportScope"
+                          Value="@BulkExportDialog.BulkExportScope.Everything"
+                          Color="@Color.Primary"
+                          Disabled="@(partyCount + totalBoxCount == 0)">
+                    Party and all boxes (@(partyCount + totalBoxCount) Pokémon)
                 </MudRadio>
             </MudRadioGroup>
 

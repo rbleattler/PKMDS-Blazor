@@ -559,7 +559,12 @@ public partial class PokemonSlotComponent : IDisposable
                 return;
             }
 
-            var parameters = new DialogParameters<BulkImportDialog> { { x => x.PreloadedFiles, preloaded } };
+            var parameters = new DialogParameters<BulkImportDialog>
+            {
+                { x => x.PreloadedFiles, preloaded },
+                // Box slot drop → fill boxes first; party slot drop → fill party first.
+                { x => x.FillBoxesFirst, !IsPartySlot }
+            };
             var options = new DialogOptions
             {
                 CloseOnEscapeKey = true,

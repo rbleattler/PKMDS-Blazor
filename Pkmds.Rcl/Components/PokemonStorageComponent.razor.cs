@@ -135,11 +135,19 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
         RefreshService.RefreshBoxState();
     }
 
-    private bool HasAnyBoxPokemon()
+    private bool HasAnyExportablePokemon()
     {
         if (AppState.SaveFile is not { } sav)
         {
             return false;
+        }
+
+        for (var i = 0; i < sav.PartyCount; i++)
+        {
+            if (sav.GetPartySlotAtIndex(i).Species != 0)
+            {
+                return true;
+            }
         }
 
         for (var box = 0; box < sav.BoxCount; box++)
@@ -159,7 +167,7 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
     private async Task OpenBulkExportDialog()
     {
         await DialogService.ShowAsync<BulkExportDialog>(
-            "Export Box(es) as .pk* Files",
+            "Export Pokémon as .pk* Files",
             new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true });
     }
 

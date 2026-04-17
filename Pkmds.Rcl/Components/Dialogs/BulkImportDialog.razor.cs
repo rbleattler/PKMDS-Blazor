@@ -20,6 +20,14 @@ public partial class BulkImportDialog : IDisposable
     [Parameter]
     public IReadOnlyList<(string FileName, byte[] Data)>? PreloadedFiles { get; set; }
 
+    /// <summary>
+    /// When <see langword="true" /> (the default), the placement scan fills boxes before
+    /// the party. Set to <see langword="false" /> when the import was initiated from a
+    /// party slot drop so the party fills first.
+    /// </summary>
+    [Parameter]
+    public bool FillBoxesFirst { get; set; } = true;
+
     [CascadingParameter]
     private IMudDialogInstance? MudDialog { get; set; }
 
@@ -107,7 +115,7 @@ public partial class BulkImportDialog : IDisposable
             StateHasChanged();
             await Task.Yield();
 
-            var (placed, overflow) = PlacePokemon(sav, parsed, overwriteExisting);
+            var (placed, overflow) = PlacePokemon(sav, parsed, overwriteExisting, FillBoxesFirst);
             var illegal = 0;
             foreach (var pk in placed)
             {
@@ -224,14 +232,14 @@ public partial class BulkImportDialog : IDisposable
     }
 
     private static (List<PKM> Placed, List<PKM> Overflow) PlacePokemon(
-        SaveFile sav, IReadOnlyList<PKM> candidates, bool overwrite)
+        SaveFile sav, IReadOnlyList<PKM> candidates, bool overwrite, bool fillBoxesFirst)
     {
         var placed = new List<PKM>(candidates.Count);
         var overflow = new List<PKM>();
 
         foreach (var pkm in candidates)
         {
-            if (TryPlaceSequential(sav, pkm, overwrite))
+            if (TryPlaceSequential(sav, pkm, overwrite, fillBoxesFirst))
             {
                 placed.Add(pkm);
             }
@@ -244,50 +252,43 @@ public partial class BulkImportDialog : IDisposable
         return (placed, overflow);
     }
 
-    private static bool TryPlaceSequential(SaveFile sav, PKM pkm, bool overwrite)
+    private static bool TryPlaceSequential(SaveFile sav, PKM pkm, bool overwrite, bool fillBoxesFirst)
     {
-        // Party first, then box scan (matches IAppService.TryPlacePokemonInFirstAvailableSlot).
-        if (overwrite)
+        // Party is never overwritten — `sav.PartyCount < 6` means there's a grow slot,
+        // which matches IAppService.TryPlacePokemonInFirstAvailableSlot. Overwrite only
+        // applies to boxes.
+        if (fillBoxesFirst)
         {
-            if (sav.PartyCount < 6)
-            {
-                sav.SetPartySlotAtIndex(pkm, sav.PartyCount);
-                return true;
-            }
+            return TryFillBoxes(sav, pkm, overwrite) || TryFillParty(sav, pkm);
+        }
 
-            // Overwrite mode: fill boxes sequentially, replacing whatever is there.
-            for (var box = 0; box < sav.BoxCount; box++)
-            {
-                for (var slot = 0; slot < sav.BoxSlotCount; slot++)
-                {
-                    var existing = sav.GetBoxSlotAtIndex(box, slot);
-                    if (existing.Species != 0 && !IsSlotEligibleForOverwrite(sav, box, slot))
-                    {
-                        continue;
-                    }
+        return TryFillParty(sav, pkm) || TryFillBoxes(sav, pkm, overwrite);
+    }
 
-                    sav.SetBoxSlotAtIndex(pkm, box, slot);
-                    return true;
-                }
-            }
-
+    private static bool TryFillParty(SaveFile sav, PKM pkm)
+    {
+        if (sav.PartyCount >= 6)
+        {
             return false;
         }
 
-        // Fill empty only.
-        if (sav.PartyCount < 6)
-        {
-            sav.SetPartySlotAtIndex(pkm, sav.PartyCount);
-            return true;
-        }
+        sav.SetPartySlotAtIndex(pkm, sav.PartyCount);
+        return true;
+    }
 
+    private static bool TryFillBoxes(SaveFile sav, PKM pkm, bool overwrite)
+    {
         for (var box = 0; box < sav.BoxCount; box++)
         {
             for (var slot = 0; slot < sav.BoxSlotCount; slot++)
             {
-                if (sav.GetBoxSlotAtIndex(box, slot).Species != 0)
+                var existing = sav.GetBoxSlotAtIndex(box, slot);
+                if (existing.Species != 0)
                 {
-                    continue;
+                    if (!overwrite || !IsSlotEligibleForOverwrite(sav, box, slot))
+                    {
+                        continue;
+                    }
                 }
 
                 sav.SetBoxSlotAtIndex(pkm, box, slot);

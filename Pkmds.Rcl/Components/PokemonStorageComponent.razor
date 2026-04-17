@@ -105,11 +105,11 @@
             </MudIconButton>
 
             <MudIconButton OnClick="@OpenBulkExportDialog"
-                           title="Export box(es) as .pk* files"
+                           title="Export party or box(es) as .pk* files"
                            ButtonType="@ButtonType.Button"
                            Icon="@Icons.Material.Filled.Download"
                            Variant="@Variant.Filled"
-                           Disabled="@(!HasAnyBoxPokemon())"
+                           Disabled="@(!HasAnyExportablePokemon())"
                            Class="m-1.5 p-1.5">
             </MudIconButton>
 
