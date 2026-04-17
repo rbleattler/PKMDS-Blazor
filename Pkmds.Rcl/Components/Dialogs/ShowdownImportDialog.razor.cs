@@ -1,3 +1,5 @@
+using PKHexSeverity = PKHeX.Core.Severity;
+
 namespace Pkmds.Rcl.Components.Dialogs;
 
 public partial class ShowdownImportDialog
@@ -7,7 +9,8 @@ public partial class ShowdownImportDialog
 
     private string inputText = string.Empty;
     private bool isFetching;
-    private List<ShowdownSet> parsedSets = [];
+    private bool isParsing;
+    private List<ParsedEntry> parsedEntries = [];
     private string? pasteInfo;
 
     [CascadingParameter]
@@ -18,7 +21,140 @@ public partial class ShowdownImportDialog
 
     private bool IsUrl => PokepasteTeam.IsURL(inputText, out _);
 
-    private void ParseText() => parsedSets = [.. AppService.ParseShowdownText(inputText)];
+    private async Task ParseTextAsync()
+    {
+        if (string.IsNullOrWhiteSpace(inputText))
+        {
+            return;
+        }
+
+        isParsing = true;
+        parsedEntries = [];
+        StateHasChanged();
+
+        // Yield so the spinner paints before per-set conversion + legality analysis runs.
+        // Task.Delay(1) (not Task.Yield) because in Blazor WASM, Yield stays on the same
+        // JS macrotask and never lets the browser paint.
+        await Task.Delay(1);
+
+        var sets = AppService.ParseShowdownText(inputText);
+        var entries = new List<ParsedEntry>(sets.Count);
+        foreach (var set in sets)
+        {
+            var pkm = AppService.ConvertShowdownSetToPkm(set);
+            var (status, firstIssue) = AnalyzeLegality(pkm);
+            entries.Add(new ParsedEntry(set, pkm, status, firstIssue));
+
+            // Inter-entry yield so the browser can process input between conversions,
+            // matching the pattern used by LegalityReportTab's batch legalize sweep.
+            await Task.Delay(1);
+        }
+
+        parsedEntries = entries;
+        isParsing = false;
+        StateHasChanged();
+    }
+
+    private (LegalityStatus? Status, string FirstIssue) AnalyzeLegality(PKM? pkm)
+    {
+        if (pkm is null)
+        {
+            return (null, string.Empty);
+        }
+
+        var la = AppService.GetLegalityAnalysis(pkm);
+        var status = GetStatus(la);
+        var firstIssue = status == LegalityStatus.Legal
+            ? string.Empty
+            : GetFirstIssue(la);
+        return (status, firstIssue);
+    }
+
+    // Mirrors LegalityReportTab.GetStatus — keep these in sync.
+    private static LegalityStatus GetStatus(LegalityAnalysis la)
+    {
+        var hasInvalid = la.Results.Any(r => r.Judgement == PKHexSeverity.Invalid)
+                         || !MoveResult.AllValid(la.Info.Moves)
+                         || !MoveResult.AllValid(la.Info.Relearn);
+
+        if (hasInvalid)
+        {
+            return LegalityStatus.Illegal;
+        }
+
+        var hasFishy = la.Results.Any(r => r.Judgement == PKHexSeverity.Fishy);
+        return hasFishy
+            ? LegalityStatus.Fishy
+            : LegalityStatus.Legal;
+    }
+
+    // Mirrors LegalityReportTab.GetFirstIssue — keep these in sync.
+    private static string GetFirstIssue(LegalityAnalysis la)
+    {
+        var ctx = LegalityLocalizationContext.Create(la);
+
+        // Prefer Invalid over Fishy so the more severe issue wins when both are present.
+        // CheckResult.Valid is true for Fishy judgements, so match on Judgement directly.
+        foreach (var result in la.Results)
+        {
+            if (result.Judgement == PKHexSeverity.Invalid)
+            {
+                return ctx.Humanize(in result);
+            }
+        }
+
+        if (!MoveResult.AllValid(la.Info.Moves))
+        {
+            return "Invalid move detected.";
+        }
+
+        if (!MoveResult.AllValid(la.Info.Relearn))
+        {
+            return "Invalid relearn move detected.";
+        }
+
+        foreach (var result in la.Results)
+        {
+            if (result.Judgement == PKHexSeverity.Fishy)
+            {
+                return ctx.Humanize(in result);
+            }
+        }
+
+        return string.Empty;
+    }
+
+    private static Color GetStatusColor(LegalityStatus status) => status switch
+    {
+        LegalityStatus.Legal => Color.Success,
+        LegalityStatus.Fishy => Color.Warning,
+        LegalityStatus.Illegal => Color.Error,
+        _ => Color.Default
+    };
+
+    private static string GetStatusIcon(LegalityStatus status) => status switch
+    {
+        LegalityStatus.Legal => Icons.Material.Filled.CheckCircle,
+        LegalityStatus.Fishy => Icons.Material.Filled.Warning,
+        LegalityStatus.Illegal => Icons.Material.Filled.Cancel,
+        _ => Icons.Material.Filled.Help
+    };
+
+    private static string GetStatusTooltip(ParsedEntry entry) => entry.Status switch
+    {
+        LegalityStatus.Legal => "Legal",
+        _ => string.IsNullOrEmpty(entry.FirstIssue)
+            ? GetStatusLabel(entry.Status)
+            : entry.FirstIssue
+    };
+
+    private static string GetStatusLabel(LegalityStatus? status) => status switch
+    {
+        LegalityStatus.Legal => "Legal",
+        LegalityStatus.Fishy => "Fishy",
+        LegalityStatus.Illegal => "Illegal",
+        _ => "Unknown"
+    };
 
     private async Task FetchUrlAsync()
     {
@@ -51,17 +187,17 @@ public partial class ShowdownImportDialog
             {
                 inputText = response.Paste;
                 pasteInfo = BuildPasteInfo(response);
-                ParseText();
+                isFetching = false;
+                await ParseTextAsync();
+                return;
             }
         }
         catch (Exception ex)
         {
             fetchError = $"Failed to fetch from PokePaste: {ex.Message}";
         }
-        finally
-        {
-            isFetching = false;
-        }
+
+        isFetching = false;
     }
 
     private static string? BuildPasteInfo(PokePasteResponse response)
@@ -124,19 +260,19 @@ public partial class ShowdownImportDialog
             return;
         }
 
-        // Convert all sets up front so we know exactly what we have.
-        var converted = new List<PKM>(parsedSets.Count);
+        // Reuse the pre-converted PKMs from parsing — no need to re-run the legalization
+        // engine at import time.
+        var converted = new List<PKM>(parsedEntries.Count);
         var conversionFailed = 0;
-        foreach (var set in parsedSets)
+        foreach (var entry in parsedEntries)
         {
-            var pkm = AppService.ConvertShowdownSetToPkm(set);
-            if (pkm is null)
+            if (entry.Pokemon is { } pkm)
             {
-                conversionFailed++;
+                converted.Add(pkm);
             }
             else
             {
-                converted.Add(pkm);
+                conversionFailed++;
             }
         }
 
@@ -228,4 +364,10 @@ public partial class ShowdownImportDialog
     }
 
     private void Cancel() => MudDialog?.Close(DialogResult.Cancel());
+
+    private sealed record ParsedEntry(
+        ShowdownSet Set,
+        PKM? Pokemon,
+        LegalityStatus? Status,
+        string FirstIssue);
 }

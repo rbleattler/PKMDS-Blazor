@@ -10,7 +10,7 @@
                           Lines="10"
                           Variant="@Variant.Outlined"
                           Placeholder="Paste Showdown text or a PokePaste URL (https://pokepast.es/...)…"
-                          Disabled="@isFetching"/>
+                          Disabled="@(isFetching || isParsing)"/>
 
             @if (!string.IsNullOrEmpty(fetchError))
             {
@@ -37,7 +37,7 @@
                                Variant="@Variant.Filled"
                                StartIcon="@Icons.Material.Filled.Download"
                                Color="@Color.Primary"
-                               Disabled="@isFetching">
+                               Disabled="@(isFetching || isParsing)">
                         @if (isFetching)
                         {
                             <MudProgressCircular Size="@Size.Small"
@@ -51,34 +51,52 @@
                         }
                     </MudButton>
                 }
-                <MudButton OnClick="@ParseText"
+                <MudButton OnClick="@ParseTextAsync"
                            Variant="@Variant.Filled"
                            StartIcon="@Icons.Material.Filled.Search"
-                           Disabled="@(string.IsNullOrWhiteSpace(inputText) || isFetching)">
-                    Parse
+                           Disabled="@(string.IsNullOrWhiteSpace(inputText) || isFetching || isParsing)">
+                    @if (isParsing)
+                    {
+                        <MudProgressCircular Size="@Size.Small"
+                                             Indeterminate="true"
+                                             Class="mr-2"/>
+                        @:Analyzing…
+                    }
+                    else
+                    {
+                        @:Parse
+                    }
                 </MudButton>
             </MudStack>
 
-            @if (parsedSets.Count > 0)
+            @if (parsedEntries.Count > 0)
             {
                 <MudDivider/>
 
                 <MudText Typo="@Typo.subtitle2">
-                    Preview — @parsedSets.Count Pokémon
+                    Preview — @parsedEntries.Count Pokémon
                 </MudText>
 
-                <MudList T="ShowdownSet"
+                <MudList T="ParsedEntry"
                          Dense="true">
-                    @foreach (var set in parsedSets)
+                    @foreach (var entry in parsedEntries)
                     {
-                        <MudListItem T="ShowdownSet">
+                        <MudListItem T="ParsedEntry">
                             <MudStack Row
                                       AlignItems="@AlignItems.Center"
                                       Spacing="1">
-                                <MudText>@GetSetSummary(set)</MudText>
-                                @if (set.InvalidLines.Count > 0)
+                                @if (entry.Status is { } status)
                                 {
-                                    <MudTooltip Text="@GetWarnings(set)">
+                                    <MudTooltip Text="@GetStatusTooltip(entry)">
+                                        <MudIcon Icon="@GetStatusIcon(status)"
+                                                 Color="@GetStatusColor(status)"
+                                                 Size="@Size.Small"/>
+                                    </MudTooltip>
+                                }
+                                <MudText>@GetSetSummary(entry.Set)</MudText>
+                                @if (entry.Set.InvalidLines.Count > 0)
+                                {
+                                    <MudTooltip Text="@GetWarnings(entry.Set)">
                                         <MudIcon Icon="@Icons.Material.Filled.Warning"
                                                  Color="@Color.Warning"
                                                  Size="@Size.Small"/>
@@ -120,7 +138,7 @@
                    Variant="@Variant.Filled"
                    Color="@Color.Primary"
                    StartIcon="@Icons.Material.Filled.FileUpload"
-                   Disabled="@(parsedSets.Count == 0 || AppState.SaveFile is null)">
+                   Disabled="@(parsedEntries.Count == 0 || isParsing || AppState.SaveFile is null)">
             Import
         </MudButton>
     </DialogActions>
