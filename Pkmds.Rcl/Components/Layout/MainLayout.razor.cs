@@ -95,16 +95,26 @@ public partial class MainLayout : IDisposable
 
         // Warn users who are running inside a known in-app browser (e.g. Google Search App,
         // Facebook) whose WebView typically blocks file downloads.
-        var isInAppBrowser = await JSRuntime.InvokeAsync<bool>("isInAppBrowser");
-        if (isInAppBrowser)
+        // The JS call is wrapped defensively because in-app browsers / extensions sometimes
+        // inject a non-function global with the same name, which would otherwise crash the
+        // entire layout init (see issue #732).
+        try
         {
-            Snackbar.Add(
-                new MarkupString(
-                    "You appear to be using an in-app browser, which may not support file exports. " +
-                    "For the best experience, please open this app in <strong>Safari</strong> (iOS) or " +
-                    "<strong>Chrome</strong> (Android)."),
-                Severity.Warning,
-                options => options.RequireInteraction = true);
+            var isInAppBrowser = await JSRuntime.InvokeAsync<bool>("pkmdsIsInAppBrowser");
+            if (isInAppBrowser)
+            {
+                Snackbar.Add(
+                    new MarkupString(
+                        "You appear to be using an in-app browser, which may not support file exports. " +
+                        "For the best experience, please open this app in <strong>Safari</strong> (iOS) or " +
+                        "<strong>Chrome</strong> (Android)."),
+                    Severity.Warning,
+                    options => options.RequireInteraction = true);
+            }
+        }
+        catch (JSException ex)
+        {
+            Logger.LogWarning(ex, "In-app browser detection failed");
         }
 
         // Load all persisted settings (theme, PKHaX, verbose logging, trainer defaults)
