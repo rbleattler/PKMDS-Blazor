@@ -7,7 +7,9 @@ public partial class ShowdownImportDialog
 
     private string inputText = string.Empty;
     private bool isFetching;
-    private List<ShowdownSet> parsedSets = [];
+    private bool isParsing;
+    private List<ParsedEntry> parsedEntries = [];
+    private SaveFile? parsedWithSaveFile;
     private string? pasteInfo;
 
     [CascadingParameter]
@@ -18,7 +20,70 @@ public partial class ShowdownImportDialog
 
     private bool IsUrl => PokepasteTeam.IsURL(inputText, out _);
 
-    private void ParseText() => parsedSets = [.. AppService.ParseShowdownText(inputText)];
+    private async Task ParseTextAsync()
+    {
+        if (string.IsNullOrWhiteSpace(inputText))
+        {
+            return;
+        }
+
+        isParsing = true;
+        parsedEntries = [];
+        // Record which save the entries are valid for so Import can detect a mismatch
+        // (e.g. the save was swapped between parse and import).
+        parsedWithSaveFile = AppState.SaveFile;
+        StateHasChanged();
+
+        try
+        {
+            // Yield so the spinner paints before per-set conversion + legality analysis runs.
+            // Task.Delay(1) (not Task.Yield) because in Blazor WASM, Yield stays on the same
+            // JS macrotask and never lets the browser paint.
+            await Task.Delay(1);
+
+            var sets = AppService.ParseShowdownText(inputText);
+            var entries = new List<ParsedEntry>(sets.Count);
+            foreach (var set in sets)
+            {
+                var pkm = AppService.ConvertShowdownSetToPkm(set);
+                var (status, firstIssue) = AnalyzeLegality(pkm);
+                entries.Add(new ParsedEntry(set, pkm, status, firstIssue));
+
+                // Inter-entry yield so the browser can process input between conversions,
+                // matching the pattern used by LegalityReportTab's batch legalize sweep.
+                await Task.Delay(1);
+            }
+
+            parsedEntries = entries;
+        }
+        finally
+        {
+            // Always clear the spinner / re-enable inputs, even if conversion or analysis
+            // threw — otherwise the dialog can get stuck in "Analyzing…" forever.
+            isParsing = false;
+            StateHasChanged();
+        }
+    }
+
+    private (LegalityStatus? Status, string FirstIssue) AnalyzeLegality(PKM? pkm)
+    {
+        if (pkm is null)
+        {
+            return (null, string.Empty);
+        }
+
+        var la = AppService.GetLegalityAnalysis(pkm);
+        var status = LegalityUi.GetStatus(la);
+        var firstIssue = status == LegalityStatus.Legal
+            ? string.Empty
+            : LegalityUi.GetFirstIssue(la);
+        return (status, firstIssue);
+    }
+
+    private static string GetStatusTooltip(ParsedEntry entry) =>
+        string.IsNullOrEmpty(entry.FirstIssue)
+            ? LegalityUi.GetStatusLabel(entry.Status ?? LegalityStatus.Legal)
+            : entry.FirstIssue;
 
     private async Task FetchUrlAsync()
     {
@@ -51,17 +116,17 @@ public partial class ShowdownImportDialog
             {
                 inputText = response.Paste;
                 pasteInfo = BuildPasteInfo(response);
-                ParseText();
+                isFetching = false;
+                await ParseTextAsync();
+                return;
             }
         }
         catch (Exception ex)
         {
             fetchError = $"Failed to fetch from PokePaste: {ex.Message}";
         }
-        finally
-        {
-            isFetching = false;
-        }
+
+        isFetching = false;
     }
 
     private static string? BuildPasteInfo(PokePasteResponse response)
@@ -124,33 +189,64 @@ public partial class ShowdownImportDialog
             return;
         }
 
-        // Convert all sets up front so we know exactly what we have.
-        var converted = new List<PKM>(parsedSets.Count);
-        var conversionFailed = 0;
-        foreach (var set in parsedSets)
+        // Defensive: the dialog is modal so the save shouldn't change mid-flight, but if
+        // it somehow did (or the user parsed before loading a save), the stored PKMs
+        // belong to a different target and must not be imported.
+        if (!ReferenceEquals(parsedWithSaveFile, sav))
         {
-            var pkm = AppService.ConvertShowdownSetToPkm(set);
-            if (pkm is null)
+            Snackbar.Add("Save file changed since parsing. Please parse again.", Severity.Warning);
+            parsedEntries = [];
+            parsedWithSaveFile = null;
+            StateHasChanged();
+            return;
+        }
+
+        // Reuse the pre-converted PKMs from parsing — no need to re-run the legalization
+        // engine at import time. Drop entries whose species/form isn't in the target
+        // game: when the Auto-Legality engine can't produce a valid encounter (e.g. a
+        // Gen 9 species against a Gen 5 save) it silently substitutes a different
+        // species on the PKM, so we can't trust pkm.Species — check the *set's* species,
+        // which preserves the user's original intent. Illegal-but-present entries are
+        // still imported — users can legalize them after.
+        var converted = new List<PKM>(parsedEntries.Count);
+        var conversionFailed = 0;
+        var skippedImpossible = 0;
+        foreach (var entry in parsedEntries)
+        {
+            if (entry.Pokemon is not { } pkm)
             {
                 conversionFailed++;
+                continue;
             }
-            else
+
+            if (entry.Set.Species == 0 ||
+                !sav.Personal.IsPresentInGame(entry.Set.Species, entry.Set.Form))
             {
-                converted.Add(pkm);
+                skippedImpossible++;
+                continue;
             }
+
+            converted.Add(pkm);
+        }
+
+        if (converted.Count == 0)
+        {
+            ReportResult(0, conversionFailed, skippedImpossible);
+            MudDialog?.Close();
+            return;
         }
 
         if (importToParty)
         {
-            await ImportToPartyAsync(sav, converted, conversionFailed);
+            await ImportToPartyAsync(sav, converted, conversionFailed, skippedImpossible);
         }
         else
         {
-            ImportToBox(converted, conversionFailed);
+            ImportToBox(converted, conversionFailed, skippedImpossible);
         }
     }
 
-    private async Task ImportToPartyAsync(SaveFile sav, List<PKM> converted, int conversionFailed)
+    private async Task ImportToPartyAsync(SaveFile sav, List<PKM> converted, int conversionFailed, int skippedImpossible)
     {
         var emptySlots = 6 - sav.PartyCount;
 
@@ -166,7 +262,7 @@ public partial class ShowdownImportDialog
                 }
             }
 
-            ReportResult(placed, conversionFailed + (converted.Count - placed));
+            ReportResult(placed, conversionFailed + (converted.Count - placed), skippedImpossible);
             MudDialog?.Close();
             return;
         }
@@ -190,11 +286,11 @@ public partial class ShowdownImportDialog
 
         var written = AppService.OverwriteParty(converted);
         var skipped = Math.Max(0, converted.Count - written);
-        ReportResult(written, conversionFailed + skipped);
+        ReportResult(written, conversionFailed + skipped, skippedImpossible);
         MudDialog?.Close();
     }
 
-    private void ImportToBox(List<PKM> converted, int conversionFailed)
+    private void ImportToBox(List<PKM> converted, int conversionFailed, int skippedImpossible)
     {
         var placed = 0;
         foreach (var pkm in converted)
@@ -206,26 +302,44 @@ public partial class ShowdownImportDialog
         }
 
         RefreshService.RefreshBoxState();
-        ReportResult(placed, conversionFailed + (converted.Count - placed));
+        ReportResult(placed, conversionFailed + (converted.Count - placed), skippedImpossible);
         MudDialog?.Close();
     }
 
-    private void ReportResult(int imported, int failed)
+    private void ReportResult(int imported, int failed, int skippedImpossible)
     {
-        if (imported == 0 && failed == 0)
+        if (imported == 0 && failed == 0 && skippedImpossible == 0)
         {
             return;
         }
 
-        var severity = failed == 0
+        var parts = new List<string>(2);
+        if (failed > 0)
+        {
+            parts.Add($"{failed} could not be placed");
+        }
+
+        if (skippedImpossible > 0)
+        {
+            parts.Add($"{skippedImpossible} skipped (not in this game)");
+        }
+
+        var message = parts.Count == 0
+            ? $"Imported {imported} Pokémon."
+            : $"Imported {imported} Pokémon. {string.Join(", ", parts)}.";
+
+        var severity = parts.Count == 0
             ? Severity.Success
             : Severity.Warning;
-        var message = failed == 0
-            ? $"Imported {imported} Pokémon."
-            : $"Imported {imported} Pokémon. {failed} could not be placed.";
 
         Snackbar.Add(message, severity);
     }
 
     private void Cancel() => MudDialog?.Close(DialogResult.Cancel());
+
+    private sealed record ParsedEntry(
+        ShowdownSet Set,
+        PKM? Pokemon,
+        LegalityStatus? Status,
+        string FirstIssue);
 }

@@ -1,5 +1,3 @@
-using PKHexSeverity = PKHeX.Core.Severity;
-
 namespace Pkmds.Rcl.Components.MainTabPages;
 
 public partial class LegalityReportTab : RefreshAwareComponent
@@ -144,14 +142,14 @@ public partial class LegalityReportTab : RefreshAwareComponent
             // the save now contains — if the round trip mutated the PKM, we'll see the
             // real status here rather than an optimistic pre-write one.
             var storedLa = AppService.GetLegalityAnalysis(storedPk, isParty: entry.IsParty);
-            var newStatus = GetStatus(storedLa);
+            var newStatus = LegalityUi.GetStatus(storedLa);
             var updated = entry with
             {
                 Pokemon = storedPk,
                 Status = newStatus,
                 FirstIssue = newStatus == LegalityStatus.Legal
                     ? string.Empty
-                    : GetFirstIssue(storedLa)
+                    : LegalityUi.GetFirstIssue(storedLa)
             };
             var idx = legalityReportEntries.IndexOf(entry);
             if (idx >= 0)
@@ -314,65 +312,12 @@ public partial class LegalityReportTab : RefreshAwareComponent
             Pokemon = pkm,
             SpeciesName = speciesName,
             Location = location,
-            Status = GetStatus(la),
-            FirstIssue = GetFirstIssue(la),
+            Status = LegalityUi.GetStatus(la),
+            FirstIssue = LegalityUi.GetFirstIssue(la),
             IsParty = isParty,
             BoxNumber = box,
             SlotNumber = slot
         };
-    }
-
-    private static LegalityStatus GetStatus(LegalityAnalysis la)
-    {
-        var hasInvalid = la.Results.Any(r => r.Judgement == PKHexSeverity.Invalid)
-                         || !MoveResult.AllValid(la.Info.Moves)
-                         || !MoveResult.AllValid(la.Info.Relearn);
-
-        if (hasInvalid)
-        {
-            return LegalityStatus.Illegal;
-        }
-
-        var hasFishy = la.Results.Any(r => r.Judgement == PKHexSeverity.Fishy);
-        return hasFishy
-            ? LegalityStatus.Fishy
-            : LegalityStatus.Legal;
-    }
-
-    private static string GetFirstIssue(LegalityAnalysis la)
-    {
-        var ctx = LegalityLocalizationContext.Create(la);
-
-        // Prefer Invalid results over Fishy ones so the more severe issue is shown
-        // when both are present. CheckResult.Valid is true for Fishy judgements,
-        // so we have to match on Judgement directly to surface Fishy reasons at all.
-        foreach (var result in la.Results)
-        {
-            if (result.Judgement == PKHexSeverity.Invalid)
-            {
-                return ctx.Humanize(in result);
-            }
-        }
-
-        if (!MoveResult.AllValid(la.Info.Moves))
-        {
-            return "Invalid move detected.";
-        }
-
-        if (!MoveResult.AllValid(la.Info.Relearn))
-        {
-            return "Invalid relearn move detected.";
-        }
-
-        foreach (var result in la.Results)
-        {
-            if (result.Judgement == PKHexSeverity.Fishy)
-            {
-                return ctx.Humanize(in result);
-            }
-        }
-
-        return string.Empty;
     }
 
     private void SetFilter(LegalityStatus? filter) => statusFilter = filter;
@@ -402,30 +347,6 @@ public partial class LegalityReportTab : RefreshAwareComponent
 
         await OnJumpToPartyBox.InvokeAsync();
     }
-
-    private static Color GetStatusColor(LegalityStatus status) => status switch
-    {
-        LegalityStatus.Legal => Color.Success,
-        LegalityStatus.Fishy => Color.Warning,
-        LegalityStatus.Illegal => Color.Error,
-        _ => Color.Default
-    };
-
-    private static string GetStatusIcon(LegalityStatus status) => status switch
-    {
-        LegalityStatus.Legal => Icons.Material.Filled.CheckCircle,
-        LegalityStatus.Fishy => Icons.Material.Filled.Warning,
-        LegalityStatus.Illegal => Icons.Material.Filled.Cancel,
-        _ => Icons.Material.Filled.Help
-    };
-
-    private static string GetStatusLabel(LegalityStatus status) => status switch
-    {
-        LegalityStatus.Legal => "Legal",
-        LegalityStatus.Fishy => "Fishy",
-        LegalityStatus.Illegal => "Illegal",
-        _ => "Unknown"
-    };
 
     private bool TableFilterFunction(LegalityReportEntry legalityReportEntry) =>
         statusFilter is null || legalityReportEntry.Status == statusFilter;

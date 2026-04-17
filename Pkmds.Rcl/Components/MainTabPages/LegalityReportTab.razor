@@ -173,11 +173,11 @@
 
                     <MudTd DataLabel="Status">
                         <MudChip T="@string"
-                                 Color="@GetStatusColor(context.Status)"
+                                 Color="@LegalityUi.GetStatusColor(context.Status)"
                                  Size="@Size.Small"
-                                 Icon="@GetStatusIcon(context.Status)"
+                                 Icon="@LegalityUi.GetStatusIcon(context.Status)"
                                  Variant="@Variant.Filled">
-                            @GetStatusLabel(context.Status)
+                            @LegalityUi.GetStatusLabel(context.Status)
                         </MudChip>
                     </MudTd>
 

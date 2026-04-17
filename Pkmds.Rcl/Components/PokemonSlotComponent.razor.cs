@@ -167,19 +167,7 @@ public partial class PokemonSlotComponent : IDisposable
         }
 
         var la = AppService.GetLegalityAnalysis(Pokemon, isParty: IsPartySlot);
-        var hasInvalid = la.Results.Any(r => r.Judgement == PKHeX.Core.Severity.Invalid)
-                         || !MoveResult.AllValid(la.Info.Moves)
-                         || !MoveResult.AllValid(la.Info.Relearn);
-        if (hasInvalid)
-        {
-            legalityStatus = LegalityStatus.Illegal;
-            return;
-        }
-
-        var hasFishy = la.Results.Any(r => r.Judgement == PKHeX.Core.Severity.Fishy);
-        legalityStatus = hasFishy
-            ? LegalityStatus.Fishy
-            : LegalityStatus.Legal;
+        legalityStatus = LegalityUi.GetStatus(la);
     }
 
     private string GetPokemonTitle() => Pokemon is { Species: > 0 }

@@ -1,5 +1,3 @@
-using PKHexSeverity = PKHeX.Core.Severity;
-
 namespace Pkmds.Rcl.Components;
 
 public partial class PokemonStorageComponent : RefreshAwareComponent
@@ -47,7 +45,7 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
             }
 
             var la = AppService.GetLegalityAnalysis(pkm);
-            if (GetStatus(la) == LegalityStatus.Illegal)
+            if (LegalityUi.GetStatus(la) == LegalityStatus.Illegal)
             {
                 count++;
             }
@@ -221,7 +219,7 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
             // Only target Illegal entries. Fishy is Valid per PKHeX — users expect the
             // box-level action to leave those alone. (The Legality Report tab still
             // lets users opt in to running Fishy through the engine.)
-            if (GetStatus(la) != LegalityStatus.Illegal)
+            if (LegalityUi.GetStatus(la) != LegalityStatus.Illegal)
             {
                 continue;
             }
@@ -322,7 +320,7 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
             // Re-analyse the stored bytes so the counters match what the save actually holds.
             var storedPk = saveFile.GetBoxSlotAtIndex(box, slot);
             var storedLa = AppService.GetLegalityAnalysis(storedPk);
-            switch (GetStatus(storedLa))
+            switch (LegalityUi.GetStatus(storedLa))
             {
                 case LegalityStatus.Legal:
                     successCount++;
@@ -353,23 +351,6 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
     }
 
     private void CancelLegalizeBox() => legalizeBoxCts?.Cancel();
-
-    private static LegalityStatus GetStatus(LegalityAnalysis la)
-    {
-        var hasInvalid = la.Results.Any(r => r.Judgement == PKHexSeverity.Invalid)
-                         || !MoveResult.AllValid(la.Info.Moves)
-                         || !MoveResult.AllValid(la.Info.Relearn);
-
-        if (hasInvalid)
-        {
-            return LegalityStatus.Illegal;
-        }
-
-        var hasFishy = la.Results.Any(r => r.Judgement == PKHexSeverity.Fishy);
-        return hasFishy
-            ? LegalityStatus.Fishy
-            : LegalityStatus.Legal;
-    }
 
     private static (string Message, Severity Severity) BuildLegalizeSummary(
         int targetCount,
