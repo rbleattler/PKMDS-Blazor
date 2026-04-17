@@ -1,0 +1,62 @@
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="@Typo.h6">Export Pokémon as .pk* Files</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudText Typo="@Typo.body2"
+                     Color="@Color.Secondary">
+                Downloads a single zip containing a .pk* file for each non-empty slot.
+            </MudText>
+
+            <MudRadioGroup T="BulkExportDialog.BulkExportScope"
+                           @bind-Value="scope">
+                <MudRadio T="BulkExportDialog.BulkExportScope"
+                          Value="@BulkExportDialog.BulkExportScope.Party"
+                          Color="@Color.Primary"
+                          Disabled="@(partyCount == 0)">
+                    Party (@partyCount Pokémon)
+                </MudRadio>
+                <MudRadio T="BulkExportDialog.BulkExportScope"
+                          Value="@BulkExportDialog.BulkExportScope.CurrentBox"
+                          Color="@Color.Primary"
+                          Disabled="@(currentBoxCount == 0)">
+                    Current box (@currentBoxCount Pokémon)
+                </MudRadio>
+                <MudRadio T="BulkExportDialog.BulkExportScope"
+                          Value="@BulkExportDialog.BulkExportScope.AllBoxes"
+                          Color="@Color.Primary"
+                          Disabled="@(totalBoxCount == 0)">
+                    All boxes (@totalBoxCount Pokémon)
+                </MudRadio>
+                <MudRadio T="BulkExportDialog.BulkExportScope"
+                          Value="@BulkExportDialog.BulkExportScope.Everything"
+                          Color="@Color.Primary"
+                          Disabled="@(partyCount + totalBoxCount == 0)">
+                    Party and all boxes (@(partyCount + totalBoxCount) Pokémon)
+                </MudRadio>
+            </MudRadioGroup>
+
+            @if (isExporting)
+            {
+                <MudProgressLinear Color="@Color.Primary"
+                                   Indeterminate="true"/>
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@Cancel"
+                   StartIcon="@Icons.Material.Filled.Clear"
+                   Variant="@Variant.Filled"
+                   Disabled="@isExporting">
+            Cancel
+        </MudButton>
+        <MudButton OnClick="@ExportAsync"
+                   Color="@Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Download"
+                   Variant="@Variant.Filled"
+                   Disabled="@(isExporting || GetScopedCount() == 0 || AppState.SaveFile is null)">
+            Export
+        </MudButton>
+    </DialogActions>
+</MudDialog>

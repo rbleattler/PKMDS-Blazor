@@ -92,6 +92,19 @@ window.readDroppedFile = async function (index) {
     });
 };
 
+// Returns the number of files currently queued from the last drop event.
+window.getDroppedFileCount = function () {
+    return window.droppedFiles ? window.droppedFiles.length : 0;
+};
+
+// Returns the filename of the dropped file at the given index, or null.
+window.getDroppedFileName = function (index) {
+    if (!window.droppedFiles || index >= window.droppedFiles.length) {
+        return null;
+    }
+    return window.droppedFiles[index].name;
+};
+
 // Returns true if the page is running inside a known in-app browser (e.g. Google Search App,
 // Facebook, Instagram) whose WebView may block file downloads or the File System Access API.
 window.isInAppBrowser = function () {

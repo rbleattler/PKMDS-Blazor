@@ -50,7 +50,9 @@
                            Variant="@Variant.Filled"
                            Class="m-1.5 p-1.5">
             </MudIconButton>
+        </div>
 
+        <div class="flex flex-wrap mx-[5px] mb-[5px] px-[5px] items-center">
             <MudIconButton OnClick="@OpenBoxLayoutDialog"
                            title="Edit box layout"
                            ButtonType="@ButtonType.Button"
@@ -95,6 +97,23 @@
                                Class="m-1.5 p-1.5">
                 </MudIconButton>
             }
+
+            <MudIconButton OnClick="@OpenBulkImportDialog"
+                           title="Bulk import .pk* files"
+                           ButtonType="@ButtonType.Button"
+                           Icon="@Icons.Material.Filled.Upload"
+                           Variant="@Variant.Filled"
+                           Class="m-1.5 p-1.5">
+            </MudIconButton>
+
+            <MudIconButton OnClick="@OpenBulkExportDialog"
+                           title="Export party or box(es) as .pk* files"
+                           ButtonType="@ButtonType.Button"
+                           Icon="@Icons.Material.Filled.Download"
+                           Variant="@Variant.Filled"
+                           Disabled="@(!HasAnyExportablePokemon())"
+                           Class="m-1.5 p-1.5">
+            </MudIconButton>
 
             <MudIconButton OnClick="@TogglePinCurrentBox"
                            title="@(AppState.PinnedBoxNumber == boxEdit.CurrentBox

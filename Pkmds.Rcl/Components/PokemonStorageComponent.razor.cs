@@ -135,6 +135,53 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
         RefreshService.RefreshBoxState();
     }
 
+    private bool HasAnyExportablePokemon()
+    {
+        if (AppState.SaveFile is not { } sav)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < sav.PartyCount; i++)
+        {
+            if (sav.GetPartySlotAtIndex(i).Species != 0)
+            {
+                return true;
+            }
+        }
+
+        for (var box = 0; box < sav.BoxCount; box++)
+        {
+            for (var slot = 0; slot < sav.BoxSlotCount; slot++)
+            {
+                if (sav.GetBoxSlotAtIndex(box, slot).Species != 0)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private async Task OpenBulkExportDialog()
+    {
+        await DialogService.ShowAsync<BulkExportDialog>(
+            "Export Pokémon as .pk* Files",
+            new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true });
+    }
+
+    private async Task OpenBulkImportDialog()
+    {
+        var dialog = await DialogService.ShowAsync<BulkImportDialog>(
+            "Bulk Import .pk* Files",
+            new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true });
+
+        await dialog.Result;
+        InvalidateIllegalCount();
+        RefreshService.RefreshBoxAndPartyState();
+    }
+
     private async Task OpenBoxListDialog()
     {
         var isXs = await BrowserViewportService.GetCurrentBreakpointAsync() == Breakpoint.Xs;

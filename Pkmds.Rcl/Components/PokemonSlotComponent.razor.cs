@@ -428,6 +428,15 @@ public partial class PokemonSlotComponent : IDisposable
             return;
         }
 
+        // Multi-file drop: route through BulkImportDialog with the files preloaded.
+        // The first file still lands in the dropped slot via the single-file path below
+        // only when exactly one file is dropped.
+        if (fileNames.Length > 1)
+        {
+            await HandleBulkFileDropAsync(fileNames);
+            return;
+        }
+
         var fileName = fileNames[0];
 
         try
@@ -519,6 +528,59 @@ public partial class PokemonSlotComponent : IDisposable
             Snackbar.Add($"Error importing Pokémon: {ex.Message}", Severity.Error);
             // TODO: Add proper logging with ILogger when available
             await Console.Error.WriteLineAsync($"Error in HandleFileDropAsync: {ex}");
+        }
+        finally
+        {
+            AppState.ShowProgressIndicator = false;
+        }
+    }
+
+    private async Task HandleBulkFileDropAsync(string[] fileNames)
+    {
+        try
+        {
+            AppState.ShowProgressIndicator = true;
+
+            var preloaded = new List<(string FileName, byte[] Data)>(fileNames.Length);
+            for (var i = 0; i < fileNames.Length; i++)
+            {
+                var base64 = await JSRuntime.InvokeAsync<string>("readDroppedFile", i);
+                if (string.IsNullOrEmpty(base64))
+                {
+                    continue;
+                }
+
+                preloaded.Add((fileNames[i], Convert.FromBase64String(base64)));
+            }
+
+            if (preloaded.Count == 0)
+            {
+                Snackbar.Add("Failed to read the dropped files.", Severity.Error);
+                return;
+            }
+
+            var parameters = new DialogParameters<BulkImportDialog>
+            {
+                { x => x.PreloadedFiles, preloaded },
+                // Box slot drop → fill boxes first; party slot drop → fill party first.
+                { x => x.FillBoxesFirst, !IsPartySlot }
+            };
+            var options = new DialogOptions
+            {
+                CloseOnEscapeKey = true,
+                MaxWidth = MaxWidth.Small,
+                FullWidth = true
+            };
+
+            var dialog = await DialogService.ShowAsync<BulkImportDialog>(
+                "Bulk Import .pk* Files", parameters, options);
+            await dialog.Result;
+            RefreshService.RefreshBoxAndPartyState();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error importing Pokémon: {ex.Message}", Severity.Error);
+            await Console.Error.WriteLineAsync($"Error in HandleBulkFileDropAsync: {ex}");
         }
         finally
         {
