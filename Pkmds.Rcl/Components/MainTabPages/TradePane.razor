@@ -18,10 +18,14 @@
                 <div class="min-w-0">
                     <TradeSlot Pokemon="@pkm"
                                OwnerSaveFile="@saveFile"
+                               CounterpartSaveFile="@CounterpartSaveFile"
                                OwnerVersion="@saveFile.Version"
                                IsPartySlot="true"
+                               BoxNumber="@((int?)null)"
+                               SlotNumber="@slotNum"
                                IsSelected="@(SelectedPartySlot == slotNum)"
-                               OnSlotClick="@(() => SelectParty(slotNum))"/>
+                               OnSlotClick="@(() => SelectParty(slotNum))"
+                               OnDrop="@OnSlotDrop"/>
                 </div>
             }
         </div>
@@ -71,9 +75,13 @@
                     <div class="min-w-0">
                         <TradeSlot Pokemon="@pkm"
                                    OwnerSaveFile="@saveFile"
+                                   CounterpartSaveFile="@CounterpartSaveFile"
                                    OwnerVersion="@saveFile.Version"
+                                   BoxNumber="@currentBox"
+                                   SlotNumber="@slotNum"
                                    IsSelected="@(SelectedBox == currentBox && SelectedBoxSlot == slotNum)"
-                                   OnSlotClick="@(() => SelectBoxSlot(currentBox, slotNum))"/>
+                                   OnSlotClick="@(() => SelectBoxSlot(currentBox, slotNum))"
+                                   OnDrop="@OnSlotDrop"/>
                     </div>
                 }
             </div>

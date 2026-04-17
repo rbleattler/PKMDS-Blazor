@@ -10,6 +10,9 @@ public class DragDropService : IDragDropService
     public PKM? DraggedPokemon { get; set; }
 
     /// <inheritdoc />
+    public SaveFile? DragSourceSaveFile { get; set; }
+
+    /// <inheritdoc />
     public int? DragSourceBoxNumber { get; set; }
 
     /// <inheritdoc />
@@ -22,9 +25,14 @@ public class DragDropService : IDragDropService
     public bool IsDragging => DraggedPokemon is not null;
 
     /// <inheritdoc />
-    public void StartDrag(PKM? pokemon, int? boxNumber, int slotNumber, bool isParty)
+    public void StartDrag(PKM? pokemon, int? boxNumber, int slotNumber, bool isParty) =>
+        StartDrag(pokemon, sourceSaveFile: null, boxNumber, slotNumber, isParty);
+
+    /// <inheritdoc />
+    public void StartDrag(PKM? pokemon, SaveFile? sourceSaveFile, int? boxNumber, int slotNumber, bool isParty)
     {
         DraggedPokemon = pokemon;
+        DragSourceSaveFile = sourceSaveFile;
         DragSourceBoxNumber = boxNumber;
         DragSourceSlotNumber = slotNumber;
         IsDragSourceParty = isParty;
@@ -41,6 +49,7 @@ public class DragDropService : IDragDropService
     public void ClearDrag()
     {
         DraggedPokemon = null;
+        DragSourceSaveFile = null;
         DragSourceBoxNumber = null;
         DragSourceSlotNumber = -1;
         IsDragSourceParty = false;
