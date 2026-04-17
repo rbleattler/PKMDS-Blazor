@@ -2,7 +2,7 @@ using System.IO.Compression;
 
 namespace Pkmds.Rcl.Components.Dialogs;
 
-public partial class BulkExportDialog
+public partial class BulkExportDialog : IDisposable
 {
     public enum BulkExportScope
     {
@@ -12,14 +12,28 @@ public partial class BulkExportDialog
         Everything
     }
 
+    // Yield cadence inside the zip-build loop. WASM is single-threaded — without periodic
+    // yields the UI freezes for noticeable hitches on large bank dumps.
+    private const int YieldEveryN = 16;
+
     private int currentBoxCount;
+    private CancellationTokenSource? cts;
     private bool isExporting;
     private int partyCount;
+    private double progressPercent;
     private BulkExportScope scope = BulkExportScope.CurrentBox;
+    private string statusText = string.Empty;
     private int totalBoxCount;
 
     [CascadingParameter]
     private IMudDialogInstance? MudDialog { get; set; }
+
+    public void Dispose()
+    {
+        cts?.Cancel();
+        cts?.Dispose();
+        cts = null;
+    }
 
     protected override void OnInitialized()
     {
@@ -106,12 +120,19 @@ public partial class BulkExportDialog
             return;
         }
 
+        cts?.Dispose();
+        cts = new CancellationTokenSource();
+        var ct = cts.Token;
+
         isExporting = true;
+        progressPercent = 0;
+        statusText = $"Building zip ({pokemonToExport.Count} Pokémon)…";
         StateHasChanged();
+        await Task.Yield();
 
         try
         {
-            var zipBytes = BuildZip(pokemonToExport);
+            var zipBytes = await BuildZipAsync(pokemonToExport, ct);
             var fileName = scope switch
             {
                 BulkExportScope.Party => "pokemon_export_party.zip",
@@ -122,10 +143,18 @@ public partial class BulkExportDialog
                 _ => "pokemon_export.zip"
             };
 
+            statusText = "Saving…";
+            progressPercent = 100;
+            StateHasChanged();
+
             await WriteZipAsync(zipBytes, fileName);
 
             Snackbar.Add($"Exported {pokemonToExport.Count} Pokémon.", Severity.Success);
             MudDialog?.Close();
+        }
+        catch (OperationCanceledException)
+        {
+            Snackbar.Add("Export cancelled.", Severity.Info);
         }
         catch (Exception ex)
         {
@@ -134,6 +163,7 @@ public partial class BulkExportDialog
         finally
         {
             isExporting = false;
+            cts = null;
             StateHasChanged();
         }
     }
@@ -176,22 +206,37 @@ public partial class BulkExportDialog
         return result;
     }
 
-    private byte[] BuildZip(IReadOnlyList<PKM> pokemon)
+    private async Task<byte[]> BuildZipAsync(IReadOnlyList<PKM> pokemon, CancellationToken ct)
     {
         using var ms = new MemoryStream();
         using (var zip = new ZipArchive(ms, ZipArchiveMode.Create, leaveOpen: true))
         {
             var usedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var pkm in pokemon)
+            for (var i = 0; i < pokemon.Count; i++)
             {
+                ct.ThrowIfCancellationRequested();
+
+                var pkm = pokemon[i];
                 pkm.RefreshChecksum();
                 var bytes = new byte[pkm.SIZE_PARTY];
                 pkm.WriteDecryptedDataParty(bytes);
 
                 var entryName = GetUniqueEntryName(usedNames, AppService.GetCleanFileName(pkm));
                 var entry = zip.CreateEntry(entryName, CompressionLevel.Fastest);
-                using var es = entry.Open();
-                es.Write(bytes);
+                using (var es = entry.Open())
+                {
+                    es.Write(bytes);
+                }
+
+                // Reserve 0→95% for zip building; the final 5% covers the save dialog.
+                progressPercent = (double)(i + 1) / pokemon.Count * 95;
+                statusText = $"Adding {i + 1}/{pokemon.Count}: {entryName}";
+
+                if ((i + 1) % YieldEveryN == 0 || i == pokemon.Count - 1)
+                {
+                    StateHasChanged();
+                    await Task.Delay(1, ct);
+                }
             }
         }
 
@@ -240,13 +285,10 @@ public partial class BulkExportDialog
             }
         }
 
-        // Legacy fallback: base64 data-URI anchor click.
-        var base64 = Convert.ToBase64String(data);
-        var anchor = await JSRuntime.InvokeAsync<IJSObjectReference>("eval", "document.createElement('a')");
-        await anchor.InvokeVoidAsync("setAttribute", "href", $"data:application/zip;base64,{base64}");
-        await anchor.InvokeVoidAsync("setAttribute", "download", fileName);
-        await anchor.InvokeVoidAsync("click");
+        await JSRuntime.InvokeVoidAsync("downloadBlob", fileName, data, "application/zip");
     }
+
+    private void CancelExport() => cts?.Cancel();
 
     private void Cancel() => MudDialog?.Close(DialogResult.Cancel());
 }

@@ -92,19 +92,6 @@ window.readDroppedFile = async function (index) {
     });
 };
 
-// Returns the number of files currently queued from the last drop event.
-window.getDroppedFileCount = function () {
-    return window.droppedFiles ? window.droppedFiles.length : 0;
-};
-
-// Returns the filename of the dropped file at the given index, or null.
-window.getDroppedFileName = function (index) {
-    if (!window.droppedFiles || index >= window.droppedFiles.length) {
-        return null;
-    }
-    return window.droppedFiles[index].name;
-};
-
 // Returns true if the page is running inside a known in-app browser (e.g. Google Search App,
 // Facebook, Instagram) whose WebView may block file downloads or the File System Access API.
 window.isInAppBrowser = function () {
@@ -224,4 +211,23 @@ window.showFilePickerAndWrite = async function (fileName, byteArray, extension, 
         console.error('[showFilePickerAndWrite] Error:', ex);
         throw ex;
     }
+};
+
+// Anchor-based blob download. Used as a fallback when the File System Access API isn't
+// available (or the user dismissed it). Avoids the ~33% base64 inflation of a data: URI
+// and works around URL-length limits on older engines.
+window.downloadBlob = function (fileName, byteArray, mimeType) {
+    if (!byteArray) return;
+    const uint8 = byteArray instanceof Uint8Array ? byteArray : new Uint8Array(byteArray);
+    const blob = new Blob([uint8], { type: mimeType || 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+        URL.revokeObjectURL(url);
+        a.remove();
+    }, 0);
 };
