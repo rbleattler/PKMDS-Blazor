@@ -32,7 +32,7 @@ public interface IAppState
     /// <summary>
     /// Gets or sets the secondary save file used by the cross-save Trade tab.
     /// Independent from <see cref="SaveFile" />; remains null until the user explicitly
-    /// loads a second save from the Trade tab. Read-only in Phase 1 of the cross-save trade work.
+    /// loads a second save from the Trade tab.
     /// </summary>
     SaveFile? SaveFileB { get; set; }
 
@@ -40,6 +40,13 @@ public interface IAppState
     /// Gets or sets the original file name of the secondary (slot-B) save file.
     /// </summary>
     string? SaveFileNameB { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the secondary (slot-B) save file has uncommitted edits
+    /// from the Trade tab that have not yet been exported. Reset to false when slot B
+    /// is loaded, replaced, exported, or unloaded.
+    /// </summary>
+    bool HasUnsavedChangesB { get; set; }
 
     /// <summary>
     /// Gets the box editor interface for the current save file.

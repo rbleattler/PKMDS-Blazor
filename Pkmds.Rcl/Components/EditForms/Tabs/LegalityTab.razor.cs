@@ -50,14 +50,14 @@ public partial class LegalityTab : IDisposable
     private bool HasRelearnMoveIssues => Analysis is { } la &&
                                          (!MoveResult.AllValid(la.Info.Relearn) ||
                                           la.Results.Any(r => r is
-                                              { Valid: false, Identifier: CheckIdentifier.RelearnMove }));
+                                          { Valid: false, Identifier: CheckIdentifier.RelearnMove }));
 
     private bool HasBallIssues => Analysis is { } la &&
                                   la.Results.Any(r => r is { Valid: false, Identifier: CheckIdentifier.Ball });
 
     private bool HasEncounterIssues => Analysis is { } la &&
                                        la.Results.Any(r => r is
-                                           { Valid: false, Identifier: CheckIdentifier.Encounter });
+                                       { Valid: false, Identifier: CheckIdentifier.Encounter });
 
     private bool HasMetLocationIssues => Analysis is { } la &&
                                          la.Results.Any(r => r is

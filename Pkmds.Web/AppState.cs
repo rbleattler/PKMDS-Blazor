@@ -68,11 +68,16 @@ public record AppState : IAppState
                 SelectedBoxSlotNumberB = null;
                 SelectedPartySlotNumberB = null;
             }
+
+            HasUnsavedChangesB = false;
         }
     }
 
     /// <inheritdoc />
     public string? SaveFileNameB { get; set; }
+
+    /// <inheritdoc />
+    public bool HasUnsavedChangesB { get; set; }
 
     /// <inheritdoc />
     public BoxEdit? BoxEdit { get; private set; }

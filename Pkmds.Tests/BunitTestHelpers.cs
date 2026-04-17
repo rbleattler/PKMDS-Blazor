@@ -79,6 +79,7 @@ internal class TestAppState : IAppState
     public bool ShowIllegalIndicator { get; set; } = true;
     public SaveFile? SaveFileB { get; set; }
     public string? SaveFileNameB { get; set; }
+    public bool HasUnsavedChangesB { get; set; }
     public BoxEdit? BoxEditB => null;
     public int? SelectedBoxNumberB { get; set; }
     public int? SelectedBoxSlotNumberB { get; set; }
@@ -129,12 +130,14 @@ internal class NullDescriptionService : IDescriptionService
 internal class NullDragDropService : IDragDropService
 {
     public PKM? DraggedPokemon { get; set; }
+    public SaveFile? DragSourceSaveFile { get; set; }
     public int? DragSourceBoxNumber { get; set; }
     public int DragSourceSlotNumber { get; set; }
     public bool IsDragSourceParty { get; set; }
     public bool IsDragging => false;
 
     public void StartDrag(PKM? pokemon, int? boxNumber, int slotNumber, bool isParty) { }
+    public void StartDrag(PKM? pokemon, SaveFile? sourceSaveFile, int? boxNumber, int slotNumber, bool isParty) { }
     public void EndDrag() { }
     public void ClearDrag() { }
 }

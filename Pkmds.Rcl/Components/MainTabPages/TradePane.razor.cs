@@ -9,6 +9,11 @@ public partial class TradePane : RefreshAwareComponent
     [Parameter]
     public SaveFile? SaveFile { get; set; }
 
+    // The paired save in the Trade tab — forwarded to each TradeSlot so it can indicate
+    // which Pokémon are ineligible to transfer to the other pane.
+    [Parameter]
+    public SaveFile? CounterpartSaveFile { get; set; }
+
     [Parameter]
     public int? SelectedBox { get; set; }
 
@@ -26,6 +31,11 @@ public partial class TradePane : RefreshAwareComponent
 
     [Parameter]
     public EventCallback<int?> SelectedPartySlotChanged { get; set; }
+
+    // Fired when a Pokémon is dropped onto any slot in this pane. Propagated up to
+    // TradeTab, which reads the drag source from IDragDropService and runs the transfer.
+    [Parameter]
+    public EventCallback<TradeSlotTarget> OnSlotDrop { get; set; }
 
     private async Task SelectBox(int boxNum)
     {
