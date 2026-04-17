@@ -836,9 +836,32 @@ public partial class TradeTab : RefreshAwareComponent
 
     private async Task<bool> ConfirmLegalityAsync(PKM pkm, SaveFile destSave)
     {
-        // Adapt-aware analysis: the converted PKM is already placed in the dest save, so
-        // a plain LegalityAnalysis reflects what the user will see if we commit.
-        var la = new LegalityAnalysis(pkm);
+        // Adapt-aware analysis: the converted PKM has already had UpdateHandler run
+        // against destSave (via AdaptToSaveFile), so its HT fields match destSave's
+        // trainer. HistoryVerifier.VerifyHandlerState, however, checks those HT fields
+        // against the *global* ParseSettings.ActiveTrainer — which is pinned to Save A
+        // throughout the app's lifetime so slot-A legality stays correct. When the
+        // destination is Save B, the global still points at Save A and the handler
+        // check fires false-positive "Handling trainer does not match" errors.
+        // Repoint ActiveTrainer at destSave for the duration of this analysis, then
+        // restore it so the rest of the app keeps seeing Save A as the active trainer.
+        LegalityAnalysis la;
+        if (AppState.SaveFile is { } savA && !ReferenceEquals(savA, destSave))
+        {
+            ParseSettings.InitFromSaveFileData(destSave);
+            try
+            {
+                la = new LegalityAnalysis(pkm);
+            }
+            finally
+            {
+                ParseSettings.InitFromSaveFileData(savA);
+            }
+        }
+        else
+        {
+            la = new LegalityAnalysis(pkm);
+        }
         var invalid = la.Results.Any(r => r.Judgement == PKHeX.Core.Severity.Invalid)
                       || !MoveResult.AllValid(la.Info.Moves)
                       || !MoveResult.AllValid(la.Info.Relearn);
@@ -868,7 +891,6 @@ public partial class TradeTab : RefreshAwareComponent
                 break;
             }
         }
-        _ = destSave;
 
         var severity = invalid ? "illegal" : "fishy";
         // MudBlazor's message box collapses whitespace in plain strings, so a bulleted list
