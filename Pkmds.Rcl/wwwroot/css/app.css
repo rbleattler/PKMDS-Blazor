@@ -279,10 +279,19 @@ body, html {
     }
 
     /* Trade tab content: the parent .mud-tab-panel has overflow:hidden, which would
-       clip the last row of box slots when no Pokémon is selected (no info panel to
-       compress the grid into place). Let this scroll so the full content is reachable. */
+       clip the bottom of the grid (and the selected-Pokémon info card when visible).
+       Make the tab panel a flex column so this child can be flex:1 + min-height:0 —
+       which is the pattern that actually resolves to a definite height inside the
+       MudTabs flex chain (height:100% here rendered as auto and the scrollbar never
+       appeared). */
+    .save-file-outer-tabs > .mud-tabs-panels > .mud-tab-panel:has(.trade-tab-content) {
+        display: flex;
+        flex-direction: column;
+    }
+
     .trade-tab-content {
-        height: 100%;
+        flex: 1;
+        min-height: 0;
         overflow-y: auto;
     }
 
