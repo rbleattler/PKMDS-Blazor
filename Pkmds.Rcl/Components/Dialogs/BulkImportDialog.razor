@@ -1,0 +1,93 @@
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="@Typo.h6">Bulk Import .pk* Files</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="3">
+
+            @if (HasPreloadedFiles)
+            {
+                <MudText Typo="@Typo.body2">
+                    @PreloadedFiles!.Count .pk* file(s) ready to import.
+                </MudText>
+            }
+            else
+            {
+                <MudFileUpload T="IReadOnlyList<IBrowserFile>"
+                               MaximumFileCount="9999"
+                               Accept="@AcceptList"
+                               @bind-Files="selectedFiles">
+                    <CustomContent>
+                        <MudButton Variant="@Variant.Outlined"
+                                   StartIcon="@Icons.Material.Filled.UploadFile"
+                                   Disabled="@isImporting"
+                                   OnClick="@context.OpenFilePickerAsync">
+                            Choose .pk* Files
+                        </MudButton>
+                    </CustomContent>
+                </MudFileUpload>
+
+                @if (selectedFiles is { Count: > 0 })
+                {
+                    <MudText Typo="@Typo.caption"
+                             Color="@Color.Secondary">
+                        @selectedFiles.Count file(s) selected
+                    </MudText>
+                }
+            }
+
+            <MudSwitch @bind-Value="overwriteExisting"
+                       Color="@Color.Primary"
+                       Label="Overwrite existing slots (otherwise fill only empty slots)"
+                       Disabled="@isImporting"/>
+
+            <MudSwitch @bind-Value="sendOverflowToBank"
+                       Color="@Color.Primary"
+                       Label="Send overflow to Bank when no slots remain"
+                       Disabled="@isImporting"/>
+
+            @if (isImporting)
+            {
+                <MudStack Spacing="1">
+                    <MudText Typo="@Typo.body2">@statusText</MudText>
+                    <MudProgressLinear Color="@Color.Primary"
+                                       Value="@progressPercent"
+                                       Max="100"/>
+                </MudStack>
+            }
+
+            @if (result is not null)
+            {
+                <MudAlert Severity="@GetResultSeverity()">
+                    @GetResultMessage()
+                </MudAlert>
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        @if (isImporting)
+        {
+            <MudButton OnClick="@CancelImport"
+                       StartIcon="@Icons.Material.Filled.Cancel"
+                       Color="@Color.Error"
+                       Variant="@Variant.Outlined">
+                Cancel
+            </MudButton>
+        }
+        else
+        {
+            <MudButton OnClick="@Close"
+                       StartIcon="@Icons.Material.Filled.Clear"
+                       Variant="@Variant.Filled">
+                @(result is null ? "Cancel" : "Close")
+            </MudButton>
+            <MudButton OnClick="@ImportAsync"
+                       Color="@Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Upload"
+                       Variant="@Variant.Filled"
+                       Disabled="@(result is not null || !HasAnyFiles || AppState.SaveFile is null)">
+                Import
+            </MudButton>
+        }
+    </DialogActions>
+</MudDialog>

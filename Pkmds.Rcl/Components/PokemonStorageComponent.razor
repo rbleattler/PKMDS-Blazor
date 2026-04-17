@@ -96,6 +96,23 @@
                 </MudIconButton>
             }
 
+            <MudIconButton OnClick="@OpenBulkImportDialog"
+                           title="Bulk import .pk* files"
+                           ButtonType="@ButtonType.Button"
+                           Icon="@Icons.Material.Filled.Upload"
+                           Variant="@Variant.Filled"
+                           Class="m-1.5 p-1.5">
+            </MudIconButton>
+
+            <MudIconButton OnClick="@OpenBulkExportDialog"
+                           title="Export box(es) as .pk* files"
+                           ButtonType="@ButtonType.Button"
+                           Icon="@Icons.Material.Filled.Download"
+                           Variant="@Variant.Filled"
+                           Disabled="@(!HasAnyBoxPokemon())"
+                           Class="m-1.5 p-1.5">
+            </MudIconButton>
+
             <MudIconButton OnClick="@TogglePinCurrentBox"
                            title="@(AppState.PinnedBoxNumber == boxEdit.CurrentBox
                                       ? "Unpin Box"
