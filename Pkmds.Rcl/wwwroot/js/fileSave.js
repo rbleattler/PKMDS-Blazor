@@ -94,7 +94,9 @@ window.readDroppedFile = async function (index) {
 
 // Returns true if the page is running inside a known in-app browser (e.g. Google Search App,
 // Facebook, Instagram) whose WebView may block file downloads or the File System Access API.
-window.isInAppBrowser = function () {
+// Namespaced under `pkmds` so we don't collide with the non-function `window.isInAppBrowser`
+// boolean that some in-app browsers / extensions inject into the page (see issue #732).
+window.pkmdsIsInAppBrowser = function () {
     const ua = navigator.userAgent || '';
     return (
         /GSA\//.test(ua) ||                    // Google Search App (iOS)
