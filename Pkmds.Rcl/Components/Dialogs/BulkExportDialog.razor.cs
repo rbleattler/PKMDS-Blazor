@@ -147,7 +147,7 @@ public partial class BulkExportDialog : IDisposable
             progressPercent = 100;
             StateHasChanged();
 
-            await WriteZipAsync(zipBytes, fileName);
+            await WriteZipAsync(zipBytes, fileName, ct);
 
             Snackbar.Add($"Exported {pokemonToExport.Count} Pokémon.", Severity.Success);
             MudDialog?.Close();
@@ -266,15 +266,18 @@ public partial class BulkExportDialog : IDisposable
         }
     }
 
-    private async Task WriteZipAsync(byte[] data, string fileName)
+    private async Task WriteZipAsync(byte[] data, string fileName, CancellationToken ct)
     {
         // Mirror MainLayout.WriteFile: prefer File System Access API, fall back to anchor.
+        // Thread `ct` through to both JS calls so Cancel stays responsive through the
+        // "Saving…" phase (e.g. while the File System Access picker is open).
         if (await FileSystemAccessService.IsSupportedAsync())
         {
             try
             {
                 await JSRuntime.InvokeVoidAsync(
                     "showFilePickerAndWrite",
+                    ct,
                     fileName,
                     data,
                     ".zip",
@@ -290,7 +293,7 @@ public partial class BulkExportDialog : IDisposable
             }
         }
 
-        await JSRuntime.InvokeVoidAsync("downloadBlob", fileName, data, "application/zip");
+        await JSRuntime.InvokeVoidAsync("downloadBlob", ct, fileName, data, "application/zip");
     }
 
     private void CancelExport() => cts?.Cancel();

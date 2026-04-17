@@ -379,6 +379,11 @@ public partial class PokemonSlotComponent : IDisposable
         if (e.DataTransfer.Files.Length > 0)
         {
             DragDropService.ClearDrag();
+            // Render now so the slot's external-drop highlight (driven by
+            // isDragOverWithExternalFile above) clears before the potentially
+            // long-running import; otherwise the next render only happens after
+            // HandleFileDropAsync completes, leaving the highlight on during it.
+            StateHasChanged();
             await HandleFileDropAsync(e.DataTransfer.Files);
             return;
         }
