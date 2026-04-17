@@ -280,19 +280,15 @@ body, html {
 
     /* Trade tab content: the parent .mud-tab-panel has overflow:hidden, which would
        clip the bottom of the grid (and the selected-Pokémon info card when visible).
-       Make the tab panel a flex column so this child can be flex:1 + min-height:0 —
-       which is the pattern that actually resolves to a definite height inside the
-       MudTabs flex chain (height:100% here rendered as auto and the scrollbar never
-       appeared). */
-    .save-file-outer-tabs > .mud-tabs-panels > .mud-tab-panel:has(.trade-tab-content) {
-        display: flex;
-        flex-direction: column;
-    }
-
+       Give the wrapper an explicit max-height so overflow-y:auto reliably engages —
+       the earlier flex:1 + min-height:0 approach depended on every ancestor in the
+       MudTabs flex chain resolving its height, which isn't guaranteed across all
+       layouts and still left the bottom clipped. The 160px offset matches the space
+       above the tab panel (AppBar + save-file h5 + tab bar + margin). */
     .trade-tab-content {
-        flex: 1;
-        min-height: 0;
+        max-height: calc(100dvh - 160px);
         overflow-y: auto;
+        overflow-x: hidden;
     }
 
     /* Bank tab: the tab panel becomes a flex column so the card grid can
