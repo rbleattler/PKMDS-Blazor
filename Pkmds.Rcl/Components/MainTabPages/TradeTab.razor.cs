@@ -814,10 +814,12 @@ public partial class TradeTab : RefreshAwareComponent
         if (isParty)
         {
             save.SetPartySlotAtIndex(pkm, slotNumber);
+            save.CompactParty();
         }
         else if (boxNumber.HasValue)
         {
             save.SetBoxSlotAtIndex(pkm, boxNumber.Value, slotNumber);
+            save.CompactBoxIfGen12(boxNumber.Value);
         }
     }
 
@@ -831,6 +833,7 @@ public partial class TradeTab : RefreshAwareComponent
         else if (boxNumber.HasValue)
         {
             save.SetBoxSlotAtIndex(save.BlankPKM, boxNumber.Value, slotNumber);
+            save.CompactBoxIfGen12(boxNumber.Value);
         }
     }
 
@@ -982,6 +985,7 @@ public partial class TradeTab : RefreshAwareComponent
             if (destBox.HasValue)
             {
                 save.SetBoxSlotAtIndex(source, destBox.Value, destSlot);
+                save.CompactBoxIfGen12(destBox.Value);
             }
             save.DeletePartySlot(srcSlot);
             return true;
@@ -992,9 +996,11 @@ public partial class TradeTab : RefreshAwareComponent
             if (srcBox.HasValue)
             {
                 save.SetBoxSlotAtIndex(save.BlankPKM, srcBox.Value, srcSlot);
+                save.CompactBoxIfGen12(srcBox.Value);
             }
             var target = destSlot >= save.PartyCount ? save.PartyCount : destSlot;
             save.SetPartySlotAtIndex(source, target);
+            save.CompactParty();
             return true;
         }
 

@@ -342,9 +342,11 @@ public partial class PokemonSlotComponent : IDisposable
 
     private void HandleDragEnter(DragEventArgs e)
     {
-        // Show visual feedback when an external file is dragged over the slot
-        if (DragDropService.IsDragging ||
-            !e.DataTransfer.Types.Any(t => t.Equals("Files", StringComparison.OrdinalIgnoreCase)))
+        // Show visual feedback when an external file is dragged over the slot.
+        // Internal drags never include "Files" in DataTransfer.Types, so this check
+        // is authoritative — don't gate on DragDropService.IsDragging, because that
+        // state can be stale after a drag-out-to-OS where `dragend` didn't fire.
+        if (!e.DataTransfer.Types.Any(t => t.Equals("Files", StringComparison.OrdinalIgnoreCase)))
         {
             return;
         }
@@ -368,51 +370,62 @@ public partial class PokemonSlotComponent : IDisposable
     {
         isDragOverWithExternalFile = false;
 
-        // Check for internal drag first - this takes priority over file drops
-        if (DragDropService.IsDragging)
+        // Prefer external file drops over the internal-drag state. After a successful
+        // drag-out-to-OS, Chrome's DownloadURL transfer doesn't always fire `dragend`
+        // on the source slot (the drop is consumed by the OS), so DragDropService can
+        // still report IsDragging when the user drags the resulting file back in. If
+        // we see real files on this drop, treat it as an import and clear any stale
+        // internal drag state so the next interaction starts clean.
+        if (e.DataTransfer.Files.Length > 0)
         {
-            // Don't drop onto the same slot
-            if (DragDropService.IsDragSourceParty == IsPartySlot &&
-                DragDropService.DragSourceBoxNumber == BoxNumber &&
-                DragDropService.DragSourceSlotNumber == SlotNumber)
-            {
-                DragDropService.ClearDrag();
-                StateHasChanged();
-                return;
-            }
+            DragDropService.ClearDrag();
+            // Render now so the slot's external-drop highlight (driven by
+            // isDragOverWithExternalFile above) clears before the potentially
+            // long-running import; otherwise the next render only happens after
+            // HandleFileDropAsync completes, leaving the highlight on during it.
+            StateHasChanged();
+            await HandleFileDropAsync(e.DataTransfer.Files);
+            return;
+        }
 
-            // Drag and drop is not supported for Let's Go games
-            if (AppState.SaveFile is SAV7b)
-            {
-                DragDropService.ClearDrag();
-                StateHasChanged();
-                return;
-            }
+        if (!DragDropService.IsDragging)
+        {
+            return;
+        }
 
-            // Move the Pokémon
-            AppService.MovePokemon(
-                DragDropService.DragSourceBoxNumber,
-                DragDropService.DragSourceSlotNumber,
-                DragDropService.IsDragSourceParty,
-                BoxNumber,
-                SlotNumber,
-                IsPartySlot
-            );
-
-            // Clear the selection so the editor panel closes after the move
-            AppService.ClearSelection();
-
+        // Don't drop onto the same slot
+        if (DragDropService.IsDragSourceParty == IsPartySlot &&
+            DragDropService.DragSourceBoxNumber == BoxNumber &&
+            DragDropService.DragSourceSlotNumber == SlotNumber)
+        {
             DragDropService.ClearDrag();
             StateHasChanged();
             return;
         }
 
-        // Check if this is a file drop from external source
-        // Only process if we're not in an internal drag operation
-        if (e.DataTransfer.Files.Length > 0)
+        // Drag and drop is not supported for Let's Go games
+        if (AppState.SaveFile is SAV7b)
         {
-            await HandleFileDropAsync(e.DataTransfer.Files);
+            DragDropService.ClearDrag();
+            StateHasChanged();
+            return;
         }
+
+        // Move the Pokémon
+        AppService.MovePokemon(
+            DragDropService.DragSourceBoxNumber,
+            DragDropService.DragSourceSlotNumber,
+            DragDropService.IsDragSourceParty,
+            BoxNumber,
+            SlotNumber,
+            IsPartySlot
+        );
+
+        // Clear the selection so the editor panel closes after the move
+        AppService.ClearSelection();
+
+        DragDropService.ClearDrag();
+        StateHasChanged();
     }
 
     private async Task HandleFileDropAsync(string[] fileNames)
@@ -502,15 +515,20 @@ public partial class PokemonSlotComponent : IDisposable
 
             saveFile.AdaptToSaveFile(pokemon);
 
-            // Place the Pokemon in the dropped slot
+            // Place the Pokemon in the dropped slot. Party is always a packed list in every
+            // generation, and Gen 1/2 boxes are packed lists too — compact after the write so
+            // dropping past the last filled slot collapses into the next free slot instead of
+            // leaving a gap.
             if (IsPartySlot)
             {
                 saveFile.SetPartySlotAtIndex(pokemon, SlotNumber);
+                saveFile.CompactParty();
                 RefreshService.RefreshPartyState();
             }
             else if (BoxNumber.HasValue)
             {
                 saveFile.SetBoxSlotAtIndex(pokemon, BoxNumber.Value, SlotNumber);
+                saveFile.CompactBoxIfGen12(BoxNumber.Value);
                 RefreshService.RefreshBoxState();
             }
             else // LetsGo storage
