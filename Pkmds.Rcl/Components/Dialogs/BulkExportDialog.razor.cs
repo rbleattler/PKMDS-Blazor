@@ -162,8 +162,12 @@ public partial class BulkExportDialog : IDisposable
         }
         finally
         {
-            isExporting = false;
+            // Capture before nulling so a concurrent component Dispose (which also nulls
+            // cts) can't cause us to leak the CTS — exactly one path disposes it.
+            var localCts = cts;
             cts = null;
+            localCts?.Dispose();
+            isExporting = false;
             StateHasChanged();
         }
     }
@@ -280,8 +284,9 @@ public partial class BulkExportDialog : IDisposable
             catch (JSException ex) when (ex.Message.Contains("AbortError", StringComparison.OrdinalIgnoreCase) ||
                                          ex.Message.Contains("aborted a request", StringComparison.OrdinalIgnoreCase))
             {
-                // User dismissed the picker — not an error.
-                return;
+                // User dismissed the picker. Throw so ExportAsync surfaces "cancelled"
+                // rather than reporting a successful export with no file written.
+                throw new OperationCanceledException("Save dialog dismissed.");
             }
         }
 

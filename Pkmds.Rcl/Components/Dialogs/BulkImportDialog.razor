@@ -14,7 +14,7 @@
             else
             {
                 <MudFileUpload T="IReadOnlyList<IBrowserFile>"
-                               MaximumFileCount="MaxBulkImportFiles"
+                               MaximumFileCount="@MaxBulkImportFiles"
                                Accept="@AcceptList"
                                @bind-Files="selectedFiles">
                     <CustomContent>

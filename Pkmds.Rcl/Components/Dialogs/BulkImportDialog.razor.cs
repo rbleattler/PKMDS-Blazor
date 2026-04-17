@@ -1,3 +1,5 @@
+using PKHexSeverity = PKHeX.Core.Severity;
+
 namespace Pkmds.Rcl.Components.Dialogs;
 
 public partial class BulkImportDialog : IDisposable
@@ -159,8 +161,12 @@ public partial class BulkImportDialog : IDisposable
         }
         finally
         {
-            isImporting = false;
+            // Capture before nulling so a concurrent component Dispose (which also nulls
+            // cts) can't cause us to leak the CTS — exactly one path disposes it.
+            var localCts = cts;
             cts = null;
+            localCts?.Dispose();
+            isImporting = false;
             StateHasChanged();
         }
 
@@ -298,7 +304,7 @@ public partial class BulkImportDialog : IDisposable
             ct.ThrowIfCancellationRequested();
 
             var la = AppService.GetLegalityAnalysis(placed[i]);
-            if (!la.Valid)
+            if (IsIllegal(la))
             {
                 illegal++;
             }
@@ -375,6 +381,14 @@ public partial class BulkImportDialog : IDisposable
         var flags = sav.GetBoxSlotFlags(box, slot);
         return !flags.HasFlag(StorageSlotSource.Locked);
     }
+
+    // Match PokemonStorageComponent.GetStatus / LegalityReportTab.GetStatus so the bulk
+    // summary's illegal count agrees with the box header and the Legality Report tab.
+    // `la.Valid` is also false for Fishy results, which would over-count here.
+    private static bool IsIllegal(LegalityAnalysis la) =>
+        la.Results.Any(r => r.Judgement == PKHexSeverity.Invalid)
+        || !MoveResult.AllValid(la.Info.Moves)
+        || !MoveResult.AllValid(la.Info.Relearn);
 
     private readonly record struct PlacedSlot(bool IsParty, int Box, int Slot, int PartyIndex)
     {
