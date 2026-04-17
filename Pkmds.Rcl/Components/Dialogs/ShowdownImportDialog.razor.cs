@@ -202,10 +202,12 @@ public partial class ShowdownImportDialog
         }
 
         // Reuse the pre-converted PKMs from parsing — no need to re-run the legalization
-        // engine at import time. Drop entries whose species/form isn't even in the target
-        // game: the conversion engine produces a best-effort PKM anyway (e.g. Gen 9 mons
-        // against a Gen 4 save), and silently writing those bytes would mislead the user.
-        // Illegal-but-present entries are still imported — users can legalize them after.
+        // engine at import time. Drop entries whose species/form isn't in the target
+        // game: when the Auto-Legality engine can't produce a valid encounter (e.g. a
+        // Gen 9 species against a Gen 5 save) it silently substitutes a different
+        // species on the PKM, so we can't trust pkm.Species — check the *set's* species,
+        // which preserves the user's original intent. Illegal-but-present entries are
+        // still imported — users can legalize them after.
         var converted = new List<PKM>(parsedEntries.Count);
         var conversionFailed = 0;
         var skippedImpossible = 0;
@@ -217,7 +219,8 @@ public partial class ShowdownImportDialog
                 continue;
             }
 
-            if (!sav.Personal.IsPresentInGame(pkm.Species, pkm.Form))
+            if (entry.Set.Species == 0 ||
+                !sav.Personal.IsPresentInGame(entry.Set.Species, entry.Set.Form))
             {
                 skippedImpossible++;
                 continue;
