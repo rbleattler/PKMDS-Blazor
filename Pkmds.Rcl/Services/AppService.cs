@@ -217,6 +217,9 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
         {
             case SelectedPokemonType.Party:
                 AppState.SaveFile.SetPartySlotAtIndex(pokemon, partySlot);
+                // If the edited slot was past PartyCount (e.g. HaX mode editing an empty slot)
+                // the write would leave a gap; party is always a packed list, so compact.
+                AppState.SaveFile.CompactParty();
 
                 // Let's Go games store Pokémon in a unified storage system
                 // Changes to party affect box display, so refresh both
@@ -232,6 +235,7 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
                 break;
             case SelectedPokemonType.Box:
                 AppState.SaveFile.SetBoxSlotAtIndex(pokemon, boxNumber, boxSlot);
+                AppState.SaveFile.CompactBoxIfGen12(boxNumber);
                 RefreshService.RefreshBoxState();
                 break;
             case SelectedPokemonType.None when AppState.SaveFile is SAV7b:
@@ -804,11 +808,7 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
                     {
                         saveFile.SetBoxSlotAtIndex(sourcePokemon, destBoxNumber.Value, destSlotNumber);
 
-                        // Gen 1 and Gen 2 boxes should be compacted like party (they were lists, not grids)
-                        if (saveFile.Context is EntityContext.Gen1 or EntityContext.Gen2)
-                        {
-                            CompactBox(saveFile, destBoxNumber.Value);
-                        }
+                        saveFile.CompactBoxIfGen12(destBoxNumber.Value);
                     }
                     else // LetsGo storage
                     {
@@ -827,29 +827,23 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
                     {
                         saveFile.SetBoxSlotAtIndex(saveFile.BlankPKM, sourceBoxNumber.Value, sourceSlotNumber);
 
-                        // Gen 1 and Gen 2 boxes should be compacted like party (they were lists, not grids)
-                        if (saveFile.Context is EntityContext.Gen1 or EntityContext.Gen2)
-                        {
-                            CompactBox(saveFile, sourceBoxNumber.Value);
-                        }
+                        saveFile.CompactBoxIfGen12(sourceBoxNumber.Value);
                     }
                     else // LetsGo storage
                     {
                         saveFile.SetBoxSlotAtIndex(saveFile.BlankPKM, sourceSlotNumber);
                     }
 
-                    // Add to party at the first available empty slot (or the specified slot if within PartyCount)
-                    // PKHeX.Core's party is kept compact, so we should add at PartyCount position
-                    // unless the user explicitly dropped on an occupied slot (which would be a swap)
-                    // or on an empty slot within the current party range
-                    var targetSlot = destSlotNumber;
-                    if (destSlotNumber >= saveFile.PartyCount)
-                    {
-                        // User dropped beyond current party - add at end of party (PartyCount position)
-                        targetSlot = saveFile.PartyCount;
-                    }
+                    // Realign beyond-PartyCount drops to the append position so dropping on slot
+                    // 5 with only 1 party member lands at slot 1, not slot 5 (mirrors PKHeX's
+                    // SlotInfoParty.WriteTo). CompactParty is a safety net in case an upstream
+                    // state was already inconsistent.
+                    var targetSlot = destSlotNumber >= saveFile.PartyCount
+                        ? saveFile.PartyCount
+                        : destSlotNumber;
 
                     saveFile.SetPartySlotAtIndex(sourcePokemon, targetSlot);
+                    saveFile.CompactParty();
                     break;
                 }
             default:
@@ -910,28 +904,24 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
                         else if (sourceBoxNumber.HasValue)
                         {
                             saveFile.SetBoxSlotAtIndex(saveFile.BlankPKM, sourceBoxNumber.Value, sourceSlotNumber);
-
-                            // Gen 1 and Gen 2 boxes should be compacted like party (they were lists, not grids)
-                            if (saveFile.Context is EntityContext.Gen1 or EntityContext.Gen2)
-                            {
-                                CompactBox(saveFile, sourceBoxNumber.Value);
-                            }
+                            saveFile.CompactBoxIfGen12(sourceBoxNumber.Value);
                         }
                         else // LetsGo storage
                         {
                             saveFile.SetBoxSlotAtIndex(saveFile.BlankPKM, sourceSlotNumber);
                         }
 
-                        // For Gen 1/2: If we just moved within the same box or moved into a box, compact the destination box too
-                        if (saveFile.Context is EntityContext.Gen1 or EntityContext.Gen2 && !isDestParty &&
-                            destBoxNumber.HasValue)
+                        // Compact the destination too: dropping past the last filled slot (party
+                        // in any gen, or a Gen 1/2 box) otherwise leaves a gap. For party→party
+                        // moves, DeletePartySlot above can additionally leave PartyCount in an
+                        // inconsistent state when the drop target was past the original count.
+                        if (isDestParty)
                         {
-                            // Check if destination box differs from source box, or if we're moving within same box
-                            // Either way, compact the destination box to ensure proper list format
-                            if (!isSourceParty)
-                            {
-                                CompactBox(saveFile, destBoxNumber.Value);
-                            }
+                            saveFile.CompactParty();
+                        }
+                        else if (destBoxNumber.HasValue)
+                        {
+                            saveFile.CompactBoxIfGen12(destBoxNumber.Value);
                         }
                     }
 
@@ -1942,35 +1932,6 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
     /// Compacts a box by shifting all Pokémon left to fill gaps (for Gen 1 and Gen 2 games).
     /// In these generations, boxes were lists, not grids, so they should have no gaps.
     /// </summary>
-    private static void CompactBox(SaveFile saveFile, int boxNumber)
-    {
-        var boxSlotCount = saveFile.BoxSlotCount;
-        var compacted = new PKM[boxSlotCount];
-        var writeIndex = 0;
-
-        // Collect all non-blank Pokémon
-        for (var i = 0; i < boxSlotCount; i++)
-        {
-            var pkm = saveFile.GetBoxSlotAtIndex(boxNumber, i);
-            if (pkm.Species > 0)
-            {
-                compacted[writeIndex++] = pkm;
-            }
-        }
-
-        // Fill remaining slots with blank Pokémon
-        for (var i = writeIndex; i < boxSlotCount; i++)
-        {
-            compacted[i] = saveFile.BlankPKM;
-        }
-
-        // Write the compacted box back
-        for (var i = 0; i < boxSlotCount; i++)
-        {
-            saveFile.SetBoxSlotAtIndex(compacted[i], boxNumber, i);
-        }
-    }
-
     private EncounterSearchResult BuildEncounterResult(IEncounterable enc)
     {
         var speciesName = GetPokemonSpeciesName(enc.Species);

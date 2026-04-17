@@ -515,15 +515,20 @@ public partial class PokemonSlotComponent : IDisposable
 
             saveFile.AdaptToSaveFile(pokemon);
 
-            // Place the Pokemon in the dropped slot
+            // Place the Pokemon in the dropped slot. Party is always a packed list in every
+            // generation, and Gen 1/2 boxes are packed lists too — compact after the write so
+            // dropping past the last filled slot collapses into the next free slot instead of
+            // leaving a gap.
             if (IsPartySlot)
             {
                 saveFile.SetPartySlotAtIndex(pokemon, SlotNumber);
+                saveFile.CompactParty();
                 RefreshService.RefreshPartyState();
             }
             else if (BoxNumber.HasValue)
             {
                 saveFile.SetBoxSlotAtIndex(pokemon, BoxNumber.Value, SlotNumber);
+                saveFile.CompactBoxIfGen12(BoxNumber.Value);
                 RefreshService.RefreshBoxState();
             }
             else // LetsGo storage
