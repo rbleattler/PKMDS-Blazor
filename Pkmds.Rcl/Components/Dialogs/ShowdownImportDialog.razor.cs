@@ -202,32 +202,48 @@ public partial class ShowdownImportDialog
         }
 
         // Reuse the pre-converted PKMs from parsing — no need to re-run the legalization
-        // engine at import time.
+        // engine at import time. Drop entries whose species/form isn't even in the target
+        // game: the conversion engine produces a best-effort PKM anyway (e.g. Gen 9 mons
+        // against a Gen 4 save), and silently writing those bytes would mislead the user.
+        // Illegal-but-present entries are still imported — users can legalize them after.
         var converted = new List<PKM>(parsedEntries.Count);
         var conversionFailed = 0;
+        var skippedImpossible = 0;
         foreach (var entry in parsedEntries)
         {
-            if (entry.Pokemon is { } pkm)
-            {
-                converted.Add(pkm);
-            }
-            else
+            if (entry.Pokemon is not { } pkm)
             {
                 conversionFailed++;
+                continue;
             }
+
+            if (!sav.Personal.IsPresentInGame(pkm.Species, pkm.Form))
+            {
+                skippedImpossible++;
+                continue;
+            }
+
+            converted.Add(pkm);
+        }
+
+        if (converted.Count == 0)
+        {
+            ReportResult(0, conversionFailed, skippedImpossible);
+            MudDialog?.Close();
+            return;
         }
 
         if (importToParty)
         {
-            await ImportToPartyAsync(sav, converted, conversionFailed);
+            await ImportToPartyAsync(sav, converted, conversionFailed, skippedImpossible);
         }
         else
         {
-            ImportToBox(converted, conversionFailed);
+            ImportToBox(converted, conversionFailed, skippedImpossible);
         }
     }
 
-    private async Task ImportToPartyAsync(SaveFile sav, List<PKM> converted, int conversionFailed)
+    private async Task ImportToPartyAsync(SaveFile sav, List<PKM> converted, int conversionFailed, int skippedImpossible)
     {
         var emptySlots = 6 - sav.PartyCount;
 
@@ -243,7 +259,7 @@ public partial class ShowdownImportDialog
                 }
             }
 
-            ReportResult(placed, conversionFailed + (converted.Count - placed));
+            ReportResult(placed, conversionFailed + (converted.Count - placed), skippedImpossible);
             MudDialog?.Close();
             return;
         }
@@ -267,11 +283,11 @@ public partial class ShowdownImportDialog
 
         var written = AppService.OverwriteParty(converted);
         var skipped = Math.Max(0, converted.Count - written);
-        ReportResult(written, conversionFailed + skipped);
+        ReportResult(written, conversionFailed + skipped, skippedImpossible);
         MudDialog?.Close();
     }
 
-    private void ImportToBox(List<PKM> converted, int conversionFailed)
+    private void ImportToBox(List<PKM> converted, int conversionFailed, int skippedImpossible)
     {
         var placed = 0;
         foreach (var pkm in converted)
@@ -283,23 +299,35 @@ public partial class ShowdownImportDialog
         }
 
         RefreshService.RefreshBoxState();
-        ReportResult(placed, conversionFailed + (converted.Count - placed));
+        ReportResult(placed, conversionFailed + (converted.Count - placed), skippedImpossible);
         MudDialog?.Close();
     }
 
-    private void ReportResult(int imported, int failed)
+    private void ReportResult(int imported, int failed, int skippedImpossible)
     {
-        if (imported == 0 && failed == 0)
+        if (imported == 0 && failed == 0 && skippedImpossible == 0)
         {
             return;
         }
 
-        var severity = failed == 0
+        var parts = new List<string>(2);
+        if (failed > 0)
+        {
+            parts.Add($"{failed} could not be placed");
+        }
+
+        if (skippedImpossible > 0)
+        {
+            parts.Add($"{skippedImpossible} skipped (not in this game)");
+        }
+
+        var message = parts.Count == 0
+            ? $"Imported {imported} Pokémon."
+            : $"Imported {imported} Pokémon. {string.Join(", ", parts)}.";
+
+        var severity = parts.Count == 0
             ? Severity.Success
             : Severity.Warning;
-        var message = failed == 0
-            ? $"Imported {imported} Pokémon."
-            : $"Imported {imported} Pokémon. {failed} could not be placed.";
 
         Snackbar.Add(message, severity);
     }
