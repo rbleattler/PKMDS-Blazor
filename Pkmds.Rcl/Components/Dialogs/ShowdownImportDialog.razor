@@ -88,8 +88,8 @@
                                 @if (entry.Status is { } status)
                                 {
                                     <MudTooltip Text="@GetStatusTooltip(entry)">
-                                        <MudIcon Icon="@GetStatusIcon(status)"
-                                                 Color="@GetStatusColor(status)"
+                                        <MudIcon Icon="@LegalityUi.GetStatusIcon(status)"
+                                                 Color="@LegalityUi.GetStatusColor(status)"
                                                  Size="@Size.Small"/>
                                     </MudTooltip>
                                 }
