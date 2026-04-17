@@ -65,7 +65,12 @@
 
             @if (!AppState.IsHaXEnabled && GetLegalityStatus() is { } status)
             {
-                <div class="legality-indicator-icon"
+                <div class="@($"legality-indicator-icon {status switch
+                            {
+                                LegalityStatus.Legal => "legality-indicator-icon--legal",
+                                LegalityStatus.Fishy => "legality-indicator-icon--fishy",
+                                _ => "legality-indicator-icon--illegal"
+                            }}")"
                      title="@(status switch
                             {
                                 LegalityStatus.Legal => "Legal",
@@ -74,18 +79,11 @@
                             })">
                     <MudIcon Icon="@(status switch
                                    {
-                                       LegalityStatus.Legal => Icons.Material.Filled.CheckCircle,
-                                       LegalityStatus.Fishy => Icons.Material.Filled.Warning,
-                                       _ => Icons.Material.Filled.Cancel
+                                       LegalityStatus.Legal => Icons.Material.Filled.Check,
+                                       LegalityStatus.Fishy => Icons.Material.Filled.PriorityHigh,
+                                       _ => Icons.Material.Filled.Close
                                    })"
-                             Color="@(status switch
-                                    {
-                                        LegalityStatus.Legal => Color.Success,
-                                        LegalityStatus.Fishy => Color.Warning,
-                                        _ => Color.Error
-                                    })"
-                             Class="w-full h-full"
-                             Style="font-size: 16px;"/>
+                             Style="font-size: 14px; color: white;"/>
                 </div>
             }
 
