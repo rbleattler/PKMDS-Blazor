@@ -197,7 +197,7 @@ window.showFilePickerAndWrite = async function (fileName, byteArray, extension, 
 
         // Must be called during a user gesture on some platforms.
         const handle = await window.showSaveFilePicker(opts);
-        const writable = await handle.createWritable();
+        const writable = await handle.createWritable({ keepExistingData: false });
 
         const uint8 = byteArray instanceof Uint8Array ? byteArray : new Uint8Array(byteArray);
 
