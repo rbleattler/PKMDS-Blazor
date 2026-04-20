@@ -183,10 +183,11 @@ public static class ManicEmuSaveHelper
     /// Rebuilds the original <c>.3ds.sav</c> ZIP archive, replacing the save file entry
     /// with <paramref name="newSaveBytes" />. Entries are written with
     /// <see cref="CompressionLevel.NoCompression" /> (store method) to match what Manic EMU's
-    /// own <c>ShareManager.create3DSGameSave</c> produces. Deflate-method rebuilds have been
-    /// observed to be rejected by Manic EMU on iOS even though the archive is structurally
-    /// valid (see issue #751 follow-up: a 483 kB ORAS save deflated to 9 kB failed to import,
-    /// while the same content store-method at ~483 kB worked). Timestamps are preserved.
+    /// own <c>ShareManager.create3DSGameSave</c> produces via ZIPFoundation; the general-purpose
+    /// bit 11 (UTF-8 path encoding) is also set on every entry in a post-write pass, again
+    /// matching ZIPFoundation's writer (<c>Archive+Helpers.writeLocalFileHeader</c>). Without
+    /// that flag ZIPFoundation on iOS has been observed rejecting the archive even though
+    /// all paths are pure ASCII — see issue #751 follow-up.
     /// </summary>
     /// <param name="context">The context returned by <see cref="TryExtractSaveFromZip" />.</param>
     /// <param name="newSaveBytes">The edited save data to embed.</param>
@@ -234,7 +235,98 @@ public static class ManicEmuSaveHelper
             }
         }
 
-        return resultStream.ToArray();
+        var bytes = resultStream.ToArray();
+        SetUtf8PathEncodingFlag(bytes);
+        return bytes;
+    }
+
+    /// <summary>
+    /// Sets general-purpose bit 11 (UTF-8 path encoding) on every local file header and central
+    /// directory file header in <paramref name="zipBytes" />. .NET's <see cref="ZipArchive" />
+    /// only sets this flag when a path contains non-ASCII characters, but ZIPFoundation on iOS
+    /// sets it unconditionally and has been observed rejecting archives that omit it. Matching
+    /// ZIPFoundation's behaviour makes our rebuilt archive byte-level compatible with Manic EMU's
+    /// own output.
+    /// </summary>
+    private static void SetUtf8PathEncodingFlag(byte[] zipBytes)
+    {
+        const int lfhSignature = 0x04034B50;  // "PK\x03\x04"
+        const int cdfhSignature = 0x02014B50; // "PK\x01\x02"
+        const ushort utf8Flag = 0x0800;
+
+        // Locate the End of Central Directory record so we know where local headers end
+        // and the central directory begins.
+        var eocdOffset = FindEndOfCentralDirectory(zipBytes);
+        if (eocdOffset < 0)
+        {
+            return;
+        }
+
+        var cdOffset = BitConverter.ToInt32(zipBytes, eocdOffset + 16);
+        var cdSize = BitConverter.ToInt32(zipBytes, eocdOffset + 12);
+        var entryCount = BitConverter.ToUInt16(zipBytes, eocdOffset + 10);
+
+        // Patch each local file header's flags (offset 6 from LFH start).
+        var pos = 0;
+        for (var i = 0; i < entryCount && pos + 30 <= cdOffset; i++)
+        {
+            if (BitConverter.ToInt32(zipBytes, pos) != lfhSignature)
+            {
+                break;
+            }
+
+            SetFlagBits(zipBytes, pos + 6, utf8Flag);
+
+            var nameLen = BitConverter.ToUInt16(zipBytes, pos + 26);
+            var extraLen = BitConverter.ToUInt16(zipBytes, pos + 28);
+            var compSize = BitConverter.ToUInt32(zipBytes, pos + 18);
+            pos += 30 + nameLen + extraLen + (int)compSize;
+        }
+
+        // Patch each central directory file header's flags (offset 8 from CDFH start).
+        pos = cdOffset;
+        for (var i = 0; i < entryCount && pos + 46 <= cdOffset + cdSize; i++)
+        {
+            if (BitConverter.ToInt32(zipBytes, pos) != cdfhSignature)
+            {
+                break;
+            }
+
+            SetFlagBits(zipBytes, pos + 8, utf8Flag);
+
+            var nameLen = BitConverter.ToUInt16(zipBytes, pos + 28);
+            var extraLen = BitConverter.ToUInt16(zipBytes, pos + 30);
+            var commentLen = BitConverter.ToUInt16(zipBytes, pos + 32);
+            pos += 46 + nameLen + extraLen + commentLen;
+        }
+    }
+
+    private static int FindEndOfCentralDirectory(byte[] zipBytes)
+    {
+        // EOCD signature is PK\x05\x06; scan backward from the end since the record has a
+        // variable-length comment field suffix.
+        const int eocdSignature = 0x06054B50;
+        const int eocdMinSize = 22;
+        const int eocdMaxCommentLen = 65535;
+
+        var searchStart = Math.Max(0, zipBytes.Length - eocdMinSize - eocdMaxCommentLen);
+        for (var i = zipBytes.Length - eocdMinSize; i >= searchStart; i--)
+        {
+            if (BitConverter.ToInt32(zipBytes, i) == eocdSignature)
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private static void SetFlagBits(byte[] zipBytes, int flagsOffset, ushort mask)
+    {
+        var current = BitConverter.ToUInt16(zipBytes, flagsOffset);
+        var updated = (ushort)(current | mask);
+        zipBytes[flagsOffset] = (byte)(updated & 0xFF);
+        zipBytes[flagsOffset + 1] = (byte)((updated >> 8) & 0xFF);
     }
 
     /// <summary>

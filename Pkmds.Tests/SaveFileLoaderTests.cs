@@ -122,6 +122,67 @@ public class SaveFileLoaderTests
     }
 
     [Fact]
+    public void RebuildZip_SetsUtf8PathEncodingFlagOnAllEntries()
+    {
+        // Regression guard for PR #751 follow-up: .NET's ZipArchive only sets general-purpose
+        // bit 11 (UTF-8 path encoding) when a filename contains non-ASCII characters, but
+        // ZIPFoundation on iOS sets it unconditionally when writing and has been observed
+        // rejecting archives that omit it — even for pure-ASCII paths like Manic EMU's sdmc/
+        // tree. Our rebuild has to match ZIPFoundation's behaviour.
+        var rawSave = File.ReadAllBytes(Path.Combine(TestFilesPath, "moon.sav"));
+        var original = BuildManicEmuZip(rawSave);
+
+        SaveFileLoader.TryLoad(original, "moon.3ds.sav", out var saveFile, out var ctx).Should().BeTrue();
+        var rebuilt = ManicEmuSaveHelper.RebuildZip(ctx!, saveFile!.Write().ToArray());
+
+        // Walk the central directory and confirm bit 11 is set on every CDFH.
+        var eocdOffset = FindEndOfCentralDirectory(rebuilt);
+        eocdOffset.Should().BeGreaterThanOrEqualTo(0);
+        var cdOffset = BitConverter.ToInt32(rebuilt, eocdOffset + 16);
+        var entryCount = BitConverter.ToUInt16(rebuilt, eocdOffset + 10);
+
+        var pos = cdOffset;
+        for (var i = 0; i < entryCount; i++)
+        {
+            var flags = BitConverter.ToUInt16(rebuilt, pos + 8);
+            (flags & 0x0800).Should().NotBe(0, $"CDFH entry {i} must have UTF-8 path-encoding flag (bit 11) set");
+            var nameLen = BitConverter.ToUInt16(rebuilt, pos + 28);
+            var extraLen = BitConverter.ToUInt16(rebuilt, pos + 30);
+            var commentLen = BitConverter.ToUInt16(rebuilt, pos + 32);
+            pos += 46 + nameLen + extraLen + commentLen;
+        }
+
+        // Also walk local file headers — bit 11 has to match between LFH and CDFH per spec.
+        pos = 0;
+        for (var i = 0; i < entryCount && pos < cdOffset; i++)
+        {
+            BitConverter.ToInt32(rebuilt, pos).Should().Be(0x04034B50, $"LFH {i} signature");
+            var flags = BitConverter.ToUInt16(rebuilt, pos + 6);
+            (flags & 0x0800).Should().NotBe(0, $"LFH entry {i} must have UTF-8 path-encoding flag (bit 11) set");
+            var nameLen = BitConverter.ToUInt16(rebuilt, pos + 26);
+            var extraLen = BitConverter.ToUInt16(rebuilt, pos + 28);
+            var compSize = BitConverter.ToUInt32(rebuilt, pos + 18);
+            pos += 30 + nameLen + extraLen + (int)compSize;
+        }
+    }
+
+    private static int FindEndOfCentralDirectory(byte[] zipBytes)
+    {
+        const int eocdSignature = 0x06054B50;
+        const int eocdMinSize = 22;
+        const int eocdMaxCommentLen = 65535;
+        var searchStart = Math.Max(0, zipBytes.Length - eocdMinSize - eocdMaxCommentLen);
+        for (var i = zipBytes.Length - eocdMinSize; i >= searchStart; i--)
+        {
+            if (BitConverter.ToInt32(zipBytes, i) == eocdSignature)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    [Fact]
     public void RebuildZip_PreservesStoreCompressionMatchingManicEmuOutput()
     {
         // Regression guard for the deflate-shrinkage bug observed on PR #751: a 483 kB ORAS
