@@ -4,20 +4,27 @@ using System.IO.Compression;
 namespace Pkmds.Core.Utilities;
 
 /// <summary>
-/// Helpers for importing and exporting 3DS save files in the Manic EMU
-/// <c>.3ds.sav</c> / <c>.3ds.save</c> ZIP format.
+/// Helpers for importing and exporting 3DS save files in the Manic EMU <c>.3ds.sav</c> ZIP format.
 /// </summary>
 /// <remarks>
-/// Manic EMU exports 3DS saves as a ZIP archive. The filename extension varies by
-/// platform: most versions use <c>GameTitle.3ds.sav</c>; iOS uses <c>GameTitle.3ds.save</c>.
+/// Manic EMU exports 3DS saves as a ZIP archive. The canonical extension is
+/// <c>GameTitle.3ds.sav</c> on every platform — the iOS build uses the same suffix as
+/// desktop (see <c>ManicEmu/Sources/Tools/Cores/ThreeDS.swift</c> and
+/// <c>ManicEmu/Sources/Tools/Others/ShareManager.swift</c> in the upstream repo).
+/// We still *accept* <c>.3ds.save</c> (with a trailing <c>e</c>) defensively — users
+/// sometimes rename manually, and iOS Safari has been observed mangling compound
+/// extensions on blob-URL downloads — but PKMDS should never produce it when round-tripping
+/// a <c>.3ds.sav</c> upload. Manic EMU's own importer matches <c>url.path.contains(".3ds.sav")</c>
+/// as a substring check, so <c>.3ds.save</c> happens to re-import successfully too.
+/// <para>
 /// The ZIP contains the full <c>sdmc/</c> directory tree from Citra's virtual SD card,
-/// e.g. <c>sdmc/Nintendo 3DS/…/title/00040000/00055d00/data/00000001/&lt;savefile&gt;</c>.
-/// The actual PKHeX-compatible save bytes are stored as a single binary file entry
-/// inside that directory structure.
-/// To round-trip a save through PKMDS:
+/// e.g. <c>sdmc/Nintendo 3DS/…/title/00040000/00055d00/data/00000001/main</c>. The
+/// PKHeX-compatible save bytes are stored as a single binary file entry inside that
+/// structure. To round-trip a save through PKMDS:
+/// </para>
 /// <list type="number">
-/// <item>User exports <c>.3ds.sav</c> or <c>.3ds.save</c> from Manic EMU.</item>
-/// <item>PKMDS detects the ZIP, finds the save entry, and loads it.</item>
+/// <item>User exports <c>.3ds.sav</c> from Manic EMU.</item>
+/// <item>PKMDS detects the ZIP, finds the save entry, and loads it (see <see cref="SaveFileLoader" />).</item>
 /// <item>User edits the save in PKMDS.</item>
 /// <item>
 /// PKMDS rebuilds the ZIP with the edited save bytes and offers it for download
@@ -25,17 +32,12 @@ namespace Pkmds.Core.Utilities;
 /// </item>
 /// </list>
 /// <para>
-/// Troubleshooting "save is always corrupted in Manic EMU" reports (see issue #669):
-/// the round-trip only works if the user uploads the original <c>.3ds.sav</c> /
-/// <c>.3ds.save</c> ZIP — uploading raw save bytes causes PKMDS to export raw bytes
-/// on save, which Manic EMU cannot import. The three known suspects are:
-/// (1) user uploaded the wrong file type — there is no UI feedback confirming a
-/// Manic EMU ZIP was detected on load; (2) iOS Safari may mangle or strip the
-/// compound <c>.3ds.save</c> extension when downloading via blob URL (see
-/// <c>fileSave.js</c>); (3) no test currently round-trips a Manic EMU ZIP
-/// <em>with modifications</em> and re-validates checksums. If a similar report
-/// comes in, ask the reporter which file they uploaded, whether the exported
-/// filename is intact, and whether the failure occurs even with no edits.
+/// Load-path ordering matters: PKHeX.Core ships its own <c>ZipReader</c> that recognises
+/// any ZIP with a <c>main</c> or <c>SaveData.bin</c> entry inside and unwraps it invisibly.
+/// If the Manic EMU ZIP detection runs <em>after</em> <c>SaveUtil.TryGetSaveFile</c>, PKHeX
+/// swallows the archive, we never see it as a ZIP, <see cref="ManicEmuSaveContext" /> is never
+/// set, and export silently produces raw bytes that Manic EMU can't re-import (see issue #750
+/// for the regression caused by missing this ordering). Always run ZIP detection first.
 /// </para>
 /// </remarks>
 public static class ManicEmuSaveHelper
@@ -240,9 +242,10 @@ public static class ManicEmuSaveHelper
     /// Original filename of the loaded archive (may be <see langword="null" />).
     /// </param>
     /// <returns>
-    /// A tuple of the full export filename and its compound extension.
-    /// For example, <c>("AlphaSapphire.3ds.save", ".3ds.save")</c> for an iOS archive
-    /// or <c>("AlphaSapphire.3ds.sav", ".3ds.sav")</c> for other platforms.
+    /// A tuple of the full export filename and its compound extension. Normally the canonical
+    /// <c>.3ds.sav</c> suffix, e.g. <c>("AlphaSapphire.3ds.sav", ".3ds.sav")</c>. If the user
+    /// uploaded a file whose name already ends in <c>.3ds.save</c> (manual rename or iOS-side
+    /// extension mangling), we echo that back so the round-trip is bit-for-bit transparent.
     /// </returns>
     public static (string ExportName, string CompoundExtension) GetExportFileName(string? originalName)
     {
@@ -254,7 +257,7 @@ public static class ManicEmuSaveHelper
             return ("save" + savExt, savExt);
         }
 
-        // iOS Manic EMU uses .3ds.save; check this first since it is the more specific suffix.
+        // Check .3ds.save first — it's the more specific suffix (ends in .3ds.sav also matches it).
         if (originalName.EndsWith(saveExt, StringComparison.OrdinalIgnoreCase))
         {
             var stem = originalName[..^saveExt.Length];

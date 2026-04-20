@@ -1,6 +1,7 @@
 ﻿global using FluentAssertions;
 global using PKHeX.Core;
 global using Pkmds.Core.Extensions;
+global using Pkmds.Core.Utilities;
 global using Pkmds.Rcl;
 global using Pkmds.Rcl.Components;
 global using Pkmds.Rcl.Components.EditForms.Tabs;

@@ -77,7 +77,14 @@ public partial class BugReportDialog
                 saveRevision = (sf as ISaveFileRevision)?.SaveRevisionString;
                 if (attachSaveFile)
                 {
-                    saveBytes = sf.Write().ToArray();
+                    var rawBytes = sf.Write().ToArray();
+                    // If the current save was loaded from a Manic EMU .3ds.sav ZIP, rebuild the
+                    // archive so the bug report preserves the wrapper. Without this the submitted
+                    // bytes are the bare inner save and we can never diagnose ZIP round-trip
+                    // issues from user reports (see issue #750).
+                    saveBytes = AppState.ManicEmuSaveContext is { } ctx
+                        ? ManicEmuSaveHelper.RebuildZip(ctx, rawBytes)
+                        : rawBytes;
                     saveFileName = AppState.SaveFileName ?? "save.bin";
                 }
             }
