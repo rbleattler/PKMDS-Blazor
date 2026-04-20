@@ -77,8 +77,23 @@ public partial class BugReportDialog
                 saveRevision = (sf as ISaveFileRevision)?.SaveRevisionString;
                 if (attachSaveFile)
                 {
-                    saveBytes = sf.Write().ToArray();
-                    saveFileName = AppState.SaveFileName ?? "save.bin";
+                    var rawBytes = sf.Write().ToArray();
+                    // If the current save was loaded from a Manic EMU .3ds.sav ZIP, rebuild the
+                    // archive so the bug report preserves the wrapper. Without this the submitted
+                    // bytes are the bare inner save and we can never diagnose ZIP round-trip
+                    // issues from user reports (see issue #750). The attachment name must carry
+                    // the compound extension so triagers can see at a glance the payload is a ZIP
+                    // and not a bare .sav — a generic save.bin fallback would mask that.
+                    if (AppState.ManicEmuSaveContext is { } ctx)
+                    {
+                        saveBytes = ManicEmuSaveHelper.RebuildZip(ctx, rawBytes);
+                        saveFileName = ManicEmuSaveHelper.GetExportFileName(AppState.SaveFileName).ExportName;
+                    }
+                    else
+                    {
+                        saveBytes = rawBytes;
+                        saveFileName = AppState.SaveFileName ?? "save.bin";
+                    }
                 }
             }
 

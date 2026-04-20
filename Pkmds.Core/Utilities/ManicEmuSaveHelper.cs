@@ -1,23 +1,31 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.IO.Compression;
 
 namespace Pkmds.Core.Utilities;
 
 /// <summary>
-/// Helpers for importing and exporting 3DS save files in the Manic EMU
-/// <c>.3ds.sav</c> / <c>.3ds.save</c> ZIP format.
+/// Helpers for importing and exporting 3DS save files in the Manic EMU <c>.3ds.sav</c> ZIP format.
 /// </summary>
 /// <remarks>
-/// Manic EMU exports 3DS saves as a ZIP archive. The filename extension varies by
-/// platform: most versions use <c>GameTitle.3ds.sav</c>; iOS uses <c>GameTitle.3ds.save</c>.
+/// Manic EMU exports 3DS saves as a ZIP archive. The canonical extension is
+/// <c>GameTitle.3ds.sav</c> on every platform — the iOS build uses the same suffix as
+/// desktop (see <c>ManicEmu/Sources/Tools/Cores/ThreeDS.swift</c> and
+/// <c>ManicEmu/Sources/Tools/Others/ShareManager.swift</c> in the upstream repo).
+/// We still *accept* <c>.3ds.save</c> (with a trailing <c>e</c>) defensively — users
+/// sometimes rename manually, and iOS Safari has been observed mangling compound
+/// extensions on blob-URL downloads — but PKMDS should never produce it when round-tripping
+/// a <c>.3ds.sav</c> upload. Manic EMU's own importer matches <c>url.path.contains(".3ds.sav")</c>
+/// as a substring check, so <c>.3ds.save</c> happens to re-import successfully too.
+/// <para>
 /// The ZIP contains the full <c>sdmc/</c> directory tree from Citra's virtual SD card,
-/// e.g. <c>sdmc/Nintendo 3DS/…/title/00040000/00055d00/data/00000001/&lt;savefile&gt;</c>.
-/// The actual PKHeX-compatible save bytes are stored as a single binary file entry
-/// inside that directory structure.
-/// To round-trip a save through PKMDS:
+/// e.g. <c>sdmc/Nintendo 3DS/…/title/00040000/00055d00/data/00000001/main</c>. The
+/// PKHeX-compatible save bytes are stored as a single binary file entry inside that
+/// structure. To round-trip a save through PKMDS:
+/// </para>
 /// <list type="number">
-/// <item>User exports <c>.3ds.sav</c> or <c>.3ds.save</c> from Manic EMU.</item>
-/// <item>PKMDS detects the ZIP, finds the save entry, and loads it.</item>
+/// <item>User exports <c>.3ds.sav</c> from Manic EMU.</item>
+/// <item>PKMDS detects the ZIP, finds the save entry, and loads it (see <see cref="SaveFileLoader" />).</item>
 /// <item>User edits the save in PKMDS.</item>
 /// <item>
 /// PKMDS rebuilds the ZIP with the edited save bytes and offers it for download
@@ -25,17 +33,23 @@ namespace Pkmds.Core.Utilities;
 /// </item>
 /// </list>
 /// <para>
-/// Troubleshooting "save is always corrupted in Manic EMU" reports (see issue #669):
-/// the round-trip only works if the user uploads the original <c>.3ds.sav</c> /
-/// <c>.3ds.save</c> ZIP — uploading raw save bytes causes PKMDS to export raw bytes
-/// on save, which Manic EMU cannot import. The three known suspects are:
-/// (1) user uploaded the wrong file type — there is no UI feedback confirming a
-/// Manic EMU ZIP was detected on load; (2) iOS Safari may mangle or strip the
-/// compound <c>.3ds.save</c> extension when downloading via blob URL (see
-/// <c>fileSave.js</c>); (3) no test currently round-trips a Manic EMU ZIP
-/// <em>with modifications</em> and re-validates checksums. If a similar report
-/// comes in, ask the reporter which file they uploaded, whether the exported
-/// filename is intact, and whether the failure occurs even with no edits.
+/// Load-path ordering matters: PKHeX.Core ships its own <c>ZipReader</c> that recognises
+/// any ZIP with a <c>main</c> or <c>SaveData.bin</c> entry inside and unwraps it invisibly.
+/// If the Manic EMU ZIP detection runs <em>after</em> <c>SaveUtil.TryGetSaveFile</c>, PKHeX
+/// swallows the archive, we never see it as a ZIP, <see cref="ManicEmuSaveContext" /> is never
+/// set, and export silently produces raw bytes that Manic EMU can't re-import (see issue #750
+/// for the regression caused by missing this ordering). Always run ZIP detection first.
+/// </para>
+/// <para>
+/// Known-upstream caveat: early in PR #751's debugging, a sequence of broken exports
+/// (pre-fix deflate-compressed 9 kB archives with the inner save replaced by the PKHeX
+/// default) caused Manic EMU / Citra to reject every subsequent save as "corrupted"
+/// in-game — even after switching back to byte-identical valid archives. Recovery required
+/// deleting the Manic EMU app and re-importing the ROM. The present implementation
+/// produces ZIPs byte-level compatible with ZIPFoundation's own output (store compression,
+/// bit 11 set, <c>versionMadeBy = 0x0315</c>), so a fresh round-trip on a healthy Manic EMU
+/// install is fine; the warning exists only for users who hit the issue with an older build
+/// and may need the clean reinstall to clear the accumulated state.
 /// </para>
 /// </remarks>
 public static class ManicEmuSaveHelper
@@ -179,9 +193,13 @@ public static class ManicEmuSaveHelper
 
     /// <summary>
     /// Rebuilds the original <c>.3ds.sav</c> ZIP archive, replacing the save file entry
-    /// with <paramref name="newSaveBytes" />.  All other entries are re-compressed at
-    /// <see cref="CompressionLevel.Optimal" />; timestamps are preserved but other per-entry
-    /// metadata (compression method, extra fields) may differ from the original.
+    /// with <paramref name="newSaveBytes" />. Entries are written with
+    /// <see cref="CompressionLevel.NoCompression" /> (store method) to match what Manic EMU's
+    /// own <c>ShareManager.create3DSGameSave</c> produces via ZIPFoundation; the general-purpose
+    /// bit 11 (UTF-8 path encoding) is also set on every entry in a post-write pass, again
+    /// matching ZIPFoundation's writer (<c>Archive+Helpers.writeLocalFileHeader</c>). Without
+    /// that flag ZIPFoundation on iOS has been observed rejecting the archive even though
+    /// all paths are pure ASCII — see issue #751 follow-up.
     /// </summary>
     /// <param name="context">The context returned by <see cref="TryExtractSaveFromZip" />.</param>
     /// <param name="newSaveBytes">The edited save data to embed.</param>
@@ -197,7 +215,7 @@ public static class ManicEmuSaveHelper
 
             foreach (var entry in origArchive.Entries)
             {
-                var newEntry = newArchive.CreateEntry(entry.FullName, CompressionLevel.Optimal);
+                var newEntry = newArchive.CreateEntry(entry.FullName, CompressionLevel.NoCompression);
                 newEntry.LastWriteTime = entry.LastWriteTime;
 
                 using var dest = newEntry.Open();
@@ -229,53 +247,186 @@ public static class ManicEmuSaveHelper
             }
         }
 
-        return resultStream.ToArray();
+        var bytes = resultStream.ToArray();
+        NormalizeZipHeadersForZipFoundation(bytes);
+        return bytes;
+    }
+
+    /// <summary>
+    /// Rewrites a few header fields in the rebuilt ZIP so our output matches what ZIPFoundation
+    /// (the library Manic EMU uses on iOS) would have written:
+    /// <list type="bullet">
+    ///   <item>Sets general-purpose bit 11 (UTF-8 path encoding) on every local and central
+    ///   directory file header. .NET's <see cref="ZipArchive" /> only sets bit 11 when a path
+    ///   contains non-ASCII characters, but ZIPFoundation sets it unconditionally (see
+    ///   <c>Archive+Helpers.writeLocalFileHeader</c>).</item>
+    ///   <item>Bumps <c>versionMadeBy</c> from the .NET default (2.0) to ZIPFoundation's
+    ///   2.1 (<c>0x0315</c>) on every central directory header, matching the original Manic
+    ///   EMU archive exactly in the non-data region.</item>
+    /// </list>
+    /// </summary>
+    private static void NormalizeZipHeadersForZipFoundation(byte[] zipBytes)
+    {
+        const int lfhSignature = 0x04034B50;  // "PK\x03\x04"
+        const int cdfhSignature = 0x02014B50; // "PK\x01\x02"
+        const ushort utf8Flag = 0x0800;
+        const ushort zipFoundationVersionMadeBy = 0x0315; // Unix (0x03) + ZIP spec 2.1 (0x15)
+
+        var eocdOffset = FindEndOfCentralDirectory(zipBytes);
+        if (eocdOffset < 0)
+        {
+            return;
+        }
+
+        var cdOffset = BitConverter.ToInt32(zipBytes, eocdOffset + 16);
+        var cdSize = BitConverter.ToInt32(zipBytes, eocdOffset + 12);
+        var entryCount = BitConverter.ToUInt16(zipBytes, eocdOffset + 10);
+
+        // Patch every local file header's flags (offset 6 from LFH start).
+        var pos = 0;
+        for (var i = 0; i < entryCount && pos + 30 <= cdOffset; i++)
+        {
+            if (BitConverter.ToInt32(zipBytes, pos) != lfhSignature)
+            {
+                break;
+            }
+
+            SetFlagBits(zipBytes, pos + 6, utf8Flag);
+
+            var nameLen = BitConverter.ToUInt16(zipBytes, pos + 26);
+            var extraLen = BitConverter.ToUInt16(zipBytes, pos + 28);
+            var compSize = BitConverter.ToUInt32(zipBytes, pos + 18);
+            pos += 30 + nameLen + extraLen + (int)compSize;
+        }
+
+        // Patch every central directory file header's flags (offset 8) and versionMadeBy
+        // (offset 4).
+        pos = cdOffset;
+        for (var i = 0; i < entryCount && pos + 46 <= cdOffset + cdSize; i++)
+        {
+            if (BitConverter.ToInt32(zipBytes, pos) != cdfhSignature)
+            {
+                break;
+            }
+
+            SetFlagBits(zipBytes, pos + 8, utf8Flag);
+            WriteUInt16(zipBytes, pos + 4, zipFoundationVersionMadeBy);
+
+            var nameLen = BitConverter.ToUInt16(zipBytes, pos + 28);
+            var extraLen = BitConverter.ToUInt16(zipBytes, pos + 30);
+            var commentLen = BitConverter.ToUInt16(zipBytes, pos + 32);
+            pos += 46 + nameLen + extraLen + commentLen;
+        }
+    }
+
+    private static int FindEndOfCentralDirectory(byte[] zipBytes)
+    {
+        // EOCD signature is PK\x05\x06; scan backward from the end since the record has a
+        // variable-length comment field suffix.
+        const int eocdSignature = 0x06054B50;
+        const int eocdMinSize = 22;
+        const int eocdMaxCommentLen = 65535;
+
+        var searchStart = Math.Max(0, zipBytes.Length - eocdMinSize - eocdMaxCommentLen);
+        for (var i = zipBytes.Length - eocdMinSize; i >= searchStart; i--)
+        {
+            if (BitConverter.ToInt32(zipBytes, i) == eocdSignature)
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private static void SetFlagBits(byte[] zipBytes, int flagsOffset, ushort mask)
+    {
+        var current = BitConverter.ToUInt16(zipBytes, flagsOffset);
+        var updated = (ushort)(current | mask);
+        zipBytes[flagsOffset] = (byte)(updated & 0xFF);
+        zipBytes[flagsOffset + 1] = (byte)((updated >> 8) & 0xFF);
+    }
+
+    private static void WriteUInt16(byte[] zipBytes, int offset, ushort value)
+    {
+        zipBytes[offset] = (byte)(value & 0xFF);
+        zipBytes[offset + 1] = (byte)((value >> 8) & 0xFF);
     }
 
     /// <summary>
     /// Computes the export filename and compound extension for a Manic EMU save archive,
-    /// preserving the original compound extension for round-trip compatibility.
+    /// preserving the original compound extension for round-trip compatibility and appending a
+    /// UTC timestamp suffix to the stem to prevent iOS's "filename-already-exists" auto-rename
+    /// (which inserts a space — e.g. <c>.3ds 2.sav</c> — that breaks Manic EMU's
+    /// <c>url.path.contains(".3ds.sav")</c> substring check on re-import).
     /// </summary>
     /// <param name="originalName">
     /// Original filename of the loaded archive (may be <see langword="null" />).
     /// </param>
+    /// <param name="timestamp">
+    /// Timestamp to embed in the export name. Defaults to <see cref="DateTime.UtcNow" />.
+    /// An existing <c>-yyyyMMddTHHmmss</c> suffix on the stem is stripped first, so
+    /// the name doesn't accumulate timestamps across multiple round-trips.
+    /// </param>
     /// <returns>
-    /// A tuple of the full export filename and its compound extension.
-    /// For example, <c>("AlphaSapphire.3ds.save", ".3ds.save")</c> for an iOS archive
-    /// or <c>("AlphaSapphire.3ds.sav", ".3ds.sav")</c> for other platforms.
+    /// A tuple of the full export filename and its compound extension. Normally the canonical
+    /// <c>.3ds.sav</c> suffix, e.g. <c>("AlphaSapphire-20260420T174612.3ds.sav", ".3ds.sav")</c>.
+    /// If the user uploaded a file whose name already ends in <c>.3ds.save</c> (manual rename
+    /// or iOS-side extension mangling), we echo that back so the round-trip is bit-for-bit
+    /// transparent.
     /// </returns>
-    public static (string ExportName, string CompoundExtension) GetExportFileName(string? originalName)
+    public static (string ExportName, string CompoundExtension) GetExportFileName(string? originalName, DateTime? timestamp = null)
     {
         const string savExt = ".3ds.sav";
         const string saveExt = ".3ds.save";
 
+        var suffix = "-" + (timestamp ?? DateTime.UtcNow).ToString("yyyyMMdd'T'HHmmss", CultureInfo.InvariantCulture);
+
         if (originalName is null)
         {
-            return ("save" + savExt, savExt);
+            return ("save" + suffix + savExt, savExt);
         }
 
-        // iOS Manic EMU uses .3ds.save; check this first since it is the more specific suffix.
+        // Check .3ds.save first — it's the more specific suffix (ends in .3ds.sav also matches it).
         if (originalName.EndsWith(saveExt, StringComparison.OrdinalIgnoreCase))
         {
-            var stem = originalName[..^saveExt.Length];
-            return ((stem.Length > 0
-                ? stem
-                : "save") + saveExt, saveExt);
+            var stem = StripExistingTimestampSuffix(originalName[..^saveExt.Length]);
+            return ((stem.Length > 0 ? stem : "save") + suffix + saveExt, saveExt);
         }
 
         if (originalName.EndsWith(savExt, StringComparison.OrdinalIgnoreCase))
         {
-            var stem = originalName[..^savExt.Length];
-            return ((stem.Length > 0
-                ? stem
-                : "save") + savExt, savExt);
+            var stem = StripExistingTimestampSuffix(originalName[..^savExt.Length]);
+            return ((stem.Length > 0 ? stem : "save") + suffix + savExt, savExt);
         }
 
         // Unknown/no compound extension — strip the last extension and default to .3ds.sav.
-        var fallbackStem = Path.GetFileNameWithoutExtension(originalName);
-        return ((fallbackStem.Length > 0
-            ? fallbackStem
-            : "save") + savExt, savExt);
+        var fallbackStem = StripExistingTimestampSuffix(Path.GetFileNameWithoutExtension(originalName));
+        return ((fallbackStem.Length > 0 ? fallbackStem : "save") + suffix + savExt, savExt);
+    }
+
+    /// <summary>
+    /// Removes a trailing <c>-yyyyMMddTHHmmss</c> timestamp suffix from <paramref name="stem" />
+    /// if one is present, so repeated round-trips don't accumulate timestamps. Uses a strict
+    /// length + digit check to avoid stripping unrelated user suffixes that happen to end in
+    /// hyphens or digits.
+    /// </summary>
+    private static string StripExistingTimestampSuffix(string stem)
+    {
+        // Format: ...-yyyyMMddTHHmmss (1 + 8 + 1 + 6 = 16 chars)
+        const int suffixLength = 16;
+        if (stem.Length < suffixLength + 1 || stem[^suffixLength] != '-' || stem[^7] != 'T')
+        {
+            return stem;
+        }
+
+        for (var i = stem.Length - suffixLength + 1; i < stem.Length; i++)
+        {
+            if (i == stem.Length - 7) continue; // 'T' separator, already checked
+            if (!char.IsDigit(stem[i])) return stem;
+        }
+
+        return stem[..^suffixLength];
     }
 
     /// <summary>

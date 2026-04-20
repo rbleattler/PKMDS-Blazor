@@ -40,6 +40,7 @@ public record AppState : IAppState
             if (SaveFile is null)
             {
                 SaveFileName = null;
+                ManicEmuSaveContext = null;
             }
 
             PinnedBoxNumber = null;
@@ -48,6 +49,9 @@ public record AppState : IAppState
 
     /// <inheritdoc />
     public string? SaveFileName { get; set; }
+
+    /// <inheritdoc />
+    public ManicEmuSaveHelper.ManicEmuSaveContext? ManicEmuSaveContext { get; set; }
 
     /// <inheritdoc />
     public SaveFile? SaveFileB
