@@ -84,10 +84,24 @@ public partial class BugReportDialog
                     // issues from user reports (see issue #750). The attachment name must carry
                     // the compound extension so triagers can see at a glance the payload is a ZIP
                     // and not a bare .sav — a generic save.bin fallback would mask that.
+                    //
+                    // RebuildZip can throw (InvalidDataException on oversized non-save entries,
+                    // corrupt archives, etc.). Getting the report through matters more than the
+                    // wrapper, so on failure we fall back to the bare save — the submission
+                    // itself must not be blocked by an attach-side issue.
                     if (AppState.ManicEmuSaveContext is { } ctx)
                     {
-                        saveBytes = ManicEmuSaveHelper.RebuildZip(ctx, rawBytes);
-                        saveFileName = ManicEmuSaveHelper.GetExportFileName(AppState.SaveFileName).ExportName;
+                        try
+                        {
+                            saveBytes = ManicEmuSaveHelper.RebuildZip(ctx, rawBytes);
+                            saveFileName = ManicEmuSaveHelper.GetExportFileName(AppState.SaveFileName).ExportName;
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.LogWarning(ex, "Failed to rebuild Manic EMU ZIP for bug report attachment; falling back to bare save");
+                            saveBytes = rawBytes;
+                            saveFileName = AppState.SaveFileName ?? "save.bin";
+                        }
                     }
                     else
                     {
