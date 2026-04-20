@@ -33,6 +33,16 @@ public class BugReportService(IConfiguration configuration, HttpClient httpClien
                 content.Add(new StringContent(request.SaveRevision), "saveRevision");
             }
 
+            if (request.SaveFileSource is not null)
+            {
+                content.Add(new StringContent(request.SaveFileSource), "saveFileSource");
+            }
+
+            if (request.SaveFileType is not null)
+            {
+                content.Add(new StringContent(request.SaveFileType), "saveFileType");
+            }
+
             if (request.SaveFileBytes is { Length: > 0 } saveBytes && request.SaveFileName is not null)
             {
                 content.Add(new ByteArrayContent(saveBytes), "saveFile", request.SaveFileName);

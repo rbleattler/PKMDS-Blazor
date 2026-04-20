@@ -71,10 +71,17 @@ public partial class BugReportDialog
             string? saveFileName = null;
             string? saveGameName = null;
             string? saveRevision = null;
+            string? saveFileSource = null;
+            string? saveFileType = null;
             if (AppState.SaveFile is { } sf)
             {
                 saveGameName = SaveFileNameDisplay.FriendlyGameName(sf.Version);
                 saveRevision = (sf as ISaveFileRevision)?.SaveRevisionString;
+                // Always populate source/type diagnostics — triagers need to know whether a Gen
+                // 1 save came from a VC dump or a physical cartridge even when the user opts
+                // out of attaching the save bytes, since legality rules diverge between them.
+                saveFileSource = SaveSourceDetector.Detect(sf, AppState.SaveFileName, AppState.ManicEmuSaveContext is not null);
+                saveFileType = sf.GetType().Name;
                 if (attachSaveFile)
                 {
                     var rawBytes = sf.Write().ToArray();
@@ -113,7 +120,8 @@ public partial class BugReportDialog
 
             var userAgent = await JSRuntime.InvokeAsync<string>("eval", "navigator.userAgent");
             var request = new BugReportRequest(name, email, description, AppVersion, userAgent,
-                saveBytes, saveFileName, saveGameName, saveRevision, CapturedException);
+                saveBytes, saveFileName, saveGameName, saveRevision,
+                saveFileSource, saveFileType, CapturedException);
             var result = await BugReportService.SubmitBugReportAsync(request);
 
             if (result.Success)
