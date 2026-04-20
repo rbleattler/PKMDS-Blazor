@@ -117,6 +117,22 @@ window.pkmdsIsInAppBrowser = function () {
     );
 };
 
+// Map an extension to a sensible Content-Type when the caller hasn't passed one explicitly.
+// Covers compound extensions like ".3ds.sav" (leaf ".sav") and non-save outputs (.zip, .json)
+// so anchor-download fallbacks on iOS don't end up tagged application/x-pokemon-savedata for
+// obviously-not-a-save payloads (e.g. bank exports, bulk PKM archives).
+function pkmdsInferMimeType(ext) {
+    if (!ext) return 'application/octet-stream';
+    const normalized = ext.toLowerCase();
+    const leaf = normalized.lastIndexOf('.') > 0 ? normalized.slice(normalized.lastIndexOf('.')) : normalized;
+    if (leaf === '.zip') return 'application/zip';
+    if (leaf === '.json') return 'application/json';
+    if (leaf === '.sav' || leaf === '.dsv' || /^\.(pk|ek|bk)[0-9]$/.test(leaf) || leaf === '.pb7' || leaf === '.pb8') {
+        return 'application/x-pokemon-savedata';
+    }
+    return 'application/octet-stream';
+}
+
 window.showFilePickerAndWrite = async function (fileName, byteArray, extension, description, mimeType) {
     // byteArray is expected to be a JS array of numbers coming from a Blazor byte[]
     try {
@@ -144,8 +160,10 @@ window.showFilePickerAndWrite = async function (fileName, byteArray, extension, 
 
         // Caller can override the MIME — important for ZIP archives (Manic EMU .3ds.sav)
         // where the default is wrong and iOS Safari is known to rewrite the extension to
-        // match the declared type.
-        const blobType = mimeType || 'application/x-pokemon-savedata';
+        // match the declared type. When no override is passed we infer from the extension:
+        // callers that dispatch .zip / .json (bulk exports, bank exports) shouldn't have to
+        // thread a MIME just to avoid the generic Pokémon-savedata tag on anchor fallbacks.
+        const blobType = mimeType || pkmdsInferMimeType(ext);
 
         // Chrome Android may have partial / flaky support for File System Access API.
         // iOS (all browsers) uses WebKit, which may expose showSaveFilePicker but has
@@ -228,7 +246,8 @@ window.showFilePickerAndWrite = async function (fileName, byteArray, extension, 
 window.downloadBlob = function (fileName, byteArray, mimeType) {
     if (!byteArray) return;
     const uint8 = byteArray instanceof Uint8Array ? byteArray : new Uint8Array(byteArray);
-    const blob = new Blob([uint8], { type: mimeType || 'application/octet-stream' });
+    const inferredExt = fileName ? fileName.slice(fileName.lastIndexOf('.')) : '';
+    const blob = new Blob([uint8], { type: mimeType || pkmdsInferMimeType(inferredExt) });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;

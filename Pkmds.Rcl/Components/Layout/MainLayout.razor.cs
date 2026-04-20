@@ -517,44 +517,64 @@ public partial class MainLayout : IDisposable
         Logger.LogInformation("Exporting save file");
         AppState.ShowProgressIndicator = true;
 
-        var rawSaveBytes = AppState.SaveFile.Write().ToArray();
-        var originalName = browserLoadSaveFile?.Name;
-
-        // If the save was loaded from a Manic EMU .3ds.sav ZIP, rebuild the ZIP so the
-        // user can import it directly back into Manic EMU without any manual repacking.
-        if (AppState.ManicEmuSaveContext is not null)
+        try
         {
-            // Echo back whichever compound extension the upload carried (.3ds.sav canonically, or
-            // .3ds.save if the user renamed manually or iOS Safari mangled the suffix) so the
-            // round-trip is bit-for-bit transparent. Flag the MIME as application/zip — the default
-            // application/x-pokemon-savedata is wrong for an archive and confuses iOS Safari.
-            var (exportName, compoundExt) = ManicEmuSaveHelper.GetExportFileName(originalName);
-            Logger.LogDebug("Exporting save as Manic EMU {Extension}: {FileName}", compoundExt, exportName);
+            var rawSaveBytes = AppState.SaveFile.Write().ToArray();
+            // Prefer AppState.SaveFileName — it's set consistently by both the upload path and
+            // the restore-from-backup path, whereas browserLoadSaveFile?.Name is null whenever
+            // the save wasn't loaded via the file picker (e.g. restored from a backup entry).
+            // Without this fallback, Manic EMU saves loaded from backup would lose the
+            // ".3ds.sav" compound extension on re-export.
+            var originalName = AppState.SaveFileName ?? browserLoadSaveFile?.Name;
 
-            var zipBytes = ManicEmuSaveHelper.RebuildZip(AppState.ManicEmuSaveContext, rawSaveBytes);
-            await WriteFile(zipBytes, exportName, compoundExt, "Save File", mimeType: "application/zip");
+            // If the save was loaded from a Manic EMU .3ds.sav ZIP, rebuild the ZIP so the
+            // user can import it directly back into Manic EMU without any manual repacking.
+            if (AppState.ManicEmuSaveContext is not null)
+            {
+                // Echo back whichever compound extension the upload carried (.3ds.sav canonically, or
+                // .3ds.save if the user renamed manually or iOS Safari mangled the suffix) so the
+                // round-trip is bit-for-bit transparent. Flag the MIME as application/zip — the default
+                // application/x-pokemon-savedata is wrong for an archive and confuses iOS Safari.
+                var (exportName, compoundExt) = ManicEmuSaveHelper.GetExportFileName(originalName);
+                Logger.LogDebug("Exporting save as Manic EMU {Extension}: {FileName}", compoundExt, exportName);
+
+                var zipBytes = ManicEmuSaveHelper.RebuildZip(AppState.ManicEmuSaveContext, rawSaveBytes);
+                await WriteFile(zipBytes, exportName, compoundExt, "Save File", mimeType: "application/zip");
+            }
+            // Only default to "save.sav" if we have no original filename at all
+            else if (string.IsNullOrWhiteSpace(originalName))
+            {
+                originalName = "save";
+                const string fileExtensionFromName = ".sav";
+                var finalName = EnsureExtension(originalName, fileExtensionFromName);
+                Logger.LogDebug("Exporting save file as: {FileName}", finalName);
+
+                await WriteFile(rawSaveBytes, finalName, fileExtensionFromName, "Save File");
+            }
+            else
+            {
+                // Preserve the original filename exactly as it was (with or without extension)
+                var fileExtensionFromName = Path.GetExtension(originalName);
+                Logger.LogDebug("Exporting save file as: {FileName}", originalName);
+
+                await WriteFile(rawSaveBytes, originalName, fileExtensionFromName, "Save File");
+            }
+
+            Logger.LogInformation("Save file exported successfully");
         }
-        // Only default to "save.sav" if we have no original filename at all
-        else if (string.IsNullOrWhiteSpace(originalName))
+        catch (Exception ex)
         {
-            originalName = "save";
-            const string fileExtensionFromName = ".sav";
-            var finalName = EnsureExtension(originalName, fileExtensionFromName);
-            Logger.LogDebug("Exporting save file as: {FileName}", finalName);
-
-            await WriteFile(rawSaveBytes, finalName, fileExtensionFromName, "Save File");
+            // Catches ZIP rebuild failures (InvalidDataException from the Manic EMU size guard,
+            // malformed central directories) as well as any unexpected Write() error, so the
+            // progress indicator always gets cleared in finally and the user isn't left staring
+            // at a spinner with no feedback.
+            Logger.LogError(ex, "Error exporting save file");
+            Snackbar.Add($"Export failed: {ex.Message}", Severity.Error);
         }
-        else
+        finally
         {
-            // Preserve the original filename exactly as it was (with or without extension)
-            var fileExtensionFromName = Path.GetExtension(originalName);
-            Logger.LogDebug("Exporting save file as: {FileName}", originalName);
-
-            await WriteFile(rawSaveBytes, originalName, fileExtensionFromName, "Save File");
+            AppState.ShowProgressIndicator = false;
         }
-
-        Logger.LogInformation("Save file exported successfully");
-        AppState.ShowProgressIndicator = false;
     }
 
     private async Task ShowLoadPokemonFileDialog()

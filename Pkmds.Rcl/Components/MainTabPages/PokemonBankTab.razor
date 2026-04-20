@@ -7,7 +7,7 @@
               Spacing="2">
 
         @* ── Backup reminder ── *@
-        @if (showBackupReminder)
+        @if (showBackupReminder && entries.Count > 0)
         {
             <MudAlert Severity="@Severity.Warning"
                       ShowCloseIcon

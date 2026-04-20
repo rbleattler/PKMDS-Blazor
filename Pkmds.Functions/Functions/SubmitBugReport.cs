@@ -34,6 +34,8 @@ public class SubmitBugReport(IGitHubService gitHubService, IBlobService blobServ
         var saveGameName = form["saveGameName"].ToString().Trim();
         var saveRevision = form["saveRevision"].ToString().Trim();
         var saveFileName = form["saveFileName"].ToString().Trim();
+        var saveFileSource = form["saveFileSource"].ToString().Trim();
+        var saveFileType = form["saveFileType"].ToString().Trim();
 
         if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(description))
         {
@@ -46,7 +48,10 @@ public class SubmitBugReport(IGitHubService gitHubService, IBlobService blobServ
         var issueTitle = $"[Bug] {shortTitle}";
 
         var saveFileSection = new StringBuilder();
-        if (!string.IsNullOrWhiteSpace(saveGameName) || !string.IsNullOrWhiteSpace(saveFileName))
+        if (!string.IsNullOrWhiteSpace(saveGameName) ||
+            !string.IsNullOrWhiteSpace(saveFileName) ||
+            !string.IsNullOrWhiteSpace(saveFileSource) ||
+            !string.IsNullOrWhiteSpace(saveFileType))
         {
             saveFileSection.Append("\n\n## Save File\n");
             if (!string.IsNullOrWhiteSpace(saveFileName))
@@ -62,6 +67,16 @@ public class SubmitBugReport(IGitHubService gitHubService, IBlobService blobServ
             if (!string.IsNullOrWhiteSpace(saveRevision))
             {
                 saveFileSection.Append($"\n- **Revision:** {saveRevision}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(saveFileSource))
+            {
+                saveFileSection.Append($"\n- **Detected source:** {saveFileSource}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(saveFileType))
+            {
+                saveFileSection.Append($"\n- **PKHeX type:** `{saveFileType}`");
             }
         }
 
