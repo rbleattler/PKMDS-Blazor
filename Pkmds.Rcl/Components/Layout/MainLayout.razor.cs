@@ -434,6 +434,9 @@ public partial class MainLayout : IDisposable
 
                 manicEmuSaveContext = manicContext;
                 Logger.LogInformation("Loaded save from Manic EMU .3ds.sav/.3ds.save archive; entry: {EntryPath}", manicContext.SaveEntryPath);
+                Snackbar.Add(
+                    "Manic EMU save archive detected — export will rebuild the ZIP for seamless re-import.",
+                    Severity.Info);
                 FinishLoadingSaveFile(saveFile, selectedFile.Name);
             }
             else
