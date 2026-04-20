@@ -13,12 +13,19 @@ public class SaveFileLoaderTests
 
     private const string ManicEmuSavePath = "sdmc/Nintendo 3DS/00000000000000000000000000000000/00000000000000000000000000000000/title/00040000/00175e00/data/00000001/main";
 
+    /// <summary>
+    /// Builds a ZIP matching what Manic EMU's <c>ShareManager.create3DSGameSave</c> produces
+    /// on device: a single store-method (uncompressed) entry at the Citra sdmc/ save path.
+    /// Matching the real compression method is load-bearing — a deflate rebuild of a Pokémon
+    /// save compresses to &lt;2% of the original size (heavy 0xFF / 0x00 padding), and Manic EMU /
+    /// iOS ZIPFoundation rejects the structurally-valid deflate archive on re-import.
+    /// </summary>
     private static byte[] BuildManicEmuZip(byte[] saveBytes)
     {
         using var ms = new MemoryStream();
         using (var archive = new ZipArchive(ms, ZipArchiveMode.Create, leaveOpen: true))
         {
-            var entry = archive.CreateEntry(ManicEmuSavePath, CompressionLevel.Optimal);
+            var entry = archive.CreateEntry(ManicEmuSavePath, CompressionLevel.NoCompression);
             using var s = entry.Open();
             s.Write(saveBytes, 0, saveBytes.Length);
         }
@@ -112,5 +119,35 @@ public class SaveFileLoaderTests
         reloaded!.Write().Length.Should().Be(rawSave.Length);
         reloadedCtx.Should().NotBeNull();
         reloadedCtx!.SaveEntryPath.Should().Be(ManicEmuSavePath);
+    }
+
+    [Fact]
+    public void RebuildZip_PreservesStoreCompressionMatchingManicEmuOutput()
+    {
+        // Regression guard for the deflate-shrinkage bug observed on PR #751: a 483 kB ORAS
+        // save compressed to a 9 kB deflate entry and Manic EMU rejected the re-import.
+        // The rebuild must use store (method 0) to match what Manic EMU itself produces, so the
+        // rebuilt archive stays in the same size ballpark as the original upload.
+        var rawSave = File.ReadAllBytes(Path.Combine(TestFilesPath, "moon.sav"));
+        var original = BuildManicEmuZip(rawSave);
+
+        SaveFileLoader.TryLoad(original, "moon.3ds.sav", out var saveFile, out var ctx).Should().BeTrue();
+        var rebuilt = ManicEmuSaveHelper.RebuildZip(ctx!, saveFile!.Write().ToArray());
+
+        // Store-method rebuild must be close to the input size (allow modest drift from
+        // timestamp/header differences). A deflate-compressed rebuild would be a fraction
+        // of the input size due to the save's heavy padding.
+        rebuilt.Length.Should().BeGreaterThan((int)(original.Length * 0.95));
+        rebuilt.Length.Should().BeLessThan((int)(original.Length * 1.05));
+
+        // And confirm every entry in the rebuilt archive is store-method (compression method 0).
+        using var ms = new MemoryStream(rebuilt);
+        using var archive = new ZipArchive(ms, ZipArchiveMode.Read);
+        foreach (var entry in archive.Entries)
+        {
+            // CompressedLength == Length is the observable signal that no compression was applied.
+            entry.CompressedLength.Should().Be(entry.Length,
+                $"entry '{entry.FullName}' should be store-method (uncompressed) to match Manic EMU's own output");
+        }
     }
 }

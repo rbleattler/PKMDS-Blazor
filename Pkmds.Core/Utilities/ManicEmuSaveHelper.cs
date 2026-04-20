@@ -181,9 +181,12 @@ public static class ManicEmuSaveHelper
 
     /// <summary>
     /// Rebuilds the original <c>.3ds.sav</c> ZIP archive, replacing the save file entry
-    /// with <paramref name="newSaveBytes" />.  All other entries are re-compressed at
-    /// <see cref="CompressionLevel.Optimal" />; timestamps are preserved but other per-entry
-    /// metadata (compression method, extra fields) may differ from the original.
+    /// with <paramref name="newSaveBytes" />. Entries are written with
+    /// <see cref="CompressionLevel.NoCompression" /> (store method) to match what Manic EMU's
+    /// own <c>ShareManager.create3DSGameSave</c> produces. Deflate-method rebuilds have been
+    /// observed to be rejected by Manic EMU on iOS even though the archive is structurally
+    /// valid (see issue #751 follow-up: a 483 kB ORAS save deflated to 9 kB failed to import,
+    /// while the same content store-method at ~483 kB worked). Timestamps are preserved.
     /// </summary>
     /// <param name="context">The context returned by <see cref="TryExtractSaveFromZip" />.</param>
     /// <param name="newSaveBytes">The edited save data to embed.</param>
@@ -199,7 +202,7 @@ public static class ManicEmuSaveHelper
 
             foreach (var entry in origArchive.Entries)
             {
-                var newEntry = newArchive.CreateEntry(entry.FullName, CompressionLevel.Optimal);
+                var newEntry = newArchive.CreateEntry(entry.FullName, CompressionLevel.NoCompression);
                 newEntry.LastWriteTime = entry.LastWriteTime;
 
                 using var dest = newEntry.Open();
