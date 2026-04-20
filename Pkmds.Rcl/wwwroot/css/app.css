@@ -315,34 +315,6 @@ body, html {
         overflow-y: auto;
     }
 
-    /* Pokédex tab content: inner MudDataGrid owns its scroll (FixedHeader + Virtualize),
-       so the outer container must not add a second scrollbar. */
-    .pokedex-tab-content {
-        height: 100%;
-        overflow: hidden;
-    }
-
-    .pokedex-grid-wrapper {
-        flex: 1;
-        min-height: 0;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .pokedex-grid-wrapper .pokedex-species-grid {
-        flex: 1;
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .pokedex-grid-wrapper .pokedex-species-grid > .mud-table-container {
-        flex: 1;
-        min-height: 0;
-        overflow-y: auto;
-    }
-
     /* Teams tab content: simple vertical scroll for team cards */
     .teams-tab-content {
         height: 100%;
@@ -479,6 +451,16 @@ body, html {
         overflow-y: auto;
         overflow-x: hidden;
     }
+
+    /* Pokédex panel owns its own scroll via the inner virtualized table; suppress the
+       outer panel scrollbar so the table-container has a definite, viewport-bounded
+       height to size against (otherwise the Virtualize component cuts the list off
+       at whatever fits in its initial computed height — ~106 rows on phone portrait). */
+    .save-file-outer-tabs > .mud-tabs-panels > .mud-tab-panel:has(.pokedex-tab-content) {
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
 }
 
 /* Tablet (md–lg): edit form inner tab panels also scroll independently */
@@ -486,6 +468,34 @@ body, html {
     .edit-form-tabs .mud-tabs-panels {
         overflow-y: auto;
     }
+}
+
+/* Pokédex grid flex cascade — applies on every viewport so the inner MudDataGrid's
+   .mud-table-container always has a definite height for Virtualize to size against. */
+.pokedex-tab-content {
+    height: 100%;
+    overflow: hidden;
+}
+
+.pokedex-grid-wrapper {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.pokedex-grid-wrapper .pokedex-species-grid {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.pokedex-grid-wrapper .pokedex-species-grid > .mud-table-container {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 .square-slot {
