@@ -236,26 +236,30 @@ public static class ManicEmuSaveHelper
         }
 
         var bytes = resultStream.ToArray();
-        SetUtf8PathEncodingFlag(bytes);
+        NormalizeZipHeadersForZipFoundation(bytes);
         return bytes;
     }
 
     /// <summary>
-    /// Sets general-purpose bit 11 (UTF-8 path encoding) on every local file header and central
-    /// directory file header in <paramref name="zipBytes" />. .NET's <see cref="ZipArchive" />
-    /// only sets this flag when a path contains non-ASCII characters, but ZIPFoundation on iOS
-    /// sets it unconditionally and has been observed rejecting archives that omit it. Matching
-    /// ZIPFoundation's behaviour makes our rebuilt archive byte-level compatible with Manic EMU's
-    /// own output.
+    /// Rewrites a few header fields in the rebuilt ZIP so our output matches what ZIPFoundation
+    /// (the library Manic EMU uses on iOS) would have written:
+    /// <list type="bullet">
+    ///   <item>Sets general-purpose bit 11 (UTF-8 path encoding) on every local and central
+    ///   directory file header. .NET's <see cref="ZipArchive" /> only sets bit 11 when a path
+    ///   contains non-ASCII characters, but ZIPFoundation sets it unconditionally (see
+    ///   <c>Archive+Helpers.writeLocalFileHeader</c>).</item>
+    ///   <item>Bumps <c>versionMadeBy</c> from the .NET default (2.0) to ZIPFoundation's
+    ///   2.1 (<c>0x0315</c>) on every central directory header, matching the original Manic
+    ///   EMU archive exactly in the non-data region.</item>
+    /// </list>
     /// </summary>
-    private static void SetUtf8PathEncodingFlag(byte[] zipBytes)
+    private static void NormalizeZipHeadersForZipFoundation(byte[] zipBytes)
     {
         const int lfhSignature = 0x04034B50;  // "PK\x03\x04"
         const int cdfhSignature = 0x02014B50; // "PK\x01\x02"
         const ushort utf8Flag = 0x0800;
+        const ushort zipFoundationVersionMadeBy = 0x0315; // Unix (0x03) + ZIP spec 2.1 (0x15)
 
-        // Locate the End of Central Directory record so we know where local headers end
-        // and the central directory begins.
         var eocdOffset = FindEndOfCentralDirectory(zipBytes);
         if (eocdOffset < 0)
         {
@@ -266,7 +270,7 @@ public static class ManicEmuSaveHelper
         var cdSize = BitConverter.ToInt32(zipBytes, eocdOffset + 12);
         var entryCount = BitConverter.ToUInt16(zipBytes, eocdOffset + 10);
 
-        // Patch each local file header's flags (offset 6 from LFH start).
+        // Patch every local file header's flags (offset 6 from LFH start).
         var pos = 0;
         for (var i = 0; i < entryCount && pos + 30 <= cdOffset; i++)
         {
@@ -283,7 +287,8 @@ public static class ManicEmuSaveHelper
             pos += 30 + nameLen + extraLen + (int)compSize;
         }
 
-        // Patch each central directory file header's flags (offset 8 from CDFH start).
+        // Patch every central directory file header's flags (offset 8) and versionMadeBy
+        // (offset 4).
         pos = cdOffset;
         for (var i = 0; i < entryCount && pos + 46 <= cdOffset + cdSize; i++)
         {
@@ -293,6 +298,7 @@ public static class ManicEmuSaveHelper
             }
 
             SetFlagBits(zipBytes, pos + 8, utf8Flag);
+            WriteUInt16(zipBytes, pos + 4, zipFoundationVersionMadeBy);
 
             var nameLen = BitConverter.ToUInt16(zipBytes, pos + 28);
             var extraLen = BitConverter.ToUInt16(zipBytes, pos + 30);
@@ -327,6 +333,12 @@ public static class ManicEmuSaveHelper
         var updated = (ushort)(current | mask);
         zipBytes[flagsOffset] = (byte)(updated & 0xFF);
         zipBytes[flagsOffset + 1] = (byte)((updated >> 8) & 0xFF);
+    }
+
+    private static void WriteUInt16(byte[] zipBytes, int offset, ushort value)
+    {
+        zipBytes[offset] = (byte)(value & 0xFF);
+        zipBytes[offset + 1] = (byte)((value >> 8) & 0xFF);
     }
 
     /// <summary>
