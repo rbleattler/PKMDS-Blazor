@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.IO.Compression;
 
 namespace Pkmds.Core.Utilities;
@@ -38,6 +39,17 @@ namespace Pkmds.Core.Utilities;
 /// swallows the archive, we never see it as a ZIP, <see cref="ManicEmuSaveContext" /> is never
 /// set, and export silently produces raw bytes that Manic EMU can't re-import (see issue #750
 /// for the regression caused by missing this ordering). Always run ZIP detection first.
+/// </para>
+/// <para>
+/// Known-upstream caveat: early in PR #751's debugging, a sequence of broken exports
+/// (pre-fix deflate-compressed 9 kB archives with the inner save replaced by the PKHeX
+/// default) caused Manic EMU / Citra to reject every subsequent save as "corrupted"
+/// in-game — even after switching back to byte-identical valid archives. Recovery required
+/// deleting the Manic EMU app and re-importing the ROM. The present implementation
+/// produces ZIPs byte-level compatible with ZIPFoundation's own output (store compression,
+/// bit 11 set, <c>versionMadeBy = 0x0315</c>), so a fresh round-trip on a healthy Manic EMU
+/// install is fine; the warning exists only for users who hit the issue with an older build
+/// and may need the clean reinstall to clear the accumulated state.
 /// </para>
 /// </remarks>
 public static class ManicEmuSaveHelper
@@ -343,49 +355,78 @@ public static class ManicEmuSaveHelper
 
     /// <summary>
     /// Computes the export filename and compound extension for a Manic EMU save archive,
-    /// preserving the original compound extension for round-trip compatibility.
+    /// preserving the original compound extension for round-trip compatibility and appending a
+    /// UTC timestamp suffix to the stem to prevent iOS's "filename-already-exists" auto-rename
+    /// (which inserts a space — e.g. <c>.3ds 2.sav</c> — that breaks Manic EMU's
+    /// <c>url.path.contains(".3ds.sav")</c> substring check on re-import).
     /// </summary>
     /// <param name="originalName">
     /// Original filename of the loaded archive (may be <see langword="null" />).
     /// </param>
+    /// <param name="timestamp">
+    /// Timestamp to embed in the export name. Defaults to <see cref="DateTime.UtcNow" />.
+    /// An existing <c>-yyyyMMddTHHmmss</c> suffix on the stem is stripped first, so
+    /// the name doesn't accumulate timestamps across multiple round-trips.
+    /// </param>
     /// <returns>
     /// A tuple of the full export filename and its compound extension. Normally the canonical
-    /// <c>.3ds.sav</c> suffix, e.g. <c>("AlphaSapphire.3ds.sav", ".3ds.sav")</c>. If the user
-    /// uploaded a file whose name already ends in <c>.3ds.save</c> (manual rename or iOS-side
-    /// extension mangling), we echo that back so the round-trip is bit-for-bit transparent.
+    /// <c>.3ds.sav</c> suffix, e.g. <c>("AlphaSapphire-20260420T174612.3ds.sav", ".3ds.sav")</c>.
+    /// If the user uploaded a file whose name already ends in <c>.3ds.save</c> (manual rename
+    /// or iOS-side extension mangling), we echo that back so the round-trip is bit-for-bit
+    /// transparent.
     /// </returns>
-    public static (string ExportName, string CompoundExtension) GetExportFileName(string? originalName)
+    public static (string ExportName, string CompoundExtension) GetExportFileName(string? originalName, DateTime? timestamp = null)
     {
         const string savExt = ".3ds.sav";
         const string saveExt = ".3ds.save";
 
+        var suffix = "-" + (timestamp ?? DateTime.UtcNow).ToString("yyyyMMdd'T'HHmmss", CultureInfo.InvariantCulture);
+
         if (originalName is null)
         {
-            return ("save" + savExt, savExt);
+            return ("save" + suffix + savExt, savExt);
         }
 
         // Check .3ds.save first — it's the more specific suffix (ends in .3ds.sav also matches it).
         if (originalName.EndsWith(saveExt, StringComparison.OrdinalIgnoreCase))
         {
-            var stem = originalName[..^saveExt.Length];
-            return ((stem.Length > 0
-                ? stem
-                : "save") + saveExt, saveExt);
+            var stem = StripExistingTimestampSuffix(originalName[..^saveExt.Length]);
+            return ((stem.Length > 0 ? stem : "save") + suffix + saveExt, saveExt);
         }
 
         if (originalName.EndsWith(savExt, StringComparison.OrdinalIgnoreCase))
         {
-            var stem = originalName[..^savExt.Length];
-            return ((stem.Length > 0
-                ? stem
-                : "save") + savExt, savExt);
+            var stem = StripExistingTimestampSuffix(originalName[..^savExt.Length]);
+            return ((stem.Length > 0 ? stem : "save") + suffix + savExt, savExt);
         }
 
         // Unknown/no compound extension — strip the last extension and default to .3ds.sav.
-        var fallbackStem = Path.GetFileNameWithoutExtension(originalName);
-        return ((fallbackStem.Length > 0
-            ? fallbackStem
-            : "save") + savExt, savExt);
+        var fallbackStem = StripExistingTimestampSuffix(Path.GetFileNameWithoutExtension(originalName));
+        return ((fallbackStem.Length > 0 ? fallbackStem : "save") + suffix + savExt, savExt);
+    }
+
+    /// <summary>
+    /// Removes a trailing <c>-yyyyMMddTHHmmss</c> timestamp suffix from <paramref name="stem" />
+    /// if one is present, so repeated round-trips don't accumulate timestamps. Uses a strict
+    /// length + digit check to avoid stripping unrelated user suffixes that happen to end in
+    /// hyphens or digits.
+    /// </summary>
+    private static string StripExistingTimestampSuffix(string stem)
+    {
+        // Format: ...-yyyyMMddTHHmmss (1 + 8 + 1 + 6 = 16 chars)
+        const int suffixLength = 16;
+        if (stem.Length < suffixLength + 1 || stem[^suffixLength] != '-' || stem[^7] != 'T')
+        {
+            return stem;
+        }
+
+        for (var i = stem.Length - suffixLength + 1; i < stem.Length; i++)
+        {
+            if (i == stem.Length - 7) continue; // 'T' separator, already checked
+            if (!char.IsDigit(stem[i])) return stem;
+        }
+
+        return stem[..^suffixLength];
     }
 
     /// <summary>
