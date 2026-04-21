@@ -669,13 +669,6 @@ body, html {
     -webkit-user-drag: element;
 }
 
-/* pointer-events: none on descendants routes every touch to the draggable div
-   itself, so iOS doesn't try to start the drag on a child <img>/<object> (which
-   isn't marked draggable). The slot still gets clicks and drags via the parent. */
-.square-slot > div[draggable="true"] * {
-    pointer-events: none;
-}
-
 .square-slot > div[draggable="true"]:active {
     cursor: grabbing !important;
 }

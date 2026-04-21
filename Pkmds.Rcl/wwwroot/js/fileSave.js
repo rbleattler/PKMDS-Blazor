@@ -69,6 +69,20 @@ window.setDragDownloadData = function (filename, base64data) {
     }
 };
 
+// iOS Safari cancels a drag whose dragstart completes with an empty DataTransfer.
+// Set a minimal text/plain payload so the drag survives through to dragover/drop
+// on touch devices. Desktop browsers are unaffected — they ignore unused payloads.
+window.setSlotDragMarker = function (value) {
+    if (!window.lastDragEvent) return false;
+    try {
+        window.lastDragEvent.dataTransfer.setData('text/plain', value || 'pkmds-slot');
+        return true;
+    } catch (e) {
+        console.warn('[setSlotDragMarker] Failed:', e);
+        return false;
+    }
+};
+
 // Function to read a dropped file and return as base64
 window.readDroppedFile = async function (index) {
     if (!window.droppedFiles || index >= window.droppedFiles.length) {

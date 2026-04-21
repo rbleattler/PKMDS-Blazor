@@ -191,6 +191,15 @@ public partial class TradeSlot : RefreshAwareComponent
 
         DragDropService.StartDrag(Pokemon, OwnerSaveFile, BoxNumber, SlotNumber, IsPartySlot);
         e.DataTransfer.EffectAllowed = "move";
+
+        // iOS Safari cancels a drag whose dragstart ends with an empty DataTransfer,
+        // which is why long-press lifts the slot then the drag aborts. PokemonSlotComponent
+        // sidesteps this by writing DownloadURL for OS drag-out; here we just set a
+        // text/plain marker so the drag survives to dragover/drop on touch devices.
+        if (JSRuntime is IJSInProcessRuntime inProcessRuntime)
+        {
+            inProcessRuntime.Invoke<bool>("setSlotDragMarker", "pkmds-trade");
+        }
     }
 
     private void HandleDragEnd(DragEventArgs e) => DragDropService.ClearDrag();
