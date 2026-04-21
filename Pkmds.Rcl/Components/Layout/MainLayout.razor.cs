@@ -156,7 +156,19 @@ public partial class MainLayout : IDisposable
             var themeStr = newValue
                 ? "dark"
                 : "light";
-            await JSRuntime.InvokeVoidAsync("setAppTheme", themeStr);
+
+            // `OnSystemPreferenceChanged` is `async void` (required by MudThemeProvider's
+            // WatchSystemDarkModeAsync callback), so any JSException thrown from the
+            // setAppTheme call would otherwise be unobserved and could tear down rendering.
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("setAppTheme", themeStr);
+            }
+            catch (JSException ex)
+            {
+                Logger.LogWarning(ex, "Failed to apply system theme change to DOM");
+            }
+
             StateHasChanged();
         }
     }
