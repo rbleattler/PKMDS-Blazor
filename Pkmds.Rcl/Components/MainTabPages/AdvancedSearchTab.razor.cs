@@ -68,6 +68,30 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
     private ComboItem? speciesItem;
     private uint? trainerId;
 
+    // Appearance
+    private int? type1;
+    private int? type2;
+    private byte? form;
+    private int? teraType;
+    private bool? isFavorite;
+    private bool? isAlpha;
+    private bool? isShadow;
+    private bool? canGigantamax;
+    private byte? dynamaxLevelMin;
+
+    // Origin
+    private ComboItem? metLocationItem;
+    private DateTime? metDateMin;
+    private DateTime? metDateMax;
+    private int? pokerusState;
+
+    // Ribbons
+    private readonly List<string> selectedRibbons = [];
+    private string? pendingRibbonName;
+
+    // Markings — HashSet of indices (0=Circle..5=Diamond)
+    private readonly HashSet<int> selectedMarkings = [];
+
     /// <summary>Callback invoked after a result row is clicked to jump to the Party / Box tab.</summary>
     [Parameter]
     public EventCallback OnJumpToPartyBox { get; set; }
@@ -194,6 +218,22 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
         hiddenPowerType = null;
         anyMoveItems = [];
         allMoveItems = [];
+        type1 = null;
+        type2 = null;
+        form = null;
+        teraType = null;
+        isFavorite = null;
+        isAlpha = null;
+        isShadow = null;
+        canGigantamax = null;
+        dynamaxLevelMin = null;
+        metLocationItem = null;
+        metDateMin = null;
+        metDateMax = null;
+        pokerusState = null;
+        selectedRibbons.Clear();
+        pendingRibbonName = null;
+        selectedMarkings.Clear();
         results = [];
         selectedRows = [];
     }
@@ -242,7 +282,28 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
             SpeEvMin = speEvMin,
             AnyMoves = anyMoveItems.Select(m => (ushort)m.Value).ToList(),
             AllMoves = allMoveItems.Select(m => (ushort)m.Value).ToList(),
-            HiddenPowerType = hiddenPowerType
+            HiddenPowerType = hiddenPowerType,
+            Form = form,
+            Type1 = type1,
+            Type2 = type2,
+            TeraType = teraType,
+            IsFavorite = isFavorite,
+            IsAlpha = isAlpha,
+            IsShadow = isShadow,
+            CanGigantamax = canGigantamax,
+            DynamaxLevelMin = dynamaxLevelMin,
+            MetLocation = metLocationItem is { Value: > 0 }
+                ? metLocationItem.Value
+                : null,
+            MetDateMin = metDateMin.HasValue
+                ? DateOnly.FromDateTime(metDateMin.Value)
+                : null,
+            MetDateMax = metDateMax.HasValue
+                ? DateOnly.FromDateTime(metDateMax.Value)
+                : null,
+            PokerusState = pokerusState,
+            RequiredRibbons = selectedRibbons.ToList(),
+            RequiredMarkings = selectedMarkings.ToList()
         };
 
     // ── Row navigation ────────────────────────────────────────────────────
@@ -361,6 +422,109 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
         else
         {
             filterAbilityInfo = null;
+        }
+    }
+
+    // ── Form / Tera / Flags / Origin helpers ──────────────────────────────
+
+    private IReadOnlyList<string> GetFormList()
+    {
+        if (AppState.SaveFile is not { } sf || speciesItem is not { Value: > 0 } sp)
+        {
+            return [];
+        }
+
+        var forms = FormConverter.GetFormList(
+            (ushort)sp.Value,
+            GameInfo.Strings.types,
+            GameInfo.Strings.forms,
+            GameInfo.GenderSymbolUnicode,
+            sf.Context);
+        return forms.Any(f => !string.IsNullOrEmpty(f))
+            ? forms
+            : [];
+    }
+
+    private bool SaveSupportsTeraType() =>
+        AppState.SaveFile?.BlankPKM is ITeraType;
+
+    private bool SaveSupportsFavorite() =>
+        AppState.SaveFile?.BlankPKM is IFavorite;
+
+    private bool SaveSupportsAlpha() =>
+        AppState.SaveFile?.BlankPKM is IAlpha;
+
+    private bool SaveSupportsShadow() =>
+        AppState.SaveFile?.BlankPKM is IShadowCapture;
+
+    private bool SaveSupportsGigantamax() =>
+        AppState.SaveFile?.BlankPKM is IGigantamax;
+
+    private bool SaveSupportsDynamaxLevel() =>
+        AppState.SaveFile?.BlankPKM is IDynamaxLevel;
+
+    private async Task<IEnumerable<ComboItem>> SearchMetLocationsAsync(string search, CancellationToken ct) =>
+        AppState.SaveFile is not { } sf
+            ? []
+            : await Task.FromResult(AppService.SearchMetLocations(search, sf.Version, sf.Context));
+
+    private IReadOnlyList<string> GetAvailableRibbonNames()
+    {
+        if (AppState.SaveFile is not { } sf)
+        {
+            return [];
+        }
+
+        return [.. RibbonHelper.GetAllRibbonInfo(sf.BlankPKM)
+            .Select(r => r.Name)
+            .Where(n => !selectedRibbons.Contains(n))
+            .Distinct()
+            .OrderBy(RibbonHelper.GetRibbonDisplayName)];
+    }
+
+    private async Task<IEnumerable<string>> SearchRibbonNamesAsync(string search, CancellationToken ct)
+    {
+        var names = GetAvailableRibbonNames();
+        if (string.IsNullOrWhiteSpace(search))
+        {
+            return await Task.FromResult(names.Take(30).ToList());
+        }
+
+        return await Task.FromResult(names
+            .Where(n => RibbonHelper.GetRibbonDisplayName(n)
+                .Contains(search, StringComparison.OrdinalIgnoreCase))
+            .Take(30)
+            .ToList());
+    }
+
+    private void AddRibbon(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name) || selectedRibbons.Contains(name))
+        {
+            return;
+        }
+
+        selectedRibbons.Add(name);
+        pendingRibbonName = null;
+    }
+
+    private void RemoveRibbon(string name) => selectedRibbons.Remove(name);
+
+    private static readonly (int Index, string Symbol, string Label)[] MarkingShapes =
+    [
+        ((int)MarkingsHelper.Markings.Circle, MarkingsHelper.Circle, "Circle"),
+        ((int)MarkingsHelper.Markings.Triangle, MarkingsHelper.Triangle, "Triangle"),
+        ((int)MarkingsHelper.Markings.Square, MarkingsHelper.Square, "Square"),
+        ((int)MarkingsHelper.Markings.Heart, MarkingsHelper.Heart, "Heart"),
+        ((int)MarkingsHelper.Markings.Star, MarkingsHelper.Star, "Star"),
+        ((int)MarkingsHelper.Markings.Diamond, MarkingsHelper.Diamond, "Diamond"),
+    ];
+
+    private void ToggleMarking(int index)
+    {
+        if (!selectedMarkings.Add(index))
+        {
+            selectedMarkings.Remove(index);
         }
     }
 
@@ -512,6 +676,32 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
             .Select(id => AppService.GetMoveComboItem(id))
             .Where(c => c is { Value: > 0 })
             .ToList();
+        form = f.Form;
+        type1 = f.Type1;
+        type2 = f.Type2;
+        teraType = f.TeraType;
+        isFavorite = f.IsFavorite;
+        isAlpha = f.IsAlpha;
+        isShadow = f.IsShadow;
+        canGigantamax = f.CanGigantamax;
+        dynamaxLevelMin = f.DynamaxLevelMin;
+        metLocationItem = null;
+        if (f.MetLocation is > 0 && AppState.SaveFile is { } sf)
+        {
+            metLocationItem = AppService.GetMetLocationComboItem(
+                (ushort)f.MetLocation.Value, sf.Version, sf.Context);
+        }
+        metDateMin = f.MetDateMin?.ToDateTime(TimeOnly.MinValue);
+        metDateMax = f.MetDateMax?.ToDateTime(TimeOnly.MinValue);
+        pokerusState = f.PokerusState;
+        selectedRibbons.Clear();
+        selectedRibbons.AddRange(f.RequiredRibbons);
+        pendingRibbonName = null;
+        selectedMarkings.Clear();
+        foreach (var markingIndex in f.RequiredMarkings)
+        {
+            selectedMarkings.Add(markingIndex);
+        }
         results = [];
         selectedRows = [];
     }

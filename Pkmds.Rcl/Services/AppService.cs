@@ -1743,6 +1743,124 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
             return false;
         }
 
+        // ── Types (order-agnostic multiset match against PersonalInfo) ────
+
+        if (f.Type1.HasValue || f.Type2.HasValue)
+        {
+            var t1 = pkm.PersonalInfo.Type1;
+            var t2 = pkm.PersonalInfo.Type2;
+
+            if (f.Type1.HasValue && f.Type2.HasValue)
+            {
+                var a = f.Type1.Value;
+                var b = f.Type2.Value;
+                var pairMatches = (a == t1 && b == t2) || (a == t2 && b == t1);
+                if (!pairMatches)
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                var filterType = f.Type1 ?? f.Type2!.Value;
+                if (filterType != t1 && filterType != t2)
+                {
+                    return false;
+                }
+            }
+        }
+
+        // ── Tera Type (Gen 9 SV only) ─────────────────────────────────────
+
+        if (f.TeraType.HasValue)
+        {
+            if (pkm is not ITeraType tera || (byte)tera.TeraType != f.TeraType.Value)
+            {
+                return false;
+            }
+        }
+
+        // ── Conditional flags ─────────────────────────────────────────────
+
+        if (f.IsFavorite.HasValue)
+        {
+            if (pkm is not IFavorite fav || fav.IsFavorite != f.IsFavorite.Value)
+            {
+                return false;
+            }
+        }
+
+        if (f.IsAlpha.HasValue)
+        {
+            if (pkm is not IAlpha alpha || alpha.IsAlpha != f.IsAlpha.Value)
+            {
+                return false;
+            }
+        }
+
+        if (f.IsShadow.HasValue)
+        {
+            if (pkm is not IShadowCapture shadow || shadow.IsShadow != f.IsShadow.Value)
+            {
+                return false;
+            }
+        }
+
+        if (f.CanGigantamax.HasValue)
+        {
+            if (pkm is not IGigantamax gmax || gmax.CanGigantamax != f.CanGigantamax.Value)
+            {
+                return false;
+            }
+        }
+
+        if (f.DynamaxLevelMin.HasValue)
+        {
+            if (pkm is not IDynamaxLevel dmax || dmax.DynamaxLevel < f.DynamaxLevelMin.Value)
+            {
+                return false;
+            }
+        }
+
+        // ── Origin (met date / location / Pokerus) ────────────────────────
+
+        if (f.MetLocation.HasValue && pkm.MetLocation != f.MetLocation.Value)
+        {
+            return false;
+        }
+
+        if (f.MetDateMin.HasValue || f.MetDateMax.HasValue)
+        {
+            if (pkm.MetDate is not { } metDate)
+            {
+                return false;
+            }
+
+            if (f.MetDateMin.HasValue && metDate < f.MetDateMin.Value)
+            {
+                return false;
+            }
+
+            if (f.MetDateMax.HasValue && metDate > f.MetDateMax.Value)
+            {
+                return false;
+            }
+        }
+
+        if (f.PokerusState.HasValue)
+        {
+            var state = pkm switch
+            {
+                { IsPokerusCured: true } => 2,
+                { IsPokerusInfected: true } => 1,
+                _ => 0,
+            };
+            if (state != f.PokerusState.Value)
+            {
+                return false;
+            }
+        }
+
         // ── Language ──────────────────────────────────────────────────────
 
         if (f.LanguageId.HasValue && pkm.Language != f.LanguageId.Value)
@@ -1888,6 +2006,24 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
                 .Any(prop => prop?.GetValue(pkm) is not true))
             {
                 return false;
+            }
+        }
+
+        // ── Markings (shape toggles — Gen 3+) ─────────────────────────────
+
+        if (f.RequiredMarkings.Count > 0)
+        {
+            if (pkm is not IAppliedMarkings)
+            {
+                return false;
+            }
+
+            foreach (var index in f.RequiredMarkings)
+            {
+                if (pkm.GetMarking(index) == 0)
+                {
+                    return false;
+                }
             }
         }
 

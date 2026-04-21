@@ -149,6 +149,45 @@
                                         </MudItem>
                                     </MudGrid>
 
+                                    <MudGrid Spacing="2">
+                                        <MudItem xs="6">
+                                            <MudSelect T="@(int?)"
+                                                       Label="Type 1"
+                                                       @bind-Value="@type1"
+                                                       Clearable>
+                                                <MudSelectItem T="@(int?)"
+                                                               Value="@((int?)null)">Any
+                                                </MudSelectItem>
+                                                @for (var i = 0; i < 18; i++)
+                                                {
+                                                    var typeIndex = i;
+                                                    <MudSelectItem T="@(int?)"
+                                                                   Value="@typeIndex">
+                                                        @GameInfo.Strings.Types[typeIndex]
+                                                    </MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </MudItem>
+                                        <MudItem xs="6">
+                                            <MudSelect T="@(int?)"
+                                                       Label="Type 2"
+                                                       @bind-Value="@type2"
+                                                       Clearable>
+                                                <MudSelectItem T="@(int?)"
+                                                               Value="@((int?)null)">Any
+                                                </MudSelectItem>
+                                                @for (var i = 0; i < 18; i++)
+                                                {
+                                                    var typeIndex = i;
+                                                    <MudSelectItem T="@(int?)"
+                                                                   Value="@typeIndex">
+                                                        @GameInfo.Strings.Types[typeIndex]
+                                                    </MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </MudItem>
+                                    </MudGrid>
+
                                     <MudSelect T="@(bool?)"
                                                Label="Legal status"
                                                @bind-Value="@isLegal"
@@ -163,6 +202,152 @@
                                                        Value="@false">Illegal only
                                         </MudSelectItem>
                                     </MudSelect>
+
+                                </MudStack>
+                            </MudExpansionPanel>
+
+                            @* ── Appearance ── *@
+                            <MudExpansionPanel Text="Appearance">
+                                <MudStack Spacing="2">
+
+                                    @{
+                                        var formList = GetFormList();
+                                    }
+                                    @if (formList.Count > 0)
+                                    {
+                                        <MudSelect T="@(byte?)"
+                                                   Label="Form"
+                                                   @bind-Value="@form"
+                                                   Clearable>
+                                            <MudSelectItem T="@(byte?)"
+                                                           Value="@((byte?)null)">Any
+                                            </MudSelectItem>
+                                            @for (byte i = 0; i < formList.Count; i++)
+                                            {
+                                                var formIndex = i;
+                                                var formName = formList[formIndex];
+                                                if (string.IsNullOrEmpty(formName))
+                                                {
+                                                    continue;
+                                                }
+                                                <MudSelectItem T="@(byte?)"
+                                                               Value="@((byte?)formIndex)">
+                                                    @formName
+                                                </MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    }
+                                    else if (speciesItem is not { Value: > 0 })
+                                    {
+                                        <MudText Typo="@Typo.caption">
+                                            Pick a species to enable form filtering.
+                                        </MudText>
+                                    }
+
+                                    @if (SaveSupportsTeraType())
+                                    {
+                                        <MudSelect T="@(int?)"
+                                                   Label="Tera Type"
+                                                   @bind-Value="@teraType"
+                                                   Clearable>
+                                            <MudSelectItem T="@(int?)"
+                                                           Value="@((int?)null)">Any
+                                            </MudSelectItem>
+                                            @for (var i = 0; i < 18; i++)
+                                            {
+                                                var typeIndex = i;
+                                                <MudSelectItem T="@(int?)"
+                                                               Value="@typeIndex">
+                                                    @GameInfo.Strings.Types[typeIndex]
+                                                </MudSelectItem>
+                                            }
+                                            <MudSelectItem T="@(int?)"
+                                                           Value="@((int?)TeraTypeUtil.Stellar)">
+                                                @GameInfo.Strings.Types[TeraTypeUtil.StellarTypeDisplayStringIndex]
+                                            </MudSelectItem>
+                                        </MudSelect>
+                                    }
+
+                                    @if (SaveSupportsFavorite())
+                                    {
+                                        <MudSelect T="@(bool?)"
+                                                   Label="Favorite"
+                                                   @bind-Value="@isFavorite"
+                                                   Clearable>
+                                            <MudSelectItem T="@(bool?)"
+                                                           Value="@((bool?)null)">Any
+                                            </MudSelectItem>
+                                            <MudSelectItem T="@(bool?)"
+                                                           Value="@true">Favorites only
+                                            </MudSelectItem>
+                                            <MudSelectItem T="@(bool?)"
+                                                           Value="@false">Non-favorites only
+                                            </MudSelectItem>
+                                        </MudSelect>
+                                    }
+
+                                    @if (SaveSupportsAlpha())
+                                    {
+                                        <MudSelect T="@(bool?)"
+                                                   Label="Alpha"
+                                                   @bind-Value="@isAlpha"
+                                                   Clearable>
+                                            <MudSelectItem T="@(bool?)"
+                                                           Value="@((bool?)null)">Any
+                                            </MudSelectItem>
+                                            <MudSelectItem T="@(bool?)"
+                                                           Value="@true">Alphas only
+                                            </MudSelectItem>
+                                            <MudSelectItem T="@(bool?)"
+                                                           Value="@false">Non-alphas only
+                                            </MudSelectItem>
+                                        </MudSelect>
+                                    }
+
+                                    @if (SaveSupportsShadow())
+                                    {
+                                        <MudSelect T="@(bool?)"
+                                                   Label="Shadow"
+                                                   @bind-Value="@isShadow"
+                                                   Clearable>
+                                            <MudSelectItem T="@(bool?)"
+                                                           Value="@((bool?)null)">Any
+                                            </MudSelectItem>
+                                            <MudSelectItem T="@(bool?)"
+                                                           Value="@true">Shadow only
+                                            </MudSelectItem>
+                                            <MudSelectItem T="@(bool?)"
+                                                           Value="@false">Non-shadow only
+                                            </MudSelectItem>
+                                        </MudSelect>
+                                    }
+
+                                    @if (SaveSupportsGigantamax())
+                                    {
+                                        <MudSelect T="@(bool?)"
+                                                   Label="Gigantamax factor"
+                                                   @bind-Value="@canGigantamax"
+                                                   Clearable>
+                                            <MudSelectItem T="@(bool?)"
+                                                           Value="@((bool?)null)">Any
+                                            </MudSelectItem>
+                                            <MudSelectItem T="@(bool?)"
+                                                           Value="@true">Gigantamax-capable only
+                                            </MudSelectItem>
+                                            <MudSelectItem T="@(bool?)"
+                                                           Value="@false">Non-Gigantamax only
+                                            </MudSelectItem>
+                                        </MudSelect>
+                                    }
+
+                                    @if (SaveSupportsDynamaxLevel())
+                                    {
+                                        <MudNumericField T="@(byte?)"
+                                                         Label="Min Dynamax level"
+                                                         @bind-Value="@dynamaxLevelMin"
+                                                         Min="0"
+                                                         Max="10"/>
+                                    }
 
                                 </MudStack>
                             </MudExpansionPanel>
@@ -505,6 +690,105 @@
                                             </MudSelectItem>
                                         }
                                     </MudSelect>
+
+                                </MudStack>
+                            </MudExpansionPanel>
+
+                            @* ── Origin ── *@
+                            <MudExpansionPanel Text="Origin">
+                                <MudStack Spacing="2">
+
+                                    <MudAutocomplete T="@ComboItem"
+                                                     Label="Met location"
+                                                     Value="@metLocationItem"
+                                                     ValueChanged="@(v => metLocationItem = v)"
+                                                     SearchFunc="@SearchMetLocationsAsync"
+                                                     ToStringFunc="@(l => l?.Text ?? string.Empty)"
+                                                     Clearable
+                                                     ResetValueOnEmptyText/>
+
+                                    <MudGrid Spacing="2">
+                                        <MudItem xs="6">
+                                            <MudDatePicker Label="Met date (from)"
+                                                           @bind-Date="@metDateMin"
+                                                           Clearable/>
+                                        </MudItem>
+                                        <MudItem xs="6">
+                                            <MudDatePicker Label="Met date (to)"
+                                                           @bind-Date="@metDateMax"
+                                                           Clearable/>
+                                        </MudItem>
+                                    </MudGrid>
+
+                                    <MudSelect T="@(int?)"
+                                               Label="Pokerus"
+                                               @bind-Value="@pokerusState"
+                                               Clearable>
+                                        <MudSelectItem T="@(int?)"
+                                                       Value="@((int?)null)">Any
+                                        </MudSelectItem>
+                                        <MudSelectItem T="@(int?)"
+                                                       Value="@((int?)0)">Never infected
+                                        </MudSelectItem>
+                                        <MudSelectItem T="@(int?)"
+                                                       Value="@((int?)1)">Currently infected
+                                        </MudSelectItem>
+                                        <MudSelectItem T="@(int?)"
+                                                       Value="@((int?)2)">Cured
+                                        </MudSelectItem>
+                                    </MudSelect>
+
+                                </MudStack>
+                            </MudExpansionPanel>
+
+                            @* ── Ribbons / Marks ── *@
+                            <MudExpansionPanel Text="Ribbons / Marks">
+                                <MudStack Spacing="2">
+
+                                    <MudText Typo="@Typo.subtitle2">Markings</MudText>
+                                    <MudStack Row
+                                              Wrap="@Wrap.Wrap"
+                                              Spacing="1">
+                                        @foreach (var (markingIndex, symbol, label) in MarkingShapes)
+                                        {
+                                            var idx = markingIndex;
+                                            var isSelected = selectedMarkings.Contains(idx);
+                                            <MudChip T="@int"
+                                                     Value="@idx"
+                                                     Variant="@(isSelected ? Variant.Filled : Variant.Outlined)"
+                                                     Color="@(isSelected ? Color.Primary : Color.Default)"
+                                                     Size="@Size.Large"
+                                                     OnClick="@(() => ToggleMarking(idx))"
+                                                     title="@label">
+                                                @symbol
+                                            </MudChip>
+                                        }
+                                    </MudStack>
+
+                                    <MudText Typo="@Typo.subtitle2">Ribbons</MudText>
+                                    <MudAutocomplete T="@string"
+                                                     Label="Add ribbon…"
+                                                     Value="@pendingRibbonName"
+                                                     ValueChanged="@AddRibbon"
+                                                     SearchFunc="@SearchRibbonNamesAsync"
+                                                     ToStringFunc="@(n => string.IsNullOrEmpty(n) ? string.Empty : RibbonHelper.GetRibbonDisplayName(n))"
+                                                     ResetValueOnEmptyText
+                                                     Clearable/>
+
+                                    <MudStack Row
+                                              Wrap="@Wrap.Wrap"
+                                              Spacing="1">
+                                        @foreach (var ribbon in selectedRibbons)
+                                        {
+                                            var ribbonName = ribbon;
+                                            <MudChip T="@string"
+                                                     Color="@Color.Warning"
+                                                     Size="@Size.Small"
+                                                     OnClose="@(() => RemoveRibbon(ribbonName))">
+                                                @RibbonHelper.GetRibbonDisplayName(ribbonName)
+                                            </MudChip>
+                                        }
+                                    </MudStack>
 
                                 </MudStack>
                             </MudExpansionPanel>
