@@ -5,6 +5,11 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
     private const string EnglishLang = "en";
     private const string DefaultPkmFileName = "pkm.bin";
 
+    // Number of items to return from Search* methods when the query is empty. The autocomplete
+    // dropdown uses this to populate an initial "preview" list so users see something to pick
+    // from before they start typing. Matches the Ribbons filter's top-N behavior.
+    private const int AutocompleteEmptyQueryTake = 30;
+
     // Block keys duplicated from SaveBlockAccessor8SWSH / SaveBlockAccessor9SV
     // because they are private in PKHeX.Core. Update if upstream changes.
     private const uint SwshTeamNamesKey = 0x1920C1E4;
@@ -97,25 +102,41 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
 
     public string GetPokemonSpeciesName(ushort speciesId) => GetSpeciesComboItem(speciesId).Text;
 
-    public IEnumerable<ComboItem> SearchPokemonNames(string searchString) =>
-        AppState.SaveFile is null || searchString is not { Length: > 0 }
-            ? []
-            : GameInfo.FilteredSources.Species
-                .DistinctBy(species => species.Value)
-                .Where(species => species.Text.Contains(searchString, StringComparison.OrdinalIgnoreCase))
-                .OrderBy(species => species.Text);
+    public IEnumerable<ComboItem> SearchPokemonNames(string searchString)
+    {
+        if (AppState.SaveFile is null)
+        {
+            return [];
+        }
+
+        var source = GameInfo.FilteredSources.Species
+            .DistinctBy(species => species.Value)
+            .OrderBy(species => species.Text);
+
+        return string.IsNullOrEmpty(searchString)
+            ? source.Take(AutocompleteEmptyQueryTake)
+            : source.Where(species => species.Text.Contains(searchString, StringComparison.OrdinalIgnoreCase));
+    }
 
     public ComboItem GetSpeciesComboItem(ushort speciesId) => GameInfo.FilteredSources.Species
         .DistinctBy(species => species.Value)
         .FirstOrDefault(species => species.Value == speciesId) ?? new(string.Empty, (int)Species.None);
 
-    public IEnumerable<ComboItem> SearchItemNames(string searchString) =>
-        AppState.SaveFile is null || searchString is not { Length: > 0 }
-            ? []
-            : GameInfo.FilteredSources.Items
-                .DistinctBy(item => item.Value)
-                .Where(item => item.Text.Contains(searchString, StringComparison.OrdinalIgnoreCase))
-                .OrderBy(item => item.Text);
+    public IEnumerable<ComboItem> SearchItemNames(string searchString)
+    {
+        if (AppState.SaveFile is null)
+        {
+            return [];
+        }
+
+        var source = GameInfo.FilteredSources.Items
+            .DistinctBy(item => item.Value)
+            .OrderBy(item => item.Text);
+
+        return string.IsNullOrEmpty(searchString)
+            ? source.Take(AutocompleteEmptyQueryTake)
+            : source.Where(item => item.Text.Contains(searchString, StringComparison.OrdinalIgnoreCase));
+    }
 
     public ComboItem GetItemComboItem(int itemId) => GameInfo.FilteredSources.Items
         .DistinctBy(item => item.Value)
@@ -154,13 +175,21 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
     }
 
     public IEnumerable<ComboItem> SearchMetLocations(string searchString, GameVersion gameVersion,
-        EntityContext entityContext, bool isEggLocation = false) =>
-        AppState.SaveFile is null || searchString is not { Length: > 0 }
-            ? []
-            : GameInfo.GetLocationList(gameVersion, entityContext, isEggLocation)
-                .DistinctBy(l => l.Value)
-                .Where(metLocation => metLocation.Text.Contains(searchString, StringComparison.OrdinalIgnoreCase))
-                .OrderBy(metLocation => metLocation.Text);
+        EntityContext entityContext, bool isEggLocation = false)
+    {
+        if (AppState.SaveFile is null)
+        {
+            return [];
+        }
+
+        var source = GameInfo.GetLocationList(gameVersion, entityContext, isEggLocation)
+            .DistinctBy(l => l.Value)
+            .OrderBy(l => l.Text);
+
+        return string.IsNullOrEmpty(searchString)
+            ? source.Take(AutocompleteEmptyQueryTake)
+            : source.Where(l => l.Text.Contains(searchString, StringComparison.OrdinalIgnoreCase));
+    }
 
     public ComboItem GetMetLocationComboItem(ushort metLocationId, GameVersion gameVersion, EntityContext entityContext,
         bool isEggLocation = false) => AppState.SaveFile is null
@@ -169,13 +198,21 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
             .DistinctBy(l => l.Value)
             .FirstOrDefault(metLocation => metLocation.Value == metLocationId) ?? null!;
 
-    public IEnumerable<ComboItem> SearchMoves(string searchString) =>
-        AppState.SaveFile is null || searchString is not { Length: > 0 }
-            ? []
-            : GameInfo.FilteredSources.Moves
-                .DistinctBy(move => move.Value)
-                .Where(move => move.Text.Contains(searchString, StringComparison.OrdinalIgnoreCase))
-                .OrderBy(move => move.Text);
+    public IEnumerable<ComboItem> SearchMoves(string searchString)
+    {
+        if (AppState.SaveFile is null)
+        {
+            return [];
+        }
+
+        var source = GameInfo.FilteredSources.Moves
+            .DistinctBy(move => move.Value)
+            .OrderBy(move => move.Text);
+
+        return string.IsNullOrEmpty(searchString)
+            ? source.Take(AutocompleteEmptyQueryTake)
+            : source.Where(move => move.Text.Contains(searchString, StringComparison.OrdinalIgnoreCase));
+    }
 
     public IEnumerable<ComboItem> GetMoves() => AppState.SaveFile is null
         ? []

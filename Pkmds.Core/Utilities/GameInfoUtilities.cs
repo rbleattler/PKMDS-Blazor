@@ -85,4 +85,16 @@ public static class GameInfoUtilities
     /// <param name="categoryId">Raw category ID (0 = Status, 1 = Physical, 2 = Special).</param>
     public static string GetCategoryName(int categoryId) =>
         GetCategoryName((MoveCategory)categoryId);
+
+    /// <summary>
+    /// All distinct nature values available in the current game context.
+    /// </summary>
+    public static IEnumerable<Nature> GetNatureItems() =>
+        GameInfo.FilteredSources.Natures.DistinctBy(n => n.Value).Select(n => (Nature)n.Value);
+
+    /// <summary>
+    /// Display name of a nature in the current game's language.
+    /// </summary>
+    public static string GetNatureName(Nature nature) =>
+        GameInfo.FilteredSources.Natures.FirstOrDefault(n => n.Value == (int)nature)?.Text ?? nature.ToString();
 }

@@ -142,8 +142,8 @@ public partial class BagTab
             ? ItemList[index]
             : $"(Item #{index:000})";
 
-    private static void SetItem(CellContext<InventoryItem> context, ComboItem item) =>
-        context.Item.Index = item.Value;
+    private static void SetItem(CellContext<InventoryItem> context, ComboItem? item) =>
+        context.Item.Index = item?.Value ?? 0;
 
     private void DeleteItem(CellContext<InventoryItem> context, InventoryPouch pouch)
     {
@@ -176,32 +176,16 @@ public partial class BagTab
 
     private void SortByIndex(InventoryPouch pouch) => pouch.SortByIndex(IsSortedByIndex = !IsSortedByIndex);
 
-    private Task<IEnumerable<ComboItem>> SearchItemNames(InventoryPouch pouch, string searchString)
+    private IEnumerable<ComboItem> GetPouchItems(InventoryPouch pouch)
     {
-        if (string.IsNullOrWhiteSpace(searchString))
-        {
-            return Task.FromResult(Enumerable.Empty<ComboItem>());
-        }
-
         // In HaX mode, show all items regardless of pouch type
         if (AppState.IsHaXEnabled)
         {
-            var allResults = SortedItemComboList
-                .Where(item => item.Text.Contains(searchString, StringComparison.OrdinalIgnoreCase));
-            return Task.FromResult(allResults);
+            return SortedItemComboList;
         }
 
-        // Use cached valid items for this pouch
-        if (!PouchValidItemsCache.TryGetValue(pouch.Type, out var validItems))
-        {
-            return Task.FromResult(Enumerable.Empty<ComboItem>());
-        }
-
-        // Use pre-sorted list to avoid sorting on every search
-        var results = SortedItemComboList
-            .Where(item => validItems.Contains(item.Text) &&
-                           item.Text.Contains(searchString, StringComparison.OrdinalIgnoreCase));
-
-        return Task.FromResult(results);
+        return PouchValidItemsCache.TryGetValue(pouch.Type, out var validItems)
+            ? SortedItemComboList.Where(item => validItems.Contains(item.Text))
+            : [];
     }
 }

@@ -63,6 +63,31 @@ public partial class MetTab : IDisposable
 
     private bool ShowGroundTile => Pokemon is IGroundTile && Pokemon.Gen4 && Pokemon.Format < 7;
 
+    private IEnumerable<GameVersion> OriginGameItems =>
+        GameInfo.FilteredSources.Games.Select(g => (GameVersion)g.Value);
+
+    private static string GetBattleVersionText(GameVersion version) =>
+        version == GameVersion.Any
+            ? "None"
+            : GameInfo.GetVersionName(version);
+
+    private string? CurrentBallSpriteFileName =>
+        Pokemon is { Ball: > 0 } ? ImageHelper.GetBallSpriteFilename(Pokemon.Ball) : null;
+
+    private static IEnumerable<byte> BallItems =>
+        GameInfo.FilteredSources.Balls.DistinctBy(b => b.Value).Select(b => (byte)b.Value);
+
+    private static string GetBallText(byte ballValue) =>
+        GameInfo.FilteredSources.Balls.FirstOrDefault(b => b.Value == ballValue)?.Text ?? string.Empty;
+
+    private static IEnumerable<GroundTileType> GroundTileItems =>
+        GameInfo.FilteredSources.G4GroundTiles.Select(t => (GroundTileType)t.Value);
+
+    private static string GetGroundTileText(GroundTileType tile) =>
+        GameInfo.FilteredSources.G4GroundTiles.FirstOrDefault(t => t.Value == (int)tile)?.Text ?? tile.ToString();
+
+    private static IEnumerable<MetTimeOfDay> MetTimeOfDayItems => Enum.GetValues<MetTimeOfDay>();
+
     public void Dispose() =>
         RefreshService.OnAppStateChanged -= StateHasChanged;
 

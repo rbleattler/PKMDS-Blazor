@@ -37,19 +37,11 @@
                                                      ResetValueOnEmptyText/>
 
                                     @* Game version *@
-                                    <MudSelect T="@(int?)"
-                                               Label="Game version"
-                                               @bind-Value="@gameVersionValue"
-                                               Clearable>
-                                        <MudSelectItem T="@(int?)"
-                                                       Value="@((int?)null)">All (current format)
-                                        </MudSelectItem>
-                                        @foreach (var game in GameInfo.FilteredSources.Games.Where(g => g.Value > 0))
-                                        {
-                                            <MudSelectItem T="@(int?)"
-                                                           Value="@((int?)game.Value)">@game.Text</MudSelectItem>
-                                        }
-                                    </MudSelect>
+                                    <AutocompleteSelect T="@(int?)"
+                                                        Label="Game version"
+                                                        @bind-Value="@gameVersionValue"
+                                                        Items="@GameVersionFilterItems"
+                                                        ToStringFunc="@GameVersionFilterText"/>
 
                                 </MudStack>
                             </MudExpansionPanel>
@@ -78,45 +70,18 @@
                                     </MudGrid>
 
                                     @* Shiny lock *@
-                                    <MudSelect T="@(bool?)"
-                                               Label="Shiny lock"
-                                               @bind-Value="@isShinyLocked"
-                                               Clearable>
-                                        <MudSelectItem T="@(bool?)"
-                                                       Value="@((bool?)null)">Any
-                                        </MudSelectItem>
-                                        <MudSelectItem T="@(bool?)"
-                                                       Value="@true">Shiny-locked only
-                                        </MudSelectItem>
-                                        <MudSelectItem T="@(bool?)"
-                                                       Value="@false">Can be shiny
-                                        </MudSelectItem>
-                                    </MudSelect>
+                                    <AutocompleteSelect T="@(bool?)"
+                                                        Label="Shiny lock"
+                                                        @bind-Value="@isShinyLocked"
+                                                        Items="@ShinyLockFilterItems"
+                                                        ToStringFunc="@ShinyLockFilterText"/>
 
                                     @* Encounter type *@
-                                    <MudSelect T="@(int?)"
-                                               Label="Encounter type"
-                                               @bind-Value="@encounterGroupValue"
-                                               Clearable>
-                                        <MudSelectItem T="@(int?)"
-                                                       Value="@((int?)null)">All types
-                                        </MudSelectItem>
-                                        <MudSelectItem T="@(int?)"
-                                                       Value="@((int?)EncounterTypeGroup.Slot)">Wild
-                                        </MudSelectItem>
-                                        <MudSelectItem T="@(int?)"
-                                                       Value="@((int?)EncounterTypeGroup.Static)">Static / Gift
-                                        </MudSelectItem>
-                                        <MudSelectItem T="@(int?)"
-                                                       Value="@((int?)EncounterTypeGroup.Mystery)">Mystery Gift
-                                        </MudSelectItem>
-                                        <MudSelectItem T="@(int?)"
-                                                       Value="@((int?)EncounterTypeGroup.Trade)">Trade
-                                        </MudSelectItem>
-                                        <MudSelectItem T="@(int?)"
-                                                       Value="@((int?)EncounterTypeGroup.Egg)">Egg
-                                        </MudSelectItem>
-                                    </MudSelect>
+                                    <AutocompleteSelect T="@(int?)"
+                                                        Label="Encounter type"
+                                                        @bind-Value="@encounterGroupValue"
+                                                        Items="@EncounterGroupFilterItems"
+                                                        ToStringFunc="@EncounterGroupFilterText"/>
 
                                 </MudStack>
                             </MudExpansionPanel>

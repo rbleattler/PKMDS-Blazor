@@ -43,25 +43,12 @@
                 <MudText Typo="@Typo.subtitle2">Gen 2</MudText>
             }
 
-            <MudSelect T="@StatusCondition"
-                       Label="Status Condition"
-                       Variant="@Variant.Outlined"
-                       Value="@((StatusCondition)Pokemon.Status_Condition)"
-                       ValueChanged="@(sc => Pokemon.Status_Condition = (int)sc)">
-                <MudSelectItem Value="@StatusCondition.None">Healthy</MudSelectItem>
-                <MudSelectItem Value="@StatusCondition.Sleep1">Sleeping (1 turn)</MudSelectItem>
-                <MudSelectItem Value="@StatusCondition.Sleep2">Sleeping (2 turns)</MudSelectItem>
-                <MudSelectItem Value="@StatusCondition.Sleep3">Sleeping (3 turns)</MudSelectItem>
-                <MudSelectItem Value="@StatusCondition.Sleep4">Sleeping (4 turns)</MudSelectItem>
-                <MudSelectItem Value="@StatusCondition.Sleep5">Sleeping (5 turns)</MudSelectItem>
-                <MudSelectItem Value="@StatusCondition.Sleep6">Sleeping (6 turns)</MudSelectItem>
-                <MudSelectItem Value="@StatusCondition.Sleep7">Sleeping (7 turns)</MudSelectItem>
-                <MudSelectItem Value="@StatusCondition.Poison">Poisoned</MudSelectItem>
-                <MudSelectItem Value="@StatusCondition.Burn">Burned</MudSelectItem>
-                <MudSelectItem Value="@StatusCondition.Freeze">Frozen</MudSelectItem>
-                <MudSelectItem Value="@StatusCondition.Paralysis">Paralyzed</MudSelectItem>
-                <MudSelectItem Value="@StatusCondition.PoisonBad">Badly Poisoned</MudSelectItem>
-            </MudSelect>
+            <AutocompleteSelect T="@StatusCondition"
+                                Label="Status Condition"
+                                Value="@((StatusCondition)Pokemon.Status_Condition)"
+                                ValueChanged="@(sc => Pokemon.Status_Condition = (int)sc)"
+                                Items="@StatusConditionValues"
+                                ToStringFunc="@GetStatusConditionText"/>
         }
 
         @* Gen 3 — Shadow (Colosseum / XD) *@
@@ -269,74 +256,68 @@
             <MudGrid>
                 <MudItem xs="9">
                     <MudStack>
-                        <MudSelect Label="Original Tera Type"
-                                   Variant="@Variant.Outlined"
-                                   @bind-Value="@tt.TeraTypeOriginal"
-                                   For="@(() => tt.TeraTypeOriginal)">
-                            @foreach (var teraType in Enum.GetValues<MoveType>().Where(m => m != MoveType.Any))
+                        <MudStack Row
+                                  AlignItems="@AlignItems.Center"
+                                  Spacing="1">
+                            <MudStack Style="flex: 1; min-width: 0;">
+                                <AutocompleteSelect T="@MoveType"
+                                                    Label="Original Tera Type"
+                                                    @bind-Value="@tt.TeraTypeOriginal"
+                                                    Items="@TeraTypeOriginalItems"
+                                                    ToStringFunc="@GetTeraTypeText"
+                                                    For="@(() => tt.TeraTypeOriginal)">
+                                    <ItemTemplate Context="teraType">
+                                        <MudStack Row
+                                                  Class="my-2"
+                                                  AlignItems="@AlignItems.Center">
+                                            @RenderTeraTypeImage((byte)teraType)
+                                            <MudText>
+                                                @GetTeraTypeDisplayName((byte)teraType)
+                                            </MudText>
+                                        </MudStack>
+                                    </ItemTemplate>
+                                </AutocompleteSelect>
+                            </MudStack>
+                            @RenderTeraTypeImage((byte)tt.TeraTypeOriginal)
+                        </MudStack>
+                        <MudStack Row
+                                  AlignItems="@AlignItems.Center"
+                                  Spacing="1">
+                            <MudStack Style="flex: 1; min-width: 0;">
+                                <AutocompleteSelect T="@MoveType"
+                                                    Label="Override Tera Type"
+                                                    @bind-Value="@tt.TeraTypeOverride"
+                                                    Items="@TeraTypeOverrideItems"
+                                                    ToStringFunc="@GetTeraTypeText"
+                                                    For="@(() => tt.TeraTypeOverride)">
+                                    <ItemTemplate Context="teraType">
+                                        @if ((byte)teraType == TeraTypeUtil.OverrideNone)
+                                        {
+                                            <MudText>@Constants.EmptyIndex</MudText>
+                                        }
+                                        else
+                                        {
+                                            <MudStack Row
+                                                      Class="my-2"
+                                                      AlignItems="@AlignItems.Center">
+                                                @RenderTeraTypeImage((byte)teraType)
+                                                <MudText>
+                                                    @GetTeraTypeDisplayName((byte)teraType)
+                                                </MudText>
+                                            </MudStack>
+                                        }
+                                    </ItemTemplate>
+                                </AutocompleteSelect>
+                            </MudStack>
+                            @if ((byte)tt.TeraTypeOverride != TeraTypeUtil.OverrideNone)
                             {
-                                var teraTypeId = (byte)teraType;
-                                <MudSelectItem Value="@teraType"
-                                               @key="@teraType">
-                                    <MudStack Row
-                                              Class="my-2"
-                                              AlignItems="@AlignItems.Center">
-                                        @RenderTeraTypeImage(teraTypeId)
-                                        <MudText>
-                                            @GetTeraTypeDisplayName(teraTypeId)
-                                        </MudText>
-                                    </MudStack>
-                                </MudSelectItem>
+                                @RenderTeraTypeImage((byte)tt.TeraTypeOverride)
                             }
-                            <MudSelectItem Value="@((MoveType)TeraTypeUtil.Stellar)"
-                                           @key="@((MoveType)TeraTypeUtil.Stellar)">
-                                <MudStack Row
-                                          Class="my-2"
-                                          AlignItems="@AlignItems.Center">
-                                    @RenderTeraTypeImage(TeraTypeUtil.Stellar)
-                                    <MudText>
-                                        @GetTeraTypeDisplayName(TeraTypeUtil.Stellar)
-                                    </MudText>
-                                </MudStack>
-                            </MudSelectItem>
-                        </MudSelect>
-                        <MudSelect Label="Override Tera Type"
-                                   Variant="@Variant.Outlined"
-                                   @bind-Value="@tt.TeraTypeOverride"
-                                   For="@(() => tt.TeraTypeOverride)">
-                            <MudSelectItem Value="@((MoveType)TeraTypeUtil.OverrideNone)"
-                                           @key="@TeraTypeUtil.OverrideNone">
-                                <MudText>
-                                    @Constants.EmptyIndex
-                                </MudText>
-                            </MudSelectItem>
-                            @foreach (var teraType in Enum.GetValues<MoveType>().Where(m => m != MoveType.Any))
+                            else
                             {
-                                var teraTypeId = (byte)teraType;
-                                <MudSelectItem Value="@teraType"
-                                               @key="@teraType">
-                                    <MudStack Row
-                                              Class="my-2"
-                                              AlignItems="@AlignItems.Center">
-                                        @RenderTeraTypeImage(teraTypeId)
-                                        <MudText>
-                                            @GetTeraTypeDisplayName(teraTypeId)
-                                        </MudText>
-                                    </MudStack>
-                                </MudSelectItem>
+                                <span style="width: 30px;"></span>
                             }
-                            <MudSelectItem Value="@((MoveType)TeraTypeUtil.Stellar)"
-                                           @key="@((MoveType)TeraTypeUtil.Stellar)">
-                                <MudStack Row
-                                          Class="my-2"
-                                          AlignItems="@AlignItems.Center">
-                                    @RenderTeraTypeImage(TeraTypeUtil.Stellar)
-                                    <MudText>
-                                        @GetTeraTypeDisplayName(TeraTypeUtil.Stellar)
-                                    </MudText>
-                                </MudStack>
-                            </MudSelectItem>
-                        </MudSelect>
+                        </MudStack>
                     </MudStack>
                 </MudItem>
                 <MudItem xs="3"

@@ -720,16 +720,22 @@
                                       Height="24"
                                       Class="mt-4"/>
                         }
-                        <MudSelect T="@int"
-                                   Label="Status Condition"
-                                   Variant="@Variant.Outlined"
-                                   Value="@GetCurrentStatusValue()"
-                                   ValueChanged="@OnStatusChanged">
-                            @foreach (var option in GetStatusOptions())
-                            {
-                                <MudSelectItem T="@int"
-                                               Value="@option.Value"
-                                               @key="@option.Value">
+                        @{
+                            var statusOptions = GetStatusOptions();
+                            var currentStatusValue = GetCurrentStatusValue();
+                        }
+                        <AutocompleteSelect T="@int"
+                                            Label="Status Condition"
+                                            Value="@currentStatusValue"
+                                            ValueChanged="@OnStatusChanged"
+                                            Items="@statusOptions.Select(o => o.Value)"
+                                            ToStringFunc="@(v => statusOptions.FirstOrDefault(o => o.Value == v)?.Label ?? string.Empty)">
+                            <ItemTemplate Context="optionValue">
+                                @{
+                                    var option = statusOptions.FirstOrDefault(o => o.Value == optionValue);
+                                }
+                                @if (option is not null)
+                                {
                                     <MudStack Row
                                               AlignItems="@AlignItems.Center"
                                               Spacing="1">
@@ -742,9 +748,9 @@
                                         }
                                         <MudText>@option.Label</MudText>
                                     </MudStack>
-                                </MudSelectItem>
-                            }
-                        </MudSelect>
+                                }
+                            </ItemTemplate>
+                        </AutocompleteSelect>
                     </MudStack>
 
                     @if (Pokemon.Format <= 4 && IsSleepSelected())
@@ -782,50 +788,46 @@
 
     @if (saveGeneration >= 3)
     {
-        <MudSelect Label="Nature"
-                   Variant="@Variant.Outlined"
-                   @bind-Value:get="@Pokemon.Nature"
-                   @bind-Value:set="@OnNatureSet"
-                   For="@(() => Pokemon.Nature)">
-            @foreach (var nature in GameInfo.FilteredSources.Natures.DistinctBy(nature => nature.Value))
-            {
-                <MudSelectItem Value="@((Nature)nature.Value)"
-                               @key="@nature.Value">
-                    <MudStack Row>
-                        <MudText>
-                            @nature.Text
-                        </MudText>
-                        <MudText>
-                            @AppService.GetStatModifierString((Nature)nature.Value)
-                        </MudText>
-                    </MudStack>
-                </MudSelectItem>
-            }
-        </MudSelect>
+        <AutocompleteSelect T="@Nature"
+                            Label="Nature"
+                            @bind-Value:get="@Pokemon.Nature"
+                            @bind-Value:set="@OnNatureSet"
+                            Items="@GetNatureItems()"
+                            ToStringFunc="@GetNatureName"
+                            For="@(() => Pokemon.Nature)">
+            <ItemTemplate Context="nature">
+                <MudStack Row>
+                    <MudText>
+                        @GetNatureName(nature)
+                    </MudText>
+                    <MudText>
+                        @AppService.GetStatModifierString(nature)
+                    </MudText>
+                </MudStack>
+            </ItemTemplate>
+        </AutocompleteSelect>
     }
 
     @if (saveGeneration >= 8)
     {
-        <MudSelect Label="Stat Nature"
-                   Variant="@Variant.Outlined"
-                   @bind-Value:get="@Pokemon.StatNature"
-                   @bind-Value:set="@OnStatNatureSet"
-                   For="@(() => Pokemon.StatNature)">
-            @foreach (var nature in GameInfo.FilteredSources.Natures.DistinctBy(nature => nature.Value))
-            {
-                <MudSelectItem Value="@((Nature)nature.Value)"
-                               @key="@nature.Value">
-                    <MudStack Row>
-                        <MudText>
-                            @nature.Text
-                        </MudText>
-                        <MudText>
-                            @AppService.GetStatModifierString((Nature)nature.Value)
-                        </MudText>
-                    </MudStack>
-                </MudSelectItem>
-            }
-        </MudSelect>
+        <AutocompleteSelect T="@Nature"
+                            Label="Stat Nature"
+                            @bind-Value:get="@Pokemon.StatNature"
+                            @bind-Value:set="@OnStatNatureSet"
+                            Items="@GetNatureItems()"
+                            ToStringFunc="@GetNatureName"
+                            For="@(() => Pokemon.StatNature)">
+            <ItemTemplate Context="nature">
+                <MudStack Row>
+                    <MudText>
+                        @GetNatureName(nature)
+                    </MudText>
+                    <MudText>
+                        @AppService.GetStatModifierString(nature)
+                    </MudText>
+                </MudStack>
+            </ItemTemplate>
+        </AutocompleteSelect>
     }
 
     @if (GameInfo.FilteredSources.Moves.Any(m => m.Value == (int)Move.HiddenPower) && Pokemon is not { Context: EntityContext.Gen8 or EntityContext.Gen9 })
