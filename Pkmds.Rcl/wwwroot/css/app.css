@@ -656,11 +656,24 @@ body, html {
    interpret a long-press-to-drag as a pan when the parent tab panel is actually
    scrollable (Trade tab: two stacked panes overflow the viewport on mobile). With
    manipulation, the pan gesture wins and the drag aborts after the initial visual
-   "lift". Users can still scroll by touching the gutter between slots. */
+   "lift". touch-action isn't inherited, so apply to descendants too — otherwise a
+   finger landing on the sprite (<img>/<object>) uses the child's default auto and
+   the pan still wins. Users can still scroll by touching outside .square-slot. */
+.square-slot > div[draggable="true"],
+.square-slot > div[draggable="true"] * {
+    touch-action: none;
+}
+
 .square-slot > div[draggable="true"] {
     cursor: grab !important;
     -webkit-user-drag: element;
-    touch-action: none;
+}
+
+/* pointer-events: none on descendants routes every touch to the draggable div
+   itself, so iOS doesn't try to start the drag on a child <img>/<object> (which
+   isn't marked draggable). The slot still gets clicks and drags via the parent. */
+.square-slot > div[draggable="true"] * {
+    pointer-events: none;
 }
 
 .square-slot > div[draggable="true"]:active {
