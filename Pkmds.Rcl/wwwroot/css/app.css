@@ -652,21 +652,10 @@ body, html {
     -webkit-touch-callout: none;
 }
 
-/* touch-action: none (not manipulation) so iOS Safari's gesture recognizer doesn't
-   interpret a long-press-to-drag as a pan when the parent tab panel is actually
-   scrollable (Trade tab: two stacked panes overflow the viewport on mobile). With
-   manipulation, the pan gesture wins and the drag aborts after the initial visual
-   "lift". touch-action isn't inherited, so apply to descendants too — otherwise a
-   finger landing on the sprite (<img>/<object>) uses the child's default auto and
-   the pan still wins. Users can still scroll by touching outside .square-slot. */
-.square-slot > div[draggable="true"],
-.square-slot > div[draggable="true"] * {
-    touch-action: none;
-}
-
 .square-slot > div[draggable="true"] {
     cursor: grab !important;
     -webkit-user-drag: element;
+    touch-action: manipulation;
 }
 
 .square-slot > div[draggable="true"]:active {
