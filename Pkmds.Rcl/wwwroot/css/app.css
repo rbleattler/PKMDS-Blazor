@@ -652,10 +652,15 @@ body, html {
     -webkit-touch-callout: none;
 }
 
+/* touch-action: none (not manipulation) so iOS Safari's gesture recognizer doesn't
+   interpret a long-press-to-drag as a pan when the parent tab panel is actually
+   scrollable (Trade tab: two stacked panes overflow the viewport on mobile). With
+   manipulation, the pan gesture wins and the drag aborts after the initial visual
+   "lift". Users can still scroll by touching the gutter between slots. */
 .square-slot > div[draggable="true"] {
     cursor: grab !important;
     -webkit-user-drag: element;
-    touch-action: manipulation;
+    touch-action: none;
 }
 
 .square-slot > div[draggable="true"]:active {
