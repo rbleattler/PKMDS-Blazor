@@ -130,10 +130,12 @@ Static JSON data files consumed by `DescriptionService` are generated from exter
 
 ### `tools/generate-descriptions.cs`
 
-Generates `ability-info.json`, `move-info.json`, and `item-info.json` from PokeAPI CSV data, with optional secondary-effect supplement from Pokémon Showdown.
+Generates `ability-info.json`, `move-info.json`, and `item-info.json` from PokeAPI CSV data, with optional supplements from Pokémon Showdown.
 
 - **Source**: PokeAPI repo (CSV files under `data/v2/csv/`)
-- **Source (optional)**: Pokémon Showdown repo (`data/moves.ts`) — supplements secondary effects (stat changes, status, flinch, drain, multi-hit, crit rate) for Gen 8+ moves that PokeAPI's `move_meta` CSV doesn't cover yet
+- **Source (optional)**: Pokémon Showdown repo — supplies two fallbacks when PokeAPI is incomplete:
+  - `data/moves.ts` — secondary effects (stat changes, status, flinch, drain, multi-hit, crit rate) for Gen 8+ moves that PokeAPI's `move_meta` CSV doesn't cover yet
+  - `data/text/items.ts` — `shortDesc` used as a fallback description for items whose PokeAPI `item_prose.csv` row is empty (most Gen 9 held items, plus Ability Shield, Booster Energy, etc.)
 - **Output**: `Pkmds.Rcl/wwwroot/data/`
 
 ```sh
@@ -143,7 +145,7 @@ dotnet run tools/generate-descriptions.cs -- --pokeapi ~/Code/codemonkey85/pokea
 # Windows:
 dotnet run tools/generate-descriptions.cs -- --pokeapi C:\Code\pokeapi
 
-# With Showdown supplement (recommended — fills Gen 8+ move secondary effects)
+# With Showdown supplement (recommended — fills Gen 8+ move secondary effects and Gen 9 item descriptions)
 # macOS:
 dotnet run tools/generate-descriptions.cs -- --pokeapi ~/Code/codemonkey85/pokeapi --showdown ~/Code/codemonkey85/pokemon-showdown
 # Windows:
@@ -166,6 +168,18 @@ dotnet run tools/generate-tm-data.cs -- --input "path/to/List of TMs - Bulbapedi
 ```
 
 Both scripts default output to `Pkmds.Rcl/wwwroot/data/` by walking up from the working directory to find the repo root. Pass `--output /path` to override.
+
+### `tools/report-missing-descriptions.cs`
+
+Diagnostic script that scans the generated `ability-info.json` / `move-info.json` / `item-info.json` and produces a plain-text report of entries with missing descriptions, missing per-gen flavor, or both. Useful for tracking coverage as upstream data sources fill in.
+
+- **Input**: `Pkmds.Rcl/wwwroot/data/` (override with `--data`)
+- **Output**: `missing-flavor-report.txt` at the repo root (override with `--output`; pass `--output -` to write to stdout). The report file itself is gitignored — the script is the source of truth.
+
+```sh
+dotnet run tools/report-missing-descriptions.cs
+dotnet run tools/report-missing-descriptions.cs -- --output -   # print to stdout
+```
 
 ## MudBlazor and Razor gotchas
 

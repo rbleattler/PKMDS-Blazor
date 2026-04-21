@@ -19,6 +19,13 @@
  *   move-info.json     — moves indexed by PokeAPI numeric ID, with per-version-group stats
  *   item-info.json     — items indexed by lowercase English name (for cross-referencing with PKHeX)
  *
+ * Optional --showdown path enables two supplements:
+ *   moves: secondary effects (stat changes, status, flinch, drain, multi-hit, crit rate,
+ *          wind/slicing flags) for moves PokeAPI's move_meta / move_meta_stat_changes CSV
+ *          hasn't caught up on yet (mostly Gen 8+).
+ *   items: shortDesc from data/text/items.ts used as a fallback description when PokeAPI's
+ *          item_prose.csv has no English row for the item (common for Gen 9 held items).
+ *
  * Version-group changelog interpretation
  * ---------------------------------------
  * move_changelog stores the OLD value that was in effect BEFORE the named version group.
@@ -470,6 +477,47 @@ static IReadOnlyDictionary<int, ShowdownMoveSupplement> ReadShowdownMoves(string
     return result;
 }
 
+/// <summary>
+/// Parse pokemon-showdown/data/text/items.ts and return a dictionary of
+/// Showdown item id (alphanumeric, e.g. "abilityshield") → English shortDesc.
+/// Used as a fallback for items whose PokeAPI item_prose.csv row is empty.
+/// </summary>
+static IReadOnlyDictionary<string, string> ReadShowdownItemText(string showdownPath)
+{
+    var itemsTs = File.Exists(showdownPath) && Path.GetExtension(showdownPath) == ".ts"
+        ? showdownPath
+        : Path.Combine(showdownPath, "data", "text", "items.ts");
+
+    if (!File.Exists(itemsTs))
+    {
+        Console.Error.WriteLine($"WARNING: Showdown text/items.ts not found at {itemsTs}");
+        return new Dictionary<string, string>();
+    }
+
+    var text = File.ReadAllText(itemsTs, Encoding.UTF8);
+    var result = new Dictionary<string, string>(StringComparer.Ordinal);
+
+    // Each top-level item entry starts with: \n\t<id>: {
+    var entryRe = new Regex(@"\n\t([a-z0-9]+):\s*\{", RegexOptions.Compiled);
+    foreach (Match entryMatch in entryRe.Matches(text))
+    {
+        var id = entryMatch.Groups[1].Value;
+        int openPos = entryMatch.Index + entryMatch.Length - 1; // the {
+        int closePos = FindMatchingClose(text, openPos, '{', '}');
+        if (closePos < 0) continue;
+        var block = text[(openPos + 1)..closePos];
+
+        // Grab the first shortDesc. Showdown puts the current-gen shortDesc at the top level,
+        // with any per-gen overrides nested afterward in genX: { ... } blocks, so the first
+        // match is always the current description.
+        var m = Regex.Match(block, @"shortDesc:\s*""([^""]*)""");
+        if (m.Success) result[id] = m.Groups[1].Value;
+    }
+
+    Console.WriteLine($"  → {result.Count} items with shortDesc from Showdown");
+    return result;
+}
+
 // Human-readable name for a Showdown volatile status that appears in a secondary effect.
 // Returns null for volatile statuses that are better described by other fields (e.g. stat changes)
 // or that don't have a meaningful user-facing description.
@@ -895,7 +943,7 @@ JsonObject GenerateMoveInfo(string csvDir, string? showdownPath = null)
     return result;
 }
 
-JsonObject GenerateItemInfo(string csvDir)
+JsonObject GenerateItemInfo(string csvDir, string? showdownPath = null)
 {
     var itemNames = new Dictionary<string, string>();
     foreach (var r in ReadCsv(Path.Combine(csvDir, "item_names.csv")))
@@ -907,19 +955,48 @@ JsonObject GenerateItemInfo(string csvDir)
 
     var flavor = EnFlavor(ReadCsv(Path.Combine(csvDir, "item_flavor_text.csv")), "item_id");
 
+    // Supplemental short descriptions for items where PokeAPI's item_prose.csv is empty
+    // (common for Gen 9 held items, event items, and items added after PokeAPI freezes).
+    var showdownItemDescs = showdownPath is not null
+        ? ReadShowdownItemText(showdownPath)
+        : (IReadOnlyDictionary<string, string>)new Dictionary<string, string>();
+
     var result = new JsonObject();
     foreach (var item in ReadCsv(Path.Combine(csvDir, "items.csv")))
     {
         var itemId = item["id"];
         if (!itemNames.TryGetValue(itemId, out var name)) continue;
         var key = name.ToLowerInvariant().Trim();
+
+        var desc = descriptions.GetValueOrDefault(itemId, "");
+        if (desc.Length == 0 && item.TryGetValue("identifier", out var identifier))
+        {
+            var sdKey = identifier.Replace("-", "");
+            if (showdownItemDescs.TryGetValue(sdKey, out var sdDesc))
+                desc = sdDesc;
+        }
+
         var entry = new JsonObject
         {
             ["name"] = name,
-            ["description"] = descriptions.GetValueOrDefault(itemId, ""),
+            ["description"] = desc,
         };
         if (flavor.TryGetValue(itemId, out var flavorMap))
             entry["flavor"] = ToJsonObject(flavorMap);
+
+        // PokeAPI can have multiple rows with the same English name (e.g. Legends: Arceus
+        // variants `lapoke-ball` / `lagreat-ball` / `laultra-ball` alongside the originals).
+        // Don't let an empty duplicate clobber a populated entry.
+        var newHasData = desc.Length > 0 || entry["flavor"] is not null;
+        if (result.TryGetPropertyValue(key, out var existingNode)
+            && existingNode is JsonObject existing)
+        {
+            var existingHasData =
+                ((string?)existing["description"])?.Length > 0
+                || existing["flavor"] is not null;
+            if (existingHasData && !newHasData)
+                continue;
+        }
         result[key] = entry;
     }
     return result;
@@ -939,7 +1016,7 @@ var tasks = new (string file, Func<string, JsonObject> generator, string label)[
 {
     ("ability-info.json", GenerateAbilityInfo,                        "abilities"),
     ("move-info.json",    csv => GenerateMoveInfo(csv, showdownArg),  "moves"),
-    ("item-info.json",    GenerateItemInfo,                           "items"),
+    ("item-info.json",    csv => GenerateItemInfo(csv, showdownArg),  "items"),
 };
 
 foreach (var (file, generator, label) in tasks)

@@ -366,3 +366,6 @@ Pkmds.Rcl/bin/sha256sums.txt
 
 # Azure zip deploy staging directory
 .azure-deploy/
+
+# Local diagnostic output from tools/report-missing-descriptions.cs
+missing-flavor-report.txt
