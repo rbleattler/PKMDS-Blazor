@@ -10,6 +10,7 @@ public partial class MainLayout : IDisposable
     private IBrowserFile? browserLoadSaveFile;
     private bool isDarkMode;
     private bool systemIsDarkMode;
+    private bool settingsLoaded;
     private ThemeMode themeMode = ThemeMode.System;
 
     [Inject]
@@ -125,6 +126,7 @@ public partial class MainLayout : IDisposable
             "light" => ThemeMode.Light,
             _ => ThemeMode.System
         };
+        settingsLoaded = true;
         isDarkMode = ComputeIsDarkMode();
         RefreshService.RefreshTheme(isDarkMode);
         RefreshService.Refresh();
@@ -135,6 +137,18 @@ public partial class MainLayout : IDisposable
     private async void OnSystemPreferenceChanged(bool newValue)
     {
         systemIsDarkMode = newValue;
+
+        // Until persisted settings have loaded, `themeMode` is still the default `System`,
+        // so a transient OS-dark signal would incorrectly flip `isDarkMode` to true even when
+        // the user's persisted preference is explicitly Light (or Dark). That intermediate
+        // flip leaves MudMainContent stranded in dark mode on first load — see issue #755.
+        // Gating here preserves the cached `systemIsDarkMode` for later use once settings
+        // load and the user's real preference is known.
+        if (!settingsLoaded)
+        {
+            return;
+        }
+
         if (themeMode == ThemeMode.System)
         {
             isDarkMode = newValue;
@@ -142,7 +156,19 @@ public partial class MainLayout : IDisposable
             var themeStr = newValue
                 ? "dark"
                 : "light";
-            await JSRuntime.InvokeVoidAsync("setAppTheme", themeStr);
+
+            // `OnSystemPreferenceChanged` is `async void` (required by MudThemeProvider's
+            // WatchSystemDarkModeAsync callback), so any JSException thrown from the
+            // setAppTheme call would otherwise be unobserved and could tear down rendering.
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("setAppTheme", themeStr);
+            }
+            catch (JSException ex)
+            {
+                Logger.LogWarning(ex, "Failed to apply system theme change to DOM");
+            }
+
             StateHasChanged();
         }
     }
