@@ -510,7 +510,7 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
 
     private void RemoveRibbon(string name) => selectedRibbons.Remove(name);
 
-    private static readonly (int Index, string Symbol, string Label)[] MarkingShapes =
+    private static readonly (int Index, string Symbol, string Label)[] AllMarkingShapes =
     [
         ((int)MarkingsHelper.Markings.Circle, MarkingsHelper.Circle, "Circle"),
         ((int)MarkingsHelper.Markings.Triangle, MarkingsHelper.Triangle, "Triangle"),
@@ -519,6 +519,18 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
         ((int)MarkingsHelper.Markings.Star, MarkingsHelper.Star, "Star"),
         ((int)MarkingsHelper.Markings.Diamond, MarkingsHelper.Diamond, "Diamond"),
     ];
+
+    private IEnumerable<(int Index, string Symbol, string Label)> GetAvailableMarkingShapes()
+    {
+        // Gen 3 only has 4 markings (no Star/Diamond). Gate the UI on the save's
+        // blank PKM so users can't pick indices that will never match.
+        if (AppState.SaveFile?.BlankPKM is not IAppliedMarkings marks)
+        {
+            return [];
+        }
+
+        return AllMarkingShapes.Where(s => s.Index < marks.MarkingCount);
+    }
 
     private void ToggleMarking(int index)
     {

@@ -1747,8 +1747,7 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
 
         if (f.Type1.HasValue || f.Type2.HasValue)
         {
-            var t1 = pkm.PersonalInfo.Type1;
-            var t2 = pkm.PersonalInfo.Type2;
+            var (t1, t2) = pkm.GetGenerationTypes();
 
             if (f.Type1.HasValue && f.Type2.HasValue)
             {
@@ -2013,13 +2012,20 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
 
         if (f.RequiredMarkings.Count > 0)
         {
-            if (pkm is not IAppliedMarkings)
+            if (pkm is not IAppliedMarkings marks)
             {
                 return false;
             }
 
             foreach (var index in f.RequiredMarkings)
             {
+                if ((uint)index >= (uint)marks.MarkingCount)
+                {
+                    // Persisted filters can outlive the save they were built against;
+                    // unsupported indices on this PKM are "not set" rather than an error.
+                    return false;
+                }
+
                 if (pkm.GetMarking(index) == 0)
                 {
                     return false;

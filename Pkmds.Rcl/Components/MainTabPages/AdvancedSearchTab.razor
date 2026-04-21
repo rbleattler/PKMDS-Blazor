@@ -745,25 +745,31 @@
                             <MudExpansionPanel Text="Ribbons / Marks">
                                 <MudStack Spacing="2">
 
-                                    <MudText Typo="@Typo.subtitle2">Markings</MudText>
-                                    <MudStack Row
-                                              Wrap="@Wrap.Wrap"
-                                              Spacing="1">
-                                        @foreach (var (markingIndex, symbol, label) in MarkingShapes)
-                                        {
-                                            var idx = markingIndex;
-                                            var isSelected = selectedMarkings.Contains(idx);
-                                            <MudChip T="@int"
-                                                     Value="@idx"
-                                                     Variant="@(isSelected ? Variant.Filled : Variant.Outlined)"
-                                                     Color="@(isSelected ? Color.Primary : Color.Default)"
-                                                     Size="@Size.Large"
-                                                     OnClick="@(() => ToggleMarking(idx))"
-                                                     title="@label">
-                                                @symbol
-                                            </MudChip>
-                                        }
-                                    </MudStack>
+                                    @{
+                                        var markingShapes = GetAvailableMarkingShapes().ToList();
+                                    }
+                                    @if (markingShapes.Count > 0)
+                                    {
+                                        <MudText Typo="@Typo.subtitle2">Markings</MudText>
+                                        <MudStack Row
+                                                  Wrap="@Wrap.Wrap"
+                                                  Spacing="1">
+                                            @foreach (var (markingIndex, symbol, label) in markingShapes)
+                                            {
+                                                var idx = markingIndex;
+                                                var isSelected = selectedMarkings.Contains(idx);
+                                                <MudChip T="@int"
+                                                         Value="@idx"
+                                                         Variant="@(isSelected ? Variant.Filled : Variant.Outlined)"
+                                                         Color="@(isSelected ? Color.Primary : Color.Default)"
+                                                         Size="@Size.Large"
+                                                         OnClick="@(() => ToggleMarking(idx))"
+                                                         title="@label">
+                                                    @symbol
+                                                </MudChip>
+                                            }
+                                        </MudStack>
+                                    }
 
                                     <MudText Typo="@Typo.subtitle2">Ribbons</MudText>
                                     <MudAutocomplete T="@string"
