@@ -121,7 +121,10 @@ public partial class BagTab
 
             if (moveName is not null)
             {
-                ItemList[i] = $"{prefix} ({moveName})";
+                // tm-data.json spellings (Bulbapedia-sourced) sometimes differ from PKHeX's
+                // ("Softboiled" vs "Soft-Boiled", "ThunderPunch" vs "Thunder Punch"). Prefer
+                // the canonical PKHeX name so the list matches the tooltip.
+                ItemList[i] = $"{prefix} ({GameInfoUtilities.GetCanonicalMoveName(moveName)})";
             }
         }
     }

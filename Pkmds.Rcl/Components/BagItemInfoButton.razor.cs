@@ -129,16 +129,8 @@ public partial class BagItemInfoButton
                 return null;
             }
 
-            var movelist = GameInfo.Strings.movelist;
-            for (ushort i = 1; i < movelist.Length; i++)
-            {
-                if (string.Equals(movelist[i], hmMoveName, StringComparison.OrdinalIgnoreCase))
-                {
-                    return i;
-                }
-            }
-
-            return null;
+            var hmId = GameInfoUtilities.FindMoveIdByName(hmMoveName);
+            return hmId > 0 ? hmId : null;
         }
         else if (prefix.StartsWith("TM", StringComparison.OrdinalIgnoreCase))
         {
@@ -167,15 +159,10 @@ public partial class BagItemInfoButton
             return null;
         }
 
-        var tmMovelist = GameInfo.Strings.movelist;
-        for (ushort i = 1; i < tmMovelist.Length; i++)
-        {
-            if (string.Equals(tmMovelist[i], moveName, StringComparison.OrdinalIgnoreCase))
-            {
-                return i;
-            }
-        }
-
-        return null;
+        // tm-data.json is Bulbapedia-sourced and sometimes differs in hyphenation/spacing
+        // from PKHeX's canonical move names (e.g. "Softboiled" vs "Soft-Boiled",
+        // "ThunderPunch" vs "Thunder Punch"). FindMoveIdByName handles the mismatch.
+        var tmId = GameInfoUtilities.FindMoveIdByName(moveName);
+        return tmId > 0 ? tmId : null;
     }
 }
