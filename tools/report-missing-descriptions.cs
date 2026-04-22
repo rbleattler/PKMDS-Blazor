@@ -19,9 +19,12 @@
  *             Pass "-" to write to stdout.
  *
  * Categories:
- *   BOTH MISSING  — description empty AND no populated per-gen flavor entries
- *   DESCRIPTION   — description empty; flavor populated
- *   FLAVOR        — description populated; flavor map empty or absent
+ *   RUNTIME UI GAP       — description empty AND no populated flavor entries. This is what
+ *                          surfaces as "No description available" in tooltips. Priority list.
+ *   DATA COMPLETENESS    — either description OR flavor missing (but the UI still has
+ *                          something to render). DescriptionService prefers gen-appropriate
+ *                          flavor over the top-level description, so these entries look fine
+ *                          in the UI today. Informational; chase for 100% data completeness.
  */
 
 using System.Text;
@@ -77,10 +80,10 @@ static bool AllFlavorsEmpty(JsonNode? flavor)
     return true;
 }
 
-static (List<string> Both, List<string> DescOnly, List<string> FlavorOnly) Classify(
+static (List<string> RuntimeGap, List<string> DescOnly, List<string> FlavorOnly) Classify(
     JsonObject data, bool prefixIdInLabel)
 {
-    var both = new List<string>();
+    var runtimeGap = new List<string>();
     var descOnly = new List<string>();
     var flavorOnly = new List<string>();
     foreach (var (key, node) in data)
@@ -90,14 +93,14 @@ static (List<string> Both, List<string> DescOnly, List<string> FlavorOnly) Class
         var label = prefixIdInLabel ? $"#{key} {name}" : name;
         var descEmpty = IsEmpty((string?)entry["description"]);
         var flavorEmpty = AllFlavorsEmpty(entry["flavor"]);
-        if (descEmpty && flavorEmpty) both.Add(label);
+        if (descEmpty && flavorEmpty) runtimeGap.Add(label);
         else if (descEmpty) descOnly.Add(label);
         else if (flavorEmpty) flavorOnly.Add(label);
     }
-    both.Sort(StringComparer.OrdinalIgnoreCase);
+    runtimeGap.Sort(StringComparer.OrdinalIgnoreCase);
     descOnly.Sort(StringComparer.OrdinalIgnoreCase);
     flavorOnly.Sort(StringComparer.OrdinalIgnoreCase);
-    return (both, descOnly, flavorOnly);
+    return (runtimeGap, descOnly, flavorOnly);
 }
 
 static JsonObject LoadJson(string path) =>
@@ -118,37 +121,61 @@ var abilities = LoadJson(abilitiesPath);
 var moves = LoadJson(movesPath);
 var items = LoadJson(itemsPath);
 
+var classified = new (string Label, (List<string> RuntimeGap, List<string> DescOnly, List<string> FlavorOnly) Lists, int Total)[]
+{
+    ("Items",     Classify(items,     prefixIdInLabel: false), items.Count),
+    ("Abilities", Classify(abilities, prefixIdInLabel: true),  abilities.Count),
+    ("Moves",     Classify(moves,     prefixIdInLabel: true),  moves.Count),
+};
+
 var sb = new StringBuilder();
 sb.AppendLine("=== Missing description/flavor report ===");
 sb.AppendLine("Generated from Pkmds.Rcl/wwwroot/data/*.json after the latest generate-descriptions.cs run.");
-sb.AppendLine("Rerun tools/report-missing-descriptions.cs to regenerate. Target: 0 entries everywhere.");
+sb.AppendLine("Rerun tools/report-missing-descriptions.cs to regenerate.");
 sb.AppendLine();
-sb.AppendLine("Categories:");
-sb.AppendLine("  BOTH MISSING  — empty description AND no populated per-gen flavor entries");
-sb.AppendLine("  DESCRIPTION   — description empty; flavor populated");
-sb.AppendLine("  FLAVOR        — description populated; flavor empty/absent");
+sb.AppendLine("The report is split into two sections:");
+sb.AppendLine();
+sb.AppendLine("  1. RUNTIME UI GAPS — entries with no description AND no flavor. These surface");
+sb.AppendLine("     as \"No description available\" in the UI. Priority list for filling in.");
+sb.AppendLine();
+sb.AppendLine("  2. DATA COMPLETENESS GAPS — entries missing either the description or the flavor");
+sb.AppendLine("     map, but not both. DescriptionService prefers gen-appropriate flavor text, so");
+sb.AppendLine("     these render fine in tooltips today. Chase these for full data parity, but");
+sb.AppendLine("     they don't affect user-visible behavior.");
 sb.AppendLine();
 
-void WriteSection(string label, JsonObject data, bool prefixIds)
+// --- Runtime UI gaps (priority) ---
+sb.AppendLine("=".PadRight(72, '='));
+sb.AppendLine("SECTION 1: RUNTIME UI GAPS (no description AND no flavor)");
+sb.AppendLine("=".PadRight(72, '='));
+sb.AppendLine();
+var runtimeTotal = classified.Sum(c => c.Lists.RuntimeGap.Count);
+sb.AppendLine($"Total runtime gaps across all datasets: {runtimeTotal}");
+sb.AppendLine();
+foreach (var (label, (runtimeGap, _, _), total) in classified)
 {
-    var (both, descOnly, flavorOnly) = Classify(data, prefixIds);
-    sb.AppendLine($"== {label.ToUpperInvariant()} (total {data.Count}) ==");
-    sb.AppendLine($"  both missing={both.Count}  description only={descOnly.Count}  flavor only={flavorOnly.Count}");
-    sb.AppendLine();
-    sb.AppendLine($"-- {label}: BOTH description and flavor missing ({both.Count}) --");
-    foreach (var n in both) sb.AppendLine($"  {n}");
-    sb.AppendLine();
-    sb.AppendLine($"-- {label}: description only missing ({descOnly.Count}) --");
-    foreach (var n in descOnly) sb.AppendLine($"  {n}");
-    sb.AppendLine();
-    sb.AppendLine($"-- {label}: flavor only missing ({flavorOnly.Count}) --");
-    foreach (var n in flavorOnly) sb.AppendLine($"  {n}");
+    sb.AppendLine($"-- {label} ({runtimeGap.Count} of {total}) --");
+    foreach (var n in runtimeGap) sb.AppendLine($"  {n}");
     sb.AppendLine();
 }
 
-WriteSection("Items", items, prefixIds: false);
-WriteSection("Abilities", abilities, prefixIds: true);
-WriteSection("Moves", moves, prefixIds: true);
+// --- Data completeness (informational) ---
+sb.AppendLine("=".PadRight(72, '='));
+sb.AppendLine("SECTION 2: DATA COMPLETENESS GAPS (render fine today; chase for 100% coverage)");
+sb.AppendLine("=".PadRight(72, '='));
+sb.AppendLine();
+var completenessTotal = classified.Sum(c => c.Lists.DescOnly.Count + c.Lists.FlavorOnly.Count);
+sb.AppendLine($"Total data-completeness gaps across all datasets: {completenessTotal}");
+sb.AppendLine();
+foreach (var (label, (_, descOnly, flavorOnly), total) in classified)
+{
+    sb.AppendLine($"-- {label} ({descOnly.Count + flavorOnly.Count} of {total}) --");
+    sb.AppendLine($"  description missing (flavor present): {descOnly.Count}");
+    foreach (var n in descOnly) sb.AppendLine($"    {n}");
+    sb.AppendLine($"  flavor missing (description present): {flavorOnly.Count}");
+    foreach (var n in flavorOnly) sb.AppendLine($"    {n}");
+    sb.AppendLine();
+}
 
 if (outputPath is null)
 {

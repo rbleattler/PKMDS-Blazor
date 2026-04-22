@@ -26,6 +26,12 @@
  *   items: shortDesc from data/text/items.ts used as a fallback description when PokeAPI's
  *          item_prose.csv has no English row for the item (common for Gen 9 held items).
  *
+ * Optional --overrides path loads a description-overrides.json produced by
+ * tools/scrape-pokemondb-descriptions.cs. Used as a last-resort description fallback
+ * (applied after PokeAPI short_effect and Showdown shortDesc) for items and moves.
+ * Auto-discovered at tools/data/description-overrides.json under the repo root if the
+ * flag is omitted.
+ *
  * Version-group changelog interpretation
  * ---------------------------------------
  * move_changelog stores the OLD value that was in effect BEFORE the named version group.
@@ -52,17 +58,34 @@ using System.Text.RegularExpressions;
 string? pokeapiArg = null;
 string? outputArg = null;
 string? showdownArg = null;
+string? overridesArg = null;
 for (var i = 0; i < args.Length; i++)
 {
     if (args[i] == "--pokeapi" && i + 1 < args.Length) pokeapiArg = args[++i];
     else if (args[i] == "--output" && i + 1 < args.Length) outputArg = args[++i];
     else if (args[i] == "--showdown" && i + 1 < args.Length) showdownArg = args[++i];
+    else if (args[i] == "--overrides" && i + 1 < args.Length) overridesArg = args[++i];
 }
 
 if (pokeapiArg is null)
 {
-    Console.Error.WriteLine("Usage: dotnet run tools/generate-descriptions.cs -- --pokeapi /path/to/pokeapi [--showdown /path/to/pokemon-showdown] [--output /path/to/output]");
+    Console.Error.WriteLine("Usage: dotnet run tools/generate-descriptions.cs -- --pokeapi /path/to/pokeapi [--showdown /path/to/pokemon-showdown] [--overrides /path/to/description-overrides.json] [--output /path/to/output]");
     return 1;
+}
+
+// If no explicit --overrides path was given, auto-load tools/data/description-overrides.json
+// if it exists alongside this script. Makes the common path "just work" with no extra flag.
+if (overridesArg is null)
+{
+    var defaultOverrides = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "tools", "data", "description-overrides.json");
+    // Walk up from CWD instead for the file-based-app case.
+    var walk = Environment.CurrentDirectory;
+    while (walk is not null)
+    {
+        var candidate = Path.Combine(walk, "tools", "data", "description-overrides.json");
+        if (File.Exists(candidate)) { overridesArg = candidate; break; }
+        walk = Path.GetDirectoryName(walk);
+    }
 }
 
 var pokeapiRoot = Path.GetFullPath(pokeapiArg);
@@ -84,7 +107,27 @@ Directory.CreateDirectory(outputDir);
 
 Console.WriteLine($"Reading CSV from : {csvDir}");
 Console.WriteLine($"Writing JSON to  : {outputDir}");
+if (overridesArg is not null) Console.WriteLine($"Overrides from   : {overridesArg}");
 Console.WriteLine();
+
+// Load description overrides (from scrape-pokemondb-descriptions.cs, if present).
+// Keys: item-info.json-style lowercase name; move-info.json-style numeric id.
+var itemOverrides = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+var moveOverrides = new Dictionary<string, string>(StringComparer.Ordinal);
+if (overridesArg is not null && File.Exists(overridesArg))
+{
+    var overridesJson = JsonNode.Parse(File.ReadAllText(overridesArg))?.AsObject();
+    if (overridesJson?["items"] is JsonObject itemsObj)
+        foreach (var (k, v) in itemsObj)
+            if (v is not null && v.GetValue<string>() is { Length: > 0 } s)
+                itemOverrides[k] = s;
+    if (overridesJson?["moves"] is JsonObject movesObj)
+        foreach (var (k, v) in movesObj)
+            if (v is not null && v.GetValue<string>() is { Length: > 0 } s)
+                moveOverrides[k] = s;
+    Console.WriteLine($"  → {itemOverrides.Count} item and {moveOverrides.Count} move description overrides loaded");
+    Console.WriteLine();
+}
 
 // Walk up from the working directory to find the repo root (contains Pkmds.Rcl/).
 string FindDefaultOutputDir()
@@ -652,7 +695,7 @@ JsonObject GenerateAbilityInfo(string csvDir)
     return result;
 }
 
-JsonObject GenerateMoveInfo(string csvDir, string? showdownPath = null)
+JsonObject GenerateMoveInfo(string csvDir, string? showdownPath = null, IReadOnlyDictionary<string, string>? overrides = null)
 {
     var damageClasses = new Dictionary<string, string> { ["1"] = "Status", ["2"] = "Physical", ["3"] = "Special" };
 
@@ -754,6 +797,10 @@ JsonObject GenerateMoveInfo(string csvDir, string? showdownPath = null)
         move.TryGetValue("effect_chance", out var effectChance);
         if (!string.IsNullOrEmpty(effectChance) && rawDesc.Contains("$effect_chance%"))
             rawDesc = rawDesc.Replace("$effect_chance%", $"{effectChance}%");
+
+        // Last-resort fallback: scraped description override keyed by numeric move id.
+        if (rawDesc.Length == 0 && overrides is not null && overrides.TryGetValue(moveId, out var overrideDesc))
+            rawDesc = overrideDesc;
 
         var epochs = ComputeStatEpochs(move, changelogByMove.GetValueOrDefault(moveId, []));
 
@@ -943,7 +990,7 @@ JsonObject GenerateMoveInfo(string csvDir, string? showdownPath = null)
     return result;
 }
 
-JsonObject GenerateItemInfo(string csvDir, string? showdownPath = null)
+JsonObject GenerateItemInfo(string csvDir, string? showdownPath = null, IReadOnlyDictionary<string, string>? overrides = null)
 {
     var itemNames = new Dictionary<string, string>();
     foreach (var r in ReadCsv(Path.Combine(csvDir, "item_names.csv")))
@@ -961,6 +1008,8 @@ JsonObject GenerateItemInfo(string csvDir, string? showdownPath = null)
         ? ReadShowdownItemText(showdownPath)
         : (IReadOnlyDictionary<string, string>)new Dictionary<string, string>();
 
+    overrides ??= new Dictionary<string, string>();
+
     var result = new JsonObject();
     foreach (var item in ReadCsv(Path.Combine(csvDir, "items.csv")))
     {
@@ -975,6 +1024,9 @@ JsonObject GenerateItemInfo(string csvDir, string? showdownPath = null)
             if (showdownItemDescs.TryGetValue(sdKey, out var sdDesc))
                 desc = sdDesc;
         }
+        // Last-resort fallback: scraped description override (see scrape-pokemondb-descriptions.cs).
+        if (desc.Length == 0 && overrides.TryGetValue(key, out var overrideDesc))
+            desc = overrideDesc;
 
         var entry = new JsonObject
         {
@@ -1014,9 +1066,9 @@ var serializerOptions = new JsonSerializerOptions
 
 var tasks = new (string file, Func<string, JsonObject> generator, string label)[]
 {
-    ("ability-info.json", GenerateAbilityInfo,                        "abilities"),
-    ("move-info.json",    csv => GenerateMoveInfo(csv, showdownArg),  "moves"),
-    ("item-info.json",    csv => GenerateItemInfo(csv, showdownArg),  "items"),
+    ("ability-info.json", GenerateAbilityInfo,                                        "abilities"),
+    ("move-info.json",    csv => GenerateMoveInfo(csv, showdownArg, moveOverrides),   "moves"),
+    ("item-info.json",    csv => GenerateItemInfo(csv, showdownArg, itemOverrides),   "items"),
 };
 
 foreach (var (file, generator, label) in tasks)

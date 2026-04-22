@@ -181,6 +181,27 @@ dotnet run tools/report-missing-descriptions.cs
 dotnet run tools/report-missing-descriptions.cs -- --output -   # print to stdout
 ```
 
+Categorizes entries as:
+- **Runtime UI gaps** — no description AND no flavor; tooltip shows "No description available". Priority list.
+- **Data completeness gaps** — missing description OR flavor but not both. `DescriptionService` renders gen-appropriate flavor, so these look fine in the UI today; chase them for 100% data parity.
+
+### `tools/scrape-pokemondb-descriptions.cs`
+
+Scrapes pokemondb.net for item and move descriptions that are missing from both PokeAPI and Showdown. Populates `tools/data/description-overrides.json`, which `generate-descriptions.cs` reads as a last-resort fallback (applied after PokeAPI `short_effect` and Showdown `shortDesc`).
+
+- **Source**: https://pokemondb.net/item/\<slug> and https://pokemondb.net/move/\<slug>. Primary extraction target is the Effects section; falls back to the first row of the Game descriptions table when Effects is empty.
+- **Output**: `tools/data/description-overrides.json` (committed — the scrape is slow, so the cache persists).
+- **Rate limit**: pokemondb.net's `robots.txt` requires `Crawl-delay: 2`; the script defaults to 2500ms between requests. A full scrape of the gap list (~540 entries) takes ~22 minutes.
+
+```sh
+dotnet run tools/scrape-pokemondb-descriptions.cs                       # scrape all remaining gaps
+dotnet run tools/scrape-pokemondb-descriptions.cs -- --limit 10         # smoke test
+dotnet run tools/scrape-pokemondb-descriptions.cs -- --retry-notfound   # re-try prior 404s
+dotnet run tools/scrape-pokemondb-descriptions.cs -- --force            # re-scrape everything
+```
+
+The scraper is incremental — re-running it only fetches entries that aren't already in the cache (or that were previously 404, unless `--retry-notfound` is passed). Ctrl+C saves partial progress. After running the scraper, rerun `generate-descriptions.cs` to pick up the new overrides; passing `--overrides` is optional because it auto-discovers `tools/data/description-overrides.json` from the repo root.
+
 ## MudBlazor and Razor gotchas
 
 - `ComboItem` (PKHeX) is a **sealed record** (reference type). Using `ComboItem?` in a Razor `@bind-Value` triggers CS8669 in the Razor-generated code — use `int?` with `.Value` for select bindings instead.
