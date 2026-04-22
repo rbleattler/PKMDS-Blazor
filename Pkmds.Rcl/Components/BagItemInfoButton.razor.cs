@@ -32,7 +32,10 @@ public partial class BagItemInfoButton
 
     protected override async Task OnInitializedAsync()
     {
-        if (ItemIndex != 0 && PouchType == InventoryType.TMHMs)
+        // Pouch-type check removed: Gen 1/2 saves use a single bag with no TMHMs pouch,
+        // yet TM items there still need the move-lookup path. TryResolveTmMoveIdAsync
+        // guards internally by item-name prefix.
+        if (ItemIndex != 0)
         {
             moveId = await TryResolveTmMoveIdAsync();
             if (moveId.HasValue && AppState.SaveFile is { Context: var ctx })
@@ -65,7 +68,16 @@ public partial class BagItemInfoButton
         }
         else
         {
-            itemInfo = await DescriptionService.GetItemInfoAsync(ItemName, Version);
+            // BagTab enriches TM/HM/TR names to "TM41 (Softboiled)" for display. Strip that
+            // suffix before the item-info lookup so we hit the underlying "tm41" JSON key.
+            var lookupName = ItemName;
+            var parenIdx = lookupName.IndexOf(" (", StringComparison.Ordinal);
+            if (parenIdx > 0)
+            {
+                lookupName = lookupName[..parenIdx];
+            }
+
+            itemInfo = await DescriptionService.GetItemInfoAsync(lookupName, Version);
         }
 
         loaded = true;
@@ -80,11 +92,8 @@ public partial class BagItemInfoButton
     /// </summary>
     private async Task<ushort?> TryResolveTmMoveIdAsync()
     {
-        if (PouchType != InventoryType.TMHMs)
-        {
-            return null;
-        }
-
+        // Guard by item-name prefix rather than pouch type — Gen 1/2 have no TMHMs pouch,
+        // but their single-bag items named "TM41" etc. are still TMs.
         // Extract the TM/HM/TR prefix and number: "TM001 Hone Claws" → key "001",
         // "TR00 Swords Dance" → key "TR00", "HM01" → key "HM01"
         if (ItemName.Length < 3)
