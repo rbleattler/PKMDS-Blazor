@@ -30,8 +30,27 @@ public partial class BagItemInfoButton
     [EditorRequired]
     public GameVersion Version { get; set; }
 
-    protected override async Task OnInitializedAsync()
+    private int lastItemIndex = -1;
+
+    protected override async Task OnParametersSetAsync()
     {
+        // Re-run initialization whenever the underlying item changes. The user can pick a
+        // different item from the bag dropdown at any time, which re-renders this component
+        // with a new ItemIndex/ItemName; without this guard the cached moveId/itemInfo from
+        // the previous item would stick until the parent remounts.
+        if (lastItemIndex == ItemIndex)
+        {
+            return;
+        }
+        lastItemIndex = ItemIndex;
+
+        moveId = null;
+        moveType = null;
+        moveInfo = null;
+        itemInfo = null;
+        loaded = false;
+        open = false;
+
         // Pouch-type check removed: Gen 1/2 saves use a single bag with no TMHMs pouch,
         // yet TM items there still need the move-lookup path. TryResolveTmMoveIdAsync
         // guards internally by item-name prefix.
@@ -42,9 +61,9 @@ public partial class BagItemInfoButton
             {
                 moveType = MoveInfo.GetType(moveId.Value, ctx);
             }
-
-            StateHasChanged();
         }
+
+        StateHasChanged();
     }
 
     private async Task Toggle()
