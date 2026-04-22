@@ -387,12 +387,13 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
         }
 
         var source = GameInfo.FilteredSources.Abilities
-            .DistinctBy(a => a.Value)
-            .OrderBy(a => a.Text);
+            .DistinctBy(a => a.Value);
 
         IEnumerable<ComboItem> results = string.IsNullOrWhiteSpace(search)
-            ? source.Take(30)
-            : source.Where(a => a.Text.Contains(search, StringComparison.OrdinalIgnoreCase));
+            ? source.OrderBy(a => a.Text).Take(30)
+            : source
+                .Where(a => a.Text.Contains(search, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(a => a.Text);
 
         return Task.FromResult(results);
     }

@@ -73,12 +73,10 @@ if (pokeapiArg is null)
     return 1;
 }
 
-// If no explicit --overrides path was given, auto-load tools/data/description-overrides.json
-// if it exists alongside this script. Makes the common path "just work" with no extra flag.
+// If no explicit --overrides path was given, auto-discover tools/data/description-overrides.json
+// by walking up from the current working directory. Makes the common path "just work".
 if (overridesArg is null)
 {
-    var defaultOverrides = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "tools", "data", "description-overrides.json");
-    // Walk up from CWD instead for the file-based-app case.
     var walk = Environment.CurrentDirectory;
     while (walk is not null)
     {

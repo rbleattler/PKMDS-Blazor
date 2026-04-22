@@ -62,16 +62,10 @@ public partial class AutocompleteSelect<T>
     private RenderFragment<Option> WrappedItemTemplate =>
         opt => EffectiveItemTemplate(opt.Value!);
 
-    private Func<string?, CancellationToken, Task<IEnumerable<Option>>?> WrappedSearchFunc =>
+    private Func<string?, CancellationToken, Task<IEnumerable<Option>>> WrappedSearchFunc =>
         async (query, ct) =>
         {
-            var searchTask = EffectiveSearchFunc(query, ct);
-            if (searchTask is null)
-            {
-                return [];
-            }
-
-            var results = await searchTask;
+            var results = await EffectiveSearchFunc(query, ct);
             return results.Select(v => new Option(v));
         };
 
@@ -88,10 +82,8 @@ public partial class AutocompleteSelect<T>
     private RenderFragment<T> EffectiveItemTemplate =>
         ItemTemplate ?? (item => builder => builder.AddContent(0, EffectiveToStringFunc(item)));
 
-    private Func<string?, CancellationToken, Task<IEnumerable<T>>?> EffectiveSearchFunc =>
-        SearchFunc is not null
-            ? (query, ct) => SearchFunc(query, ct)
-            : DefaultSearchAsync;
+    private Func<string?, CancellationToken, Task<IEnumerable<T>>> EffectiveSearchFunc =>
+        SearchFunc ?? DefaultSearchAsync;
 
     // How many items to preview in the dropdown when the user hasn't typed anything yet.
     // Keeps large source lists (moves, items, species) from rendering hundreds of rows on

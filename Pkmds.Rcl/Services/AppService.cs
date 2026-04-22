@@ -110,12 +110,13 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
         }
 
         var source = GameInfo.FilteredSources.Species
-            .DistinctBy(species => species.Value)
-            .OrderBy(species => species.Text);
+            .DistinctBy(species => species.Value);
 
         return string.IsNullOrEmpty(searchString)
-            ? source.Take(AutocompleteEmptyQueryTake)
-            : source.Where(species => species.Text.Contains(searchString, StringComparison.OrdinalIgnoreCase));
+            ? source.OrderBy(species => species.Text).Take(AutocompleteEmptyQueryTake)
+            : source
+                .Where(species => species.Text.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(species => species.Text);
     }
 
     public ComboItem GetSpeciesComboItem(ushort speciesId) => GameInfo.FilteredSources.Species
@@ -130,12 +131,13 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
         }
 
         var source = GameInfo.FilteredSources.Items
-            .DistinctBy(item => item.Value)
-            .OrderBy(item => item.Text);
+            .DistinctBy(item => item.Value);
 
         return string.IsNullOrEmpty(searchString)
-            ? source.Take(AutocompleteEmptyQueryTake)
-            : source.Where(item => item.Text.Contains(searchString, StringComparison.OrdinalIgnoreCase));
+            ? source.OrderBy(item => item.Text).Take(AutocompleteEmptyQueryTake)
+            : source
+                .Where(item => item.Text.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(item => item.Text);
     }
 
     public ComboItem GetItemComboItem(int itemId) => GameInfo.FilteredSources.Items
@@ -183,12 +185,13 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
         }
 
         var source = GameInfo.GetLocationList(gameVersion, entityContext, isEggLocation)
-            .DistinctBy(l => l.Value)
-            .OrderBy(l => l.Text);
+            .DistinctBy(l => l.Value);
 
         return string.IsNullOrEmpty(searchString)
-            ? source.Take(AutocompleteEmptyQueryTake)
-            : source.Where(l => l.Text.Contains(searchString, StringComparison.OrdinalIgnoreCase));
+            ? source.OrderBy(l => l.Text).Take(AutocompleteEmptyQueryTake)
+            : source
+                .Where(l => l.Text.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(l => l.Text);
     }
 
     public ComboItem GetMetLocationComboItem(ushort metLocationId, GameVersion gameVersion, EntityContext entityContext,
@@ -206,12 +209,13 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
         }
 
         var source = GameInfo.FilteredSources.Moves
-            .DistinctBy(move => move.Value)
-            .OrderBy(move => move.Text);
+            .DistinctBy(move => move.Value);
 
         return string.IsNullOrEmpty(searchString)
-            ? source.Take(AutocompleteEmptyQueryTake)
-            : source.Where(move => move.Text.Contains(searchString, StringComparison.OrdinalIgnoreCase));
+            ? source.OrderBy(move => move.Text).Take(AutocompleteEmptyQueryTake)
+            : source
+                .Where(move => move.Text.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(move => move.Text);
     }
 
     public IEnumerable<ComboItem> GetMoves() => AppState.SaveFile is null
