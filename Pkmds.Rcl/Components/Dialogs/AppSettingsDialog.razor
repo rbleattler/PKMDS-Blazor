@@ -181,6 +181,26 @@
                         Backups are stored in the browser. Oldest backups are automatically
                         removed when the limit is exceeded.
                     </MudText>
+
+                    <MudDivider/>
+
+                    <MudText Typo="@Typo.subtitle1"
+                             Color="@Color.Primary">
+                        App Cache
+                    </MudText>
+                    <MudText Typo="@Typo.caption"
+                             Color="@Color.Secondary">
+                        Use this if the app appears stuck on an old version after a deploy —
+                        stale descriptions, sprites, or move data. Unregisters the service
+                        worker, deletes all browser caches, and reloads the page. Your save
+                        files and backups are preserved.
+                    </MudText>
+                    <MudButton StartIcon="@Icons.Material.Filled.DeleteSweep"
+                               Variant="@Variant.Outlined"
+                               Color="@Color.Warning"
+                               OnClick="@OnClearAppCache">
+                        Clear App Cache &amp; Reload
+                    </MudButton>
                 </MudStack>
             </MudTabPanel>
 

@@ -110,6 +110,23 @@ public partial class AppSettingsDialog
         StateHasChanged();
     }
 
+    private async Task OnClearAppCache()
+    {
+        var confirmed = await DialogService.ShowMessageBoxAsync(
+            "Clear App Cache",
+            "This unregisters the service worker, deletes all browser caches for this site, " +
+            "and reloads the page. Your save files and backups are preserved. Continue?",
+            "Clear & Reload",
+            cancelText: "Cancel");
+
+        if (confirmed != true)
+        {
+            return;
+        }
+
+        await JSRuntime.InvokeVoidAsync("clearAppCacheAndReload");
+    }
+
     private void Cancel() => MudDialog.Close(DialogResult.Cancel());
 
     private void Save()
