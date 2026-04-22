@@ -130,10 +130,12 @@ Static JSON data files consumed by `DescriptionService` are generated from exter
 
 ### `tools/generate-descriptions.cs`
 
-Generates `ability-info.json`, `move-info.json`, and `item-info.json` from PokeAPI CSV data, with optional secondary-effect supplement from Pokémon Showdown.
+Generates `ability-info.json`, `move-info.json`, and `item-info.json` from PokeAPI CSV data, with optional supplements from Pokémon Showdown.
 
 - **Source**: PokeAPI repo (CSV files under `data/v2/csv/`)
-- **Source (optional)**: Pokémon Showdown repo (`data/moves.ts`) — supplements secondary effects (stat changes, status, flinch, drain, multi-hit, crit rate) for Gen 8+ moves that PokeAPI's `move_meta` CSV doesn't cover yet
+- **Source (optional)**: Pokémon Showdown repo — supplies two fallbacks when PokeAPI is incomplete:
+  - `data/moves.ts` — secondary effects (stat changes, status, flinch, drain, multi-hit, crit rate) for Gen 8+ moves that PokeAPI's `move_meta` CSV doesn't cover yet
+  - `data/text/items.ts` — `shortDesc` used as a fallback description for items whose PokeAPI `item_prose.csv` row is empty (most Gen 9 held items, plus Ability Shield, Booster Energy, etc.)
 - **Output**: `Pkmds.Rcl/wwwroot/data/`
 
 ```sh
@@ -143,7 +145,7 @@ dotnet run tools/generate-descriptions.cs -- --pokeapi ~/Code/codemonkey85/pokea
 # Windows:
 dotnet run tools/generate-descriptions.cs -- --pokeapi C:\Code\pokeapi
 
-# With Showdown supplement (recommended — fills Gen 8+ move secondary effects)
+# With Showdown supplement (recommended — fills Gen 8+ move secondary effects and Gen 9 item descriptions)
 # macOS:
 dotnet run tools/generate-descriptions.cs -- --pokeapi ~/Code/codemonkey85/pokeapi --showdown ~/Code/codemonkey85/pokemon-showdown
 # Windows:
@@ -166,6 +168,39 @@ dotnet run tools/generate-tm-data.cs -- --input "path/to/List of TMs - Bulbapedi
 ```
 
 Both scripts default output to `Pkmds.Rcl/wwwroot/data/` by walking up from the working directory to find the repo root. Pass `--output /path` to override.
+
+### `tools/report-missing-descriptions.cs`
+
+Diagnostic script that scans the generated `ability-info.json` / `move-info.json` / `item-info.json` and produces a plain-text report of entries with missing descriptions, missing per-gen flavor, or both. Useful for tracking coverage as upstream data sources fill in.
+
+- **Input**: `Pkmds.Rcl/wwwroot/data/` (override with `--data`)
+- **Output**: `missing-flavor-report.txt` at the repo root (override with `--output`; pass `--output -` to write to stdout). The report file itself is gitignored — the script is the source of truth.
+
+```sh
+dotnet run tools/report-missing-descriptions.cs
+dotnet run tools/report-missing-descriptions.cs -- --output -   # print to stdout
+```
+
+Categorizes entries as:
+- **Runtime UI gaps** — no description AND no flavor; tooltip shows "No description available". Priority list.
+- **Data completeness gaps** — missing description OR flavor but not both. `DescriptionService` renders gen-appropriate flavor, so these look fine in the UI today; chase them for 100% data parity.
+
+### `tools/scrape-pokemondb-descriptions.cs`
+
+Scrapes pokemondb.net for item and move descriptions that are missing from both PokeAPI and Showdown. Populates `tools/data/description-overrides.json`, which `generate-descriptions.cs` reads as a last-resort fallback (applied after PokeAPI `short_effect` and Showdown `shortDesc`).
+
+- **Source**: https://pokemondb.net/item/\<slug> and https://pokemondb.net/move/\<slug>. Primary extraction target is the Effects section; falls back to the first row of the Game descriptions table when Effects is empty.
+- **Output**: `tools/data/description-overrides.json` (committed — the scrape is slow, so the cache persists).
+- **Rate limit**: pokemondb.net's `robots.txt` requires `Crawl-delay: 2`; the script defaults to 2500ms between requests. A full scrape of the gap list (~540 entries) takes ~22 minutes.
+
+```sh
+dotnet run tools/scrape-pokemondb-descriptions.cs                       # scrape all remaining gaps
+dotnet run tools/scrape-pokemondb-descriptions.cs -- --limit 10         # smoke test
+dotnet run tools/scrape-pokemondb-descriptions.cs -- --retry-notfound   # re-try prior 404s
+dotnet run tools/scrape-pokemondb-descriptions.cs -- --force            # re-scrape everything
+```
+
+The scraper is incremental — re-running it only fetches entries that aren't already in the cache (or that were previously 404, unless `--retry-notfound` is passed). Ctrl+C saves partial progress. After running the scraper, rerun `generate-descriptions.cs` to pick up the new overrides; passing `--overrides` is optional because it auto-discovers `tools/data/description-overrides.json` from the repo root.
 
 ## MudBlazor and Razor gotchas
 

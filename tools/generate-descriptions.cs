@@ -19,6 +19,19 @@
  *   move-info.json     — moves indexed by PokeAPI numeric ID, with per-version-group stats
  *   item-info.json     — items indexed by lowercase English name (for cross-referencing with PKHeX)
  *
+ * Optional --showdown path enables two supplements:
+ *   moves: secondary effects (stat changes, status, flinch, drain, multi-hit, crit rate,
+ *          wind/slicing flags) for moves PokeAPI's move_meta / move_meta_stat_changes CSV
+ *          hasn't caught up on yet (mostly Gen 8+).
+ *   items: shortDesc from data/text/items.ts used as a fallback description when PokeAPI's
+ *          item_prose.csv has no English row for the item (common for Gen 9 held items).
+ *
+ * Optional --overrides path loads a description-overrides.json produced by
+ * tools/scrape-pokemondb-descriptions.cs. Used as a last-resort description fallback
+ * (applied after PokeAPI short_effect and Showdown shortDesc) for items and moves.
+ * Auto-discovered at tools/data/description-overrides.json under the repo root if the
+ * flag is omitted.
+ *
  * Version-group changelog interpretation
  * ---------------------------------------
  * move_changelog stores the OLD value that was in effect BEFORE the named version group.
@@ -45,17 +58,32 @@ using System.Text.RegularExpressions;
 string? pokeapiArg = null;
 string? outputArg = null;
 string? showdownArg = null;
+string? overridesArg = null;
 for (var i = 0; i < args.Length; i++)
 {
     if (args[i] == "--pokeapi" && i + 1 < args.Length) pokeapiArg = args[++i];
     else if (args[i] == "--output" && i + 1 < args.Length) outputArg = args[++i];
     else if (args[i] == "--showdown" && i + 1 < args.Length) showdownArg = args[++i];
+    else if (args[i] == "--overrides" && i + 1 < args.Length) overridesArg = args[++i];
 }
 
 if (pokeapiArg is null)
 {
-    Console.Error.WriteLine("Usage: dotnet run tools/generate-descriptions.cs -- --pokeapi /path/to/pokeapi [--showdown /path/to/pokemon-showdown] [--output /path/to/output]");
+    Console.Error.WriteLine("Usage: dotnet run tools/generate-descriptions.cs -- --pokeapi /path/to/pokeapi [--showdown /path/to/pokemon-showdown] [--overrides /path/to/description-overrides.json] [--output /path/to/output]");
     return 1;
+}
+
+// If no explicit --overrides path was given, auto-discover tools/data/description-overrides.json
+// by walking up from the current working directory. Makes the common path "just work".
+if (overridesArg is null)
+{
+    var walk = Environment.CurrentDirectory;
+    while (walk is not null)
+    {
+        var candidate = Path.Combine(walk, "tools", "data", "description-overrides.json");
+        if (File.Exists(candidate)) { overridesArg = candidate; break; }
+        walk = Path.GetDirectoryName(walk);
+    }
 }
 
 var pokeapiRoot = Path.GetFullPath(pokeapiArg);
@@ -77,7 +105,27 @@ Directory.CreateDirectory(outputDir);
 
 Console.WriteLine($"Reading CSV from : {csvDir}");
 Console.WriteLine($"Writing JSON to  : {outputDir}");
+if (overridesArg is not null) Console.WriteLine($"Overrides from   : {overridesArg}");
 Console.WriteLine();
+
+// Load description overrides (from scrape-pokemondb-descriptions.cs, if present).
+// Keys: item-info.json-style lowercase name; move-info.json-style numeric id.
+var itemOverrides = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+var moveOverrides = new Dictionary<string, string>(StringComparer.Ordinal);
+if (overridesArg is not null && File.Exists(overridesArg))
+{
+    var overridesJson = JsonNode.Parse(File.ReadAllText(overridesArg))?.AsObject();
+    if (overridesJson?["items"] is JsonObject itemsObj)
+        foreach (var (k, v) in itemsObj)
+            if (v is not null && v.GetValue<string>() is { Length: > 0 } s)
+                itemOverrides[k] = s;
+    if (overridesJson?["moves"] is JsonObject movesObj)
+        foreach (var (k, v) in movesObj)
+            if (v is not null && v.GetValue<string>() is { Length: > 0 } s)
+                moveOverrides[k] = s;
+    Console.WriteLine($"  → {itemOverrides.Count} item and {moveOverrides.Count} move description overrides loaded");
+    Console.WriteLine();
+}
 
 // Walk up from the working directory to find the repo root (contains Pkmds.Rcl/).
 string FindDefaultOutputDir()
@@ -470,6 +518,47 @@ static IReadOnlyDictionary<int, ShowdownMoveSupplement> ReadShowdownMoves(string
     return result;
 }
 
+/// <summary>
+/// Parse pokemon-showdown/data/text/items.ts and return a dictionary of
+/// Showdown item id (alphanumeric, e.g. "abilityshield") → English shortDesc.
+/// Used as a fallback for items whose PokeAPI item_prose.csv row is empty.
+/// </summary>
+static IReadOnlyDictionary<string, string> ReadShowdownItemText(string showdownPath)
+{
+    var itemsTs = File.Exists(showdownPath) && Path.GetExtension(showdownPath) == ".ts"
+        ? showdownPath
+        : Path.Combine(showdownPath, "data", "text", "items.ts");
+
+    if (!File.Exists(itemsTs))
+    {
+        Console.Error.WriteLine($"WARNING: Showdown text/items.ts not found at {itemsTs}");
+        return new Dictionary<string, string>();
+    }
+
+    var text = File.ReadAllText(itemsTs, Encoding.UTF8);
+    var result = new Dictionary<string, string>(StringComparer.Ordinal);
+
+    // Each top-level item entry starts with: \n\t<id>: {
+    var entryRe = new Regex(@"\n\t([a-z0-9]+):\s*\{", RegexOptions.Compiled);
+    foreach (Match entryMatch in entryRe.Matches(text))
+    {
+        var id = entryMatch.Groups[1].Value;
+        int openPos = entryMatch.Index + entryMatch.Length - 1; // the {
+        int closePos = FindMatchingClose(text, openPos, '{', '}');
+        if (closePos < 0) continue;
+        var block = text[(openPos + 1)..closePos];
+
+        // Grab the first shortDesc. Showdown puts the current-gen shortDesc at the top level,
+        // with any per-gen overrides nested afterward in genX: { ... } blocks, so the first
+        // match is always the current description.
+        var m = Regex.Match(block, @"shortDesc:\s*""([^""]*)""");
+        if (m.Success) result[id] = m.Groups[1].Value;
+    }
+
+    Console.WriteLine($"  → {result.Count} items with shortDesc from Showdown");
+    return result;
+}
+
 // Human-readable name for a Showdown volatile status that appears in a secondary effect.
 // Returns null for volatile statuses that are better described by other fields (e.g. stat changes)
 // or that don't have a meaningful user-facing description.
@@ -604,7 +693,7 @@ JsonObject GenerateAbilityInfo(string csvDir)
     return result;
 }
 
-JsonObject GenerateMoveInfo(string csvDir, string? showdownPath = null)
+JsonObject GenerateMoveInfo(string csvDir, string? showdownPath = null, IReadOnlyDictionary<string, string>? overrides = null)
 {
     var damageClasses = new Dictionary<string, string> { ["1"] = "Status", ["2"] = "Physical", ["3"] = "Special" };
 
@@ -706,6 +795,10 @@ JsonObject GenerateMoveInfo(string csvDir, string? showdownPath = null)
         move.TryGetValue("effect_chance", out var effectChance);
         if (!string.IsNullOrEmpty(effectChance) && rawDesc.Contains("$effect_chance%"))
             rawDesc = rawDesc.Replace("$effect_chance%", $"{effectChance}%");
+
+        // Last-resort fallback: scraped description override keyed by numeric move id.
+        if (rawDesc.Length == 0 && overrides is not null && overrides.TryGetValue(moveId, out var overrideDesc))
+            rawDesc = overrideDesc;
 
         var epochs = ComputeStatEpochs(move, changelogByMove.GetValueOrDefault(moveId, []));
 
@@ -895,7 +988,7 @@ JsonObject GenerateMoveInfo(string csvDir, string? showdownPath = null)
     return result;
 }
 
-JsonObject GenerateItemInfo(string csvDir)
+JsonObject GenerateItemInfo(string csvDir, string? showdownPath = null, IReadOnlyDictionary<string, string>? overrides = null)
 {
     var itemNames = new Dictionary<string, string>();
     foreach (var r in ReadCsv(Path.Combine(csvDir, "item_names.csv")))
@@ -907,19 +1000,53 @@ JsonObject GenerateItemInfo(string csvDir)
 
     var flavor = EnFlavor(ReadCsv(Path.Combine(csvDir, "item_flavor_text.csv")), "item_id");
 
+    // Supplemental short descriptions for items where PokeAPI's item_prose.csv is empty
+    // (common for Gen 9 held items, event items, and items added after PokeAPI freezes).
+    var showdownItemDescs = showdownPath is not null
+        ? ReadShowdownItemText(showdownPath)
+        : (IReadOnlyDictionary<string, string>)new Dictionary<string, string>();
+
+    overrides ??= new Dictionary<string, string>();
+
     var result = new JsonObject();
     foreach (var item in ReadCsv(Path.Combine(csvDir, "items.csv")))
     {
         var itemId = item["id"];
         if (!itemNames.TryGetValue(itemId, out var name)) continue;
         var key = name.ToLowerInvariant().Trim();
+
+        var desc = descriptions.GetValueOrDefault(itemId, "");
+        if (desc.Length == 0 && item.TryGetValue("identifier", out var identifier))
+        {
+            var sdKey = identifier.Replace("-", "");
+            if (showdownItemDescs.TryGetValue(sdKey, out var sdDesc))
+                desc = sdDesc;
+        }
+        // Last-resort fallback: scraped description override (see scrape-pokemondb-descriptions.cs).
+        if (desc.Length == 0 && overrides.TryGetValue(key, out var overrideDesc))
+            desc = overrideDesc;
+
         var entry = new JsonObject
         {
             ["name"] = name,
-            ["description"] = descriptions.GetValueOrDefault(itemId, ""),
+            ["description"] = desc,
         };
         if (flavor.TryGetValue(itemId, out var flavorMap))
             entry["flavor"] = ToJsonObject(flavorMap);
+
+        // PokeAPI can have multiple rows with the same English name (e.g. Legends: Arceus
+        // variants `lapoke-ball` / `lagreat-ball` / `laultra-ball` alongside the originals).
+        // Don't let an empty duplicate clobber a populated entry.
+        var newHasData = desc.Length > 0 || entry["flavor"] is not null;
+        if (result.TryGetPropertyValue(key, out var existingNode)
+            && existingNode is JsonObject existing)
+        {
+            var existingHasData =
+                ((string?)existing["description"])?.Length > 0
+                || existing["flavor"] is not null;
+            if (existingHasData && !newHasData)
+                continue;
+        }
         result[key] = entry;
     }
     return result;
@@ -937,9 +1064,9 @@ var serializerOptions = new JsonSerializerOptions
 
 var tasks = new (string file, Func<string, JsonObject> generator, string label)[]
 {
-    ("ability-info.json", GenerateAbilityInfo,                        "abilities"),
-    ("move-info.json",    csv => GenerateMoveInfo(csv, showdownArg),  "moves"),
-    ("item-info.json",    GenerateItemInfo,                           "items"),
+    ("ability-info.json", GenerateAbilityInfo,                                        "abilities"),
+    ("move-info.json",    csv => GenerateMoveInfo(csv, showdownArg, moveOverrides),   "moves"),
+    ("item-info.json",    csv => GenerateItemInfo(csv, showdownArg, itemOverrides),   "items"),
 };
 
 foreach (var (file, generator, label) in tasks)

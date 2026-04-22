@@ -18,19 +18,14 @@
               AlignItems="@AlignItems.Center"
               Spacing="1">
         <MudStack Style="flex: 1; min-width: 0;">
-            <MudSelect Label="Origin Game"
-                       Variant="@Variant.Outlined"
-                       @bind-Value="@Pokemon.Version"
-                       @bind-Value:after="@OriginGameChanged"
-                       ToStringFunc="@(version => GameInfo.GetVersionName(version))"
-                       Disabled="@(saveGeneration <= 2)"
-                       For="@(() => Pokemon.Version)">
-                @foreach (var gameVersion in GameInfo.FilteredSources.Games)
-                {
-                    <MudSelectItem Value="@((GameVersion)gameVersion.Value)"
-                                   @key="@((GameVersion)gameVersion.Value)"/>
-                }
-            </MudSelect>
+            <AutocompleteSelect T="@GameVersion"
+                                Label="Origin Game"
+                                @bind-Value="@Pokemon.Version"
+                                @bind-Value:after="@OriginGameChanged"
+                                Items="@OriginGameItems"
+                                ToStringFunc="@(version => GameInfo.GetVersionName(version))"
+                                Disabled="@(saveGeneration <= 2)"
+                                For="@(() => Pokemon.Version)"/>
         </MudStack>
         @if (OriginMarkSpriteFileName is { } originSrc)
         {
@@ -52,21 +47,12 @@
                   AlignItems="@AlignItems.Center"
                   Spacing="1">
             <MudStack Style="flex: 1; min-width: 0;">
-                <MudSelect Label="Battle Version"
-                           Variant="@Variant.Outlined"
-                           T="@GameVersion"
-                           Value="@BattleVersionValue"
-                           ValueChanged="@(v => BattleVersionValue = v)"
-                           ToStringFunc="@(version => version == GameVersion.Any
-                                             ? "None"
-                                             : GameInfo.GetVersionName(version))">
-                    <MudSelectItem Value="@GameVersion.Any">None</MudSelectItem>
-                    @foreach (var gameVersion in GameInfo.FilteredSources.Games)
-                    {
-                        <MudSelectItem Value="@((GameVersion)gameVersion.Value)"
-                                       @key="@((GameVersion)gameVersion.Value)"/>
-                    }
-                </MudSelect>
+                <AutocompleteSelect T="@GameVersion"
+                                    Label="Battle Version"
+                                    Value="@BattleVersionValue"
+                                    ValueChanged="@(v => BattleVersionValue = v)"
+                                    Items="@OriginGameItems"
+                                    ToStringFunc="@GetBattleVersionText"/>
             </MudStack>
         </MudStack>
     }
@@ -95,31 +81,38 @@
                   AlignItems="@AlignItems.Center"
                   Spacing="1">
             <MudStack Style="flex: 1; min-width: 0;">
-                <MudSelect Label="Ball"
-                           Variant="@Variant.Outlined"
-                           @bind-Value="@Pokemon.Ball"
-                           @bind-Value:after="@OnBallChanged"
-                           For="@(() => Pokemon.Ball)">
-                    @foreach (var ball in GameInfo.FilteredSources.Balls.DistinctBy(ball => ball.Value))
-                    {
-                        <MudSelectItem Value="@((byte)ball.Value)"
-                                       @key="@ball.Value">
-                            <MudStack Row>
-                                <MudImage Src="@ImageHelper.GetBallSpriteFilename(ball.Value)"
-                                          Alt="@ball.Text"
-                                          title="@ball.Text"
-                                          ObjectFit="@ObjectFit.Contain"
-                                          ObjectPosition="@ObjectPosition.Center"
-                                          Width="22"
-                                          Height="22"/>
-                                <MudText>
-                                    @ball.Text
-                                </MudText>
-                            </MudStack>
-                        </MudSelectItem>
-                    }
-                </MudSelect>
+                <AutocompleteSelect T="@byte"
+                                    Label="Ball"
+                                    @bind-Value="@Pokemon.Ball"
+                                    @bind-Value:after="@OnBallChanged"
+                                    Items="@BallItems"
+                                    ToStringFunc="@GetBallText"
+                                    For="@(() => Pokemon.Ball)">
+                    <ItemTemplate Context="ballValue">
+                        <MudStack Row>
+                            <MudImage Src="@ImageHelper.GetBallSpriteFilename(ballValue)"
+                                      Alt="@GetBallText(ballValue)"
+                                      title="@GetBallText(ballValue)"
+                                      ObjectFit="@ObjectFit.Contain"
+                                      ObjectPosition="@ObjectPosition.Center"
+                                      Width="22"
+                                      Height="22"/>
+                            <MudText>
+                                @GetBallText(ballValue)
+                            </MudText>
+                        </MudStack>
+                    </ItemTemplate>
+                </AutocompleteSelect>
             </MudStack>
+            @if (CurrentBallSpriteFileName is { } ballSrc)
+            {
+                <MudImage Src="@ballSrc"
+                          Alt="@GetBallText(Pokemon.Ball)"
+                          title="@GetBallText(Pokemon.Ball)"
+                          Width="24"
+                          ObjectFit="@ObjectFit.Contain"
+                          ObjectPosition="@ObjectPosition.Center"/>
+            }
             <LegalityIndicator
                 Severity="@(GetCheckResult(CheckIdentifier.Ball)?.Judgement ?? PKHeX.Core.Severity.Valid)"
                 Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Ball))"/>
@@ -164,37 +157,23 @@
 
     @if (ShowGroundTile)
     {
-        <MudSelect Label="Encountered On"
-                   T="@GroundTileType"
-                   Variant="@Variant.Outlined"
-                   Value="@GetGroundTile()"
-                   ValueChanged="@SetGroundTile">
-            @foreach (var item in GameInfo.FilteredSources.G4GroundTiles)
-            {
-                <MudSelectItem Value="@((GroundTileType)item.Value)"
-                               @key="@item.Value">
-                    @item.Text
-                </MudSelectItem>
-            }
-        </MudSelect>
+        <AutocompleteSelect T="@GroundTileType"
+                            Label="Encountered On"
+                            Value="@GetGroundTile()"
+                            ValueChanged="@SetGroundTile"
+                            Items="@GroundTileItems"
+                            ToStringFunc="@GetGroundTileText"/>
     }
 
     @switch (saveGeneration)
     {
         case 2 when Pokemon is PK2:
-            <MudSelect Label="Time of Day"
-                       T="@MetTimeOfDay"
-                       Variant="@Variant.Outlined"
-                       Value="@GetMetTimeOfDay"
-                       ValueChanged="@SetMetTimeOfDay">
-                @foreach (var timeOfDay in Enum.GetValues<MetTimeOfDay>())
-                {
-                    <MudSelectItem Value="@timeOfDay"
-                                   @key="timeOfDay">
-                        @timeOfDay.ToString()
-                    </MudSelectItem>
-                }
-            </MudSelect>
+            <AutocompleteSelect T="@MetTimeOfDay"
+                                Label="Time of Day"
+                                Value="@GetMetTimeOfDay"
+                                ValueChanged="@SetMetTimeOfDay"
+                                Items="@MetTimeOfDayItems"
+                                ToStringFunc="@(timeOfDay => timeOfDay.ToString())"/>
             break;
         case >= 4:
             <label for="met-date">

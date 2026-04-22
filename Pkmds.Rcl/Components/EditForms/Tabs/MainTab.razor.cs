@@ -15,8 +15,6 @@ public partial class MainTab : IDisposable
     [Parameter]
     public LegalityAnalysis? Analysis { get; set; }
 
-    private MudSelect<byte>? FormSelect { get; set; }
-
     private bool IsAlcremie => Pokemon?.Species == (ushort)Species.Alcremie;
 
     private bool IsVivillon =>
@@ -160,11 +158,13 @@ public partial class MainTab : IDisposable
     protected override void OnInitialized() =>
         RefreshService.OnAppStateChanged += Refresh;
 
-    private void Refresh()
-    {
-        FormSelect?.ForceRender(true);
-        StateHasChanged();
-    }
+    private void Refresh() => StateHasChanged();
+
+    private static IEnumerable<int> LanguageItems =>
+        GameInfo.FilteredSources.Languages.DistinctBy(l => l.Value).Select(l => l.Value);
+
+    private static string GetLanguageText(int value) =>
+        GameInfo.FilteredSources.Languages.FirstOrDefault(l => l.Value == value)?.Text ?? value.ToString();
 
     private void OnNatureSet(Nature nature)
     {
@@ -276,18 +276,14 @@ public partial class MainTab : IDisposable
     private static Task<IEnumerable<ComboItem>> SearchAllAbilities(string searchString, CancellationToken _)
     {
         var names = GameInfo.Strings.Ability;
-        IEnumerable<ComboItem> results;
-        if (string.IsNullOrWhiteSpace(searchString))
-        {
-            results = Enumerable.Empty<ComboItem>();
-        }
-        else
-        {
-            results = names
-                .Select((name, i) => new ComboItem(name, i))
-                .Where(item => !string.IsNullOrEmpty(item.Text) &&
-                               item.Text.Contains(searchString, StringComparison.OrdinalIgnoreCase));
-        }
+        var source = names
+            .Select((name, i) => new ComboItem(name, i))
+            .Where(item => !string.IsNullOrEmpty(item.Text))
+            .OrderBy(item => item.Text);
+
+        IEnumerable<ComboItem> results = string.IsNullOrWhiteSpace(searchString)
+            ? source.Take(30)
+            : source.Where(item => item.Text.Contains(searchString, StringComparison.OrdinalIgnoreCase));
 
         return Task.FromResult(results);
     }

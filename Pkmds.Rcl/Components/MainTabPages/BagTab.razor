@@ -107,12 +107,11 @@
                                         <MudStack Row
                                                   Spacing="1"
                                                   AlignItems="@AlignItems.Center">
-                                            <MudAutocomplete T="@ComboItem"
-                                                             Variant="@Variant.Outlined"
-                                                             Value="@GetItem(context)"
-                                                             ValueChanged="@(newItem => SetItem(context, newItem))"
-                                                             SearchFunc="@((searchString, _) => SearchItemNames(pouch, searchString))"
-                                                             ToStringFunc="@(_ => GetItemName(context.Item.Index))">
+                                            <AutocompleteSelect T="@ComboItem"
+                                                                Value="@GetItem(context)"
+                                                                ValueChanged="@(newItem => SetItem(context, newItem))"
+                                                                Items="@GetPouchItems(pouch)"
+                                                                ToStringFunc="@(item => item?.Text ?? GetItemName(context.Item.Index))">
                                                 <ItemTemplate Context="item">
                                                     <MudStack Row>
                                                         @if (item.Value != 0)
@@ -133,7 +132,7 @@
                                                         </MudText>
                                                     </MudStack>
                                                 </ItemTemplate>
-                                            </MudAutocomplete>
+                                            </AutocompleteSelect>
                                             <BagItemInfoButton ItemIndex="@context.Item.Index"
                                                                ItemName="@GetItemName(context.Item.Index)"
                                                                PouchType="@pouch.Type"

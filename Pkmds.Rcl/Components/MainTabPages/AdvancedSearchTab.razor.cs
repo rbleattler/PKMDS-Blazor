@@ -379,18 +379,23 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
 
     private static string ItemToString(ComboItem? item) => item?.Text ?? string.Empty;
 
-    private async Task<IEnumerable<ComboItem>> SearchAbilitiesAsync(string search, CancellationToken ct)
+    private Task<IEnumerable<ComboItem>> SearchAbilitiesAsync(string search, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(search) || AppState.SaveFile is null)
+        if (AppState.SaveFile is null)
         {
-            return [];
+            return Task.FromResult(Enumerable.Empty<ComboItem>());
         }
 
-        return await Task.FromResult(
-            GameInfo.FilteredSources.Abilities
+        var source = GameInfo.FilteredSources.Abilities
+            .DistinctBy(a => a.Value);
+
+        IEnumerable<ComboItem> results = string.IsNullOrWhiteSpace(search)
+            ? source.OrderBy(a => a.Text).Take(30)
+            : source
                 .Where(a => a.Text.Contains(search, StringComparison.OrdinalIgnoreCase))
-                .Take(20)
-        );
+                .OrderBy(a => a.Text);
+
+        return Task.FromResult(results);
     }
 
     private async Task OnBallFilterChanged(int? value)
@@ -730,4 +735,86 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
             // Ignore localStorage failures.
         }
     }
+
+    private static readonly bool?[] BoolFilterItems = [null, true, false];
+
+    private static string BoolFilterText(bool? value, string trueLabel, string falseLabel) => value switch
+    {
+        null => "Any",
+        true => trueLabel,
+        _ => falseLabel
+    };
+
+    private static IEnumerable<int?> TypeFilterItems =>
+        new int?[] { null }.Concat(Enumerable.Range(0, 18).Select(i => (int?)i));
+
+    private static string TypeFilterText(int? value) =>
+        value is { } v ? GameInfo.Strings.Types[v] : "Any";
+
+    private static IEnumerable<int?> TeraTypeFilterItems =>
+        TypeFilterItems.Append((int?)TeraTypeUtil.Stellar);
+
+    private static string TeraTypeFilterText(int? value) => value switch
+    {
+        null => "Any",
+        TeraTypeUtil.Stellar => GameInfo.Strings.Types[TeraTypeUtil.StellarTypeDisplayStringIndex],
+        var v => GameInfo.Strings.Types[v.Value]
+    };
+
+    private static IEnumerable<int?> GenderFilterItems => [null, 0, 1, -1];
+
+    private static string GenderFilterText(int? value) => value switch
+    {
+        null => "Any",
+        0 => "Male",
+        1 => "Female",
+        _ => "Genderless"
+    };
+
+    private static IEnumerable<int?> NatureFilterItems =>
+        new int?[] { null }.Concat(GameInfo.FilteredSources.Natures.Select(n => (int?)n.Value));
+
+    private static string NatureFilterText(int? value) => value is { } v
+        ? GameInfo.FilteredSources.Natures.FirstOrDefault(n => n.Value == v)?.Text ?? v.ToString()
+        : "Any";
+
+    private static IEnumerable<int?> BallFilterItems =>
+        new int?[] { null }.Concat(GameInfo.FilteredSources.Balls.Select(b => (int?)b.Value));
+
+    private static string BallFilterText(int? value) => value is { } v
+        ? GameInfo.FilteredSources.Balls.FirstOrDefault(b => b.Value == v)?.Text ?? v.ToString()
+        : "Any";
+
+    private static IEnumerable<int?> OriginGameFilterItems =>
+        new int?[] { null }.Concat(GameInfo.FilteredSources.Games.Where(g => g.Value > 0).Select(g => (int?)g.Value));
+
+    private static string OriginGameFilterText(int? value) => value is { } v
+        ? GameInfo.FilteredSources.Games.FirstOrDefault(g => g.Value == v)?.Text ?? v.ToString()
+        : "Any";
+
+    private IEnumerable<int?> LanguageFilterItems =>
+        new int?[] { null }.Concat(
+            GameInfo.LanguageDataSource(AppState.SaveFile?.Generation ?? 3, AppState.SaveFile?.Context ?? EntityContext.Gen3)
+                .Select(l => (int?)l.Value));
+
+    private string LanguageFilterText(int? value) => value is { } v
+        ? GameInfo.LanguageDataSource(AppState.SaveFile?.Generation ?? 3, AppState.SaveFile?.Context ?? EntityContext.Gen3)
+              .FirstOrDefault(l => l.Value == v)?.Text ?? v.ToString()
+        : "Any";
+
+    private static IEnumerable<int?> HiddenPowerFilterItems =>
+        new int?[] { null }.Concat(Enumerable.Range(0, HiddenPower.TypeCount).Select(i => (int?)i));
+
+    private static string HiddenPowerFilterText(int? value) =>
+        value is { } v ? GameInfo.Strings.Types[v + 1] : "Any";
+
+    private static IEnumerable<int?> PokerusFilterItems => [null, 0, 1, 2];
+
+    private static string PokerusFilterText(int? value) => value switch
+    {
+        null => "Any",
+        0 => "Never infected",
+        1 => "Currently infected",
+        _ => "Cured"
+    };
 }

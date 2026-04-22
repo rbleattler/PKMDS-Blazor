@@ -170,26 +170,24 @@
                   AlignItems="@AlignItems.Center"
                   Spacing="1">
             <MudStack Style="flex: 1; min-width: 0;">
-                <MudSelect Label="Nature"
-                           Variant="@Variant.Outlined"
-                           @bind-Value:get="@Pokemon.Nature"
-                           @bind-Value:set="@OnNatureSet"
-                           For="@(() => Pokemon.Nature)">
-                    @foreach (var nature in GameInfo.FilteredSources.Natures.DistinctBy(nature => nature.Value))
-                    {
-                        <MudSelectItem Value="@((Nature)nature.Value)"
-                                       @key="@nature.Value">
-                            <MudStack Row>
-                                <MudText>
-                                    @nature.Text
-                                </MudText>
-                                <MudText>
-                                    @AppService.GetStatModifierString((Nature)nature.Value)
-                                </MudText>
-                            </MudStack>
-                        </MudSelectItem>
-                    }
-                </MudSelect>
+                <AutocompleteSelect T="@Nature"
+                                    Label="Nature"
+                                    @bind-Value:get="@Pokemon.Nature"
+                                    @bind-Value:set="@OnNatureSet"
+                                    Items="@GetNatureItems()"
+                                    ToStringFunc="@GetNatureName"
+                                    For="@(() => Pokemon.Nature)">
+                    <ItemTemplate Context="nature">
+                        <MudStack Row>
+                            <MudText>
+                                @GetNatureName(nature)
+                            </MudText>
+                            <MudText>
+                                @AppService.GetStatModifierString(nature)
+                            </MudText>
+                        </MudStack>
+                    </ItemTemplate>
+                </AutocompleteSelect>
             </MudStack>
             <LegalityIndicator
                 Severity="@(GetCheckResult(CheckIdentifier.Nature)?.Judgement ?? PKHeX.Core.Severity.Valid)"
@@ -199,26 +197,24 @@
 
     @if (saveGeneration >= 8)
     {
-        <MudSelect Label="Stat Nature"
-                   Variant="@Variant.Outlined"
-                   @bind-Value:get="@Pokemon.StatNature"
-                   @bind-Value:set="@OnStatNatureSet"
-                   For="@(() => Pokemon.StatNature)">
-            @foreach (var nature in GameInfo.FilteredSources.Natures.DistinctBy(nature => nature.Value))
-            {
-                <MudSelectItem Value="@((Nature)nature.Value)"
-                               @key="@nature.Value">
-                    <MudStack Row>
-                        <MudText>
-                            @nature.Text
-                        </MudText>
-                        <MudText>
-                            @AppService.GetStatModifierString((Nature)nature.Value)
-                        </MudText>
-                    </MudStack>
-                </MudSelectItem>
-            }
-        </MudSelect>
+        <AutocompleteSelect T="@Nature"
+                            Label="Stat Nature"
+                            @bind-Value:get="@Pokemon.StatNature"
+                            @bind-Value:set="@OnStatNatureSet"
+                            Items="@GetNatureItems()"
+                            ToStringFunc="@GetNatureName"
+                            For="@(() => Pokemon.StatNature)">
+            <ItemTemplate Context="nature">
+                <MudStack Row>
+                    <MudText>
+                        @GetNatureName(nature)
+                    </MudText>
+                    <MudText>
+                        @AppService.GetStatModifierString(nature)
+                    </MudText>
+                </MudStack>
+            </ItemTemplate>
+        </AutocompleteSelect>
     }
 
     @if (FormInfo.HasFormSelection(saveFile.Personal[Pokemon.Species], Pokemon.Species, Pokemon.Format))
@@ -230,22 +226,13 @@
                       AlignItems="@AlignItems.Center"
                       Spacing="1">
                 <MudStack Style="flex: 1; min-width: 0;">
-                    <MudSelect T="@byte"
-                               @ref="@FormSelect"
-                               Label="Form"
-                               Variant="@Variant.Outlined"
-                               @bind-Value="@Pokemon.Form"
-                               @bind-Value:after="@AfterFormChanged"
-                               For="@(() => Pokemon.Form)">
-                        @for (byte i = 0; i < forms.Length; i++)
-                        {
-                            var formId = i;
-                            <MudSelectItem Value="@formId"
-                                           @key="@formId">
-                                @forms[formId]
-                            </MudSelectItem>
-                        }
-                    </MudSelect>
+                    <AutocompleteSelect T="@byte"
+                                        Label="Form"
+                                        @bind-Value="@Pokemon.Form"
+                                        @bind-Value:after="@AfterFormChanged"
+                                        Items="@Enumerable.Range(0, forms.Length).Select(i => (byte)i)"
+                                        ToStringFunc="@(i => forms[i])"
+                                        For="@(() => Pokemon.Form)"/>
                 </MudStack>
                 <MudImage Src="@GetFormPreviewSprite()"
                           Alt="Form preview"
@@ -261,28 +248,18 @@
 
             @if (Pokemon is IFormArgument && FormArgumentUtil.GetFormArgumentMax(Pokemon.Species, Pokemon.Form, Pokemon.Context) > 0 && FormConverter.GetFormArgumentIsNamedIndex(Pokemon.Species))
             {
-                <MudSelect T="@(uint?)"
-                           Label="Form Arg"
-                           Variant="@Variant.Outlined"
-                           @bind-Value:get="@(Pokemon.GetFormArgument())"
-                           @bind-Value:set="@(formArg =>
+                var formArgs = FormConverter.GetFormArgumentStrings(Pokemon.Species);
+                <AutocompleteSelect T="@(uint?)"
+                                    Label="Form Arg"
+                                    @bind-Value:get="@(Pokemon.GetFormArgument())"
+                                    @bind-Value:set="@(formArg =>
                                             {
                                                 Pokemon.ChangeFormArgument(formArg ?? 0);
                                                 AppService.LoadPokemonStats(Pokemon);
                                                 RefreshService.Refresh();
-                                            })">
-                    @{
-                        var formArgs = FormConverter.GetFormArgumentStrings(Pokemon.Species);
-                    }
-                    @for (uint i = 0; i < formArgs.Length; i++)
-                    {
-                        var formArg = i;
-                        <MudSelectItem Value="@formArg"
-                                       @key="@formArg">
-                            @formArgs[formArg]
-                        </MudSelectItem>
-                    }
-                </MudSelect>
+                                            })"
+                                    Items="@Enumerable.Range(0, formArgs.Length).Select(i => (uint?)i)"
+                                    ToStringFunc="@(i => i.HasValue ? formArgs[i.Value] : string.Empty)"/>
             }
 
             @if (IsAlcremie)
@@ -436,20 +413,13 @@
                 @if (Pokemon.Format >= 6)
                 {
                     @* Gen 6+: AbilityNumber is independently stored and freely writable *@
-                    <MudSelect T="int"
-                               Label="Slot"
-                               Variant="@Variant.Outlined"
-                               Style="max-width: 110px;"
-                               Value="@Pokemon.AbilityNumber"
-                               ValueChanged="@SetDevAbilityNumber">
-                        @foreach (var slot in GetAbilityNumberItems())
-                        {
-                            <MudSelectItem Value="@slot.Value"
-                                           @key="@slot.Value">
-                                @slot.Text
-                            </MudSelectItem>
-                        }
-                    </MudSelect>
+                    <AutocompleteSelect T="@int"
+                                        Label="Slot"
+                                        Style="max-width: 110px;"
+                                        Value="@Pokemon.AbilityNumber"
+                                        ValueChanged="@SetDevAbilityNumber"
+                                        Items="@GetAbilityNumberItems().Select(s => s.Value)"
+                                        ToStringFunc="@(v => GetAbilityNumberItems().FirstOrDefault(s => s.Value == v)?.Text ?? v.ToString())"/>
                 }
                 <LegalityIndicator
                     Severity="@(GetCheckResult(CheckIdentifier.Ability)?.Judgement ?? PKHeX.Core.Severity.Valid)"
@@ -470,19 +440,12 @@
                       AlignItems="@AlignItems.Center"
                       Spacing="1">
                 <MudStack Style="flex: 1; min-width: 0;">
-                    <MudSelect T="int"
-                               Label="Ability"
-                               Variant="@Variant.Outlined"
-                               Value="@GetAbilitySlotIndex()"
-                               ValueChanged="@SetAbilitySlot">
-                        @foreach (var slot in GetAbilitySlotItems())
-                        {
-                            <MudSelectItem Value="@slot.Value"
-                                           @key="@slot.Value">
-                                @slot.Text
-                            </MudSelectItem>
-                        }
-                    </MudSelect>
+                    <AutocompleteSelect T="@int"
+                                        Label="Ability"
+                                        Value="@GetAbilitySlotIndex()"
+                                        ValueChanged="@SetAbilitySlot"
+                                        Items="@GetAbilitySlotItems().Select(s => s.Value)"
+                                        ToStringFunc="@(v => GetAbilitySlotItems().FirstOrDefault(s => s.Value == v)?.Text ?? v.ToString())"/>
                 </MudStack>
                 <LegalityIndicator
                     Severity="@(GetCheckResult(CheckIdentifier.Ability)?.Judgement ?? PKHeX.Core.Severity.Valid)"
@@ -505,20 +468,12 @@
                   AlignItems="@AlignItems.Center"
                   Spacing="1">
             <MudStack Style="flex: 1; min-width: 0;">
-                <MudSelect Label="Language"
-                           Variant="@Variant.Outlined"
-                           @bind-Value="@Pokemon.Language"
-                           For="@(() => Pokemon.Language)">
-                    @foreach (var language in GameInfo.FilteredSources.Languages.DistinctBy(language => language.Value))
-                    {
-                        <MudSelectItem Value="@language.Value"
-                                       @key="@language.Value">
-                            <MudText>
-                                @language.Text
-                            </MudText>
-                        </MudSelectItem>
-                    }
-                </MudSelect>
+                <AutocompleteSelect T="@int"
+                                    Label="Language"
+                                    @bind-Value="@Pokemon.Language"
+                                    Items="@LanguageItems"
+                                    ToStringFunc="@GetLanguageText"
+                                    For="@(() => Pokemon.Language)"/>
             </MudStack>
             <LegalityIndicator
                 Severity="@(GetCheckResult(CheckIdentifier.Language)?.Judgement ?? PKHeX.Core.Severity.Valid)"

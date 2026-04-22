@@ -36,9 +36,9 @@ public partial class BagTab
 
     private PlayerBag? PreviousInventory { get; set; }
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
-        base.OnParametersSet();
+        await base.OnParametersSetAsync();
 
         if (Inventory is null || AppState is not { SaveFile: { } saveFile })
         {
@@ -62,6 +62,10 @@ public partial class BagTab
             }
         }
 
+        // Append the taught move to TM/HM/TR item names — "TM41" → "TM41 (Softboiled)" etc.
+        // Uses DescriptionService's tm-data.json / hm-data.json per game version.
+        await EnrichTmItemNamesAsync(saveFile.Version);
+
         var item0 = Inventory.Pouches[0].Items[0];
 
         HasFreeSpace = item0 is IItemFreeSpace;
@@ -72,6 +76,57 @@ public partial class BagTab
         // Build caches for improved performance
         BuildItemComboCache();
         BuildPouchValidItemsCache();
+    }
+
+    /// <summary>
+    /// Rewrites TM/HM/TR entries in <see cref="ItemList" /> to include the name of the
+    /// move they teach for the current game version: "TM41" → "TM41 (Softboiled)" in
+    /// Gen 1, "TM001" → "TM001 (Take Down)" in SV, "HM01" → "HM01 (Cut)", etc.
+    /// Leaves items whose number can't be resolved for this game untouched.
+    /// </summary>
+    private async Task EnrichTmItemNamesAsync(GameVersion version)
+    {
+        for (var i = 0; i < ItemList.Length; i++)
+        {
+            var name = ItemList[i];
+            if (string.IsNullOrEmpty(name) || name[0] == '(') continue;
+
+            var prefix = name.Split(' ')[0];
+            if (prefix.Length < 3) continue;
+
+            string? moveName = null;
+            if (prefix.StartsWith("HM", StringComparison.OrdinalIgnoreCase))
+            {
+                var hmNumber = prefix[2..];
+                if (!hmNumber.All(char.IsDigit)) continue;
+                moveName = await DescriptionService.GetHmMoveNameAsync($"HM{hmNumber}", version);
+            }
+            else if (prefix.StartsWith("TR", StringComparison.OrdinalIgnoreCase))
+            {
+                var trNumber = prefix[2..];
+                if (!trNumber.All(char.IsDigit)) continue;
+                moveName = await DescriptionService.GetTmMoveNameAsync($"TR{trNumber}", version);
+            }
+            else if (prefix.StartsWith("TM", StringComparison.OrdinalIgnoreCase))
+            {
+                var tmNumber = prefix[2..];
+                if (!tmNumber.All(char.IsDigit)) continue;
+                moveName = await DescriptionService.GetTmMoveNameAsync(tmNumber, version);
+                if (moveName is null && tmNumber.Length < 3)
+                {
+                    // SV uses 3-digit keys ("001"–"099"); retry with zero-padding.
+                    moveName = await DescriptionService.GetTmMoveNameAsync(tmNumber.PadLeft(3, '0'), version);
+                }
+            }
+
+            if (moveName is not null)
+            {
+                // tm-data.json spellings (Bulbapedia-sourced) sometimes differ from PKHeX's
+                // ("Softboiled" vs "Soft-Boiled", "ThunderPunch" vs "Thunder Punch"). Prefer
+                // the canonical PKHeX name so the list matches the tooltip.
+                ItemList[i] = $"{prefix} ({GameInfoUtilities.GetCanonicalMoveName(moveName)})";
+            }
+        }
     }
 
     private void BuildItemComboCache()
@@ -142,8 +197,8 @@ public partial class BagTab
             ? ItemList[index]
             : $"(Item #{index:000})";
 
-    private static void SetItem(CellContext<InventoryItem> context, ComboItem item) =>
-        context.Item.Index = item.Value;
+    private static void SetItem(CellContext<InventoryItem> context, ComboItem? item) =>
+        context.Item.Index = item?.Value ?? 0;
 
     private void DeleteItem(CellContext<InventoryItem> context, InventoryPouch pouch)
     {
@@ -176,32 +231,16 @@ public partial class BagTab
 
     private void SortByIndex(InventoryPouch pouch) => pouch.SortByIndex(IsSortedByIndex = !IsSortedByIndex);
 
-    private Task<IEnumerable<ComboItem>> SearchItemNames(InventoryPouch pouch, string searchString)
+    private IEnumerable<ComboItem> GetPouchItems(InventoryPouch pouch)
     {
-        if (string.IsNullOrWhiteSpace(searchString))
-        {
-            return Task.FromResult(Enumerable.Empty<ComboItem>());
-        }
-
         // In HaX mode, show all items regardless of pouch type
         if (AppState.IsHaXEnabled)
         {
-            var allResults = SortedItemComboList
-                .Where(item => item.Text.Contains(searchString, StringComparison.OrdinalIgnoreCase));
-            return Task.FromResult(allResults);
+            return SortedItemComboList;
         }
 
-        // Use cached valid items for this pouch
-        if (!PouchValidItemsCache.TryGetValue(pouch.Type, out var validItems))
-        {
-            return Task.FromResult(Enumerable.Empty<ComboItem>());
-        }
-
-        // Use pre-sorted list to avoid sorting on every search
-        var results = SortedItemComboList
-            .Where(item => validItems.Contains(item.Text) &&
-                           item.Text.Contains(searchString, StringComparison.OrdinalIgnoreCase));
-
-        return Task.FromResult(results);
+        return PouchValidItemsCache.TryGetValue(pouch.Type, out var validItems)
+            ? SortedItemComboList.Where(item => validItems.Contains(item.Text))
+            : [];
     }
 }

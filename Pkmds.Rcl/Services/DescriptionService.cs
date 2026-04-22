@@ -20,6 +20,11 @@ public sealed class DescriptionService(HttpClient http, ILogger<DescriptionServi
     private Task<Dictionary<string, JsonMoveEntry>>? movesTask;
     private Task<Dictionary<string, Dictionary<string, string>>>? tmDataTask;
 
+    // Secondary index of items keyed by a punctuation-insensitive normalization of the name,
+    // built lazily alongside the main items dict. Lets GetItemInfoAsync fall back when PKHeX's
+    // spelling differs from PokeAPI's in whitespace/hyphens/apostrophes/accents/etc.
+    private Dictionary<string, JsonItemEntry>? itemsByNormalizedKey;
+
     // -------------------------------------------------------------------------
     // Public API
     // -------------------------------------------------------------------------
@@ -114,7 +119,15 @@ public sealed class DescriptionService(HttpClient http, ILogger<DescriptionServi
         var key = itemName.Trim().ToLowerInvariant();
         if (!items.TryGetValue(key, out var entry))
         {
-            return null;
+            // PKHeX item names sometimes differ from PokeAPI's by whitespace, hyphens,
+            // apostrophe style (straight vs curly), accents (é vs e), or Gen 1/2 CamelCase
+            // (e.g. BlackGlasses, NeverMeltIce, SquirtBottle). Fall back to a punctuation-
+            // insensitive lookup so these still render instead of showing "No description".
+            itemsByNormalizedKey ??= BuildNormalizedItemIndex(items);
+            if (!itemsByNormalizedKey.TryGetValue(NormalizeItemKey(itemName), out entry))
+            {
+                return null;
+            }
         }
 
         var description = ResolveFlavor(entry.Flavor, ToVersionGroup(version)) is { Length: > 0 } flavor
@@ -249,6 +262,46 @@ public sealed class DescriptionService(HttpClient http, ILogger<DescriptionServi
         GameVersion.CP => 31, // mega-dimension
         _ => 25 // default to latest known
     };
+
+    /// <summary>
+    /// Produces a lookup key that strips Unicode accents, non-alphanumerics, and case so
+    /// that PKHeX spellings like "BlackGlasses", "King's Rock", "Fresh-Start Mochi",
+    /// "Exp Share", and "Poké Ball" all collapse to the same key as their item-info.json
+    /// counterparts ("black glasses", "king's rock", "fresh start mochi", "exp. share",
+    /// "poké ball"). Used only as a last-resort fallback — the exact-key match still wins
+    /// first.
+    /// </summary>
+    private static string NormalizeItemKey(string name)
+    {
+        var decomposed = name.Normalize(NormalizationForm.FormD);
+        var sb = new StringBuilder(decomposed.Length);
+        foreach (var c in decomposed)
+        {
+            // char.IsLetterOrDigit on decomposed-form é returns true for 'e' and false for
+            // the combining acute accent, so this effectively strips diacritics.
+            if (char.IsLetterOrDigit(c))
+            {
+                sb.Append(char.ToLowerInvariant(c));
+            }
+        }
+        return sb.ToString();
+    }
+
+    private static Dictionary<string, JsonItemEntry> BuildNormalizedItemIndex(Dictionary<string, JsonItemEntry> items)
+    {
+        var map = new Dictionary<string, JsonItemEntry>(items.Count, StringComparer.Ordinal);
+        foreach (var (key, entry) in items)
+        {
+            var nkey = NormalizeItemKey(key);
+            if (nkey.Length > 0)
+            {
+                // On collision, first-write wins; primary-key exact matches still take
+                // priority because the normalized index is only consulted on miss.
+                map.TryAdd(nkey, entry);
+            }
+        }
+        return map;
+    }
 
     /// <summary>
     /// Returns the flavor text entry with the largest version-group ID that is ≤
