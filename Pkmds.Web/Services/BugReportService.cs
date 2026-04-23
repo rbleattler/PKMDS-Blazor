@@ -5,11 +5,11 @@ namespace Pkmds.Web.Services;
 
 public class BugReportService(IConfiguration configuration, HttpClient httpClient) : IBugReportService
 {
-    private readonly string? _functionUrl = configuration["BugReportService:FunctionUrl"];
+    private readonly string? functionUrl = configuration["BugReportService:FunctionUrl"];
 
     public async Task<BugReportResult> SubmitBugReportAsync(BugReportRequest request, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(_functionUrl))
+        if (string.IsNullOrWhiteSpace(functionUrl))
         {
             return new BugReportResult(false, ErrorMessage: "Bug reporting is not configured.");
         }
@@ -43,12 +43,12 @@ public class BugReportService(IConfiguration configuration, HttpClient httpClien
                 content.Add(new StringContent(request.SaveFileType), "saveFileType");
             }
 
-            if (request.SaveFileBytes is { Length: > 0 } saveBytes && request.SaveFileName is not null)
+            if (request is { SaveFileBytes: { Length: > 0 } saveBytes, SaveFileName: not null })
             {
                 content.Add(new ByteArrayContent(saveBytes), "saveFile", request.SaveFileName);
             }
 
-            var response = await httpClient.PostAsync($"{_functionUrl}/api/SubmitBugReport", content, cancellationToken);
+            var response = await httpClient.PostAsync($"{functionUrl}/api/SubmitBugReport", content, cancellationToken);
 
             if (response.IsSuccessStatusCode)
             {

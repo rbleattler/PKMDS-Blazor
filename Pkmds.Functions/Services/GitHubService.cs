@@ -16,8 +16,7 @@ public class GitHubService(IConfiguration configuration) : IGitHubService
 
     public async Task<(int IssueNumber, string IssueUrl)> CreateIssueAsync(
         string title,
-        string body,
-        CancellationToken cancellationToken = default)
+        string body)
     {
         var newIssue = new NewIssue(title) { Body = body };
         newIssue.Labels.Add("bug");
@@ -28,7 +27,6 @@ public class GitHubService(IConfiguration configuration) : IGitHubService
 
     public async Task AddCommentAsync(
         int issueNumber,
-        string comment,
-        CancellationToken cancellationToken = default) =>
+        string comment) =>
         await client.Issue.Comment.Create(owner, repo, issueNumber, comment);
 }

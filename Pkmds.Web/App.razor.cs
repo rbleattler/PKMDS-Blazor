@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using Pkmds.Rcl.Components.Dialogs;
-using Pkmds.Rcl.Services;
 
 namespace Pkmds.Web;
 
@@ -14,10 +13,7 @@ public partial class App : IDisposable
     [Inject]
     private IRefreshService RefreshService { get; set; } = null!;
 
-    public void Dispose()
-    {
-        RefreshService.OnThemeChanged -= HandleThemeChanged;
-    }
+    public void Dispose() => RefreshService.OnThemeChanged -= HandleThemeChanged;
 
     protected override void OnInitialized() =>
         RefreshService.OnThemeChanged += HandleThemeChanged;
