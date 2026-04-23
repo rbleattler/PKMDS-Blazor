@@ -4,11 +4,9 @@ public interface IGitHubService
 {
     Task<(int IssueNumber, string IssueUrl)> CreateIssueAsync(
         string title,
-        string body,
-        CancellationToken cancellationToken = default);
+        string body);
 
     Task AddCommentAsync(
         int issueNumber,
-        string comment,
-        CancellationToken cancellationToken = default);
+        string comment);
 }

@@ -108,7 +108,10 @@ public static class GameInfoUtilities
     public static ushort FindMoveIdByName(string moveName)
     {
         var target = NormalizeMoveName(moveName);
-        if (target.Length == 0) return 0;
+        if (target.Length == 0)
+        {
+            return 0;
+        }
 
         var movelist = GameInfo.Strings.movelist;
         for (ushort i = 1; i < movelist.Length; i++)

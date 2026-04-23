@@ -42,13 +42,14 @@ public static class SaveFileLoader
 
         // Manic EMU detection must run before SaveUtil.TryGetSaveFile because PKHeX's ZipReader
         // would otherwise unwrap the archive invisibly, stripping the context we need for re-export.
-        if (ManicEmuSaveHelper.IsZip(data) &&
-            ManicEmuSaveHelper.TryExtractSaveFromZip(data, fileName, out saveFile, out var ctx))
+        if (!ManicEmuSaveHelper.IsZip(data) ||
+            !ManicEmuSaveHelper.TryExtractSaveFromZip(data, fileName, out saveFile, out var ctx))
         {
-            manicEmuContext = ctx;
-            return true;
+            return SaveUtil.TryGetSaveFile(data, out saveFile, fileName);
         }
 
-        return SaveUtil.TryGetSaveFile(data, out saveFile, fileName);
+        manicEmuContext = ctx;
+        return true;
+
     }
 }

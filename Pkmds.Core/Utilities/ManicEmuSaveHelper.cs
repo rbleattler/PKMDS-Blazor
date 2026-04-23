@@ -422,8 +422,15 @@ public static class ManicEmuSaveHelper
 
         for (var i = stem.Length - suffixLength + 1; i < stem.Length; i++)
         {
-            if (i == stem.Length - 7) continue; // 'T' separator, already checked
-            if (!char.IsDigit(stem[i])) return stem;
+            if (i == stem.Length - 7)
+            {
+                continue; // 'T' separator, already checked
+            }
+
+            if (!char.IsDigit(stem[i]))
+            {
+                return stem;
+            }
         }
 
         return stem[..^suffixLength];

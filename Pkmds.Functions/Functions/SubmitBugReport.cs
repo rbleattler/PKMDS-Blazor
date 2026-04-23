@@ -91,7 +91,7 @@ public class SubmitBugReport(IGitHubService gitHubService, IBlobService blobServ
         string issueUrl;
         try
         {
-            (issueNumber, issueUrl) = await gitHubService.CreateIssueAsync(issueTitle, issueBody, cancellationToken);
+            (issueNumber, issueUrl) = await gitHubService.CreateIssueAsync(issueTitle, issueBody);
             logger.LogInformation("Created GitHub issue #{IssueNumber} for bug report from {Email}", issueNumber, email);
         }
         catch (Exception ex)
@@ -124,7 +124,7 @@ public class SubmitBugReport(IGitHubService gitHubService, IBlobService blobServ
                     var comment = sasUrl is not null
                         ? $"📎 [Download save file]({sasUrl}) — expires in 30 days (blob path: `{blobPath}`)"
                         : $"📎 Save file attached at blob path: `{blobPath}`";
-                    await gitHubService.AddCommentAsync(issueNumber, comment, cancellationToken);
+                    await gitHubService.AddCommentAsync(issueNumber, comment);
                 }
                 catch (Exception ex)
                 {
