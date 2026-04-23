@@ -704,6 +704,21 @@ body, html {
     top: 0.5rem;
 }
 
+/* ── Choose Evolution picker — high-contrast selected item ──
+   MudBlazor's default selected-list-item styling pairs primary-colored
+   text with a pale primary-hover background, which is near-unreadable
+   on the branching evolution picker. Override with a full primary fill
+   and the contrasting primary-text foreground so the highlighted
+   evolution actually stands out. */
+.evolution-picker-list .mud-list-item.mud-selected-item {
+    background-color: var(--mud-palette-primary) !important;
+    color: var(--mud-palette-primary-text) !important;
+}
+
+.evolution-picker-list .mud-list-item.mud-selected-item .mud-typography {
+    color: var(--mud-palette-primary-text) !important;
+}
+
 /* ── Responsive full-screen dialog layout ──
    MudBlazor bakes FullScreen into the dialog at open-time and won't re-react
    to viewport changes. These rules force any open dialog into full-screen

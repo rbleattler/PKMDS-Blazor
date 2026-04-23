@@ -6,6 +6,7 @@
     </TitleContent>
     <DialogContent>
         <MudList T="@EvolutionMethod"
+                 Class="evolution-picker-list"
                  SelectionMode="@SelectionMode.SingleSelection"
                  @bind-SelectedValue="@selected">
             @foreach (var method in Choices)
