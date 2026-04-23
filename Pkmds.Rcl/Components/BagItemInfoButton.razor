@@ -46,7 +46,14 @@
                     OverflowBehavior="OverflowBehavior.FlipAlways"
                     Paper="true"
                     Style="max-width:320px;max-height:400px;overflow-y:auto;z-index:1200;">
-            <div style="display:flex;justify-content:flex-end;padding:4px 4px 0 4px;">
+            @{
+                var popoverTitle = moveInfo?.Name ?? itemInfo?.Name ?? ItemName;
+            }
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 4px 0 16px;">
+                <MudText Typo="@Typo.subtitle2"
+                         Style="font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                    @popoverTitle
+                </MudText>
                 <MudIconButton Icon="@Icons.Material.Filled.Close"
                                Size="@Size.Small"
                                Color="@Color.Default"
@@ -71,7 +78,6 @@
                         }
                         @if (moveInfo is { } localMoveInfo)
                         {
-                            <MudText Typo="@Typo.subtitle2">@localMoveInfo.Name</MudText>
                             <MudStack Row
                                       Spacing="3">
                                 <MudText Typo="@Typo.caption">Power: <b>@(localMoveInfo.Power?.ToString() ?? "—")</b></MudText>
@@ -118,14 +124,12 @@
                         }
                         else if (itemInfo is { } localItemInfo)
                         {
-                            <MudText Typo="@Typo.subtitle2">@localItemInfo.Name</MudText>
                             <MudText Typo="@Typo.body2">@(string.IsNullOrEmpty(localItemInfo.Description)
                                     ? "No description available."
                                     : localItemInfo.Description)</MudText>
                         }
                         else
                         {
-                            <MudText Typo="@Typo.subtitle2">@ItemName</MudText>
                             <MudText Typo="@Typo.body2">No description available.</MudText>
                         }
                     </MudStack>

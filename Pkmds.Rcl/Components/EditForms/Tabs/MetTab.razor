@@ -116,13 +116,10 @@
             <LegalityIndicator
                 Severity="@(GetCheckResult(CheckIdentifier.Ball)?.Judgement ?? PKHeX.Core.Severity.Valid)"
                 Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Ball))"/>
-            <InfoButton>
-                <MudStack Spacing="2">
-                    <MudText Typo="@Typo.subtitle2">@(ballInfo?.Name ?? GameInfo.FilteredSources.Balls.FirstOrDefault(b => b.Value == Pokemon?.Ball)?.Text ?? "Ball")</MudText>
-                    <MudText Typo="@Typo.body2">@(ballInfo is { Description: { Length: > 0 } desc }
-                            ? desc
-                            : "No description available.")</MudText>
-                </MudStack>
+            <InfoButton Title="@(ballInfo?.Name ?? GameInfo.FilteredSources.Balls.FirstOrDefault(b => b.Value == Pokemon?.Ball)?.Text ?? "Ball")">
+                <MudText Typo="@Typo.body2">@(ballInfo is { Description: { Length: > 0 } desc }
+                        ? desc
+                        : "No description available.")</MudText>
             </InfoButton>
         </MudStack>
     }

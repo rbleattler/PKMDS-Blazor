@@ -499,10 +499,9 @@
                                                       Width="24"
                                                       ObjectFit="@ObjectFit.Contain"
                                                       ObjectPosition="@ObjectPosition.Center"/>
-                                            <InfoButton>
+                                            <InfoButton Title="@(filterBallInfo?.Name ?? BallFilterText(ball))">
                                                 @if (filterBallInfo is { } ballInfo)
                                                 {
-                                                    <MudText Typo="@Typo.subtitle2">@ballInfo.Name</MudText>
                                                     <MudText Typo="@Typo.body2">@(string.IsNullOrEmpty(ballInfo.Description)
                                                             ? "No description available."
                                                             : ballInfo.Description)</MudText>
@@ -529,10 +528,9 @@
                                                          Style="flex:1;"/>
                                         @if (abilityId is > 0)
                                         {
-                                            <InfoButton>
+                                            <InfoButton Title="@(filterAbilityInfo?.Name ?? SafeNameLookup.Ability(abilityId.Value))">
                                                 @if (filterAbilityInfo is { } abilityInfo)
                                                 {
-                                                    <MudText Typo="@Typo.subtitle2">@abilityInfo.Name</MudText>
                                                     <MudText Typo="@Typo.body2">@(string.IsNullOrEmpty(abilityInfo.Description)
                                                             ? "No description available."
                                                             : abilityInfo.Description)</MudText>
@@ -593,10 +591,9 @@
                                                      title="@heldItemName"
                                                      alt="@heldItemName"/>
                                             </object>
-                                            <InfoButton>
+                                            <InfoButton Title="@(filterHeldItemInfo?.Name ?? heldItemName)">
                                                 @if (filterHeldItemInfo is { } heldItemInfo)
                                                 {
-                                                    <MudText Typo="@Typo.subtitle2">@heldItemInfo.Name</MudText>
                                                     <MudText Typo="@Typo.body2">@(string.IsNullOrEmpty(heldItemInfo.Description)
                                                             ? "No description available."
                                                             : heldItemInfo.Description)</MudText>
@@ -869,11 +866,10 @@
                                         @(GameInfo.FilteredSources.Abilities
                                             .FirstOrDefault(a => a.Value == context.Pokemon.Ability)?.Text
                                         ?? context.Pokemon.Ability.ToString())
-                                        <InfoButton>
+                                        <InfoButton Title="@(loadedAbilities.TryGetValue(context.Pokemon.Ability, out var titleAbility) && titleAbility is not null ? titleAbility.Name : SafeNameLookup.Ability(context.Pokemon.Ability))">
                                             @if (loadedAbilities.TryGetValue(context.Pokemon.Ability, out var abilityInfo)
                                                  && abilityInfo is not null)
                                             {
-                                                <MudText Typo="@Typo.subtitle2">@abilityInfo.Name</MudText>
                                                 <MudText Typo="@Typo.body2">@(string.IsNullOrEmpty(abilityInfo.Description)
                                                         ? "No description available."
                                                         : abilityInfo.Description)</MudText>
@@ -897,19 +893,17 @@
                                              style="width:20px;height:20px;object-fit:contain;"
                                              title="@(ballName ?? "Ball")"
                                              alt="@(ballName ?? "Ball")"/>
-                                        <InfoButton>
+                                        <InfoButton Title="@(loadedBalls.TryGetValue(context.Pokemon.Ball, out var titleBall) && titleBall is not null ? titleBall.Name : (ballName ?? "Ball"))">
                                             @if (loadedBalls.TryGetValue(context.Pokemon.Ball, out var ballInfo))
                                             {
                                                 @if (ballInfo is not null)
                                                 {
-                                                    <MudText Typo="@Typo.subtitle2">@ballInfo.Name</MudText>
                                                     <MudText Typo="@Typo.body2">@(string.IsNullOrEmpty(ballInfo.Description)
                                                             ? "No description available."
                                                             : ballInfo.Description)</MudText>
                                                 }
                                                 else
                                                 {
-                                                    <MudText Typo="@Typo.body2">@(ballName ?? "Unknown ball")</MudText>
                                                     <MudText Typo="@Typo.caption">No description available.</MudText>
                                                 }
                                             }
@@ -939,19 +933,17 @@
                                                      title="@heldItemName"
                                                      alt="@heldItemName"/>
                                             </object>
-                                            <InfoButton>
+                                            <InfoButton Title="@(loadedHeldItems.TryGetValue(context.Pokemon.HeldItem, out var titleHeldItem) && titleHeldItem is not null ? titleHeldItem.Name : heldItemName)">
                                                 @if (loadedHeldItems.TryGetValue(context.Pokemon.HeldItem, out var heldItemInfo))
                                                 {
                                                     @if (heldItemInfo is not null)
                                                     {
-                                                        <MudText Typo="@Typo.subtitle2">@heldItemInfo.Name</MudText>
                                                         <MudText Typo="@Typo.body2">@(string.IsNullOrEmpty(heldItemInfo.Description)
                                                                 ? "No description available."
                                                                 : heldItemInfo.Description)</MudText>
                                                     }
                                                     else
                                                     {
-                                                        <MudText Typo="@Typo.body2">@heldItemName</MudText>
                                                         <MudText Typo="@Typo.caption">No description available.</MudText>
                                                     }
                                                 }
