@@ -41,11 +41,11 @@
                        aria-label="More info"
                        aria-expanded="@open"/>
         <MudPopover Open="@open"
-                    AnchorOrigin="Origin.BottomLeft"
-                    TransformOrigin="Origin.TopLeft"
+                    AnchorOrigin="Origin.BottomRight"
+                    TransformOrigin="Origin.TopRight"
                     OverflowBehavior="OverflowBehavior.FlipAlways"
                     Paper="true"
-                    Style="max-width:320px;max-height:400px;overflow-y:auto;z-index:1200;">
+                    Style="max-width:min(320px, calc(100vw - 16px));max-height:min(400px, calc(100vh - 48px));overflow-y:auto;z-index:1200;">
             @{
                 var popoverTitle = moveInfo?.Name ?? itemInfo?.Name ?? ItemName;
             }
