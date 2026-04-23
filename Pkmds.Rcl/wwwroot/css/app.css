@@ -704,6 +704,32 @@ body, html {
     top: 0.5rem;
 }
 
+/* ── Info popover sizing + narrow-viewport bottom sheet ──
+   InfoButton / BagItemInfoButton apply .info-popover to their MudPopover.
+   On desktop the popover stays a standard anchored popover capped at
+   320px wide; on narrow viewports (≤600px) it switches to a fixed-position
+   bottom sheet that never runs off-screen regardless of where the info
+   button sits on the page. Overrides carry !important because MudPopover's
+   JS writes top/left directly to the element's inline style. */
+.info-popover {
+    max-width: min(320px, calc(100vw - 16px));
+    max-height: min(400px, calc(100vh - 48px));
+    overflow-y: auto;
+    z-index: 1200;
+}
+
+@media (max-width: 600px) {
+    .info-popover.mud-popover {
+        position: fixed !important;
+        top: auto !important;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 16px) !important;
+        left: 8px !important;
+        right: 8px !important;
+        max-width: none !important;
+        max-height: 70vh !important;
+    }
+}
+
 /* ── Choose Evolution picker — high-contrast selected item ──
    MudBlazor's default selected-list-item styling pairs primary-colored
    text with a pale primary-hover background, which is near-unreadable
