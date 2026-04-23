@@ -33,6 +33,7 @@ public partial class VivillonEditorDialog
         }
 
         Pokemon.Form = selectedForm;
+        Haptics.Confirm();
         MudDialog?.Close(DialogResult.Ok(true));
     }
 

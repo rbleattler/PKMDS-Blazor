@@ -77,6 +77,7 @@ public partial class SpindaPatternDialog
         }
 
         ApplyPattern(Pokemon, pattern);
+        Haptics.Confirm();
         MudDialog?.Close(DialogResult.Ok(true));
     }
 

@@ -84,9 +84,10 @@
 
     <MudStack Row>
 
-        <MudCheckBox Label="Is Nicknamed"
-                     @bind-Value="@Pokemon.IsNicknamed"
-                     For="@(() => Pokemon.IsNicknamed)"/>
+        <HapticCheckBox T="@bool"
+                        Label="Is Nicknamed"
+                        @bind-Value="@Pokemon.IsNicknamed"
+                        For="@(() => Pokemon.IsNicknamed)"/>
 
         <MudButton OnClick="@RevertNickname"
                    ButtonType="@ButtonType.Button"
@@ -491,10 +492,11 @@
             <MudStack Row
                       AlignItems="@AlignItems.Center"
                       Spacing="0">
-                <MudCheckBox Label="Is Egg"
-                             @bind-Value="@Pokemon.IsEgg"
-                             @bind-Value:after="@RefreshService.Refresh"
-                             For="@(() => Pokemon.IsEgg)"/>
+                <HapticCheckBox T="@bool"
+                                Label="Is Egg"
+                                @bind-Value="@Pokemon.IsEgg"
+                                @bind-Value:after="@RefreshService.Refresh"
+                                For="@(() => Pokemon.IsEgg)"/>
                 <LegalityIndicator
                     Severity="@(GetCheckResult(CheckIdentifier.Egg)?.Judgement ?? PKHeX.Core.Severity.Valid)"
                     Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Egg))"/>
@@ -506,10 +508,11 @@
         <MudStack Row
                   AlignItems="@AlignItems.Center"
                   Spacing="0">
-            <MudCheckBox Label="Shiny"
-                         @bind-Value:get="@Pokemon.GetIsShinySafe()"
-                         @bind-Value:set="@(isShiny => OnShinySet(isShiny))"
-                         For="@(() => Pokemon.IsShiny)"/>
+            <HapticCheckBox T="@bool"
+                            Label="Shiny"
+                            @bind-Value:get="@Pokemon.GetIsShinySafe()"
+                            @bind-Value:set="@(isShiny => OnShinySet(isShiny))"
+                            For="@(() => Pokemon.IsShiny)"/>
             <LegalityIndicator
                 Severity="@(GetCheckResult(CheckIdentifier.Shiny)?.Judgement ?? PKHeX.Core.Severity.Valid)"
                 Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Shiny))"/>

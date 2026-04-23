@@ -113,6 +113,7 @@ public partial class MoveShopDialog
         }
 
         RefreshService.Refresh();
+        Haptics.Confirm();
         MudDialog?.Close(DialogResult.Ok(true));
     }
 

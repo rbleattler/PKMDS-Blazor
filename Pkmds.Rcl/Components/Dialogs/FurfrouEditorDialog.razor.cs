@@ -52,6 +52,7 @@ public partial class FurfrouEditorDialog
             ? 0
             : daysRemaining);
 
+        Haptics.Confirm();
         MudDialog?.Close(DialogResult.Ok(true));
     }
 

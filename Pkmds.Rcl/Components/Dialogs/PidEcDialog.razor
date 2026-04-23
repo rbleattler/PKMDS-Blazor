@@ -20,22 +20,26 @@
                           Class="mb-2">
                     @if (IsGen345)
                     {
-                        <MudCheckBox @bind-Value="@KeepNature"
-                                     Label="Keep nature"
-                                     Color="@Color.Primary"/>
+                        <HapticCheckBox T="@bool"
+                                        @bind-Value="@KeepNature"
+                                        Label="Keep nature"
+                                        Color="@Color.Primary"/>
                         @if (Pokemon.PersonalInfo.IsDualGender)
                         {
-                            <MudCheckBox @bind-Value="@KeepGender"
-                                         Label="Keep gender"
-                                         Color="@Color.Primary"/>
+                            <HapticCheckBox T="@bool"
+                                            @bind-Value="@KeepGender"
+                                            Label="Keep gender"
+                                            Color="@Color.Primary"/>
                         }
                     }
-                    <MudCheckBox @bind-Value="@AvoidShiny"
-                                 Label="Avoid shiny"
-                                 Color="@Color.Primary"/>
-                    <MudCheckBox @bind-Value="@ForceShiny"
-                                 Label="Force shiny"
-                                 Color="@Color.Primary"/>
+                    <HapticCheckBox T="@bool"
+                                    @bind-Value="@AvoidShiny"
+                                    Label="Avoid shiny"
+                                    Color="@Color.Primary"/>
+                    <HapticCheckBox T="@bool"
+                                    @bind-Value="@ForceShiny"
+                                    Label="Force shiny"
+                                    Color="@Color.Primary"/>
                 </MudStack>
 
                 <MudStack Row
