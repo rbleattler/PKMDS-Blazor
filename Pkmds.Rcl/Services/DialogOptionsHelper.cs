@@ -10,27 +10,30 @@ public sealed class DialogOptionsHelper(IBrowserViewportService browserViewportS
         bool closeOnEscapeKey = true,
         bool backdropClick = true)
     {
-        var isXs = await IsXsBreakpointAsync();
+        var isNarrow = await IsNarrowBreakpointAsync();
 
         return new DialogOptions
         {
             MaxWidth = desktopMaxWidth,
             FullWidth = fullWidth,
-            FullScreen = isXs,
+            FullScreen = isNarrow,
             CloseButton = closeButton,
             CloseOnEscapeKey = closeOnEscapeKey,
             BackdropClick = backdropClick,
         };
     }
 
-    private async Task<bool> IsXsBreakpointAsync()
+    private async Task<bool> IsNarrowBreakpointAsync()
     {
-        // Guard against the viewport service being unavailable (e.g. during a
-        // crash-handler dialog where JS interop may already be broken). In
-        // that case, fall back to the desktop layout rather than rethrowing.
+        // Promote dialogs to full-screen on Sm-and-down so both phones (Xs, <600px)
+        // and narrow iPad / narrow desktop browser windows (Sm, 600–959px) avoid
+        // the nested-scrollbar pattern. Guard against the viewport service being
+        // unavailable (e.g. during a crash-handler dialog where JS interop may
+        // already be broken) by falling back to the desktop layout.
         try
         {
-            return await browserViewportService.GetCurrentBreakpointAsync() == Breakpoint.Xs;
+            var breakpoint = await browserViewportService.GetCurrentBreakpointAsync();
+            return breakpoint is Breakpoint.Xs or Breakpoint.Sm;
         }
         catch
         {

@@ -704,35 +704,33 @@ body, html {
     top: 0.5rem;
 }
 
-/* ── Mobile dialog layout (Xs breakpoint) ──
-   On mobile we promote dialogs to full-screen so the outer dialog doesn't
-   clamp to max-height: 90vh with inner content that also scrolls — that's
-   the nested-scrollbar pattern we're trying to eliminate. The content area
-   becomes the single scroll surface, and the action bar sticks to the
-   bottom above the iOS home indicator. */
-@media (max-width: 599px) {
-    .mud-dialog-fullscreen .mud-dialog-content {
-        overflow-y: auto;
-        overflow-x: hidden;
-        max-height: none;
-        padding-bottom: env(safe-area-inset-bottom, 16px);
-    }
+/* ── Full-screen dialog layout ──
+   Applied whenever a dialog is opened with FullScreen=true (phones on Xs,
+   and narrow iPad / narrow desktop windows on Sm via DialogOptionsHelper).
+   The content area becomes the single scroll surface instead of fighting
+   an outer 90vh clamp, and the action bar sticks to the bottom above the
+   iOS home indicator. */
+.mud-dialog-fullscreen .mud-dialog-content {
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: none;
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+}
 
-    .mud-dialog-fullscreen .mud-dialog-actions {
-        position: sticky;
-        bottom: 0;
-        background: var(--mud-palette-surface);
-        z-index: 2;
-        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
-    }
+.mud-dialog-fullscreen .mud-dialog-actions {
+    position: sticky;
+    bottom: 0;
+    background: var(--mud-palette-surface);
+    z-index: 2;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+}
 
-    /* Kill inner max-height clamps that would otherwise create a second
-       scroll region inside the already-scrolling dialog content. */
-    .mud-dialog-fullscreen .search-filter-panel-scroll,
-    .mud-dialog-fullscreen .mud-table-container,
-    .mud-dialog-fullscreen .bag-data-grid .mud-table-container,
-    .mud-dialog-fullscreen .legality-report-table .mud-table-container,
-    .mud-dialog-fullscreen .encounter-db-table .mud-table-container {
-        max-height: none;
-    }
+/* Kill inner max-height clamps that would otherwise create a second
+   scroll region inside the already-scrolling dialog content. */
+.mud-dialog-fullscreen .search-filter-panel-scroll,
+.mud-dialog-fullscreen .mud-table-container,
+.mud-dialog-fullscreen .bag-data-grid .mud-table-container,
+.mud-dialog-fullscreen .legality-report-table .mud-table-container,
+.mud-dialog-fullscreen .encounter-db-table .mud-table-container {
+    max-height: none;
 }
