@@ -53,29 +53,27 @@
                              Color="@Color.Primary">
                         Sprite Style
                     </MudText>
-                    <MudButtonGroup Variant="@Variant.Outlined"
+                    <MudButtonGroup Variant="@Variant.Filled"
                                     Size="@Size.Small">
                         <MudButton StartIcon="@Icons.Material.Filled.Home"
-                                   Color="@Color.Inherit"
-                                   Style="@(spriteStyle == SpriteStyle.Home
-                                              ? "background-color: var(--mud-palette-primary-lighten);"
-                                              : "opacity: 0.6;")"
+                                   Color="@(spriteStyle == SpriteStyle.Home
+                                              ? Color.Primary
+                                              : Color.Default)"
                                    title="Home (high-res 512×512 sprites)"
                                    OnClick="@(() => spriteStyle = SpriteStyle.Home)">
                             Home
                         </MudButton>
                         <MudButton StartIcon="@Icons.Material.Filled.VideogameAsset"
-                                   Color="@Color.Inherit"
-                                   Style="@(spriteStyle == SpriteStyle.Game
-                                              ? "background-color: var(--mud-palette-primary-lighten);"
-                                              : "opacity: 0.6;")"
+                                   Color="@(spriteStyle == SpriteStyle.Game
+                                              ? Color.Primary
+                                              : Color.Default)"
                                    title="Game (era-accurate pixel-art sprites matched to save file)"
                                    OnClick="@(() => spriteStyle = SpriteStyle.Game)">
                             Game
                         </MudButton>
                     </MudButtonGroup>
                     <MudButton StartIcon="@Icons.Material.Filled.ImageNotSupported"
-                               Variant="@Variant.Text"
+                               Variant="@Variant.Filled"
                                Size="@Size.Small"
                                Color="@Color.Default"
                                title="Forces all high-res sprites to reload from the CDN"
@@ -196,8 +194,8 @@
                         files and backups are preserved.
                     </MudText>
                     <MudButton StartIcon="@Icons.Material.Filled.DeleteSweep"
-                               Variant="@Variant.Outlined"
-                               Color="@Color.Warning"
+                               Variant="@Variant.Filled"
+                               Color="@Color.Error"
                                OnClick="@OnClearAppCache">
                         Clear App Cache &amp; Reload
                     </MudButton>
@@ -208,19 +206,20 @@
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="@OnResetAll"
+                   Variant="@Variant.Filled"
                    Color="@Color.Error"
-                   StartIcon="@Icons.Material.Filled.RestartAlt"
-                   Variant="@Variant.Text">
+                   StartIcon="@Icons.Material.Filled.RestartAlt">
             Reset All
         </MudButton>
         <MudSpacer/>
         <MudButton OnClick="@Cancel"
-                   Variant="@Variant.Text">
+                   Variant="@Variant.Filled"
+                   Color="@Color.Default">
             Cancel
         </MudButton>
         <MudButton OnClick="@Save"
-                   Color="@Color.Primary"
-                   Variant="@Variant.Filled">
+                   Variant="@Variant.Filled"
+                   Color="@Color.Primary">
             Save
         </MudButton>
     </DialogActions>

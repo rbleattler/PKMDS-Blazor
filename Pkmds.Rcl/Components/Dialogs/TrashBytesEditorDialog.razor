@@ -45,8 +45,8 @@
 
             <MudStack Row
                       Spacing="1">
-                <MudButton Variant="@Variant.Outlined"
-                           Color="@Color.Warning"
+                <MudButton Variant="@Variant.Filled"
+                           Color="@Color.Error"
                            StartIcon="@Icons.Material.Filled.Clear"
                            Size="@Size.Small"
                            OnClick="@ClearTrash">
@@ -100,7 +100,8 @@
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="@Cancel"
-                   Variant="@Variant.Outlined">Cancel
+                   Variant="@Variant.Filled"
+                   Color="@Color.Default">Cancel
         </MudButton>
         <MudButton OnClick="@Save"
                    Variant="@Variant.Filled"

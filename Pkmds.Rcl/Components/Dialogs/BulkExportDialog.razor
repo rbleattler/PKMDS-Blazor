@@ -54,8 +54,8 @@
         {
             <MudButton OnClick="@CancelExport"
                        StartIcon="@Icons.Material.Filled.Cancel"
-                       Color="@Color.Error"
-                       Variant="@Variant.Outlined">
+                       Variant="@Variant.Filled"
+                       Color="@Color.Default">
                 Cancel
             </MudButton>
         }
@@ -63,13 +63,14 @@
         {
             <MudButton OnClick="@Cancel"
                        StartIcon="@Icons.Material.Filled.Clear"
-                       Variant="@Variant.Filled">
+                       Variant="@Variant.Filled"
+                       Color="@Color.Default">
                 Cancel
             </MudButton>
             <MudButton OnClick="@ExportAsync"
-                       Color="@Color.Primary"
                        StartIcon="@Icons.Material.Filled.Download"
                        Variant="@Variant.Filled"
+                       Color="@Color.Primary"
                        Disabled="@(GetScopedCount() == 0 || AppState.SaveFile is null)">
                 Export
             </MudButton>

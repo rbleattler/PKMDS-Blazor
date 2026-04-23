@@ -80,10 +80,10 @@ public partial class PokemonEditForm : IDisposable
             { nameof(ConfirmActionDialog.Message), "Are you sure you want to delete this Pokémon?" },
             { nameof(ConfirmActionDialog.ConfirmText), "Delete" },
             { nameof(ConfirmActionDialog.ConfirmIcon), Icons.Material.Filled.Delete },
-            { nameof(ConfirmActionDialog.ConfirmColor), Color.Default },
+            { nameof(ConfirmActionDialog.ConfirmColor), Color.Error },
             { nameof(ConfirmActionDialog.CancelText), "Cancel" },
             { nameof(ConfirmActionDialog.CancelIcon), Icons.Material.Filled.Clear },
-            { nameof(ConfirmActionDialog.CancelColor), Color.Error },
+            { nameof(ConfirmActionDialog.CancelColor), Color.Default },
             { nameof(ConfirmActionDialog.OnConfirm), EventCallback.Factory.Create<bool>(this, OnDeleteConfirm) }
         };
 
@@ -149,10 +149,10 @@ public partial class PokemonEditForm : IDisposable
                 { nameof(ConfirmActionDialog.Message), "Are you sure you want to paste the copied Pokémon? The Pokémon in the selected slot will be replaced." },
                 { nameof(ConfirmActionDialog.ConfirmText), "Paste" },
                 { nameof(ConfirmActionDialog.ConfirmIcon), Icons.Material.Filled.ContentPaste },
-                { nameof(ConfirmActionDialog.ConfirmColor), Color.Default },
+                { nameof(ConfirmActionDialog.ConfirmColor), Color.Primary },
                 { nameof(ConfirmActionDialog.CancelText), "Cancel" },
                 { nameof(ConfirmActionDialog.CancelIcon), Icons.Material.Filled.Clear },
-                { nameof(ConfirmActionDialog.CancelColor), Color.Primary },
+                { nameof(ConfirmActionDialog.CancelColor), Color.Default },
                 { nameof(ConfirmActionDialog.OnConfirm), EventCallback.Factory.Create<bool>(this, OnPasteConfirm) }
             };
 
