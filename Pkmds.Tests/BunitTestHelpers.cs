@@ -71,12 +71,20 @@ internal class TestAppState : IAppState
     public DateTime? AppBuildDate => null;
     public int? PinnedBoxNumber { get; set; }
     public string? SaveFileName { get; set; }
+    public ManicEmuSaveHelper.ManicEmuSaveContext? ManicEmuSaveContext { get; set; }
     public bool SelectedSlotsAreValid => true;
     public bool IsHaXEnabled { get; set; }
     public SpriteStyle SpriteStyle { get; set; }
     public bool ShowLegalIndicator { get; set; } = true;
     public bool ShowFishyIndicator { get; set; } = true;
     public bool ShowIllegalIndicator { get; set; } = true;
+    public SaveFile? SaveFileB { get; set; }
+    public string? SaveFileNameB { get; set; }
+    public bool HasUnsavedChangesB { get; set; }
+    public BoxEdit? BoxEditB => null;
+    public int? SelectedBoxNumberB { get; set; }
+    public int? SelectedBoxSlotNumberB { get; set; }
+    public int? SelectedPartySlotNumberB { get; set; }
 }
 
 internal class TestRefreshService : IRefreshService
@@ -88,6 +96,7 @@ internal class TestRefreshService : IRefreshService
     public void RefreshPartyState() { }
     public void RefreshBoxAndPartyState() { }
     public void RefreshTheme(bool isDarkMode) { }
+    public void RefreshSystemTheme(bool systemIsDarkMode) { }
     public void ShowUpdateMessage() { }
     public void RequestJumpToPartyBox() { }
 
@@ -97,6 +106,7 @@ internal class TestRefreshService : IRefreshService
     public event Action? OnPartyStateChanged;
     public event Action? OnUpdateAvailable;
     public event Action<bool>? OnThemeChanged;
+    public event Action<bool>? OnSystemThemeChanged;
     public event Action? OnRequestJumpToPartyBox;
 #pragma warning restore CS0067
 }
@@ -121,12 +131,14 @@ internal class NullDescriptionService : IDescriptionService
 internal class NullDragDropService : IDragDropService
 {
     public PKM? DraggedPokemon { get; set; }
+    public SaveFile? DragSourceSaveFile { get; set; }
     public int? DragSourceBoxNumber { get; set; }
     public int DragSourceSlotNumber { get; set; }
     public bool IsDragSourceParty { get; set; }
     public bool IsDragging => false;
 
     public void StartDrag(PKM? pokemon, int? boxNumber, int slotNumber, bool isParty) { }
+    public void StartDrag(PKM? pokemon, SaveFile? sourceSaveFile, int? boxNumber, int slotNumber, bool isParty) { }
     public void EndDrag() { }
     public void ClearDrag() { }
 }

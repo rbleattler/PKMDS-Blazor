@@ -10,6 +10,14 @@ public partial class PokedexSpeciesGrid
     private IReadOnlyList<RegionalDexDefinition> regionalDexDefinitions = [];
     private List<PokedexGridRow> rows = [];
 
+    // Pre-filtered view of rows passed directly to MudDataGrid Items so the
+    // virtualizer always has a correct, stable item count.  Rebuilt whenever
+    // rows changes or any filter criterion changes.  This avoids the
+    // QuickFilter delegate-recreation problem where MudDataGrid invalidates its
+    // internal cache every render cycle and the Virtualize component resets the
+    // scroll position back to 0.
+    private List<PokedexGridRow> filteredRows = [];
+
     private string searchText = string.Empty;
     private int selectedRegionalDexFilter = -1; // -1 = All
     private DexStatusFilter selectedStatusFilter = DexStatusFilter.All;
@@ -52,6 +60,7 @@ public partial class PokedexSpeciesGrid
         if (AppState.SaveFile is not { HasPokeDex: true } saveFile)
         {
             rows = [];
+            filteredRows = [];
             return;
         }
 
@@ -79,6 +88,30 @@ public partial class PokedexSpeciesGrid
         hasDetailedEditor = saveFile is SAV4 or SAV5 or SAV6XY or SAV6AO or SAV7 or SAV7b
             or SAV8SWSH or SAV8LA or SAV8BS or SAV9SV or SAV9ZA;
         selectedStatusFilter = DexStatusFilter.All;
+        ApplyFilter();
+    }
+
+    // Rebuilds filteredRows from the full rows list using the current filter
+    // state.  Always call this after changing rows, searchText,
+    // selectedStatusFilter, or selectedRegionalDexFilter.
+    private void ApplyFilter() => filteredRows = [.. rows.Where(FilterRow)];
+
+    private void SetSearchText(string value)
+    {
+        searchText = value;
+        ApplyFilter();
+    }
+
+    private void SetStatusFilter(DexStatusFilter filter)
+    {
+        selectedStatusFilter = filter;
+        ApplyFilter();
+    }
+
+    private void SetRegionalDexFilter(int filter)
+    {
+        selectedRegionalDexFilter = filter;
+        ApplyFilter();
     }
 
     // Delegates to the shared PokedexHelpers.IsSpeciesInDex so the grid and the
@@ -254,10 +287,20 @@ public partial class PokedexSpeciesGrid
             return;
         }
 
-        // Build a new list so MudDataGrid's virtualizer detects the Items reference
-        // change and re-renders visible rows with the updated Seen/Caught state.
-        var newRows = new List<PokedexGridRow>(rows) { [idx] = row with { IsSeen = saveFile.GetSeen(row.SpeciesId), IsCaught = saveFile.GetCaught(row.SpeciesId) } };
-        rows = newRows;
+        rows = new List<PokedexGridRow>(rows)
+        {
+            [idx] = row with
+            {
+                IsSeen = saveFile.GetSeen(row.SpeciesId),
+                IsCaught = saveFile.GetCaught(row.SpeciesId),
+            },
+        };
+
+        // Rebuild filteredRows so MudDataGrid's virtualizer detects the Items
+        // reference change and re-renders visible rows with updated Seen/Caught
+        // state.  Also handles the case where a status-filter is active and the
+        // row's visibility changes (e.g. unchecking Seen while "Seen" filter is on).
+        ApplyFilter();
     }
 
     private async Task OpenDetails(PokedexGridRow row)

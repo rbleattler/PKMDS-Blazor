@@ -30,18 +30,40 @@ public partial class BagItemInfoButton
     [EditorRequired]
     public GameVersion Version { get; set; }
 
-    protected override async Task OnInitializedAsync()
+    private int lastItemIndex = -1;
+
+    protected override async Task OnParametersSetAsync()
     {
-        if (ItemIndex != 0 && PouchType == InventoryType.TMHMs)
+        // Re-run initialization whenever the underlying item changes. The user can pick a
+        // different item from the bag dropdown at any time, which re-renders this component
+        // with a new ItemIndex/ItemName; without this guard the cached moveId/itemInfo from
+        // the previous item would stick until the parent remounts.
+        if (lastItemIndex == ItemIndex)
+        {
+            return;
+        }
+        lastItemIndex = ItemIndex;
+
+        moveId = null;
+        moveType = null;
+        moveInfo = null;
+        itemInfo = null;
+        loaded = false;
+        open = false;
+
+        // Pouch-type check removed: Gen 1/2 saves use a single bag with no TMHMs pouch,
+        // yet TM items there still need the move-lookup path. TryResolveTmMoveIdAsync
+        // guards internally by item-name prefix.
+        if (ItemIndex != 0)
         {
             moveId = await TryResolveTmMoveIdAsync();
             if (moveId.HasValue && AppState.SaveFile is { Context: var ctx })
             {
                 moveType = MoveInfo.GetType(moveId.Value, ctx);
             }
-
-            StateHasChanged();
         }
+
+        StateHasChanged();
     }
 
     private async Task Toggle()
@@ -65,7 +87,16 @@ public partial class BagItemInfoButton
         }
         else
         {
-            itemInfo = await DescriptionService.GetItemInfoAsync(ItemName, Version);
+            // BagTab enriches TM/HM/TR names to "TM41 (Softboiled)" for display. Strip that
+            // suffix before the item-info lookup so we hit the underlying "tm41" JSON key.
+            var lookupName = ItemName;
+            var parenIdx = lookupName.IndexOf(" (", StringComparison.Ordinal);
+            if (parenIdx > 0)
+            {
+                lookupName = lookupName[..parenIdx];
+            }
+
+            itemInfo = await DescriptionService.GetItemInfoAsync(lookupName, Version);
         }
 
         loaded = true;
@@ -80,11 +111,8 @@ public partial class BagItemInfoButton
     /// </summary>
     private async Task<ushort?> TryResolveTmMoveIdAsync()
     {
-        if (PouchType != InventoryType.TMHMs)
-        {
-            return null;
-        }
-
+        // Guard by item-name prefix rather than pouch type — Gen 1/2 have no TMHMs pouch,
+        // but their single-bag items named "TM41" etc. are still TMs.
         // Extract the TM/HM/TR prefix and number: "TM001 Hone Claws" → key "001",
         // "TR00 Swords Dance" → key "TR00", "HM01" → key "HM01"
         if (ItemName.Length < 3)
@@ -120,16 +148,8 @@ public partial class BagItemInfoButton
                 return null;
             }
 
-            var movelist = GameInfo.Strings.movelist;
-            for (ushort i = 1; i < movelist.Length; i++)
-            {
-                if (string.Equals(movelist[i], hmMoveName, StringComparison.OrdinalIgnoreCase))
-                {
-                    return i;
-                }
-            }
-
-            return null;
+            var hmId = GameInfoUtilities.FindMoveIdByName(hmMoveName);
+            return hmId > 0 ? hmId : null;
         }
         else if (prefix.StartsWith("TM", StringComparison.OrdinalIgnoreCase))
         {
@@ -158,15 +178,10 @@ public partial class BagItemInfoButton
             return null;
         }
 
-        var tmMovelist = GameInfo.Strings.movelist;
-        for (ushort i = 1; i < tmMovelist.Length; i++)
-        {
-            if (string.Equals(tmMovelist[i], moveName, StringComparison.OrdinalIgnoreCase))
-            {
-                return i;
-            }
-        }
-
-        return null;
+        // tm-data.json is Bulbapedia-sourced and sometimes differs in hyphenation/spacing
+        // from PKHeX's canonical move names (e.g. "Softboiled" vs "Soft-Boiled",
+        // "ThunderPunch" vs "Thunder Punch"). FindMoveIdByName handles the mismatch.
+        var tmId = GameInfoUtilities.FindMoveIdByName(moveName);
+        return tmId > 0 ? tmId : null;
     }
 }

@@ -15,7 +15,6 @@ body, html {
 
 .pkm-sprite-hires {
     position: absolute;
-    width: 80%;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
@@ -109,6 +108,46 @@ body, html {
     height: 16px;
     pointer-events: none;
     z-index: 10;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+    /* Material's "Filled" CheckCircle / Cancel icons are cutouts — the symbol shows
+       whatever is behind the icon. Instead of painting a disc behind them, the
+       markup uses solid symbols (Check / PriorityHigh / Close) inside a coloured
+       disc wrapper: the disc provides the circle, the glyph is drawn solid white. */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.legality-indicator-icon--legal { background: var(--mud-palette-success); }
+.legality-indicator-icon--fishy { background: var(--mud-palette-warning); }
+.legality-indicator-icon--illegal { background: var(--mud-palette-error); }
+
+/* Trade tab: dim the sprite (but not the indicator badges) so the user sees at a glance
+   which Pokémon can't be transferred to the other save, while keeping the legality
+   indicator readable. The .transfer-block-indicator-icon sits in the bottom-left corner
+   opposite the shiny/legality badges. */
+.slot-ineligible-transfer .pkm-sprite,
+.slot-ineligible-transfer .pkm-sprite-hires {
+    opacity: 0.4;
+    filter: grayscale(0.7);
+}
+
+.transfer-block-indicator-icon {
+    position: absolute;
+    bottom: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    pointer-events: none;
+    z-index: 10;
+    border-radius: 50%;
+    background: var(--mud-palette-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
     filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
 }
 
@@ -239,6 +278,14 @@ body, html {
         overflow: hidden;
     }
 
+    /* Trade tab content: the parent .mud-tab-panel has overflow:hidden, which would
+       clip the last row of box slots when no Pokémon is selected (no info panel to
+       compress the grid into place). Let this scroll so the full content is reachable. */
+    .trade-tab-content {
+        height: 100%;
+        overflow-y: auto;
+    }
+
     /* Bank tab: the tab panel becomes a flex column so the card grid can
        fill remaining vertical space without a fragile calc() offset. */
     .save-file-outer-tabs > .mud-tabs-panels > .mud-tab-panel:has(.bank-tab-content) {
@@ -266,13 +313,6 @@ body, html {
         flex: 1;
         min-height: 0;
         overflow-y: auto;
-    }
-
-    /* Pokédex tab content: inner MudDataGrid owns its scroll (FixedHeader + Virtualize),
-       so the outer container must not add a second scrollbar. */
-    .pokedex-tab-content {
-        height: 100%;
-        overflow: hidden;
     }
 
     /* Teams tab content: simple vertical scroll for team cards */
@@ -411,6 +451,16 @@ body, html {
         overflow-y: auto;
         overflow-x: hidden;
     }
+
+    /* Pokédex panel owns its own scroll via the inner virtualized table; suppress the
+       outer panel scrollbar so the table-container has a definite, viewport-bounded
+       height to size against (otherwise the Virtualize component cuts the list off
+       at whatever fits in its initial computed height — ~106 rows on phone portrait). */
+    .save-file-outer-tabs > .mud-tabs-panels > .mud-tab-panel:has(.pokedex-tab-content) {
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
 }
 
 /* Tablet (md–lg): edit form inner tab panels also scroll independently */
@@ -418,6 +468,34 @@ body, html {
     .edit-form-tabs .mud-tabs-panels {
         overflow-y: auto;
     }
+}
+
+/* Pokédex grid flex cascade — applies on every viewport so the inner MudDataGrid's
+   .mud-table-container always has a definite height for Virtualize to size against. */
+.pokedex-tab-content {
+    height: 100%;
+    overflow: hidden;
+}
+
+.pokedex-grid-wrapper {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.pokedex-grid-wrapper .pokedex-species-grid {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.pokedex-grid-wrapper .pokedex-species-grid > .mud-table-container {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 .square-slot {

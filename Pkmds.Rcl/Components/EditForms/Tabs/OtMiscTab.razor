@@ -225,17 +225,15 @@
             {
                 <MudItem xs="6"
                          Class="@ColumnClass">
-                    <MudSelect T="@byte"
-                               Label="Handler Language"
-                               Variant="@Variant.Outlined"
-                               Value="@htLang.HandlingTrainerLanguage"
-                               ValueChanged="@(v => htLang.HandlingTrainerLanguage = v)">
-                        @foreach (var item in AppService.GetLanguageComboItems(saveGeneration, saveFile.Context))
-                        {
-                            <MudSelectItem T="byte"
-                                           Value="@((byte)item.Value)">@item.Text</MudSelectItem>
-                        }
-                    </MudSelect>
+                    @{
+                        var handlerLangItems = AppService.GetLanguageComboItems(saveGeneration, saveFile.Context).ToList();
+                    }
+                    <AutocompleteSelect T="@ComboItem"
+                                        Label="Handler Language"
+                                        Value="@(handlerLangItems.FirstOrDefault(i => i.Value == htLang.HandlingTrainerLanguage))"
+                                        ValueChanged="@(item => htLang.HandlingTrainerLanguage = (byte)(item?.Value ?? 0))"
+                                        Items="@handlerLangItems"
+                                        ToStringFunc="@(item => item?.Text)"/>
                 </MudItem>
             }
         }
@@ -343,18 +341,12 @@
         {
             <MudItem xs="6"
                      Class="@ColumnClass">
-                <MudSelect T="byte"
-                           Label="Current Handler"
-                           Variant="@Variant.Outlined"
-                           Value="@Pokemon.CurrentHandler"
-                           ValueChanged="@(v => Pokemon.CurrentHandler = v)">
-                    <MudSelectItem T="byte"
-                                   Value="@((byte)0)">OT
-                    </MudSelectItem>
-                    <MudSelectItem T="byte"
-                                   Value="@((byte)1)">HT
-                    </MudSelectItem>
-                </MudSelect>
+                <AutocompleteSelect T="@byte"
+                                    Label="Current Handler"
+                                    Value="@Pokemon.CurrentHandler"
+                                    ValueChanged="@(v => Pokemon.CurrentHandler = v)"
+                                    Items="@(new byte[] { 0, 1 })"
+                                    ToStringFunc="@(v => v == 0 ? "OT" : "HT")"/>
             </MudItem>
         }
 
@@ -390,70 +382,44 @@
             </MudItem>
 
             <MudItem xs="12">
-                <MudSelect T="byte"
-                           Label="Memory"
-                           Variant="@Variant.Outlined"
-                           FullWidth
-                           MaxHeight="300"
-                           Value="@otMemory.OriginalTrainerMemory"
-                           ValueChanged="@(v => otMemory.OriginalTrainerMemory = v)">
-                    @foreach (var item in CachedMemoryItems)
-                    {
-                        <MudSelectItem T="byte"
-                                       Value="@((byte)item.Value)">@item.Text</MudSelectItem>
-                    }
-                </MudSelect>
+                <AutocompleteSelect T="@ComboItem"
+                                    Label="Memory"
+                                    Value="@(CachedMemoryItems.FirstOrDefault(i => i.Value == otMemory.OriginalTrainerMemory))"
+                                    ValueChanged="@(item => otMemory.OriginalTrainerMemory = (byte)(item?.Value ?? 0))"
+                                    Items="@CachedMemoryItems"
+                                    ToStringFunc="@(item => item?.Text)"/>
             </MudItem>
 
             @if (otArgItems is not null)
             {
                 <MudItem xs="12">
-                    <MudSelect T="ushort"
-                               Label="@GetMemoryArgLabel(otArgType)"
-                               Variant="@Variant.Outlined"
-                               FullWidth
-                               MaxHeight="300"
-                               Value="@otMemory.OriginalTrainerMemoryVariable"
-                               ValueChanged="@(v => otMemory.OriginalTrainerMemoryVariable = v)">
-                        @foreach (var item in otArgItems)
-                        {
-                            <MudSelectItem T="ushort"
-                                           Value="@((ushort)item.Value)">@item.Text</MudSelectItem>
-                        }
-                    </MudSelect>
+                    <AutocompleteSelect T="@ComboItem"
+                                        Label="@GetMemoryArgLabel(otArgType)"
+                                        Value="@(otArgItems.FirstOrDefault(i => i.Value == otMemory.OriginalTrainerMemoryVariable))"
+                                        ValueChanged="@(item => otMemory.OriginalTrainerMemoryVariable = (ushort)(item?.Value ?? 0))"
+                                        Items="@otArgItems"
+                                        ToStringFunc="@(item => item?.Text)"/>
                 </MudItem>
             }
 
             <MudItem xs="6"
                      Class="@ColumnClass">
-                <MudSelect T="byte"
-                           Label="Intensity"
-                           Variant="@Variant.Outlined"
-                           FullWidth
-                           Value="@otMemory.OriginalTrainerMemoryIntensity"
-                           ValueChanged="@(v => otMemory.OriginalTrainerMemoryIntensity = v)">
-                    @foreach (var item in CachedQualityItems)
-                    {
-                        <MudSelectItem T="byte"
-                                       Value="@((byte)item.Value)">@item.Text</MudSelectItem>
-                    }
-                </MudSelect>
+                <AutocompleteSelect T="@ComboItem"
+                                    Label="Intensity"
+                                    Value="@(CachedQualityItems.FirstOrDefault(i => i.Value == otMemory.OriginalTrainerMemoryIntensity))"
+                                    ValueChanged="@(item => otMemory.OriginalTrainerMemoryIntensity = (byte)(item?.Value ?? 0))"
+                                    Items="@CachedQualityItems"
+                                    ToStringFunc="@(item => item?.Text)"/>
             </MudItem>
 
             <MudItem xs="6"
                      Class="@ColumnClass">
-                <MudSelect T="byte"
-                           Label="Feeling"
-                           Variant="@Variant.Outlined"
-                           FullWidth
-                           Value="@otMemory.OriginalTrainerMemoryFeeling"
-                           ValueChanged="@(v => otMemory.OriginalTrainerMemoryFeeling = v)">
-                    @foreach (var item in CachedFeelingItems)
-                    {
-                        <MudSelectItem T="byte"
-                                       Value="@((byte)item.Value)">@item.Text</MudSelectItem>
-                    }
-                </MudSelect>
+                <AutocompleteSelect T="@ComboItem"
+                                    Label="Feeling"
+                                    Value="@(CachedFeelingItems.FirstOrDefault(i => i.Value == otMemory.OriginalTrainerMemoryFeeling))"
+                                    ValueChanged="@(item => otMemory.OriginalTrainerMemoryFeeling = (byte)(item?.Value ?? 0))"
+                                    Items="@CachedFeelingItems"
+                                    ToStringFunc="@(item => item?.Text)"/>
             </MudItem>
 
             @if (!string.IsNullOrEmpty(otPreview))
@@ -503,70 +469,44 @@
             </MudItem>
 
             <MudItem xs="12">
-                <MudSelect T="byte"
-                           Label="Memory"
-                           Variant="@Variant.Outlined"
-                           FullWidth
-                           MaxHeight="300"
-                           Value="@htMemory.HandlingTrainerMemory"
-                           ValueChanged="@(v => htMemory.HandlingTrainerMemory = v)">
-                    @foreach (var item in CachedMemoryItems)
-                    {
-                        <MudSelectItem T="byte"
-                                       Value="@((byte)item.Value)">@item.Text</MudSelectItem>
-                    }
-                </MudSelect>
+                <AutocompleteSelect T="@ComboItem"
+                                    Label="Memory"
+                                    Value="@(CachedMemoryItems.FirstOrDefault(i => i.Value == htMemory.HandlingTrainerMemory))"
+                                    ValueChanged="@(item => htMemory.HandlingTrainerMemory = (byte)(item?.Value ?? 0))"
+                                    Items="@CachedMemoryItems"
+                                    ToStringFunc="@(item => item?.Text)"/>
             </MudItem>
 
             @if (htArgItems is not null)
             {
                 <MudItem xs="12">
-                    <MudSelect T="ushort"
-                               Label="@GetMemoryArgLabel(htArgType)"
-                               Variant="@Variant.Outlined"
-                               FullWidth
-                               MaxHeight="300"
-                               Value="@htMemory.HandlingTrainerMemoryVariable"
-                               ValueChanged="@(v => htMemory.HandlingTrainerMemoryVariable = v)">
-                        @foreach (var item in htArgItems)
-                        {
-                            <MudSelectItem T="ushort"
-                                           Value="@((ushort)item.Value)">@item.Text</MudSelectItem>
-                        }
-                    </MudSelect>
+                    <AutocompleteSelect T="@ComboItem"
+                                        Label="@GetMemoryArgLabel(htArgType)"
+                                        Value="@(htArgItems.FirstOrDefault(i => i.Value == htMemory.HandlingTrainerMemoryVariable))"
+                                        ValueChanged="@(item => htMemory.HandlingTrainerMemoryVariable = (ushort)(item?.Value ?? 0))"
+                                        Items="@htArgItems"
+                                        ToStringFunc="@(item => item?.Text)"/>
                 </MudItem>
             }
 
             <MudItem xs="6"
                      Class="@ColumnClass">
-                <MudSelect T="byte"
-                           Label="Intensity"
-                           Variant="@Variant.Outlined"
-                           FullWidth
-                           Value="@htMemory.HandlingTrainerMemoryIntensity"
-                           ValueChanged="@(v => htMemory.HandlingTrainerMemoryIntensity = v)">
-                    @foreach (var item in CachedQualityItems)
-                    {
-                        <MudSelectItem T="byte"
-                                       Value="@((byte)item.Value)">@item.Text</MudSelectItem>
-                    }
-                </MudSelect>
+                <AutocompleteSelect T="@ComboItem"
+                                    Label="Intensity"
+                                    Value="@(CachedQualityItems.FirstOrDefault(i => i.Value == htMemory.HandlingTrainerMemoryIntensity))"
+                                    ValueChanged="@(item => htMemory.HandlingTrainerMemoryIntensity = (byte)(item?.Value ?? 0))"
+                                    Items="@CachedQualityItems"
+                                    ToStringFunc="@(item => item?.Text)"/>
             </MudItem>
 
             <MudItem xs="6"
                      Class="@ColumnClass">
-                <MudSelect T="byte"
-                           Label="Feeling"
-                           Variant="@Variant.Outlined"
-                           FullWidth
-                           Value="@htMemory.HandlingTrainerMemoryFeeling"
-                           ValueChanged="@(v => htMemory.HandlingTrainerMemoryFeeling = v)">
-                    @foreach (var item in CachedFeelingItems)
-                    {
-                        <MudSelectItem T="byte"
-                                       Value="@((byte)item.Value)">@item.Text</MudSelectItem>
-                    }
-                </MudSelect>
+                <AutocompleteSelect T="@ComboItem"
+                                    Label="Feeling"
+                                    Value="@(CachedFeelingItems.FirstOrDefault(i => i.Value == htMemory.HandlingTrainerMemoryFeeling))"
+                                    ValueChanged="@(item => htMemory.HandlingTrainerMemoryFeeling = (byte)(item?.Value ?? 0))"
+                                    Items="@CachedFeelingItems"
+                                    ToStringFunc="@(item => item?.Text)"/>
             </MudItem>
 
             @if (!string.IsNullOrEmpty(htPreview))
@@ -619,38 +559,24 @@
 
                 <MudItem xs="6"
                          Class="@ColumnClass">
-                    <MudSelect T="byte"
-                               Label="@slotLabel"
-                               Variant="@Variant.Outlined"
-                               FullWidth
-                               MaxHeight="300"
-                               Value="@slotCountry"
-                               ValueChanged="@(v => SetGeoCountry(geoTrack, slotIndex, v))">
-                        @foreach (var item in countries)
-                        {
-                            <MudSelectItem T="byte"
-                                           Value="@((byte)item.Value)">@item.Text</MudSelectItem>
-                        }
-                    </MudSelect>
+                    <AutocompleteSelect T="@ComboItem"
+                                        Label="@slotLabel"
+                                        Value="@(countries.FirstOrDefault(i => i.Value == slotCountry))"
+                                        ValueChanged="@(item => SetGeoCountry(geoTrack, slotIndex, (byte)(item?.Value ?? 0)))"
+                                        Items="@countries"
+                                        ToStringFunc="@(item => item?.Text)"/>
                 </MudItem>
 
                 @if (slotRegions is not null)
                 {
                     <MudItem xs="6"
                              Class="@ColumnClass">
-                        <MudSelect T="byte"
-                                   Label="@regionLabel"
-                                   Variant="@Variant.Outlined"
-                                   FullWidth
-                                   MaxHeight="300"
-                                   Value="@GetGeoRegion(geoTrack, slotIndex)"
-                                   ValueChanged="@(v => SetGeoRegion(geoTrack, slotIndex, v))">
-                            @foreach (var item in slotRegions)
-                            {
-                                <MudSelectItem T="byte"
-                                               Value="@((byte)item.Value)">@item.Text</MudSelectItem>
-                            }
-                        </MudSelect>
+                        <AutocompleteSelect T="@ComboItem"
+                                            Label="@regionLabel"
+                                            Value="@(slotRegions.FirstOrDefault(i => i.Value == GetGeoRegion(geoTrack, slotIndex)))"
+                                            ValueChanged="@(item => SetGeoRegion(geoTrack, slotIndex, (byte)(item?.Value ?? 0)))"
+                                            Items="@slotRegions"
+                                            ToStringFunc="@(item => item?.Text)"/>
                     </MudItem>
                 }
                 else
@@ -688,38 +614,24 @@
 
             <MudItem xs="6"
                      Class="@ColumnClass">
-                <MudSelect T="byte"
-                           Label="Country"
-                           Variant="@Variant.Outlined"
-                           FullWidth
-                           MaxHeight="300"
-                           Value="@regionOrigin.Country"
-                           ValueChanged="@(v => SetRegionOriginCountry(regionOrigin, v))">
-                    @foreach (var item in countries)
-                    {
-                        <MudSelectItem T="byte"
-                                       Value="@((byte)item.Value)">@item.Text</MudSelectItem>
-                    }
-                </MudSelect>
+                <AutocompleteSelect T="@ComboItem"
+                                    Label="Country"
+                                    Value="@(countries.FirstOrDefault(i => i.Value == regionOrigin.Country))"
+                                    ValueChanged="@(item => SetRegionOriginCountry(regionOrigin, (byte)(item?.Value ?? 0)))"
+                                    Items="@countries"
+                                    ToStringFunc="@(item => item?.Text)"/>
             </MudItem>
 
             @if (subRegions is not null)
             {
                 <MudItem xs="6"
                          Class="@ColumnClass">
-                    <MudSelect T="byte"
-                               Label="Sub-Region"
-                               Variant="@Variant.Outlined"
-                               FullWidth
-                               MaxHeight="300"
-                               Value="@regionOrigin.Region"
-                               ValueChanged="@(v => regionOrigin.Region = v)">
-                        @foreach (var item in subRegions)
-                        {
-                            <MudSelectItem T="byte"
-                                           Value="@((byte)item.Value)">@item.Text</MudSelectItem>
-                        }
-                    </MudSelect>
+                    <AutocompleteSelect T="@ComboItem"
+                                        Label="Sub-Region"
+                                        Value="@(subRegions.FirstOrDefault(i => i.Value == regionOrigin.Region))"
+                                        ValueChanged="@(item => regionOrigin.Region = (byte)(item?.Value ?? 0))"
+                                        Items="@subRegions"
+                                        ToStringFunc="@(item => item?.Text)"/>
                 </MudItem>
             }
             else
@@ -729,18 +641,12 @@
 
             <MudItem xs="6"
                      Class="@ColumnClass">
-                <MudSelect T="byte"
-                           Label="Console Region"
-                           Variant="@Variant.Outlined"
-                           FullWidth
-                           Value="@regionOrigin.ConsoleRegion"
-                           ValueChanged="@(v => regionOrigin.ConsoleRegion = v)">
-                    @foreach (var item in consoleRegions)
-                    {
-                        <MudSelectItem T="byte"
-                                       Value="@((byte)item.Value)">@item.Text</MudSelectItem>
-                    }
-                </MudSelect>
+                <AutocompleteSelect T="@ComboItem"
+                                    Label="Console Region"
+                                    Value="@(consoleRegions.FirstOrDefault(i => i.Value == regionOrigin.ConsoleRegion))"
+                                    ValueChanged="@(item => regionOrigin.ConsoleRegion = (byte)(item?.Value ?? 0))"
+                                    Items="@consoleRegions"
+                                    ToStringFunc="@(item => item?.Text)"/>
             </MudItem>
 
             <MudItem xs="6"/>
@@ -755,19 +661,12 @@
 
             <MudItem xs="6"
                      Class="@ColumnClass">
-                <MudSelect T="sbyte"
-                           Label="Affixed Ribbon / Mark"
-                           Variant="@Variant.Outlined"
-                           FullWidth
-                           MaxHeight="300"
-                           Value="@affixedHolder.AffixedRibbon"
-                           ValueChanged="@(v => affixedHolder.AffixedRibbon = v)">
-                    @foreach (var item in CachedAffixedRibbonItems)
-                    {
-                        <MudSelectItem T="sbyte"
-                                       Value="@((sbyte)item.Value)">@item.Text</MudSelectItem>
-                    }
-                </MudSelect>
+                <AutocompleteSelect T="@ComboItem"
+                                    Label="Affixed Ribbon / Mark"
+                                    Value="@(CachedAffixedRibbonItems.FirstOrDefault(i => i.Value == affixedHolder.AffixedRibbon))"
+                                    ValueChanged="@(item => affixedHolder.AffixedRibbon = (sbyte)(item?.Value ?? 0))"
+                                    Items="@CachedAffixedRibbonItems"
+                                    ToStringFunc="@(item => item?.Text)"/>
             </MudItem>
         }
 

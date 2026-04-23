@@ -8,4 +8,5 @@ public sealed record GitHubIssuePayload(
 
 public sealed record GitHubIssueData(
     [property: JsonPropertyName("number")] int Number,
+    // ReSharper disable once NotAccessedPositionalProperty.Global
     [property: JsonPropertyName("state")] string State);

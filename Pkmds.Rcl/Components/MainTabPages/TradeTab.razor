@@ -1,0 +1,105 @@
+@inherits RefreshAwareComponent
+
+@if (AppState.SaveFile is null)
+{
+    <MudAlert Severity="@Severity.Info">
+        Load a save file first to use the Trade tab.
+    </MudAlert>
+}
+else
+{
+    <MudGrid Spacing="2"
+             Justify="@Justify.FlexStart">
+
+        @* ── Slot A ── *@
+        <MudItem xs="12"
+                 lg="6"
+                 Style="max-width: 480px; min-width: 0;">
+            <MudPaper Elevation="0"
+                      Class="min-w-0">
+                <TradePane Title="@SlotATitle"
+                           SaveFile="@AppState.SaveFile"
+                           CounterpartSaveFile="@AppState.SaveFileB"
+                           SelectedBox="@AppState.SelectedBoxNumber"
+                           SelectedBoxChanged="@(b => AppState.SelectedBoxNumber = b)"
+                           SelectedBoxSlot="@AppState.SelectedBoxSlotNumber"
+                           SelectedBoxSlotChanged="@(s => AppState.SelectedBoxSlotNumber = s)"
+                           SelectedPartySlot="@AppState.SelectedPartySlotNumber"
+                           SelectedPartySlotChanged="@(s => AppState.SelectedPartySlotNumber = s)"
+                           OnSlotDrop="@HandleSlotDropAsync"/>
+            </MudPaper>
+        </MudItem>
+
+        @* ── Slot B ── *@
+        <MudItem xs="12"
+                 lg="6"
+                 Style="max-width: 480px; min-width: 0;">
+            <MudPaper Elevation="0"
+                      Class="min-w-0">
+                @if (AppState.SaveFileB is null)
+                {
+                    <MudStack Spacing="2"
+                              AlignItems="@AlignItems.Start"
+                              Class="pa-3">
+                        <MudText Typo="@Typo.subtitle1">Second save</MudText>
+                        <MudText Typo="@Typo.body2">
+                            Load a second save file to transfer Pokémon side-by-side with the
+                            first save. Drag a Pokémon between panes, or select one and use
+                            the arrow buttons to move it across.
+                        </MudText>
+                        <MudButton Variant="@Variant.Filled"
+                                   Color="@Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.UploadFile"
+                                   OnClick="@LoadSecondarySaveAsync"
+                                   Disabled="@isLoading">
+                            Load second save
+                        </MudButton>
+                    </MudStack>
+                }
+                else
+                {
+                    <MudStack Spacing="1">
+                        <MudStack Row
+                                  AlignItems="@AlignItems.Center"
+                                  Spacing="1">
+                            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack"
+                                           OnClick="@(() => TransferSelectedAsync(fromA: false))"
+                                           Disabled="@(!CanTransferFromB())"
+                                           title="Send selected Pokémon from Slot B to Slot A"
+                                           Size="@Size.Small"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.ArrowForward"
+                                           OnClick="@(() => TransferSelectedAsync(fromA: true))"
+                                           Disabled="@(!CanTransferFromA())"
+                                           title="Send selected Pokémon from Slot A to Slot B"
+                                           Size="@Size.Small"/>
+                            <MudSpacer/>
+                            <MudIconButton Icon="@Icons.Material.Filled.IosShare"
+                                           OnClick="@ExportSecondarySaveAsync"
+                                           title="Export second save"
+                                           Size="@Size.Small"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.SwapHoriz"
+                                           OnClick="@LoadSecondarySaveAsync"
+                                           Disabled="@isLoading"
+                                           title="Replace second save"
+                                           Size="@Size.Small"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                           OnClick="@UnloadSecondarySaveAsync"
+                                           title="Close second save"
+                                           Size="@Size.Small"/>
+                        </MudStack>
+                        <TradePane Title="@SlotBTitle"
+                                   SaveFile="@AppState.SaveFileB"
+                                   CounterpartSaveFile="@AppState.SaveFile"
+                                   SelectedBox="@AppState.SelectedBoxNumberB"
+                                   SelectedBoxChanged="@(b => AppState.SelectedBoxNumberB = b)"
+                                   SelectedBoxSlot="@AppState.SelectedBoxSlotNumberB"
+                                   SelectedBoxSlotChanged="@(s => AppState.SelectedBoxSlotNumberB = s)"
+                                   SelectedPartySlot="@AppState.SelectedPartySlotNumberB"
+                                   SelectedPartySlotChanged="@(s => AppState.SelectedPartySlotNumberB = s)"
+                                   OnSlotDrop="@HandleSlotDropAsync"/>
+                    </MudStack>
+                }
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}

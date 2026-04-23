@@ -69,6 +69,20 @@ window.setDragDownloadData = function (filename, base64data) {
     }
 };
 
+// iOS Safari cancels a drag whose dragstart completes with an empty DataTransfer.
+// Set a minimal text/plain payload so the drag survives through to dragover/drop
+// on touch devices. Desktop browsers are unaffected — they ignore unused payloads.
+window.setSlotDragMarker = function (value) {
+    if (!window.lastDragEvent) return false;
+    try {
+        window.lastDragEvent.dataTransfer.setData('text/plain', value || 'pkmds-slot');
+        return true;
+    } catch (e) {
+        console.warn('[setSlotDragMarker] Failed:', e);
+        return false;
+    }
+};
+
 // Function to read a dropped file and return as base64
 window.readDroppedFile = async function (index) {
     if (!window.droppedFiles || index >= window.droppedFiles.length) {
@@ -94,7 +108,9 @@ window.readDroppedFile = async function (index) {
 
 // Returns true if the page is running inside a known in-app browser (e.g. Google Search App,
 // Facebook, Instagram) whose WebView may block file downloads or the File System Access API.
-window.isInAppBrowser = function () {
+// Namespaced under `pkmds` so we don't collide with the non-function `window.isInAppBrowser`
+// boolean that some in-app browsers / extensions inject into the page (see issue #732).
+window.pkmdsIsInAppBrowser = function () {
     const ua = navigator.userAgent || '';
     return (
         /GSA\//.test(ua) ||                    // Google Search App (iOS)
@@ -115,7 +131,23 @@ window.isInAppBrowser = function () {
     );
 };
 
-window.showFilePickerAndWrite = async function (fileName, byteArray, extension, description) {
+// Map an extension to a sensible Content-Type when the caller hasn't passed one explicitly.
+// Covers compound extensions like ".3ds.sav" (leaf ".sav") and non-save outputs (.zip, .json)
+// so anchor-download fallbacks on iOS don't end up tagged application/x-pokemon-savedata for
+// obviously-not-a-save payloads (e.g. bank exports, bulk PKM archives).
+function pkmdsInferMimeType(ext) {
+    if (!ext) return 'application/octet-stream';
+    const normalized = ext.toLowerCase();
+    const leaf = normalized.lastIndexOf('.') > 0 ? normalized.slice(normalized.lastIndexOf('.')) : normalized;
+    if (leaf === '.zip') return 'application/zip';
+    if (leaf === '.json') return 'application/json';
+    if (leaf === '.sav' || leaf === '.dsv' || /^\.(pk|ek|bk)[0-9]$/.test(leaf) || leaf === '.pb7' || leaf === '.pb8') {
+        return 'application/x-pokemon-savedata';
+    }
+    return 'application/octet-stream';
+}
+
+window.showFilePickerAndWrite = async function (fileName, byteArray, extension, description, mimeType) {
     // byteArray is expected to be a JS array of numbers coming from a Blazor byte[]
     try {
         if (!byteArray) throw new Error('byteArray is null/undefined');
@@ -140,6 +172,13 @@ window.showFilePickerAndWrite = async function (fileName, byteArray, extension, 
             ext = '.' + ext;
         }
 
+        // Caller can override the MIME — important for ZIP archives (Manic EMU .3ds.sav)
+        // where the default is wrong and iOS Safari is known to rewrite the extension to
+        // match the declared type. When no override is passed we infer from the extension:
+        // callers that dispatch .zip / .json (bulk exports, bank exports) shouldn't have to
+        // thread a MIME just to avoid the generic Pokémon-savedata tag on anchor fallbacks.
+        const blobType = mimeType || pkmdsInferMimeType(ext);
+
         // Chrome Android may have partial / flaky support for File System Access API.
         // iOS (all browsers) uses WebKit, which may expose showSaveFilePicker but has
         // incomplete support for createWritable() — always use the anchor fallback on iOS.
@@ -150,9 +189,7 @@ window.showFilePickerAndWrite = async function (fileName, byteArray, extension, 
             console.warn('[showFilePickerAndWrite] Falling back to anchor download for this platform.');
 
             const uint8 = byteArray instanceof Uint8Array ? byteArray : new Uint8Array(byteArray);
-
-            // Use a more "specific" looking type instead of generic octet-stream.
-            const blob = new Blob([uint8], {type: 'application/x-pokemon-savedata'});
+            const blob = new Blob([uint8], {type: blobType});
 
             const hasExt = ext && fileName.toLowerCase().endsWith(ext.toLowerCase());
             const finalName = (ext && !hasExt) ? fileName + ext : fileName;
@@ -170,12 +207,11 @@ window.showFilePickerAndWrite = async function (fileName, byteArray, extension, 
             return;
         }
 
-        // Only add types if we have a valid simple extension.
-        // Chrome's showSaveFilePicker rejects extensions that contain spaces or other
-        // non-alphanumeric characters (e.g. '.sav 2'), so skip types in that case.
-        // Also strip the invalid extension from suggestedName — Chrome blanks the filename
-        // field entirely if suggestedName contains spaces or other disallowed characters.
-        const isValidExtForPicker = !!ext && /^\.[a-zA-Z0-9]+$/.test(ext);
+        // Chrome's showSaveFilePicker accepts single extensions like ".sav" and compound
+        // extensions like ".3ds.sav". Disallow spaces or non-alphanumeric segments — those
+        // cause Chrome to blank the filename field — but keep compound suffixes intact so
+        // Manic EMU archives don't lose their ".3ds.sav" on export.
+        const isValidExtForPicker = !!ext && /^(?:\.[a-zA-Z0-9]+){1,2}$/.test(ext);
 
         // Build options for File System Access API
         const opts = {
@@ -185,17 +221,20 @@ window.showFilePickerAndWrite = async function (fileName, byteArray, extension, 
         };
 
         if (isValidExtForPicker) {
+            // The `accept` field only takes simple extensions per the File System Access spec,
+            // so pass the leaf extension (".sav" from ".3ds.sav") rather than the compound.
+            const leafExt = ext.lastIndexOf('.') > 0 ? ext.slice(ext.lastIndexOf('.')) : ext;
             opts.types = [{
                 description: description || 'File',
                 accept: {
-                    'application/x-pokemon-savedata': [ext]
+                    [blobType]: [leafExt]
                 }
             }];
         }
 
         // Must be called during a user gesture on some platforms.
         const handle = await window.showSaveFilePicker(opts);
-        const writable = await handle.createWritable();
+        const writable = await handle.createWritable({ keepExistingData: false });
 
         const uint8 = byteArray instanceof Uint8Array ? byteArray : new Uint8Array(byteArray);
 
@@ -211,4 +250,26 @@ window.showFilePickerAndWrite = async function (fileName, byteArray, extension, 
         console.error('[showFilePickerAndWrite] Error:', ex);
         throw ex;
     }
+};
+
+// Anchor-based blob download. Used as a fallback when the File System Access API isn't
+// available (or the user dismissed it). Avoids the ~33% base64 inflation of a data: URI
+// and works around URL-length limits on older engines. The caller should pass an explicit
+// mimeType — application/zip for Manic EMU archives, application/x-pokemon-savedata for
+// raw saves, application/octet-stream for anything else.
+window.downloadBlob = function (fileName, byteArray, mimeType) {
+    if (!byteArray) return;
+    const uint8 = byteArray instanceof Uint8Array ? byteArray : new Uint8Array(byteArray);
+    const inferredExt = fileName ? fileName.slice(fileName.lastIndexOf('.')) : '';
+    const blob = new Blob([uint8], { type: mimeType || pkmdsInferMimeType(inferredExt) });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+        URL.revokeObjectURL(url);
+        a.remove();
+    }, 0);
 };

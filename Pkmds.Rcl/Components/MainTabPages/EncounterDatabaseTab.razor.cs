@@ -185,7 +185,7 @@ public partial class EncounterDatabaseTab : RefreshAwareComponent
                 return true;
             }
 
-            var occupantName = GameInfo.Strings.Species[AppService.EditFormPokemon!.Species];
+            var occupantName = SafeNameLookup.Species(AppService.EditFormPokemon!.Species);
             var confirmed = await DialogService.ShowMessageBoxAsync(
                 "Overwrite Pokémon?",
                 $"The selected slot contains {occupantName}. Overwrite it?",
@@ -233,5 +233,42 @@ public partial class EncounterDatabaseTab : RefreshAwareComponent
         "Trade" => Color.Warning,
         "Egg" => Color.Info,
         _ => Color.Default
+    };
+
+    private static IEnumerable<int?> GameVersionFilterItems =>
+        new int?[] { null }.Concat(GameInfo.FilteredSources.Games.Where(g => g.Value > 0).Select(g => (int?)g.Value));
+
+    private static string GameVersionFilterText(int? value) => value is { } v
+        ? GameInfo.FilteredSources.Games.FirstOrDefault(g => g.Value == v)?.Text ?? v.ToString()
+        : "All (current format)";
+
+    private static readonly bool?[] ShinyLockFilterItems = [null, true, false];
+
+    private static string ShinyLockFilterText(bool? value) => value switch
+    {
+        null => "Any",
+        true => "Shiny-locked only",
+        _ => "Can be shiny"
+    };
+
+    private static readonly int?[] EncounterGroupFilterItems =
+    [
+        null,
+        (int?)EncounterTypeGroup.Slot,
+        (int?)EncounterTypeGroup.Static,
+        (int?)EncounterTypeGroup.Mystery,
+        (int?)EncounterTypeGroup.Trade,
+        (int?)EncounterTypeGroup.Egg
+    ];
+
+    private static string EncounterGroupFilterText(int? value) => value switch
+    {
+        null => "All types",
+        (int)EncounterTypeGroup.Slot => "Wild",
+        (int)EncounterTypeGroup.Static => "Static / Gift",
+        (int)EncounterTypeGroup.Mystery => "Mystery Gift",
+        (int)EncounterTypeGroup.Trade => "Trade",
+        (int)EncounterTypeGroup.Egg => "Egg",
+        _ => value.ToString() ?? string.Empty
     };
 }

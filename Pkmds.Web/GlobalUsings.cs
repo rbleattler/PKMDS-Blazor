@@ -6,6 +6,7 @@ global using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 global using Microsoft.JSInterop;
 global using MudBlazor.Services;
 global using PKHeX.Core;
+global using Pkmds.Core.Utilities;
 global using Pkmds.Rcl;
 global using Pkmds.Rcl.Extensions;
 global using Pkmds.Rcl.Services;

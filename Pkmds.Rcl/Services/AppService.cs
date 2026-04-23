@@ -5,6 +5,11 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
     private const string EnglishLang = "en";
     private const string DefaultPkmFileName = "pkm.bin";
 
+    // Number of items to return from Search* methods when the query is empty. The autocomplete
+    // dropdown uses this to populate an initial "preview" list so users see something to pick
+    // from before they start typing. Matches the Ribbons filter's top-N behavior.
+    private const int AutocompleteEmptyQueryTake = 30;
+
     // Block keys duplicated from SaveBlockAccessor8SWSH / SaveBlockAccessor9SV
     // because they are private in PKHeX.Core. Update if upstream changes.
     private const uint SwshTeamNamesKey = 0x1920C1E4;
@@ -97,25 +102,43 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
 
     public string GetPokemonSpeciesName(ushort speciesId) => GetSpeciesComboItem(speciesId).Text;
 
-    public IEnumerable<ComboItem> SearchPokemonNames(string searchString) =>
-        AppState.SaveFile is null || searchString is not { Length: > 0 }
-            ? []
-            : GameInfo.FilteredSources.Species
-                .DistinctBy(species => species.Value)
+    public IEnumerable<ComboItem> SearchPokemonNames(string searchString)
+    {
+        if (AppState.SaveFile is null)
+        {
+            return [];
+        }
+
+        var source = GameInfo.FilteredSources.Species
+            .DistinctBy(species => species.Value);
+
+        return string.IsNullOrEmpty(searchString)
+            ? source.OrderBy(species => species.Text).Take(AutocompleteEmptyQueryTake)
+            : source
                 .Where(species => species.Text.Contains(searchString, StringComparison.OrdinalIgnoreCase))
                 .OrderBy(species => species.Text);
+    }
 
     public ComboItem GetSpeciesComboItem(ushort speciesId) => GameInfo.FilteredSources.Species
         .DistinctBy(species => species.Value)
         .FirstOrDefault(species => species.Value == speciesId) ?? new(string.Empty, (int)Species.None);
 
-    public IEnumerable<ComboItem> SearchItemNames(string searchString) =>
-        AppState.SaveFile is null || searchString is not { Length: > 0 }
-            ? []
-            : GameInfo.FilteredSources.Items
-                .DistinctBy(item => item.Value)
+    public IEnumerable<ComboItem> SearchItemNames(string searchString)
+    {
+        if (AppState.SaveFile is null)
+        {
+            return [];
+        }
+
+        var source = GameInfo.FilteredSources.Items
+            .DistinctBy(item => item.Value);
+
+        return string.IsNullOrEmpty(searchString)
+            ? source.OrderBy(item => item.Text).Take(AutocompleteEmptyQueryTake)
+            : source
                 .Where(item => item.Text.Contains(searchString, StringComparison.OrdinalIgnoreCase))
                 .OrderBy(item => item.Text);
+    }
 
     public ComboItem GetItemComboItem(int itemId) => GameInfo.FilteredSources.Items
         .DistinctBy(item => item.Value)
@@ -154,13 +177,22 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
     }
 
     public IEnumerable<ComboItem> SearchMetLocations(string searchString, GameVersion gameVersion,
-        EntityContext entityContext, bool isEggLocation = false) =>
-        AppState.SaveFile is null || searchString is not { Length: > 0 }
-            ? []
-            : GameInfo.GetLocationList(gameVersion, entityContext, isEggLocation)
-                .DistinctBy(l => l.Value)
-                .Where(metLocation => metLocation.Text.Contains(searchString, StringComparison.OrdinalIgnoreCase))
-                .OrderBy(metLocation => metLocation.Text);
+        EntityContext entityContext, bool isEggLocation = false)
+    {
+        if (AppState.SaveFile is null)
+        {
+            return [];
+        }
+
+        var source = GameInfo.GetLocationList(gameVersion, entityContext, isEggLocation)
+            .DistinctBy(l => l.Value);
+
+        return string.IsNullOrEmpty(searchString)
+            ? source.OrderBy(l => l.Text).Take(AutocompleteEmptyQueryTake)
+            : source
+                .Where(l => l.Text.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(l => l.Text);
+    }
 
     public ComboItem GetMetLocationComboItem(ushort metLocationId, GameVersion gameVersion, EntityContext entityContext,
         bool isEggLocation = false) => AppState.SaveFile is null
@@ -169,13 +201,22 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
             .DistinctBy(l => l.Value)
             .FirstOrDefault(metLocation => metLocation.Value == metLocationId) ?? null!;
 
-    public IEnumerable<ComboItem> SearchMoves(string searchString) =>
-        AppState.SaveFile is null || searchString is not { Length: > 0 }
-            ? []
-            : GameInfo.FilteredSources.Moves
-                .DistinctBy(move => move.Value)
+    public IEnumerable<ComboItem> SearchMoves(string searchString)
+    {
+        if (AppState.SaveFile is null)
+        {
+            return [];
+        }
+
+        var source = GameInfo.FilteredSources.Moves
+            .DistinctBy(move => move.Value);
+
+        return string.IsNullOrEmpty(searchString)
+            ? source.OrderBy(move => move.Text).Take(AutocompleteEmptyQueryTake)
+            : source
                 .Where(move => move.Text.Contains(searchString, StringComparison.OrdinalIgnoreCase))
                 .OrderBy(move => move.Text);
+    }
 
     public IEnumerable<ComboItem> GetMoves() => AppState.SaveFile is null
         ? []
@@ -217,6 +258,9 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
         {
             case SelectedPokemonType.Party:
                 AppState.SaveFile.SetPartySlotAtIndex(pokemon, partySlot);
+                // If the edited slot was past PartyCount (e.g. HaX mode editing an empty slot)
+                // the write would leave a gap; party is always a packed list, so compact.
+                AppState.SaveFile.CompactParty();
 
                 // Let's Go games store Pokémon in a unified storage system
                 // Changes to party affect box display, so refresh both
@@ -232,6 +276,7 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
                 break;
             case SelectedPokemonType.Box:
                 AppState.SaveFile.SetBoxSlotAtIndex(pokemon, boxNumber, boxSlot);
+                AppState.SaveFile.CompactBoxIfGen12(boxNumber);
                 RefreshService.RefreshBoxState();
                 break;
             case SelectedPokemonType.None when AppState.SaveFile is SAV7b:
@@ -804,11 +849,7 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
                     {
                         saveFile.SetBoxSlotAtIndex(sourcePokemon, destBoxNumber.Value, destSlotNumber);
 
-                        // Gen 1 and Gen 2 boxes should be compacted like party (they were lists, not grids)
-                        if (saveFile.Context is EntityContext.Gen1 or EntityContext.Gen2)
-                        {
-                            CompactBox(saveFile, destBoxNumber.Value);
-                        }
+                        saveFile.CompactBoxIfGen12(destBoxNumber.Value);
                     }
                     else // LetsGo storage
                     {
@@ -827,29 +868,23 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
                     {
                         saveFile.SetBoxSlotAtIndex(saveFile.BlankPKM, sourceBoxNumber.Value, sourceSlotNumber);
 
-                        // Gen 1 and Gen 2 boxes should be compacted like party (they were lists, not grids)
-                        if (saveFile.Context is EntityContext.Gen1 or EntityContext.Gen2)
-                        {
-                            CompactBox(saveFile, sourceBoxNumber.Value);
-                        }
+                        saveFile.CompactBoxIfGen12(sourceBoxNumber.Value);
                     }
                     else // LetsGo storage
                     {
                         saveFile.SetBoxSlotAtIndex(saveFile.BlankPKM, sourceSlotNumber);
                     }
 
-                    // Add to party at the first available empty slot (or the specified slot if within PartyCount)
-                    // PKHeX.Core's party is kept compact, so we should add at PartyCount position
-                    // unless the user explicitly dropped on an occupied slot (which would be a swap)
-                    // or on an empty slot within the current party range
-                    var targetSlot = destSlotNumber;
-                    if (destSlotNumber >= saveFile.PartyCount)
-                    {
-                        // User dropped beyond current party - add at end of party (PartyCount position)
-                        targetSlot = saveFile.PartyCount;
-                    }
+                    // Realign beyond-PartyCount drops to the append position so dropping on slot
+                    // 5 with only 1 party member lands at slot 1, not slot 5 (mirrors PKHeX's
+                    // SlotInfoParty.WriteTo). CompactParty is a safety net in case an upstream
+                    // state was already inconsistent.
+                    var targetSlot = destSlotNumber >= saveFile.PartyCount
+                        ? saveFile.PartyCount
+                        : destSlotNumber;
 
                     saveFile.SetPartySlotAtIndex(sourcePokemon, targetSlot);
+                    saveFile.CompactParty();
                     break;
                 }
             default:
@@ -910,28 +945,24 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
                         else if (sourceBoxNumber.HasValue)
                         {
                             saveFile.SetBoxSlotAtIndex(saveFile.BlankPKM, sourceBoxNumber.Value, sourceSlotNumber);
-
-                            // Gen 1 and Gen 2 boxes should be compacted like party (they were lists, not grids)
-                            if (saveFile.Context is EntityContext.Gen1 or EntityContext.Gen2)
-                            {
-                                CompactBox(saveFile, sourceBoxNumber.Value);
-                            }
+                            saveFile.CompactBoxIfGen12(sourceBoxNumber.Value);
                         }
                         else // LetsGo storage
                         {
                             saveFile.SetBoxSlotAtIndex(saveFile.BlankPKM, sourceSlotNumber);
                         }
 
-                        // For Gen 1/2: If we just moved within the same box or moved into a box, compact the destination box too
-                        if (saveFile.Context is EntityContext.Gen1 or EntityContext.Gen2 && !isDestParty &&
-                            destBoxNumber.HasValue)
+                        // Compact the destination too: dropping past the last filled slot (party
+                        // in any gen, or a Gen 1/2 box) otherwise leaves a gap. For party→party
+                        // moves, DeletePartySlot above can additionally leave PartyCount in an
+                        // inconsistent state when the drop target was past the original count.
+                        if (isDestParty)
                         {
-                            // Check if destination box differs from source box, or if we're moving within same box
-                            // Either way, compact the destination box to ensure proper list format
-                            if (!isSourceParty)
-                            {
-                                CompactBox(saveFile, destBoxNumber.Value);
-                            }
+                            saveFile.CompactParty();
+                        }
+                        else if (destBoxNumber.HasValue)
+                        {
+                            saveFile.CompactBoxIfGen12(destBoxNumber.Value);
                         }
                     }
 
@@ -1753,6 +1784,123 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
             return false;
         }
 
+        // ── Types (order-agnostic multiset match against PersonalInfo) ────
+
+        if (f.Type1.HasValue || f.Type2.HasValue)
+        {
+            var (t1, t2) = pkm.GetGenerationTypes();
+
+            if (f.Type1.HasValue && f.Type2.HasValue)
+            {
+                var a = f.Type1.Value;
+                var b = f.Type2.Value;
+                var pairMatches = (a == t1 && b == t2) || (a == t2 && b == t1);
+                if (!pairMatches)
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                var filterType = f.Type1 ?? f.Type2!.Value;
+                if (filterType != t1 && filterType != t2)
+                {
+                    return false;
+                }
+            }
+        }
+
+        // ── Tera Type (Gen 9 SV only) ─────────────────────────────────────
+
+        if (f.TeraType.HasValue)
+        {
+            if (pkm is not ITeraType tera || (byte)tera.TeraType != f.TeraType.Value)
+            {
+                return false;
+            }
+        }
+
+        // ── Conditional flags ─────────────────────────────────────────────
+
+        if (f.IsFavorite.HasValue)
+        {
+            if (pkm is not IFavorite fav || fav.IsFavorite != f.IsFavorite.Value)
+            {
+                return false;
+            }
+        }
+
+        if (f.IsAlpha.HasValue)
+        {
+            if (pkm is not IAlpha alpha || alpha.IsAlpha != f.IsAlpha.Value)
+            {
+                return false;
+            }
+        }
+
+        if (f.IsShadow.HasValue)
+        {
+            if (pkm is not IShadowCapture shadow || shadow.IsShadow != f.IsShadow.Value)
+            {
+                return false;
+            }
+        }
+
+        if (f.CanGigantamax.HasValue)
+        {
+            if (pkm is not IGigantamax gmax || gmax.CanGigantamax != f.CanGigantamax.Value)
+            {
+                return false;
+            }
+        }
+
+        if (f.DynamaxLevelMin.HasValue)
+        {
+            if (pkm is not IDynamaxLevel dmax || dmax.DynamaxLevel < f.DynamaxLevelMin.Value)
+            {
+                return false;
+            }
+        }
+
+        // ── Origin (met date / location / Pokerus) ────────────────────────
+
+        if (f.MetLocation.HasValue && pkm.MetLocation != f.MetLocation.Value)
+        {
+            return false;
+        }
+
+        if (f.MetDateMin.HasValue || f.MetDateMax.HasValue)
+        {
+            if (pkm.MetDate is not { } metDate)
+            {
+                return false;
+            }
+
+            if (f.MetDateMin.HasValue && metDate < f.MetDateMin.Value)
+            {
+                return false;
+            }
+
+            if (f.MetDateMax.HasValue && metDate > f.MetDateMax.Value)
+            {
+                return false;
+            }
+        }
+
+        if (f.PokerusState.HasValue)
+        {
+            var state = pkm switch
+            {
+                { IsPokerusCured: true } => 2,
+                { IsPokerusInfected: true } => 1,
+                _ => 0,
+            };
+            if (state != f.PokerusState.Value)
+            {
+                return false;
+            }
+        }
+
         // ── Language ──────────────────────────────────────────────────────
 
         if (f.LanguageId.HasValue && pkm.Language != f.LanguageId.Value)
@@ -1901,6 +2049,31 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
             }
         }
 
+        // ── Markings (shape toggles — Gen 3+) ─────────────────────────────
+
+        if (f.RequiredMarkings.Count > 0)
+        {
+            if (pkm is not IAppliedMarkings marks)
+            {
+                return false;
+            }
+
+            foreach (var index in f.RequiredMarkings)
+            {
+                if ((uint)index >= (uint)marks.MarkingCount)
+                {
+                    // Persisted filters can outlive the save they were built against;
+                    // unsupported indices on this PKM are "not set" rather than an error.
+                    return false;
+                }
+
+                if (pkm.GetMarking(index) == 0)
+                {
+                    return false;
+                }
+            }
+        }
+
         // ── Legality (expensive — evaluated last) ─────────────────────────
 
         if (!f.IsLegal.HasValue)
@@ -1942,35 +2115,6 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
     /// Compacts a box by shifting all Pokémon left to fill gaps (for Gen 1 and Gen 2 games).
     /// In these generations, boxes were lists, not grids, so they should have no gaps.
     /// </summary>
-    private static void CompactBox(SaveFile saveFile, int boxNumber)
-    {
-        var boxSlotCount = saveFile.BoxSlotCount;
-        var compacted = new PKM[boxSlotCount];
-        var writeIndex = 0;
-
-        // Collect all non-blank Pokémon
-        for (var i = 0; i < boxSlotCount; i++)
-        {
-            var pkm = saveFile.GetBoxSlotAtIndex(boxNumber, i);
-            if (pkm.Species > 0)
-            {
-                compacted[writeIndex++] = pkm;
-            }
-        }
-
-        // Fill remaining slots with blank Pokémon
-        for (var i = writeIndex; i < boxSlotCount; i++)
-        {
-            compacted[i] = saveFile.BlankPKM;
-        }
-
-        // Write the compacted box back
-        for (var i = 0; i < boxSlotCount; i++)
-        {
-            saveFile.SetBoxSlotAtIndex(compacted[i], boxNumber, i);
-        }
-    }
-
     private EncounterSearchResult BuildEncounterResult(IEncounterable enc)
     {
         var speciesName = GetPokemonSpeciesName(enc.Species);

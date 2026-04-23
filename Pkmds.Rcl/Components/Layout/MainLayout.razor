@@ -1,12 +1,6 @@
 @inherits LayoutComponentBase
 @inject ILogger<MainLayout> Logger
 
-<MudThemeProvider @ref="@mudThemeProvider"
-                  IsDarkMode="@isDarkMode"/>
-<MudPopoverProvider/>
-<MudDialogProvider BackdropClick="false"/>
-<MudSnackbarProvider/>
-
 <MudLayout>
     <MudAppBar Dense>
         <MudBadge Color="@Color.Info"
@@ -171,6 +165,16 @@
                        FullWidth>
                 Report a Bug
             </MudButton>
+            @if (IsDebugBuild)
+            {
+                <MudButton OnClick="@TriggerCrash"
+                           StartIcon="@Icons.Material.Filled.Warning"
+                           Variant="@Variant.Outlined"
+                           Color="@Color.Error"
+                           FullWidth>
+                    [DEBUG] Trigger Crash
+                </MudButton>
+            }
             @if (IsUpdateAvailable)
             {
                 <MudButton OnClick="@ReloadApp"

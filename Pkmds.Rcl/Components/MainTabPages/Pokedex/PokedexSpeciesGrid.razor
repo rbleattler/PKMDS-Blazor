@@ -7,7 +7,8 @@
               Wrap="@Wrap.Wrap"
               Spacing="2"
               Class="mb-2">
-        <MudTextField @bind-Value="searchText"
+        <MudTextField Value="@searchText"
+                      ValueChanged="@((string v) => SetSearchText(v))"
                       Placeholder="Search species…"
                       Immediate
                       AdornmenT="@Adornment.Start"
@@ -18,31 +19,31 @@
             <MudButton Color="@(selectedStatusFilter == DexStatusFilter.All
                                   ? Color.Primary
                                   : Color.Default)"
-                       OnClick="@(() => selectedStatusFilter = DexStatusFilter.All)">
+                       OnClick="@(() => SetStatusFilter(DexStatusFilter.All))">
                 All
             </MudButton>
             <MudButton Color="@(selectedStatusFilter == DexStatusFilter.Seen
                                   ? Color.Primary
                                   : Color.Default)"
-                       OnClick="@(() => selectedStatusFilter = DexStatusFilter.Seen)">
+                       OnClick="@(() => SetStatusFilter(DexStatusFilter.Seen))">
                 Seen
             </MudButton>
             <MudButton Color="@(selectedStatusFilter == DexStatusFilter.Caught
                                   ? Color.Success
                                   : Color.Default)"
-                       OnClick="@(() => selectedStatusFilter = DexStatusFilter.Caught)">
+                       OnClick="@(() => SetStatusFilter(DexStatusFilter.Caught))">
                 Caught
             </MudButton>
             <MudButton Color="@(selectedStatusFilter == DexStatusFilter.Unseen
                                   ? Color.Warning
                                   : Color.Default)"
-                       OnClick="@(() => selectedStatusFilter = DexStatusFilter.Unseen)">
+                       OnClick="@(() => SetStatusFilter(DexStatusFilter.Unseen))">
                 Unseen
             </MudButton>
             <MudButton Color="@(selectedStatusFilter == DexStatusFilter.SeenNotCaught
                                   ? Color.Info
                                   : Color.Default)"
-                       OnClick="@(() => selectedStatusFilter = DexStatusFilter.SeenNotCaught)">
+                       OnClick="@(() => SetStatusFilter(DexStatusFilter.SeenNotCaught))">
                 Seen / Not Caught
             </MudButton>
         </MudButtonGroup>
@@ -53,7 +54,7 @@
                 <MudButton Color="@(selectedRegionalDexFilter == -1
                                       ? Color.Primary
                                       : Color.Default)"
-                           OnClick="@(() => selectedRegionalDexFilter = -1)">
+                           OnClick="@(() => SetRegionalDexFilter(-1))">
                     All Dexes
                 </MudButton>
                 @for (var i = 0; i < regionalDexDefinitions.Count; i++)
@@ -62,7 +63,7 @@
                     <MudButton Color="@(selectedRegionalDexFilter == idx
                                           ? Color.Primary
                                           : Color.Default)"
-                               OnClick="@(() => selectedRegionalDexFilter = idx)">
+                               OnClick="@(() => SetRegionalDexFilter(idx))">
                         @regionalDexDefinitions[idx].Name
                     </MudButton>
                 }
@@ -71,8 +72,7 @@
     </MudStack>
 
     <MudDataGrid T="@PokedexGridRow"
-                 Items="@rows"
-                 QuickFilter="@FilterRow"
+                 Items="@filteredRows"
                  Dense
                  Hover
                  Bordered
@@ -81,7 +81,7 @@
                  RowClassFunc="@((_, i) => i % 2 != 0
                                    ? "row-alt"
                                    : string.Empty)"
-                 Height="@($"calc(100dvh - {(regionalDexDefinitions.Count > 0 ? 400 : 350)}px)")">
+                 Class="pokedex-species-grid">
 
         <Columns>
             <PropertyColumn Property="@(r => r.SpeciesId)"

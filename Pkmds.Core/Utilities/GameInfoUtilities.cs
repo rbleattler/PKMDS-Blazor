@@ -85,4 +85,56 @@ public static class GameInfoUtilities
     /// <param name="categoryId">Raw category ID (0 = Status, 1 = Physical, 2 = Special).</param>
     public static string GetCategoryName(int categoryId) =>
         GetCategoryName((MoveCategory)categoryId);
+
+    /// <summary>
+    /// All distinct nature values available in the current game context.
+    /// </summary>
+    public static IEnumerable<Nature> GetNatureItems() =>
+        GameInfo.FilteredSources.Natures.DistinctBy(n => n.Value).Select(n => (Nature)n.Value);
+
+    /// <summary>
+    /// Display name of a nature in the current game's language.
+    /// </summary>
+    public static string GetNatureName(Nature nature) =>
+        GameInfo.FilteredSources.Natures.FirstOrDefault(n => n.Value == (int)nature)?.Text ?? nature.ToString();
+
+    /// <summary>
+    /// Looks up a move ID from a move name in PKHeX's movelist, treating non-alphanumeric
+    /// characters (hyphens, spaces, apostrophes, periods) as equivalent. Cross-source data
+    /// (e.g., tm-data.json from Bulbapedia, which uses "Softboiled" / "ThunderPunch") can
+    /// match PKHeX's canonical spelling ("Soft-Boiled" / "Thunder Punch") without requiring
+    /// a per-move alias table. Returns 0 if no match is found.
+    /// </summary>
+    public static ushort FindMoveIdByName(string moveName)
+    {
+        var target = NormalizeMoveName(moveName);
+        if (target.Length == 0)
+        {
+            return 0;
+        }
+
+        var movelist = GameInfo.Strings.movelist;
+        for (ushort i = 1; i < movelist.Length; i++)
+        {
+            if (NormalizeMoveName(movelist[i]) == target)
+            {
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    /// <summary>
+    /// Returns PKHeX's canonical spelling for a move name (using the same loose
+    /// normalization as <see cref="FindMoveIdByName" />), or the input unchanged if no
+    /// match is found.
+    /// </summary>
+    public static string GetCanonicalMoveName(string moveName)
+    {
+        var id = FindMoveIdByName(moveName);
+        return id > 0 ? GameInfo.Strings.movelist[id] : moveName;
+    }
+
+    private static string NormalizeMoveName(string s) =>
+        string.Concat(s.Where(char.IsLetterOrDigit).Select(char.ToLowerInvariant));
 }

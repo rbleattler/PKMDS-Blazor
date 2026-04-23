@@ -140,6 +140,7 @@ public class RefreshAwareComponentTests
 
         public event Action? OnUpdateAvailable;
         public event Action<bool>? OnThemeChanged;
+        public event Action<bool>? OnSystemThemeChanged;
 
         public void Refresh() => _onAppStateChanged?.Invoke();
         public void RefreshBoxState() => _onBoxStateChanged?.Invoke();
@@ -152,6 +153,7 @@ public class RefreshAwareComponentTests
         }
 
         public void RefreshTheme(bool isDarkMode) => OnThemeChanged?.Invoke(isDarkMode);
+        public void RefreshSystemTheme(bool systemIsDarkMode) => OnSystemThemeChanged?.Invoke(systemIsDarkMode);
         public void ShowUpdateMessage() => OnUpdateAvailable?.Invoke();
 
         public event Action? OnRequestJumpToPartyBox;

@@ -35,6 +35,12 @@ public class RefreshService : IRefreshService
     public event Action<bool>? OnThemeChanged;
 
     /// <inheritdoc />
+    public event Action<bool>? OnSystemThemeChanged;
+
+    /// <inheritdoc />
+    public void RefreshSystemTheme(bool systemIsDarkMode) => OnSystemThemeChanged?.Invoke(systemIsDarkMode);
+
+    /// <inheritdoc />
     void IRefreshService.ShowUpdateMessage() => ShowUpdateMessage();
 
     /// <inheritdoc />

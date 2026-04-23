@@ -30,10 +30,43 @@ public interface IAppState
     string? SaveFileName { get; set; }
 
     /// <summary>
+    /// Gets or sets the Manic EMU ZIP context captured when the user uploaded a
+    /// <c>.3ds.sav</c> / <c>.3ds.save</c> archive. Non-null only while a Manic EMU save is loaded.
+    /// Export, auto-backup, and bug-report submission all read this to round-trip the
+    /// original ZIP wrapper instead of the raw inner save. Cleared when the save file is unloaded.
+    /// </summary>
+    ManicEmuSaveHelper.ManicEmuSaveContext? ManicEmuSaveContext { get; set; }
+
+    /// <summary>
+    /// Gets or sets the secondary save file used by the cross-save Trade tab.
+    /// Independent from <see cref="SaveFile" />; remains null until the user explicitly
+    /// loads a second save from the Trade tab.
+    /// </summary>
+    SaveFile? SaveFileB { get; set; }
+
+    /// <summary>
+    /// Gets or sets the original file name of the secondary (slot-B) save file.
+    /// </summary>
+    string? SaveFileNameB { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the secondary (slot-B) save file has uncommitted edits
+    /// from the Trade tab that have not yet been exported. Reset to false when slot B
+    /// is loaded, replaced, exported, or unloaded.
+    /// </summary>
+    bool HasUnsavedChangesB { get; set; }
+
+    /// <summary>
     /// Gets the box editor interface for the current save file.
     /// This provides access to box manipulation operations.
     /// </summary>
     BoxEdit? BoxEdit { get; }
+
+    /// <summary>
+    /// Gets the box editor interface for the secondary (slot-B) save file.
+    /// Null when no secondary save file is loaded.
+    /// </summary>
+    BoxEdit? BoxEditB { get; }
 
     /// <summary>
     /// Gets or sets the Pokémon currently stored in the clipboard for copy/paste operations.
@@ -57,6 +90,21 @@ public interface IAppState
     /// Null when no party slot is selected or when a box slot is selected.
     /// </summary>
     int? SelectedPartySlotNumber { get; set; }
+
+    /// <summary>
+    /// Gets or sets the slot-B currently selected box number (0-based index) on the Trade tab.
+    /// </summary>
+    int? SelectedBoxNumberB { get; set; }
+
+    /// <summary>
+    /// Gets or sets the slot-B currently selected box slot number (0-based index within a box).
+    /// </summary>
+    int? SelectedBoxSlotNumberB { get; set; }
+
+    /// <summary>
+    /// Gets or sets the slot-B currently selected party slot number (0-based index, 0-5).
+    /// </summary>
+    int? SelectedPartySlotNumberB { get; set; }
 
     /// <summary>
     /// Gets or sets whether the progress indicator should be displayed.

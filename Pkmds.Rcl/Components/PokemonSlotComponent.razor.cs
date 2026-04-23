@@ -50,6 +50,16 @@ public partial class PokemonSlotComponent : IDisposable
     /// <summary>Clears the session sprite cache, forcing all high-res sprites to reload.</summary>
     public static void ClearSpriteCache() => HighResLoadedSpecies.Clear();
 
+    /// <summary>Returns whether the given sprite combo has loaded high-res in this session.</summary>
+    public static bool IsHighResLoaded(ushort species, byte form, uint formArg, bool isShiny, bool isFemale,
+        SpriteStyle style) =>
+        HighResLoadedSpecies.Contains((species, form, formArg, isShiny, isFemale, style));
+
+    /// <summary>Marks the given sprite combo as high-res-loaded for this session.</summary>
+    public static void MarkHighResLoaded(ushort species, byte form, uint formArg, bool isShiny, bool isFemale,
+        SpriteStyle style) =>
+        HighResLoadedSpecies.Add((species, form, formArg, isShiny, isFemale, style));
+
     private async Task HandleClick() =>
         await OnSlotClick.InvokeAsync();
 
@@ -97,8 +107,8 @@ public partial class PokemonSlotComponent : IDisposable
         lastLoadedSpriteStyle = currentSpriteStyle;
         // If this combo has already loaded high-res in this session, skip the bundled sprite entirely.
         highResLoaded = lastLoadedSpecies > 0
-                        && HighResLoadedSpecies.Contains((lastLoadedSpecies, lastLoadedForm, lastLoadedFormArg,
-                            lastLoadedIsShiny, lastLoadedIsFemale, lastLoadedSpriteStyle));
+                        && IsHighResLoaded(lastLoadedSpecies, lastLoadedForm, lastLoadedFormArg,
+                            lastLoadedIsShiny, lastLoadedIsFemale, lastLoadedSpriteStyle);
     }
 
     // Gen I/II transparent sprites are 40×40 px — scale up to fill the slot.
@@ -128,8 +138,8 @@ public partial class PokemonSlotComponent : IDisposable
         highResLoaded = true;
         if (lastLoadedSpecies > 0)
         {
-            HighResLoadedSpecies.Add((lastLoadedSpecies, lastLoadedForm, lastLoadedFormArg, lastLoadedIsShiny,
-                lastLoadedIsFemale, lastLoadedSpriteStyle));
+            MarkHighResLoaded(lastLoadedSpecies, lastLoadedForm, lastLoadedFormArg, lastLoadedIsShiny,
+                lastLoadedIsFemale, lastLoadedSpriteStyle);
         }
 
         StateHasChanged();
@@ -157,19 +167,7 @@ public partial class PokemonSlotComponent : IDisposable
         }
 
         var la = AppService.GetLegalityAnalysis(Pokemon, isParty: IsPartySlot);
-        var hasInvalid = la.Results.Any(r => r.Judgement == PKHeX.Core.Severity.Invalid)
-                         || !MoveResult.AllValid(la.Info.Moves)
-                         || !MoveResult.AllValid(la.Info.Relearn);
-        if (hasInvalid)
-        {
-            legalityStatus = LegalityStatus.Illegal;
-            return;
-        }
-
-        var hasFishy = la.Results.Any(r => r.Judgement == PKHeX.Core.Severity.Fishy);
-        legalityStatus = hasFishy
-            ? LegalityStatus.Fishy
-            : LegalityStatus.Legal;
+        legalityStatus = LegalityUi.GetStatus(la);
     }
 
     private string GetPokemonTitle() => Pokemon is { Species: > 0 }
@@ -332,9 +330,11 @@ public partial class PokemonSlotComponent : IDisposable
 
     private void HandleDragEnter(DragEventArgs e)
     {
-        // Show visual feedback when an external file is dragged over the slot
-        if (DragDropService.IsDragging ||
-            !e.DataTransfer.Types.Any(t => t.Equals("Files", StringComparison.OrdinalIgnoreCase)))
+        // Show visual feedback when an external file is dragged over the slot.
+        // Internal drags never include "Files" in DataTransfer.Types, so this check
+        // is authoritative — don't gate on DragDropService.IsDragging, because that
+        // state can be stale after a drag-out-to-OS where `dragend` didn't fire.
+        if (!e.DataTransfer.Types.Any(t => t.Equals("Files", StringComparison.OrdinalIgnoreCase)))
         {
             return;
         }
@@ -358,51 +358,62 @@ public partial class PokemonSlotComponent : IDisposable
     {
         isDragOverWithExternalFile = false;
 
-        // Check for internal drag first - this takes priority over file drops
-        if (DragDropService.IsDragging)
+        // Prefer external file drops over the internal-drag state. After a successful
+        // drag-out-to-OS, Chrome's DownloadURL transfer doesn't always fire `dragend`
+        // on the source slot (the drop is consumed by the OS), so DragDropService can
+        // still report IsDragging when the user drags the resulting file back in. If
+        // we see real files on this drop, treat it as an import and clear any stale
+        // internal drag state so the next interaction starts clean.
+        if (e.DataTransfer.Files.Length > 0)
         {
-            // Don't drop onto the same slot
-            if (DragDropService.IsDragSourceParty == IsPartySlot &&
-                DragDropService.DragSourceBoxNumber == BoxNumber &&
-                DragDropService.DragSourceSlotNumber == SlotNumber)
-            {
-                DragDropService.ClearDrag();
-                StateHasChanged();
-                return;
-            }
+            DragDropService.ClearDrag();
+            // Render now so the slot's external-drop highlight (driven by
+            // isDragOverWithExternalFile above) clears before the potentially
+            // long-running import; otherwise the next render only happens after
+            // HandleFileDropAsync completes, leaving the highlight on during it.
+            StateHasChanged();
+            await HandleFileDropAsync(e.DataTransfer.Files);
+            return;
+        }
 
-            // Drag and drop is not supported for Let's Go games
-            if (AppState.SaveFile is SAV7b)
-            {
-                DragDropService.ClearDrag();
-                StateHasChanged();
-                return;
-            }
+        if (!DragDropService.IsDragging)
+        {
+            return;
+        }
 
-            // Move the Pokémon
-            AppService.MovePokemon(
-                DragDropService.DragSourceBoxNumber,
-                DragDropService.DragSourceSlotNumber,
-                DragDropService.IsDragSourceParty,
-                BoxNumber,
-                SlotNumber,
-                IsPartySlot
-            );
-
-            // Clear the selection so the editor panel closes after the move
-            AppService.ClearSelection();
-
+        // Don't drop onto the same slot
+        if (DragDropService.IsDragSourceParty == IsPartySlot &&
+            DragDropService.DragSourceBoxNumber == BoxNumber &&
+            DragDropService.DragSourceSlotNumber == SlotNumber)
+        {
             DragDropService.ClearDrag();
             StateHasChanged();
             return;
         }
 
-        // Check if this is a file drop from external source
-        // Only process if we're not in an internal drag operation
-        if (e.DataTransfer.Files.Length > 0)
+        // Drag and drop is not supported for Let's Go games
+        if (AppState.SaveFile is SAV7b)
         {
-            await HandleFileDropAsync(e.DataTransfer.Files);
+            DragDropService.ClearDrag();
+            StateHasChanged();
+            return;
         }
+
+        // Move the Pokémon
+        AppService.MovePokemon(
+            DragDropService.DragSourceBoxNumber,
+            DragDropService.DragSourceSlotNumber,
+            DragDropService.IsDragSourceParty,
+            BoxNumber,
+            SlotNumber,
+            IsPartySlot
+        );
+
+        // Clear the selection so the editor panel closes after the move
+        AppService.ClearSelection();
+
+        DragDropService.ClearDrag();
+        StateHasChanged();
     }
 
     private async Task HandleFileDropAsync(string[] fileNames)
@@ -415,6 +426,15 @@ public partial class PokemonSlotComponent : IDisposable
 
         if (fileNames.Length == 0)
         {
+            return;
+        }
+
+        // Multi-file drop: route through BulkImportDialog with the files preloaded.
+        // The first file still lands in the dropped slot via the single-file path below
+        // only when exactly one file is dropped.
+        if (fileNames.Length > 1)
+        {
+            await HandleBulkFileDropAsync(fileNames);
             return;
         }
 
@@ -483,15 +503,20 @@ public partial class PokemonSlotComponent : IDisposable
 
             saveFile.AdaptToSaveFile(pokemon);
 
-            // Place the Pokemon in the dropped slot
+            // Place the Pokemon in the dropped slot. Party is always a packed list in every
+            // generation, and Gen 1/2 boxes are packed lists too — compact after the write so
+            // dropping past the last filled slot collapses into the next free slot instead of
+            // leaving a gap.
             if (IsPartySlot)
             {
                 saveFile.SetPartySlotAtIndex(pokemon, SlotNumber);
+                saveFile.CompactParty();
                 RefreshService.RefreshPartyState();
             }
             else if (BoxNumber.HasValue)
             {
                 saveFile.SetBoxSlotAtIndex(pokemon, BoxNumber.Value, SlotNumber);
+                saveFile.CompactBoxIfGen12(BoxNumber.Value);
                 RefreshService.RefreshBoxState();
             }
             else // LetsGo storage
@@ -509,6 +534,59 @@ public partial class PokemonSlotComponent : IDisposable
             Snackbar.Add($"Error importing Pokémon: {ex.Message}", Severity.Error);
             // TODO: Add proper logging with ILogger when available
             await Console.Error.WriteLineAsync($"Error in HandleFileDropAsync: {ex}");
+        }
+        finally
+        {
+            AppState.ShowProgressIndicator = false;
+        }
+    }
+
+    private async Task HandleBulkFileDropAsync(string[] fileNames)
+    {
+        try
+        {
+            AppState.ShowProgressIndicator = true;
+
+            var preloaded = new List<(string FileName, byte[] Data)>(fileNames.Length);
+            for (var i = 0; i < fileNames.Length; i++)
+            {
+                var base64 = await JSRuntime.InvokeAsync<string>("readDroppedFile", i);
+                if (string.IsNullOrEmpty(base64))
+                {
+                    continue;
+                }
+
+                preloaded.Add((fileNames[i], Convert.FromBase64String(base64)));
+            }
+
+            if (preloaded.Count == 0)
+            {
+                Snackbar.Add("Failed to read the dropped files.", Severity.Error);
+                return;
+            }
+
+            var parameters = new DialogParameters<BulkImportDialog>
+            {
+                { x => x.PreloadedFiles, preloaded },
+                // Box slot drop → fill boxes first; party slot drop → fill party first.
+                { x => x.FillBoxesFirst, !IsPartySlot }
+            };
+            var options = new DialogOptions
+            {
+                CloseOnEscapeKey = true,
+                MaxWidth = MaxWidth.Small,
+                FullWidth = true
+            };
+
+            var dialog = await DialogService.ShowAsync<BulkImportDialog>(
+                "Bulk Import .pk* Files", parameters, options);
+            await dialog.Result;
+            RefreshService.RefreshBoxAndPartyState();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error importing Pokémon: {ex.Message}", Severity.Error);
+            await Console.Error.WriteLineAsync($"Error in HandleBulkFileDropAsync: {ex}");
         }
         finally
         {

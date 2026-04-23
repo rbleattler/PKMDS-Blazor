@@ -392,6 +392,7 @@ public class EvolveTests
         public int? SelectedPartySlotNumber { get; set; }
         public int? PinnedBoxNumber { get; set; }
         public string? SaveFileName { get; set; }
+        public ManicEmuSaveHelper.ManicEmuSaveContext? ManicEmuSaveContext { get; set; }
         public bool ShowProgressIndicator { get; set; }
         public string AppVersion => "Test";
         public DateTime? AppBuildDate => null;
@@ -401,6 +402,13 @@ public class EvolveTests
         public bool ShowLegalIndicator { get; set; } = true;
         public bool ShowFishyIndicator { get; set; } = true;
         public bool ShowIllegalIndicator { get; set; } = true;
+        public SaveFile? SaveFileB { get; set; }
+        public string? SaveFileNameB { get; set; }
+        public bool HasUnsavedChangesB { get; set; }
+        public BoxEdit? BoxEditB => null;
+        public int? SelectedBoxNumberB { get; set; }
+        public int? SelectedBoxSlotNumberB { get; set; }
+        public int? SelectedPartySlotNumberB { get; set; }
     }
 
     private sealed class TestRefreshService : IRefreshService
@@ -410,6 +418,7 @@ public class EvolveTests
         public event Action? OnPartyStateChanged { add { } remove { } }
         public event Action? OnUpdateAvailable { add { } remove { } }
         public event Action<bool>? OnThemeChanged { add { } remove { } }
+        public event Action<bool>? OnSystemThemeChanged { add { } remove { } }
         public event Action? OnRequestJumpToPartyBox { add { } remove { } }
 
         public void Refresh() { }
@@ -417,6 +426,7 @@ public class EvolveTests
         public void RefreshPartyState() { }
         public void RefreshBoxAndPartyState() { }
         public void RefreshTheme(bool isDarkMode) { }
+        public void RefreshSystemTheme(bool systemIsDarkMode) { }
         public void ShowUpdateMessage() { }
         public void RequestJumpToPartyBox() { }
     }

@@ -10,6 +10,8 @@ public sealed record BugReportRequest(
     string? SaveFileName = null,
     string? SaveGameName = null,
     string? SaveRevision = null,
+    string? SaveFileSource = null,
+    string? SaveFileType = null,
     Exception? CapturedException = null);
 
 public sealed record BugReportResult(bool Success, string? IssueUrl = null, string? ErrorMessage = null);

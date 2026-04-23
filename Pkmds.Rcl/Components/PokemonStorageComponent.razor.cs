@@ -1,5 +1,3 @@
-using PKHexSeverity = PKHeX.Core.Severity;
-
 namespace Pkmds.Rcl.Components;
 
 public partial class PokemonStorageComponent : RefreshAwareComponent
@@ -47,7 +45,7 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
             }
 
             var la = AppService.GetLegalityAnalysis(pkm);
-            if (GetStatus(la) == LegalityStatus.Illegal)
+            if (LegalityUi.GetStatus(la) == LegalityStatus.Illegal)
             {
                 count++;
             }
@@ -135,6 +133,53 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
         RefreshService.RefreshBoxState();
     }
 
+    private bool HasAnyExportablePokemon()
+    {
+        if (AppState.SaveFile is not { } sav)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < sav.PartyCount; i++)
+        {
+            if (sav.GetPartySlotAtIndex(i).Species != 0)
+            {
+                return true;
+            }
+        }
+
+        for (var box = 0; box < sav.BoxCount; box++)
+        {
+            for (var slot = 0; slot < sav.BoxSlotCount; slot++)
+            {
+                if (sav.GetBoxSlotAtIndex(box, slot).Species != 0)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private async Task OpenBulkExportDialog()
+    {
+        await DialogService.ShowAsync<BulkExportDialog>(
+            "Export Pokémon as .pk* Files",
+            new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true });
+    }
+
+    private async Task OpenBulkImportDialog()
+    {
+        var dialog = await DialogService.ShowAsync<BulkImportDialog>(
+            "Bulk Import .pk* Files",
+            new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true });
+
+        await dialog.Result;
+        InvalidateIllegalCount();
+        RefreshService.RefreshBoxAndPartyState();
+    }
+
     private async Task OpenBoxListDialog()
     {
         var isXs = await BrowserViewportService.GetCurrentBreakpointAsync() == Breakpoint.Xs;
@@ -174,7 +219,7 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
             // Only target Illegal entries. Fishy is Valid per PKHeX — users expect the
             // box-level action to leave those alone. (The Legality Report tab still
             // lets users opt in to running Fishy through the engine.)
-            if (GetStatus(la) != LegalityStatus.Illegal)
+            if (LegalityUi.GetStatus(la) != LegalityStatus.Illegal)
             {
                 continue;
             }
@@ -275,7 +320,7 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
             // Re-analyse the stored bytes so the counters match what the save actually holds.
             var storedPk = saveFile.GetBoxSlotAtIndex(box, slot);
             var storedLa = AppService.GetLegalityAnalysis(storedPk);
-            switch (GetStatus(storedLa))
+            switch (LegalityUi.GetStatus(storedLa))
             {
                 case LegalityStatus.Legal:
                     successCount++;
@@ -306,23 +351,6 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
     }
 
     private void CancelLegalizeBox() => legalizeBoxCts?.Cancel();
-
-    private static LegalityStatus GetStatus(LegalityAnalysis la)
-    {
-        var hasInvalid = la.Results.Any(r => r.Judgement == PKHexSeverity.Invalid)
-                         || !MoveResult.AllValid(la.Info.Moves)
-                         || !MoveResult.AllValid(la.Info.Relearn);
-
-        if (hasInvalid)
-        {
-            return LegalityStatus.Illegal;
-        }
-
-        var hasFishy = la.Results.Any(r => r.Judgement == PKHexSeverity.Fishy);
-        return hasFishy
-            ? LegalityStatus.Fishy
-            : LegalityStatus.Legal;
-    }
 
     private static (string Message, Severity Severity) BuildLegalizeSummary(
         int targetCount,

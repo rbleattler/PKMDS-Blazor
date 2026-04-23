@@ -208,43 +208,66 @@ public class ManicEmuSaveHelperTests
 
     // ── GetExportFileName ─────────────────────────────────────────────────
 
+    private static readonly DateTime FixedTimestamp = new(2026, 04, 20, 17, 46, 12, DateTimeKind.Utc);
+    private const string TimestampSuffix = "-20260420T174612";
+
     [Fact]
-    public void GetExportFileName_NullOriginalName_ReturnsSavSuffix()
+    public void GetExportFileName_NullOriginalName_ReturnsSavSuffixWithTimestamp()
     {
-        var (name, ext) = ManicEmuSaveHelper.GetExportFileName(null);
+        var (name, ext) = ManicEmuSaveHelper.GetExportFileName(null, FixedTimestamp);
         ext.Should().Be(".3ds.sav");
-        name.Should().Be("save.3ds.sav");
+        name.Should().Be($"save{TimestampSuffix}.3ds.sav");
     }
 
     [Theory]
-    [InlineData("AlphaSapphire.3ds.sav", "AlphaSapphire.3ds.sav", ".3ds.sav")]
-    [InlineData("ALPHASAPPHIRE.3DS.SAV", "ALPHASAPPHIRE.3ds.sav", ".3ds.sav")] // case-insensitive strip
-    [InlineData(".3ds.sav", "save.3ds.sav", ".3ds.sav")] // empty stem fallback
-    public void GetExportFileName_DotSav_PreservesSavExtension(string input, string expectedName, string expectedExt)
+    [InlineData("AlphaSapphire.3ds.sav", "AlphaSapphire", ".3ds.sav")]
+    [InlineData("ALPHASAPPHIRE.3DS.SAV", "ALPHASAPPHIRE", ".3ds.sav")] // case-insensitive strip
+    [InlineData(".3ds.sav", "save", ".3ds.sav")] // empty stem fallback
+    public void GetExportFileName_DotSav_PreservesSavExtension(string input, string expectedStem, string expectedExt)
     {
-        var (name, ext) = ManicEmuSaveHelper.GetExportFileName(input);
-        name.Should().Be(expectedName);
+        var (name, ext) = ManicEmuSaveHelper.GetExportFileName(input, FixedTimestamp);
+        name.Should().Be($"{expectedStem}{TimestampSuffix}{expectedExt}");
         ext.Should().Be(expectedExt);
     }
 
     [Theory]
-    [InlineData("AlphaSapphire.3ds.save", "AlphaSapphire.3ds.save", ".3ds.save")]
-    [InlineData("ALPHASAPPHIRE.3DS.SAVE", "ALPHASAPPHIRE.3ds.save", ".3ds.save")] // case-insensitive strip
-    [InlineData(".3ds.save", "save.3ds.save", ".3ds.save")] // empty stem fallback
-    public void GetExportFileName_DotSave_PreservesSaveExtension(string input, string expectedName, string expectedExt)
+    [InlineData("AlphaSapphire.3ds.save", "AlphaSapphire", ".3ds.save")]
+    [InlineData("ALPHASAPPHIRE.3DS.SAVE", "ALPHASAPPHIRE", ".3ds.save")] // case-insensitive strip
+    [InlineData(".3ds.save", "save", ".3ds.save")] // empty stem fallback
+    public void GetExportFileName_DotSave_PreservesSaveExtension(string input, string expectedStem, string expectedExt)
     {
-        var (name, ext) = ManicEmuSaveHelper.GetExportFileName(input);
-        name.Should().Be(expectedName);
+        var (name, ext) = ManicEmuSaveHelper.GetExportFileName(input, FixedTimestamp);
+        name.Should().Be($"{expectedStem}{TimestampSuffix}{expectedExt}");
         ext.Should().Be(expectedExt);
     }
 
     [Fact]
-    public void GetExportFileName_UnknownExtension_DefaultsToSav()
+    public void GetExportFileName_UnknownExtension_DefaultsToSavWithTimestamp()
     {
         // An unknown extension should strip the last extension and default to .3ds.sav.
-        var (name, ext) = ManicEmuSaveHelper.GetExportFileName("game.unknown");
+        var (name, ext) = ManicEmuSaveHelper.GetExportFileName("game.unknown", FixedTimestamp);
         ext.Should().Be(".3ds.sav");
-        name.Should().Be("game.3ds.sav");
+        name.Should().Be($"game{TimestampSuffix}.3ds.sav");
+    }
+
+    [Theory]
+    [InlineData("AlphaSapphire-20260420T174612.3ds.sav", "AlphaSapphire")]
+    [InlineData("AlphaSapphire-20260101T000000-20260420T174612.3ds.sav", "AlphaSapphire-20260101T000000")]
+    public void GetExportFileName_PreviousTimestampSuffix_IsReplacedNotAccumulated(string input, string expectedStem)
+    {
+        // Round-tripping an already-timestamped filename through the export must not accumulate
+        // timestamps (would produce ever-longer filenames across successive round-trips).
+        var (name, _) = ManicEmuSaveHelper.GetExportFileName(input, FixedTimestamp);
+        name.Should().Be($"{expectedStem}{TimestampSuffix}.3ds.sav");
+    }
+
+    [Fact]
+    public void GetExportFileName_SuffixThatLooksLikeTimestampButIsnt_IsPreserved()
+    {
+        // A hyphen + 15 characters that happen to look like a timestamp but aren't (e.g. any
+        // non-digit, or a wrong separator) should not be mistakenly stripped.
+        var (name, _) = ManicEmuSaveHelper.GetExportFileName("AlphaSapphire-1234567X123456.3ds.sav", FixedTimestamp);
+        name.Should().Be($"AlphaSapphire-1234567X123456{TimestampSuffix}.3ds.sav");
     }
 
     [Fact]

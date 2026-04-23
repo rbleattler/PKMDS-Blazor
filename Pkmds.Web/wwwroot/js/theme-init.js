@@ -1,11 +1,11 @@
 (function () {
-    var stored = null;
+    let stored = null;
     try {
         stored = localStorage.getItem('pkmds_theme');
     } catch (_) {
     }
-    var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    var theme = stored || (prefersDark ? 'dark' : 'light');
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const theme = stored || (prefersDark ? 'dark' : 'light');
     document.documentElement.setAttribute('data-theme', theme);
 })();
 

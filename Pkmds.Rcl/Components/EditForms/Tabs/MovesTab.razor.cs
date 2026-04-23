@@ -17,8 +17,6 @@ public partial class MovesTab
     [Parameter]
     public LegalityAnalysis? Analysis { get; set; }
 
-    private bool UseTextSearch { get; set; } = true;
-
     protected override async Task OnParametersSetAsync()
     {
         if (ReferenceEquals(Pokemon, lastPokemon))
@@ -81,9 +79,6 @@ public partial class MovesTab
         var ctx = LegalityLocalizationContext.Create(la);
         return ctx.FormatMove(result, index + 1, AppState.SaveFile!.Context);
     }
-
-    private Task<IEnumerable<ComboItem>> SearchMoves(string searchString, CancellationToken token) =>
-        Task.FromResult(AppService.SearchMoves(searchString));
 
     private void SetPokemonMove(int moveIndex, ComboItem? moveComboItem) =>
         SetPokemonMove(moveIndex, moveComboItem?.Value);
