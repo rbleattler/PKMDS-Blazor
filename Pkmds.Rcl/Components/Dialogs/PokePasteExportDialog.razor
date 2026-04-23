@@ -31,11 +31,13 @@
     <DialogActions>
         <MudButton OnClick="@Close"
                    Variant="@Variant.Filled"
+                   Color="@Color.Default"
                    StartIcon="@Icons.Material.Filled.Clear">
             Cancel
         </MudButton>
         <MudButton OnClick="@CopyToClipboardAsync"
                    Variant="@Variant.Filled"
+                   Color="@Color.Primary"
                    StartIcon="@Icons.Material.Filled.ContentCopy"
                    Disabled="@string.IsNullOrWhiteSpace(ShowdownText)">
             Copy

@@ -34,11 +34,11 @@
                         </MudStack>
                         @if (HasChecksums)
                         {
-                            <MudButton Variant="@Variant.Outlined"
+                            <MudButton Variant="@Variant.Filled"
                                        Size="@Size.Small"
                                        Color="@(SaveFile.ChecksumsValid
                                                   ? Color.Success
-                                                  : Color.Warning)"
+                                                  : Color.Primary)"
                                        StartIcon="@(SaveFile.ChecksumsValid
                                                       ? Icons.Material.Filled.CheckCircle
                                                       : Icons.Material.Filled.Warning)"
@@ -74,7 +74,7 @@
                                 Restore HP, PP, and stats for all party members.
                             </MudText>
                         </MudStack>
-                        <MudButton Variant="@Variant.Outlined"
+                        <MudButton Variant="@Variant.Filled"
                                    Size="@Size.Small"
                                    Color="@Color.Primary"
                                    StartIcon="@Icons.Material.Filled.Healing"
@@ -99,7 +99,7 @@
                                 Restore PP to max for all moves on box Pokémon.
                             </MudText>
                         </MudStack>
-                        <MudButton Variant="@Variant.Outlined"
+                        <MudButton Variant="@Variant.Filled"
                                    Size="@Size.Small"
                                    Color="@Color.Primary"
                                    StartIcon="@Icons.Material.Filled.Battery5Bar"
@@ -126,7 +126,7 @@
                                     Remove empty gaps in box storage.
                                 </MudText>
                             </MudStack>
-                            <MudButton Variant="@Variant.Outlined"
+                            <MudButton Variant="@Variant.Filled"
                                        Size="@Size.Small"
                                        Color="@Color.Primary"
                                        StartIcon="@Icons.Material.Filled.Compress"
@@ -142,7 +142,8 @@
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="@Close"
-                   Variant="@Variant.Text">
+                   Variant="@Variant.Filled"
+                   Color="@Color.Default">
             Close
         </MudButton>
     </DialogActions>

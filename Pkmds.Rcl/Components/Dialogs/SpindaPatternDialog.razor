@@ -35,12 +35,14 @@
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="@Randomize"
-                   Variant="@Variant.Outlined"
+                   Variant="@Variant.Filled"
+                   Color="@Color.Primary"
                    StartIcon="@Icons.Material.Filled.Shuffle">
             Randomize
         </MudButton>
         <MudButton OnClick="@Cancel"
-                   Variant="@Variant.Outlined">
+                   Variant="@Variant.Filled"
+                   Color="@Color.Default">
             Cancel
         </MudButton>
         <MudButton OnClick="@Confirm"

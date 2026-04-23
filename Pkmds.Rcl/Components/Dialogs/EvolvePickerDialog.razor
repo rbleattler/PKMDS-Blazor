@@ -6,6 +6,7 @@
     </TitleContent>
     <DialogContent>
         <MudList T="@EvolutionMethod"
+                 Class="evolution-picker-list"
                  SelectionMode="@SelectionMode.SingleSelection"
                  @bind-SelectedValue="@selected">
             @foreach (var method in Choices)
@@ -31,7 +32,8 @@
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="@Cancel"
-                   Variant="@Variant.Outlined">Cancel
+                   Variant="@Variant.Filled"
+                   Color="@Color.Default">Cancel
         </MudButton>
         <MudButton OnClick="@Confirm"
                    Variant="@Variant.Filled"

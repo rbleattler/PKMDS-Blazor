@@ -36,6 +36,7 @@ services
     .AddSingleton<IAppState, AppState>()
     .AddSingleton<IRefreshService, RefreshService>()
     .AddSingleton<IAppService, AppService>()
+    .AddSingleton<IDialogOptionsHelper, DialogOptionsHelper>()
     .AddSingleton<IDragDropService, DragDropService>()
     .AddSingleton<ILoggingService, LoggingService>()
     .AddSingleton<ISettingsService, SettingsService>()

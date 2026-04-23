@@ -703,3 +703,92 @@ body, html {
     right: 0.75rem;
     top: 0.5rem;
 }
+
+/* ── Info popover sizing + narrow-viewport bottom sheet ──
+   InfoButton / BagItemInfoButton apply .info-popover to their MudPopover.
+   On desktop the popover stays a standard anchored popover capped at
+   320px wide; on narrow viewports (≤767px — same breakpoint the dialog
+   layout uses) it switches to a fixed-position bottom sheet that never
+   runs off-screen regardless of where the info button sits on the page.
+   Overrides carry !important because MudPopover's JS writes top/left
+   directly to the element's inline style, and content inside the
+   popover can otherwise push the popover wider than max-width implies. */
+.info-popover.mud-popover {
+    max-width: min(320px, calc(100vw - 16px)) !important;
+    max-height: min(400px, calc(100vh - 48px)) !important;
+    overflow-y: auto;
+    z-index: 1200;
+}
+
+@media (max-width: 767px) {
+    .info-popover.mud-popover {
+        position: fixed !important;
+        top: auto !important;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 16px) !important;
+        left: 8px !important;
+        right: 8px !important;
+        max-width: none !important;
+        max-height: 70vh !important;
+    }
+}
+
+/* ── Choose Evolution picker — high-contrast selected item ──
+   MudBlazor's default selected-list-item styling pairs primary-colored
+   text with a pale primary-hover background, which is near-unreadable
+   on the branching evolution picker. Override with a full primary fill
+   and the contrasting primary-text foreground so the highlighted
+   evolution actually stands out. */
+.evolution-picker-list .mud-list-item.mud-selected-item {
+    background-color: var(--mud-palette-primary) !important;
+    color: var(--mud-palette-primary-text) !important;
+}
+
+.evolution-picker-list .mud-list-item.mud-selected-item .mud-typography {
+    color: var(--mud-palette-primary-text) !important;
+}
+
+/* ── Responsive full-screen dialog layout ──
+   MudBlazor bakes FullScreen into the dialog at open-time and won't re-react
+   to viewport changes. These rules force any open dialog into full-screen
+   rendering when the viewport is ≤767px (phones + narrow iPad windows), so
+   the layout stays right whether the dialog was opened narrow, opened wide,
+   or the window is resized while it's open. Covers the nested-scrollbar
+   cases from issue #740 while leaving moderately-narrow desktop browser
+   windows (768–959px) as regular centered dialogs.
+
+   Selector specificity (0,2,0) beats MudBlazor's own `.mud-dialog-width-*`
+   and `.mud-dialog-fullscreen` rules (0,1,0), so these overrides win. */
+@media (max-width: 767px) {
+    .mud-dialog-container > .mud-dialog {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        max-width: 100%;
+        max-height: none;
+        border-radius: 0;
+        overflow-y: hidden;
+    }
+
+    .mud-dialog-container > .mud-dialog .mud-dialog-content {
+        overflow-y: auto;
+        overflow-x: hidden;
+        max-height: none;
+        padding-bottom: env(safe-area-inset-bottom, 16px);
+    }
+
+    .mud-dialog-container > .mud-dialog .mud-dialog-actions {
+        position: sticky;
+        bottom: 0;
+        background: var(--mud-palette-surface);
+        z-index: 2;
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+    }
+
+    .mud-dialog-container > .mud-dialog .search-filter-panel-scroll,
+    .mud-dialog-container > .mud-dialog .mud-table-container,
+    .mud-dialog-container > .mud-dialog .bag-data-grid .mud-table-container,
+    .mud-dialog-container > .mud-dialog .legality-report-table .mud-table-container,
+    .mud-dialog-container > .mud-dialog .encounter-db-table .mud-table-container {
+        max-height: none;
+    }
+}

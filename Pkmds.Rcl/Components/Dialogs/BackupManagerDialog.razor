@@ -26,7 +26,7 @@
                 </MudButton>
                 <MudSpacer/>
                 <MudButton StartIcon="@Icons.Material.Filled.DeleteSweep"
-                           Variant="@Variant.Text"
+                           Variant="@Variant.Filled"
                            Color="@Color.Error"
                            Size="@Size.Small"
                            Disabled="@(backups.Count == 0)"
@@ -123,7 +123,8 @@
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="@Close"
-                   Variant="@Variant.Text">
+                   Variant="@Variant.Filled"
+                   Color="@Color.Default">
             Close
         </MudButton>
     </DialogActions>

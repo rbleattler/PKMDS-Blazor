@@ -18,7 +18,8 @@
                                Accept="@AcceptList"
                                @bind-Files="selectedFiles">
                     <CustomContent>
-                        <MudButton Variant="@Variant.Outlined"
+                        <MudButton Variant="@Variant.Filled"
+                                   Color="@Color.Primary"
                                    StartIcon="@Icons.Material.Filled.UploadFile"
                                    Disabled="@isImporting"
                                    OnClick="@context.OpenFilePickerAsync">
@@ -69,8 +70,8 @@
         {
             <MudButton OnClick="@CancelImport"
                        StartIcon="@Icons.Material.Filled.Cancel"
-                       Color="@Color.Error"
-                       Variant="@Variant.Outlined">
+                       Variant="@Variant.Filled"
+                       Color="@Color.Default">
                 Cancel
             </MudButton>
         }
@@ -78,13 +79,14 @@
         {
             <MudButton OnClick="@Close"
                        StartIcon="@Icons.Material.Filled.Clear"
-                       Variant="@Variant.Filled">
+                       Variant="@Variant.Filled"
+                       Color="@Color.Default">
                 @(result is null ? "Cancel" : "Close")
             </MudButton>
             <MudButton OnClick="@ImportAsync"
-                       Color="@Color.Primary"
                        StartIcon="@Icons.Material.Filled.Upload"
                        Variant="@Variant.Filled"
+                       Color="@Color.Primary"
                        Disabled="@(result is not null || !HasAnyFiles || AppState.SaveFile is null)">
                 Import
             </MudButton>

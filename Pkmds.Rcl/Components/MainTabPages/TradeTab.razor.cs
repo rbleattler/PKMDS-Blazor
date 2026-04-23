@@ -49,10 +49,11 @@ public partial class TradeTab : RefreshAwareComponent
             { nameof(FileUploadDialog.Message), message }
         };
 
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Small, backdropClick: false);
         var dialog = await DialogService.ShowAsync<FileUploadDialog>(
             "Load Second Save File",
             dialogParameters,
-            new DialogOptions { CloseOnEscapeKey = true, BackdropClick = false });
+            options);
 
         var result = await dialog.Result;
         if (result is not { Data: IBrowserFile selectedFile })

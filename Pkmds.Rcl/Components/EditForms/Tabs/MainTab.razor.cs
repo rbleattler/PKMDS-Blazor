@@ -2,6 +2,8 @@ namespace Pkmds.Rcl.Components.EditForms.Tabs;
 
 public partial class MainTab : IDisposable
 {
+    // Used by the small picker dialogs (Pumpkaboo size, Minior color, Flower color,
+    // Spinda pattern) that look fine on mobile without going full-screen.
     private static readonly DialogOptions AppearanceDialogOptions = new() { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
     private AbilitySummary? abilityInfo;
     private ItemSummary? heldItemInfo;
@@ -376,7 +378,8 @@ public partial class MainTab : IDisposable
     private async Task OpenAlcremieEditorDialog()
     {
         var parameters = new DialogParameters<AlcremieEditorDialog> { { x => x.Pokemon, Pokemon } };
-        var dialog = await DialogService.ShowAsync<AlcremieEditorDialog>("Alcremie Appearance", parameters, AppearanceDialogOptions);
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Medium);
+        var dialog = await DialogService.ShowAsync<AlcremieEditorDialog>("Alcremie Appearance", parameters, options);
         var result = await dialog.Result;
         if (result is { Canceled: false })
         {
@@ -394,7 +397,8 @@ public partial class MainTab : IDisposable
             (ushort)Species.Spewpa => "Spewpa Pattern",
             _ => "Vivillon Pattern"
         };
-        var dialog = await DialogService.ShowAsync<VivillonEditorDialog>(title, parameters, AppearanceDialogOptions);
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Medium);
+        var dialog = await DialogService.ShowAsync<VivillonEditorDialog>(title, parameters, options);
         var result = await dialog.Result;
         if (result is { Canceled: false })
         {
@@ -406,7 +410,8 @@ public partial class MainTab : IDisposable
     private async Task OpenFurfrouEditorDialog()
     {
         var parameters = new DialogParameters<FurfrouEditorDialog> { { x => x.Pokemon, Pokemon } };
-        var dialog = await DialogService.ShowAsync<FurfrouEditorDialog>("Furfrou Trim", parameters, AppearanceDialogOptions);
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Medium);
+        var dialog = await DialogService.ShowAsync<FurfrouEditorDialog>("Furfrou Trim", parameters, options);
         var result = await dialog.Result;
         if (result is { Canceled: false })
         {
@@ -463,9 +468,7 @@ public partial class MainTab : IDisposable
     private async Task OpenPidEcDialog()
     {
         var parameters = new DialogParameters<PidEcDialog> { { x => x.Pokemon, Pokemon } };
-
-        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
-
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Small);
         await DialogService.ShowAsync<PidEcDialog>("PID / EC Generator", parameters, options);
     }
 
@@ -565,8 +568,8 @@ public partial class MainTab : IDisposable
         else
         {
             var parameters = new DialogParameters<EvolvePickerDialog> { { x => x.Choices, choices }, { x => x.Pokemon, Pokemon } };
-            var dialog = await DialogService.ShowAsync<EvolvePickerDialog>("Choose Evolution", parameters,
-                new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true });
+            var evolveOptions = await DialogOptionsHelper.BuildAsync(MaxWidth.Small);
+            var dialog = await DialogService.ShowAsync<EvolvePickerDialog>("Choose Evolution", parameters, evolveOptions);
             var result = await dialog.Result;
             if (result is null or { Canceled: true })
             {
