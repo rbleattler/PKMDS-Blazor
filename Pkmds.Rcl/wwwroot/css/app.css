@@ -707,18 +707,20 @@ body, html {
 /* ── Info popover sizing + narrow-viewport bottom sheet ──
    InfoButton / BagItemInfoButton apply .info-popover to their MudPopover.
    On desktop the popover stays a standard anchored popover capped at
-   320px wide; on narrow viewports (≤600px) it switches to a fixed-position
-   bottom sheet that never runs off-screen regardless of where the info
-   button sits on the page. Overrides carry !important because MudPopover's
-   JS writes top/left directly to the element's inline style. */
-.info-popover {
-    max-width: min(320px, calc(100vw - 16px));
-    max-height: min(400px, calc(100vh - 48px));
+   320px wide; on narrow viewports (≤767px — same breakpoint the dialog
+   layout uses) it switches to a fixed-position bottom sheet that never
+   runs off-screen regardless of where the info button sits on the page.
+   Overrides carry !important because MudPopover's JS writes top/left
+   directly to the element's inline style, and content inside the
+   popover can otherwise push the popover wider than max-width implies. */
+.info-popover.mud-popover {
+    max-width: min(320px, calc(100vw - 16px)) !important;
+    max-height: min(400px, calc(100vh - 48px)) !important;
     overflow-y: auto;
     z-index: 1200;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 767px) {
     .info-popover.mud-popover {
         position: fixed !important;
         top: auto !important;
