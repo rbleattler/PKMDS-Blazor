@@ -704,24 +704,31 @@ body, html {
     top: 0.5rem;
 }
 
-/* ── Responsive narrow-viewport dialog layout ──
+/* ── Responsive full-screen dialog layout ──
    MudBlazor bakes FullScreen into the dialog at open-time and won't re-react
-   to viewport changes. These rules apply to any open dialog when the viewport
-   is Sm-and-down (≤959px) so that resizing a wide-opened dialog into a narrow
-   window (iPadOS 26 windowing, narrow desktop windows, phone rotation) still
-   eliminates the nested scrollbars shown in issue #740.
+   to viewport changes. These rules force any open dialog into full-screen
+   rendering when the viewport is Sm-and-down (≤959px), so the layout stays
+   right whether the dialog was opened narrow, opened wide, or the window is
+   resized while it's open. Covers the nested-scrollbar cases from issue
+   #740 across iPhone, iPadOS 26 windowing, and narrow desktop windows.
 
-   Approach: give the dialog a near-full-width gutter-card layout, prevent the
-   outer content element from generating a horizontal scrollbar, and drop the
-   max-height clamps on inner tables / filter panels that would otherwise
-   produce a second scroll region. */
+   Selector specificity (0,2,0) beats MudBlazor's own `.mud-dialog-width-*`
+   and `.mud-dialog-fullscreen` rules (0,1,0), so these overrides win. */
 @media (max-width: 959px) {
     .mud-dialog-container > .mud-dialog {
-        max-width: calc(100% - 16px);
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        max-width: 100%;
+        max-height: none;
+        border-radius: 0;
+        overflow-y: hidden;
     }
 
     .mud-dialog-container > .mud-dialog .mud-dialog-content {
+        overflow-y: auto;
         overflow-x: hidden;
+        max-height: none;
         padding-bottom: env(safe-area-inset-bottom, 16px);
     }
 
