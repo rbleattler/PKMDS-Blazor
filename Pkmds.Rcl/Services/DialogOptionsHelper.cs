@@ -1,43 +1,24 @@
 namespace Pkmds.Rcl.Services;
 
-public sealed class DialogOptionsHelper(IBrowserViewportService browserViewportService)
-    : IDialogOptionsHelper
+public sealed class DialogOptionsHelper : IDialogOptionsHelper
 {
-    public async Task<DialogOptions> BuildAsync(
+    // Narrow-viewport layout is handled purely in CSS (see app.css — the
+    // @media (max-width: 959px) block targeting .mud-dialog). That makes the
+    // layout responsive to live window resizes, which setting FullScreen at
+    // open-time could not — MudBlazor bakes FullScreen into the dialog once
+    // and won't re-react to viewport changes without closing and reopening.
+    public Task<DialogOptions> BuildAsync(
         MaxWidth desktopMaxWidth,
         bool fullWidth = true,
         bool closeButton = true,
         bool closeOnEscapeKey = true,
-        bool backdropClick = true)
-    {
-        var isNarrow = await IsNarrowBreakpointAsync();
-
-        return new DialogOptions
+        bool backdropClick = true) =>
+        Task.FromResult(new DialogOptions
         {
             MaxWidth = desktopMaxWidth,
             FullWidth = fullWidth,
-            FullScreen = isNarrow,
             CloseButton = closeButton,
             CloseOnEscapeKey = closeOnEscapeKey,
             BackdropClick = backdropClick,
-        };
-    }
-
-    private async Task<bool> IsNarrowBreakpointAsync()
-    {
-        // Promote dialogs to full-screen on Sm-and-down so both phones (Xs, <600px)
-        // and narrow iPad / narrow desktop browser windows (Sm, 600–959px) avoid
-        // the nested-scrollbar pattern. Guard against the viewport service being
-        // unavailable (e.g. during a crash-handler dialog where JS interop may
-        // already be broken) by falling back to the desktop layout.
-        try
-        {
-            var breakpoint = await browserViewportService.GetCurrentBreakpointAsync();
-            return breakpoint is Breakpoint.Xs or Breakpoint.Sm;
-        }
-        catch
-        {
-            return false;
-        }
-    }
+        });
 }

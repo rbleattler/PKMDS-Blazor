@@ -704,33 +704,40 @@ body, html {
     top: 0.5rem;
 }
 
-/* ── Full-screen dialog layout ──
-   Applied whenever a dialog is opened with FullScreen=true (phones on Xs,
-   and narrow iPad / narrow desktop windows on Sm via DialogOptionsHelper).
-   The content area becomes the single scroll surface instead of fighting
-   an outer 90vh clamp, and the action bar sticks to the bottom above the
-   iOS home indicator. */
-.mud-dialog-fullscreen .mud-dialog-content {
-    overflow-y: auto;
-    overflow-x: hidden;
-    max-height: none;
-    padding-bottom: env(safe-area-inset-bottom, 16px);
-}
+/* ── Responsive narrow-viewport dialog layout ──
+   MudBlazor bakes FullScreen into the dialog at open-time and won't re-react
+   to viewport changes. These rules apply to any open dialog when the viewport
+   is Sm-and-down (≤959px) so that resizing a wide-opened dialog into a narrow
+   window (iPadOS 26 windowing, narrow desktop windows, phone rotation) still
+   eliminates the nested scrollbars shown in issue #740.
 
-.mud-dialog-fullscreen .mud-dialog-actions {
-    position: sticky;
-    bottom: 0;
-    background: var(--mud-palette-surface);
-    z-index: 2;
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
-}
+   Approach: give the dialog a near-full-width gutter-card layout, prevent the
+   outer content element from generating a horizontal scrollbar, and drop the
+   max-height clamps on inner tables / filter panels that would otherwise
+   produce a second scroll region. */
+@media (max-width: 959px) {
+    .mud-dialog-container > .mud-dialog {
+        max-width: calc(100% - 16px);
+    }
 
-/* Kill inner max-height clamps that would otherwise create a second
-   scroll region inside the already-scrolling dialog content. */
-.mud-dialog-fullscreen .search-filter-panel-scroll,
-.mud-dialog-fullscreen .mud-table-container,
-.mud-dialog-fullscreen .bag-data-grid .mud-table-container,
-.mud-dialog-fullscreen .legality-report-table .mud-table-container,
-.mud-dialog-fullscreen .encounter-db-table .mud-table-container {
-    max-height: none;
+    .mud-dialog-container > .mud-dialog .mud-dialog-content {
+        overflow-x: hidden;
+        padding-bottom: env(safe-area-inset-bottom, 16px);
+    }
+
+    .mud-dialog-container > .mud-dialog .mud-dialog-actions {
+        position: sticky;
+        bottom: 0;
+        background: var(--mud-palette-surface);
+        z-index: 2;
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+    }
+
+    .mud-dialog-container > .mud-dialog .search-filter-panel-scroll,
+    .mud-dialog-container > .mud-dialog .mud-table-container,
+    .mud-dialog-container > .mud-dialog .bag-data-grid .mud-table-container,
+    .mud-dialog-container > .mud-dialog .legality-report-table .mud-table-container,
+    .mud-dialog-container > .mud-dialog .encounter-db-table .mud-table-container {
+        max-height: none;
+    }
 }
