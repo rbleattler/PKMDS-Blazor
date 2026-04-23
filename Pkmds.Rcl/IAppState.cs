@@ -160,4 +160,11 @@ public interface IAppState
 
     /// <summary>Whether to render the red "illegal" indicator on slots.</summary>
     bool ShowIllegalIndicator { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether haptic feedback is enabled for key interactions.
+    /// No effect on devices without <c>navigator.vibrate</c> (notably iOS Safari).
+    /// Persisted across sessions via localStorage.
+    /// </summary>
+    bool HapticsEnabled { get; set; }
 }

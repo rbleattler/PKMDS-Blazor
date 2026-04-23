@@ -491,6 +491,7 @@ public partial class TradeTab : RefreshAwareComponent
             }
 
             MarkSlotBDirtyIfInvolved(srcSave, destSave);
+            Haptics.Confirm();
             RefreshService.Refresh();
             return;
         }
@@ -624,6 +625,7 @@ public partial class TradeTab : RefreshAwareComponent
         }
 
         MarkSlotBDirtyIfInvolved(srcSave, destSave);
+        Haptics.Confirm();
         RefreshService.Refresh();
     }
 

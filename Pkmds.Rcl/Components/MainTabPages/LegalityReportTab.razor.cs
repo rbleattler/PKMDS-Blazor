@@ -179,6 +179,23 @@ public partial class LegalityReportTab : RefreshAwareComponent
         var summary = BuildLegalizeSummary(targets.Count, processed, successCount, fishyCount, failureCount, cancelled);
         Snackbar.Add(summary.Message, summary.Severity);
 
+        // Skip a haptic on plain cancellation — the user already knows; only signal completion.
+        if (!cancelled)
+        {
+            if (successCount > 0 && failureCount == 0)
+            {
+                Haptics.Success();
+            }
+            else if (successCount == 0 && failureCount > 0)
+            {
+                Haptics.Error();
+            }
+            else
+            {
+                Haptics.Confirm();
+            }
+        }
+
         isLegalizing = false;
         legalizationStatusText = string.Empty;
         legalizationPercent = 0;
