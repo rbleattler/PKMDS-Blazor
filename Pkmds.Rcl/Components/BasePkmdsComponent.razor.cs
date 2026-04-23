@@ -2,8 +2,6 @@ namespace Pkmds.Rcl.Components;
 
 public partial class BasePkmdsComponent
 {
-    private static readonly DialogOptions TrashBytesEditorDialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
-
     protected static readonly IReadOnlyDictionary<string, string> FlagLabels =
         new Dictionary<string, string>
         {
@@ -56,10 +54,11 @@ public partial class BasePkmdsComponent
             ["slicing"] = 9 // Sharpness — Gen 9
         };
 
-    protected Task OpenTrashBytesEditorAsync(PKM? pokemon, StringSource field)
+    protected async Task OpenTrashBytesEditorAsync(PKM? pokemon, StringSource field)
     {
         var parameters = new DialogParameters<TrashBytesEditorDialog> { { x => x.Pokemon, pokemon }, { x => x.Field, field } };
-        return DialogService.ShowAsync<TrashBytesEditorDialog>("Trash Bytes Editor", parameters, TrashBytesEditorDialogOptions);
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Small);
+        await DialogService.ShowAsync<TrashBytesEditorDialog>("Trash Bytes Editor", parameters, options);
     }
 
     /// <summary>

@@ -227,27 +227,21 @@ public partial class MovesTab
     private async Task OpenRelearnFlagsDialog()
     {
         var parameters = new DialogParameters<RelearnFlagsDialog> { { x => x.Pokemon, Pokemon } };
-
-        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
-
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Small);
         await DialogService.ShowAsync<RelearnFlagsDialog>("TR Relearn Editor", parameters, options);
     }
 
     private async Task OpenPlusFlagsDialog()
     {
         var parameters = new DialogParameters<PlusFlagsDialog> { { x => x.Pokemon, Pokemon } };
-
-        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
-
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Small);
         await DialogService.ShowAsync<PlusFlagsDialog>("Plus Flags Editor", parameters, options);
     }
 
     private async Task OpenMoveShopDialog()
     {
         var parameters = new DialogParameters<MoveShopDialog> { { x => x.Pokemon, Pokemon } };
-
-        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
-
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Small);
         await DialogService.ShowAsync<MoveShopDialog>("Move Shop Editor", parameters, options);
     }
 }

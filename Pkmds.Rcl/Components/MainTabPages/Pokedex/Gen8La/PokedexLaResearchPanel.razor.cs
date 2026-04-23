@@ -139,10 +139,11 @@ public partial class PokedexLaResearchPanel : BasePkmdsComponent
 
     private async Task OpenResearchEditorDialog(ushort species)
     {
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Small);
         var result = await DialogService.ShowAsync<PokedexLaResearchEditorDialog>(
             string.Empty,
             new DialogParameters<PokedexLaResearchEditorDialog> { { x => x.SpeciesId, species } },
-            new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true });
+            options);
 
         await result.Result;
         StateHasChanged();
@@ -150,10 +151,11 @@ public partial class PokedexLaResearchPanel : BasePkmdsComponent
 
     private async Task OpenFlagsDialog(ushort species)
     {
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Medium);
         var result = await DialogService.ShowAsync<PokedexSpeciesDialog>(
             string.Empty,
             new DialogParameters<PokedexSpeciesDialog> { { x => x.SpeciesId, species } },
-            new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true });
+            options);
 
         await result.Result;
         StateHasChanged();

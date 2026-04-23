@@ -219,7 +219,7 @@ public partial class MainLayout : IDisposable
     private async Task ShowBugReportDialog()
     {
         var parameters = new DialogParameters { { nameof(BugReportDialog.HasSaveFile), AppState.SaveFile is not null }, { nameof(BugReportDialog.AppVersion), AppState.AppVersion ?? string.Empty } };
-        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Small);
         var dialog = await DialogService.ShowAsync<BugReportDialog>("Report a Bug", parameters, options);
         var result = await dialog.Result;
         if (result is { Data: string issueUrl })
@@ -235,7 +235,7 @@ public partial class MainLayout : IDisposable
         var parameters =
             new DialogParameters { { nameof(AppSettingsDialog.InitialSettings), SettingsService.Settings } };
 
-        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Small);
 
         var dialog = await DialogService.ShowAsync<AppSettingsDialog>("Settings", parameters, options);
         var result = await dialog.Result;
@@ -267,21 +267,21 @@ public partial class MainLayout : IDisposable
     private async Task ShowSaveFileInfoDialog()
     {
         var parameters = new DialogParameters { { nameof(SaveFileInfoDialog.SaveFile), AppState.SaveFile } };
-        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Small);
         await DialogService.ShowAsync<SaveFileInfoDialog>("Save File Info", parameters, options);
     }
 
     private async Task ShowSaveFileRepairDialog()
     {
         var parameters = new DialogParameters { { nameof(SaveFileRepairDialog.SaveFile), AppState.SaveFile } };
-        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Small);
         await DialogService.ShowAsync<SaveFileRepairDialog>("Repair Save File", parameters, options);
     }
 
     private async Task ShowBackupManagerDialog()
     {
         var parameters = new DialogParameters { { nameof(BackupManagerDialog.SaveFile), AppState.SaveFile }, { nameof(BackupManagerDialog.FileName), AppState.SaveFileName }, { nameof(BackupManagerDialog.IsManicEmu), AppState.ManicEmuSaveContext is not null }, { nameof(BackupManagerDialog.ManicEmuContext), AppState.ManicEmuSaveContext } };
-        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = true };
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Medium);
         var dialog = await DialogService.ShowAsync<BackupManagerDialog>("Backup Manager", parameters, options);
         var result = await dialog.Result;
 
@@ -358,10 +358,11 @@ public partial class MainLayout : IDisposable
             "for seamless round-trip import support.";
 
         var dialogParameters = new DialogParameters { { nameof(FileUploadDialog.Message), message }, { nameof(FileUploadDialog.HintText), manicEmuHint } };
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Small, backdropClick: false);
 
         var dialog = await DialogService.ShowAsync<FileUploadDialog>("Load Save File",
             dialogParameters,
-            new() { CloseOnEscapeKey = true, BackdropClick = false });
+            options);
 
         var result = await dialog.Result;
         if (result is { Data: IBrowserFile selectedFile })
@@ -609,11 +610,12 @@ public partial class MainLayout : IDisposable
         const string message = "Choose a Pokémon file";
 
         var dialogParameters = new DialogParameters { { nameof(FileUploadDialog.Message), message } };
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Small, backdropClick: false);
 
         var dialog = await DialogService.ShowAsync<FileUploadDialog>(
             title,
             dialogParameters,
-            new() { CloseOnEscapeKey = true, BackdropClick = false });
+            options);
 
         var result = await dialog.Result;
         if (result is { Data: IBrowserFile selectedFile })
@@ -628,11 +630,12 @@ public partial class MainLayout : IDisposable
         const string message = "Choose a Mystery Gift file";
 
         var dialogParameters = new DialogParameters { { nameof(FileUploadDialog.Message), message } };
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Small, backdropClick: false);
 
         var dialog = await DialogService.ShowAsync<FileUploadDialog>(
             title,
             dialogParameters,
-            new() { CloseOnEscapeKey = true, BackdropClick = false });
+            options);
 
         var result = await dialog.Result;
         if (result is { Data: IBrowserFile selectedFile })

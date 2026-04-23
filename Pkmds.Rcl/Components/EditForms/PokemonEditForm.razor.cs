@@ -2,8 +2,6 @@ namespace Pkmds.Rcl.Components.EditForms;
 
 public partial class PokemonEditForm : IDisposable
 {
-    private static readonly DialogOptions ImportExportDialogOptions = new() { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
-
     [Parameter]
     [EditorRequired]
     public PKM? Pokemon { get; set; }
@@ -41,23 +39,32 @@ public partial class PokemonEditForm : IDisposable
         RefreshService.Refresh();
     }
 
-    private void ExportAsShowdown() =>
-        DialogService.ShowAsync<ShowdownExportDialog>(
+    private async Task ExportAsShowdown()
+    {
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Small);
+        await DialogService.ShowAsync<ShowdownExportDialog>(
             "Showdown Export",
             new() { { nameof(ShowdownExportDialog.Pokemon), Pokemon } },
-            new() { CloseOnEscapeKey = true });
+            options);
+    }
 
-    private void ExportToPokePaste() =>
-        DialogService.ShowAsync<PokePasteExportDialog>(
+    private async Task ExportToPokePaste()
+    {
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Medium);
+        await DialogService.ShowAsync<PokePasteExportDialog>(
             "Export to PokePaste",
             new() { { nameof(PokePasteExportDialog.Pokemon), Pokemon } },
-            ImportExportDialogOptions);
+            options);
+    }
 
-    private void ImportFromShowdown() =>
-        DialogService.ShowAsync<ShowdownImportDialog>(
+    private async Task ImportFromShowdown()
+    {
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Medium);
+        await DialogService.ShowAsync<ShowdownImportDialog>(
             "Import from Showdown / PokePaste",
             new DialogParameters<ShowdownImportDialog>(),
-            ImportExportDialogOptions);
+            options);
+    }
 
     private void SaveAndClose()
     {

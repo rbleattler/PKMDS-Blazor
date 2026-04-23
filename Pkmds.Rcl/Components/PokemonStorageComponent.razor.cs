@@ -12,9 +12,6 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
     private string legalizeBoxStatusText = string.Empty;
 
     [Inject]
-    private IBrowserViewportService BrowserViewportService { get; set; } = null!;
-
-    [Inject]
     private ILegalizationService LegalizationService { get; set; } = null!;
 
     protected override RefreshEvents SubscribeTo =>
@@ -127,9 +124,8 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
 
     private async Task OpenBoxLayoutDialog()
     {
-        await DialogService.ShowAsync<BoxLayoutDialog>(
-            "Box Layout",
-            new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true });
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Medium);
+        await DialogService.ShowAsync<BoxLayoutDialog>("Box Layout", options);
         RefreshService.RefreshBoxState();
     }
 
@@ -164,16 +160,14 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
 
     private async Task OpenBulkExportDialog()
     {
-        await DialogService.ShowAsync<BulkExportDialog>(
-            "Export Pokémon as .pk* Files",
-            new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true });
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Small);
+        await DialogService.ShowAsync<BulkExportDialog>("Export Pokémon as .pk* Files", options);
     }
 
     private async Task OpenBulkImportDialog()
     {
-        var dialog = await DialogService.ShowAsync<BulkImportDialog>(
-            "Bulk Import .pk* Files",
-            new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true });
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Small);
+        var dialog = await DialogService.ShowAsync<BulkImportDialog>("Bulk Import .pk* Files", options);
 
         await dialog.Result;
         InvalidateIllegalCount();
@@ -182,18 +176,8 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
 
     private async Task OpenBoxListDialog()
     {
-        var isXs = await BrowserViewportService.GetCurrentBreakpointAsync() == Breakpoint.Xs;
-        await DialogService.ShowAsync<BoxListDialog>(
-            "All Boxes",
-            new DialogOptions
-            {
-                MaxWidth = MaxWidth.ExtraExtraLarge,
-                FullWidth = true,
-                FullScreen = isXs,
-                CloseButton = true,
-                BackdropClick = true,
-                CloseOnEscapeKey = true
-            });
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.ExtraExtraLarge);
+        await DialogService.ShowAsync<BoxListDialog>("All Boxes", options);
     }
 
     private async Task LegalizeBoxAsync()

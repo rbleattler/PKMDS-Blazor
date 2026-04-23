@@ -2,8 +2,6 @@ namespace Pkmds.Rcl.Components;
 
 public partial class PartyGrid : RefreshAwareComponent
 {
-    private static readonly DialogOptions ImportExportDialogOptions = new() { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
-
     protected override RefreshEvents SubscribeTo => RefreshEvents.AppState | RefreshEvents.PartyState;
 
     private void SetSelectedPokemon(PKM? pokemon, int slotNumber) =>
@@ -13,20 +11,27 @@ public partial class PartyGrid : RefreshAwareComponent
         ? Constants.SelectedSlotClass
         : string.Empty;
 
-    private void ExportAsShowdown() =>
-        DialogService.ShowAsync<ShowdownExportDialog>(
-            "Showdown Export",
-            new DialogOptions { CloseOnEscapeKey = true });
+    private async Task ExportAsShowdown()
+    {
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Small);
+        await DialogService.ShowAsync<ShowdownExportDialog>("Showdown Export", options);
+    }
 
-    private void ExportToPokePaste() =>
-        DialogService.ShowAsync<PokePasteExportDialog>(
+    private async Task ExportToPokePaste()
+    {
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Medium);
+        await DialogService.ShowAsync<PokePasteExportDialog>(
             "Export to PokePaste",
             new DialogParameters<PokePasteExportDialog>(),
-            ImportExportDialogOptions);
+            options);
+    }
 
-    private void ImportFromShowdown() =>
-        DialogService.ShowAsync<ShowdownImportDialog>(
+    private async Task ImportFromShowdown()
+    {
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Medium);
+        await DialogService.ShowAsync<ShowdownImportDialog>(
             "Import from Showdown / PokePaste",
             new DialogParameters<ShowdownImportDialog>(),
-            ImportExportDialogOptions);
+            options);
+    }
 }

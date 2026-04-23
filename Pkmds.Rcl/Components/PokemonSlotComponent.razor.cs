@@ -571,12 +571,7 @@ public partial class PokemonSlotComponent : IDisposable
                 // Box slot drop → fill boxes first; party slot drop → fill party first.
                 { x => x.FillBoxesFirst, !IsPartySlot }
             };
-            var options = new DialogOptions
-            {
-                CloseOnEscapeKey = true,
-                MaxWidth = MaxWidth.Small,
-                FullWidth = true
-            };
+            var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Small);
 
             var dialog = await DialogService.ShowAsync<BulkImportDialog>(
                 "Bulk Import .pk* Files", parameters, options);
