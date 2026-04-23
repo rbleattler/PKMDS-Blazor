@@ -3,7 +3,7 @@ namespace Pkmds.Rcl.Services;
 public sealed class DialogOptionsHelper : IDialogOptionsHelper
 {
     // Narrow-viewport layout is handled purely in CSS (see app.css — the
-    // @media (max-width: 959px) block targeting .mud-dialog). That makes the
+    // @media (max-width: 767px) block targeting .mud-dialog). That makes the
     // layout responsive to live window resizes, which setting FullScreen at
     // open-time could not — MudBlazor bakes FullScreen into the dialog once
     // and won't re-react to viewport changes without closing and reopening.
