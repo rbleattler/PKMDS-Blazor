@@ -42,6 +42,18 @@
                 Save
             </MudButton>
 
+            <MudButton OnClick="@AddToBankAsync"
+                       ButtonType="@ButtonType.Button"
+                       Variant="@Variant.Filled"
+                       StartIcon="@Icons.Material.Filled.AccountBalanceWallet"
+                       Class="my-2"
+                       Color="@Color.Default"
+                       Size="@Size.Small"
+                       title="Add Pokémon to Bank"
+                       Disabled="@(Pokemon.Species.IsInvalidSpecies())">
+                Bank
+            </MudButton>
+
             <MudButton OnClick="@OnClickCopy"
                        ButtonType="@ButtonType.Button"
                        Variant="@Variant.Filled"

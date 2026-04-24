@@ -180,6 +180,57 @@ public partial class PokemonStorageComponent : RefreshAwareComponent
         await DialogService.ShowAsync<BoxListDialog>("All Boxes", options);
     }
 
+    private async Task OpenAddToBankDialogAsync()
+    {
+        if (AppService.EditFormPokemon is { Species: > 0 } editedPkm && AppState.SaveFile is { } sav
+            && HasUnsavedEditFormChanges(editedPkm, sav))
+        {
+            var save = await DialogService.ShowMessageBoxAsync(
+                "Unsaved Changes",
+                "The open Pokémon has unsaved changes. Save before opening the Bank dialog?",
+                yesText: "Save & Continue",
+                cancelText: "Cancel");
+
+            if (save is not true)
+            {
+                return;
+            }
+
+            AppService.SavePokemon(editedPkm);
+        }
+
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Small);
+        await DialogService.ShowAsync<AddToBankDialog>("Add to Bank", options);
+    }
+
+    private bool HasUnsavedEditFormChanges(PKM editedPkm, SaveFile saveFile)
+    {
+        var selectedPokemonType =
+            AppService.GetSelectedPokemonSlot(out var partySlot, out var boxNumber, out var boxSlot);
+
+        PKM? slotPokemon = selectedPokemonType switch
+        {
+            SelectedPokemonType.Party => saveFile.GetPartySlotAtIndex(partySlot),
+            SelectedPokemonType.Box => saveFile.GetBoxSlotAtIndex(boxNumber, boxSlot),
+            SelectedPokemonType.None when saveFile is SAV7b && AppState.SelectedBoxSlotNumber is { } lgSlot =>
+                saveFile.GetBoxSlotAtIndex(lgSlot / saveFile.BoxSlotCount, lgSlot % saveFile.BoxSlotCount),
+            _ => null
+        };
+
+        if (slotPokemon is null || editedPkm.SIZE_STORED != slotPokemon.SIZE_STORED)
+        {
+            return false;
+        }
+
+        var editedBytes = new byte[editedPkm.SIZE_STORED];
+        editedPkm.WriteDecryptedDataStored(editedBytes);
+
+        var slotBytes = new byte[slotPokemon.SIZE_STORED];
+        slotPokemon.WriteDecryptedDataStored(slotBytes);
+
+        return !editedBytes.AsSpan().SequenceEqual(slotBytes);
+    }
+
     private async Task LegalizeBoxAsync()
     {
         if (AppState.SaveFile is not { } saveFile || AppState.BoxEdit is not { } boxEdit)

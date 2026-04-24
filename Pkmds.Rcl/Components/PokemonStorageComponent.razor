@@ -9,6 +9,15 @@
 
     @if (saveFile.Version is GameVersion.LG or GameVersion.GP or GameVersion.GE)
     {
+        <div class="flex flex-wrap mx-[5px] mb-[5px] px-[5px] items-center">
+            <MudIconButton OnClick="@OpenAddToBankDialogAsync"
+                           title="Add to Bank…"
+                           ButtonType="@ButtonType.Button"
+                           Icon="@Icons.Material.Filled.AccountBalanceWallet"
+                           Variant="@Variant.Filled"
+                           Class="m-1.5 p-1.5">
+            </MudIconButton>
+        </div>
         <LetsGoBoxComponent/>
     }
     else
@@ -123,6 +132,14 @@
                            Icon="@(AppState.PinnedBoxNumber == boxEdit.CurrentBox
                                      ? Icons.Material.Filled.PushPin
                                      : Icons.Material.Outlined.PushPin)"
+                           Variant="@Variant.Filled"
+                           Class="m-1.5 p-1.5">
+            </MudIconButton>
+
+            <MudIconButton OnClick="@OpenAddToBankDialogAsync"
+                           title="Add to Bank…"
+                           ButtonType="@ButtonType.Button"
+                           Icon="@Icons.Material.Filled.AccountBalanceWallet"
                            Variant="@Variant.Filled"
                            Class="m-1.5 p-1.5">
             </MudIconButton>
