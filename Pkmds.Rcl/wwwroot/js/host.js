@@ -1,0 +1,58 @@
+// Embedded host bridge. Sets up window.PKMDS.host with a tiny surface area
+// that an external host (WKWebView in iOS, any other JS-capable container)
+// uses to drive PKMDS programmatically instead of via the file picker.
+//
+// In standalone web mode this script just creates the global; nothing calls
+// into it. In embedded mode the host calls loadSave / requestExport from its
+// own code, and PKMDS posts ready / saveExport messages back via the WebKit
+// message handler (or the console fallback in a regular browser tab).
+
+(function () {
+    'use strict';
+
+    window.PKMDS = window.PKMDS || {};
+
+    // Outbound: post a message to the host. Uses WKWebView's
+    // window.webkit.messageHandlers.pkmds when present, otherwise logs to the
+    // console so the bridge stays observable in a regular browser tab.
+    function postMessage(kind, payload) {
+        const message = Object.assign({ kind: kind }, payload || {});
+        try {
+            const handler = window.webkit
+                && window.webkit.messageHandlers
+                && window.webkit.messageHandlers.pkmds;
+            if (handler && typeof handler.postMessage === 'function') {
+                handler.postMessage(message);
+                return;
+            }
+        } catch (e) {
+            console.warn('[PKMDS.host] postMessage handler failed:', e);
+        }
+        console.log('[PKMDS.host] →', kind, payload || {});
+    }
+
+    window.PKMDS.host = {
+        // Inbound: load a save into PKMDS. The host calls this once embedded
+        // mode is initialized (after the 'ready' message has been observed).
+        // bytesBase64 — base64-encoded raw save file bytes (or Manic EMU ZIP).
+        // fileName — display filename; used for Manic EMU detection, error
+        //   messages, and the eventual export filename. Pass null if unknown.
+        loadSave: async function (bytesBase64, fileName) {
+            return await DotNet.invokeMethodAsync(
+                'Pkmds.Rcl', 'LoadSaveFromHost', bytesBase64, fileName || null);
+        },
+
+        // Inbound: request the current save bytes. PKMDS responds asynchronously
+        // by posting a 'saveExport' message with { data: '<base64>', fileName }.
+        // Typically called when the host's "Done" button is tapped.
+        requestExport: async function () {
+            return await DotNet.invokeMethodAsync(
+                'Pkmds.Rcl', 'RequestExportFromHost');
+        },
+
+        // Internal: outbound message helper, called from the C# side.
+        // Exposed via PKMDS.host to keep the postMessage / fallback logic
+        // colocated with the rest of the bridge.
+        _sendMessage: postMessage,
+    };
+})();

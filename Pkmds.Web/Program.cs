@@ -37,6 +37,7 @@ services
     .AddSingleton<IRefreshService, RefreshService>()
     .AddSingleton<IAppService, AppService>()
     .AddSingleton<IHostService, HostService>()
+    .AddSingleton<EmbeddedHostBridge>()
     .AddSingleton<IDialogOptionsHelper, DialogOptionsHelper>()
     .AddSingleton<IDragDropService, DragDropService>()
     .AddSingleton<ILoggingService, LoggingService>()
@@ -61,6 +62,12 @@ var app = builder.Build();
 // We use crypto-js via JavaScript interop for AES encryption/decryption and MD5 hashing.
 RuntimeCryptographyProvider.Aes = app.Services.GetRequiredService<BlazorAesProvider>();
 RuntimeCryptographyProvider.Md5 = app.Services.GetRequiredService<BlazorMd5Provider>();
+
+// Eagerly resolve the embedded host bridge so its constructor wires up the
+// static Instance field used by [JSInvokable] static entry points. Without
+// this the bridge would only initialize on first injection, which never
+// happens in standalone mode (nothing else depends on it).
+_ = app.Services.GetRequiredService<EmbeddedHostBridge>();
 
 // Configure logging service to allow runtime changes to log level
 var loggingService = app.Services.GetRequiredService<ILoggingService>();
