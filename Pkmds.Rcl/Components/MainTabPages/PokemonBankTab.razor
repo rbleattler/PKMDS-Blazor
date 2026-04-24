@@ -64,6 +64,13 @@
                 Export All
             </MudButton>
 
+            <MudButton Variant="@Variant.Outlined"
+                       StartIcon="@Icons.Material.Filled.Download"
+                       OnClick="@ExportAllAsync"
+                       Disabled="@(isBusy || entries.Count == 0 || isLoading)">
+                Export .pk* Files
+            </MudButton>
+
             @if (selectedIds.Count > 0)
             {
                 <MudDivider Vertical
@@ -79,6 +86,14 @@
                         Send to Save (@selectedIds.Count)
                     </MudButton>
                 }
+
+                <MudButton Variant="@Variant.Filled"
+                           Color="@Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Download"
+                           OnClick="@ExportSelectedAsync"
+                           Disabled="@isBusy">
+                    Export .pk* (@selectedIds.Count)
+                </MudButton>
 
                 <MudButton Variant="@Variant.Filled"
                            Color="@Color.Error"
@@ -224,6 +239,15 @@
                                         Send
                                     </MudButton>
                                 }
+                                <MudButton Size="@Size.Small"
+                                           Variant="@Variant.Outlined"
+                                           StartIcon="@Icons.Material.Filled.Download"
+                                           Color="@Color.Default"
+                                           OnClick="@(() => ExportSingleAsync(entry))"
+                                           Disabled="@isBusy"
+                                           title="Export as .pk* file">
+                                    Export
+                                </MudButton>
                                 <MudButton Size="@Size.Small"
                                            Variant="@Variant.Outlined"
                                            StartIcon="@Icons.Material.Filled.Delete"
