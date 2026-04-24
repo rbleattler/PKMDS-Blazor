@@ -257,6 +257,7 @@ public class LegalityCheckerTests
         public int? SelectedBoxNumberB { get; set; }
         public int? SelectedBoxSlotNumberB { get; set; }
         public int? SelectedPartySlotNumberB { get; set; }
+        public bool HapticsEnabled { get; set; }
     }
 
     private class TestRefreshService : IRefreshService
