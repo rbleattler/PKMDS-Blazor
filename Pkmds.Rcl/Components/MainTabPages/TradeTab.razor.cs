@@ -276,15 +276,45 @@ public partial class TradeTab : RefreshAwareComponent
 
     // ── Transfer logic ────────────────────────────────────────────────────────
 
-    private bool CanTransferFromA() =>
-        AppState.SaveFile is not null
-        && AppState.SaveFileB is not null
-        && TryGetSelectedSource(fromA: true, out _, out _, out _, out _);
+    private bool CanTransferFromA()
+    {
+        if (AppState.SaveFile is not { } srcSave || AppState.SaveFileB is not { } destSave)
+            return false;
+        if (!TryGetSelectedSource(fromA: true, out _, out var isParty, out var boxNum, out var slotNum))
+            return false;
+        var pkm = isParty
+            ? srcSave.GetPartySlotAtIndex(slotNum)
+            : boxNum.HasValue ? srcSave.GetBoxSlotAtIndex(boxNum.Value, slotNum) : null;
+        return IsCrossTransferEligible(pkm, srcSave, destSave, AppState.IsHaXEnabled);
+    }
 
-    private bool CanTransferFromB() =>
-        AppState.SaveFile is not null
-        && AppState.SaveFileB is not null
-        && TryGetSelectedSource(fromA: false, out _, out _, out _, out _);
+    private bool CanTransferFromB()
+    {
+        if (AppState.SaveFileB is not { } srcSave || AppState.SaveFile is not { } destSave)
+            return false;
+        if (!TryGetSelectedSource(fromA: false, out _, out var isParty, out var boxNum, out var slotNum))
+            return false;
+        var pkm = isParty
+            ? srcSave.GetPartySlotAtIndex(slotNum)
+            : boxNum.HasValue ? srcSave.GetBoxSlotAtIndex(boxNum.Value, slotNum) : null;
+        return IsCrossTransferEligible(pkm, srcSave, destSave, AppState.IsHaXEnabled);
+    }
+
+    // Mirrors the eligibility rules in TradeSlot.ComputeTransferEligibility / HandleDrop so that
+    // the arrow buttons enforce the same gate as drag-and-drop. HaX mode bypasses all checks.
+    private static bool IsCrossTransferEligible(PKM? pkm, SaveFile srcSave, SaveFile destSave, bool haxEnabled)
+    {
+        if (pkm is not { Species: > 0 })
+            return false;
+        if (haxEnabled)
+            return true;
+        if (srcSave is SAV7b || destSave is SAV7b)
+            return false;
+        if (pkm.GetType() != destSave.PKMType
+            && !EntityConverter.IsConvertibleToFormat(pkm, destSave.Generation))
+            return false;
+        return destSave.Personal.IsPresentInGame(pkm.Species, pkm.Form);
+    }
 
     private bool TryGetSelectedSource(bool fromA, out SaveFile source, out bool isParty,
         out int? boxNumber, out int slotNumber)
@@ -343,6 +373,16 @@ public partial class TradeTab : RefreshAwareComponent
         var destSave = fromA ? AppState.SaveFileB : AppState.SaveFile;
         if (destSave is null)
         {
+            return;
+        }
+
+        // Belt-and-suspenders: same eligibility gate as CanTransferFrom* / TradeSlot.HandleDrop.
+        if (!IsCrossTransferEligible(
+                srcIsParty ? srcSave.GetPartySlotAtIndex(srcSlot)
+                           : srcBox.HasValue ? srcSave.GetBoxSlotAtIndex(srcBox.Value, srcSlot) : null,
+                srcSave, destSave, AppState.IsHaXEnabled))
+        {
+            Snackbar.Add("This Pokémon can't be transferred to the destination save.", Severity.Warning);
             return;
         }
 
