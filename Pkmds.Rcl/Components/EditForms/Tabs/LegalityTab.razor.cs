@@ -77,9 +77,7 @@ public partial class LegalityTab : IDisposable
     private bool CanAutoFixTrashBytes => HasTrashByteIssues &&
                                          Pokemon is not null &&
                                          Analysis is { } la &&
-                                         (la.EncounterMatch is PCD ||
-                                          Pokemon.Format >= 8 ||
-                                          Pokemon.Context == EntityContext.Gen7b);
+                                         LegalityFixService.CanAutoFixTrashBytes(Pokemon, la);
 
     public void Dispose() =>
         RefreshService.OnAppStateChanged -= StateHasChanged;
@@ -145,22 +143,17 @@ public partial class LegalityTab : IDisposable
             return;
         }
 
-        var args = new RibbonVerifierArguments(Pokemon, la.EncounterMatch, la.Info.EvoChainsAllGens);
-        RibbonApplicator.FixInvalidRibbons(in args);
-        RefreshService.Refresh();
-        Snackbar.Add("Invalid ribbons removed. Click Save to apply changes.", Severity.Success);
+        ApplyFixOutcome(LegalityFixService.RemoveInvalidRibbons(Pokemon, la));
     }
 
     private void AddValidRibbons()
     {
-        if (Pokemon is null || Analysis is not { } la)
+        if (Analysis is not { } la)
         {
             return;
         }
 
-        RibbonApplicator.SetAllValidRibbons(la);
-        RefreshService.Refresh();
-        Snackbar.Add("All obtainable ribbons added. Click Save to apply changes.", Severity.Success);
+        ApplyFixOutcome(LegalityFixService.AddValidRibbons(la));
     }
 
     private void SuggestMoves()
@@ -170,19 +163,7 @@ public partial class LegalityTab : IDisposable
             return;
         }
 
-        Pokemon.SetMoveset();
-
-        // Update Technical Records (Gen 8+ SwSh / SV / ZA) to reflect the new moves,
-        // mirroring PKMEditor's SetSuggestedMoves behaviour.
-        if (Pokemon is ITechRecord tr)
-        {
-            tr.ClearRecordFlags();
-            var freshLa = AppService.GetLegalityAnalysis(Pokemon);
-            tr.SetRecordFlags(Pokemon, TechnicalRecordApplicatorOption.LegalCurrent, freshLa);
-        }
-
-        RefreshService.Refresh();
-        Snackbar.Add("Moves updated with a legal move set. Click Save to apply changes.", Severity.Success);
+        ApplyFixOutcome(LegalityFixService.SuggestMoves(Pokemon));
     }
 
     private void SuggestRelearnMoves()
@@ -192,9 +173,7 @@ public partial class LegalityTab : IDisposable
             return;
         }
 
-        Pokemon.SetRelearnMoves(la);
-        RefreshService.Refresh();
-        Snackbar.Add("Relearn moves updated. Click Save to apply changes.", Severity.Success);
+        ApplyFixOutcome(LegalityFixService.SuggestRelearnMoves(Pokemon, la));
     }
 
     private void SuggestBall()
@@ -204,9 +183,7 @@ public partial class LegalityTab : IDisposable
             return;
         }
 
-        BallApplicator.ApplyBallLegalByColor(Pokemon, la, PersonalColorUtil.GetColor(Pokemon));
-        RefreshService.Refresh();
-        Snackbar.Add("Ball updated to a legal option. Click Save to apply changes.", Severity.Success);
+        ApplyFixOutcome(LegalityFixService.SuggestBall(Pokemon, la));
     }
 
     private void SuggestMetLocation()
@@ -216,42 +193,7 @@ public partial class LegalityTab : IDisposable
             return;
         }
 
-        var encounter = EncounterSuggestion.GetSuggestedMetInfo(Pokemon);
-        if (encounter is null)
-        {
-            Snackbar.Add("No met location suggestion is available for this Pokémon.", Severity.Warning);
-            return;
-        }
-
-        Pokemon.MetLocation = encounter.Location;
-
-        // If the suggested encounter is for a pre-evolution (e.g. Trophy Garden Pichu → Pikachu),
-        // the Pokémon must have leveled up at least once from the encounter level to evolve.
-        // Raise CurrentLevel to encounter.LevelMin + 1 before calling GetSuggestedMetLevel so
-        // the brute-force loop considers a range that can include a valid MetLevel.
-        if (encounter.Encounter is { } enc && enc.Species != Pokemon.Species)
-        {
-            var minRequired = (byte)(encounter.LevelMin + 1);
-            if (Pokemon.CurrentLevel < minRequired)
-            {
-                Pokemon.CurrentLevel = minRequired;
-                AppService.LoadPokemonStats(Pokemon);
-            }
-        }
-
-        var metLevel = encounter.GetSuggestedMetLevel(Pokemon);
-        Pokemon.MetLevel = metLevel;
-
-        // A Pokémon's current level must be at least its met level.
-        // For freshly-created Pokémon the level defaults to 1, so raise it now.
-        if (Pokemon.CurrentLevel < metLevel)
-        {
-            Pokemon.CurrentLevel = metLevel;
-            AppService.LoadPokemonStats(Pokemon);
-        }
-
-        RefreshService.Refresh();
-        Snackbar.Add("Met location and level updated. Click Save to apply changes.", Severity.Success);
+        ApplyFixOutcome(LegalityFixService.SuggestMetLocation(Pokemon));
     }
 
     private void FixTrashBytes()
@@ -261,99 +203,17 @@ public partial class LegalityTab : IDisposable
             return;
         }
 
-        var enc = la.EncounterMatch;
-        var changed = false;
+        ApplyFixOutcome(LegalityFixService.FixTrashBytes(Pokemon, la));
+    }
 
-        if (enc is PCD pcd)
+    private void ApplyFixOutcome(FixOutcome outcome)
+    {
+        Snackbar.Add(outcome.Message, outcome.Severity);
+        if (outcome.Changed)
         {
-            var gift = pcd.Gift.PK;
-            gift.OriginalTrainerTrash.CopyTo(Pokemon.OriginalTrainerTrash);
-            if (pcd.Species == Pokemon.Species) // not evolved — nickname trash still relevant
-            {
-                gift.NicknameTrash.CopyTo(Pokemon.NicknameTrash);
-            }
-
-            changed = true;
-        }
-        else if (Pokemon.Format >= 8 || Pokemon.Context == EntityContext.Gen7b)
-        {
-            changed |= EnsureTrashTerminator(Pokemon.NicknameTrash);
-            changed |= EnsureTrashTerminator(Pokemon.OriginalTrainerTrash);
-            changed |= EnsureTrashTerminator(Pokemon.HandlingTrainerTrash);
-
-            // Clear trash for fields explicitly flagged as needing to be empty (e.g. Gen 8 eggs).
-            // Checked per-field to avoid zeroing HT on traded eggs, which require non-empty trash.
-            if (HasInvalidResult(la, CheckIdentifier.Nickname, LegalityCheckResultCode.TrashBytesShouldBeEmpty))
-            {
-                changed |= ClearTrashAfterTerminator(Pokemon, Pokemon.NicknameTrash);
-            }
-
-            if (HasInvalidResult(la, CheckIdentifier.Trainer, LegalityCheckResultCode.TrashBytesShouldBeEmpty))
-            {
-                changed |= ClearTrashAfterTerminator(Pokemon, Pokemon.OriginalTrainerTrash);
-            }
-
-            if (HasInvalidResult(la, CheckIdentifier.Handler, LegalityCheckResultCode.TrashBytesShouldBeEmpty))
-            {
-                changed |= ClearTrashAfterTerminator(Pokemon, Pokemon.HandlingTrainerTrash);
-            }
-        }
-
-        if (changed)
-        {
-            Pokemon.RefreshChecksum();
             RefreshService.Refresh();
-            Snackbar.Add("Trash bytes fixed. Click Save to apply changes.", Severity.Success);
-        }
-        else
-        {
-            Snackbar.Add("No auto-fixable trash byte issues found.", Severity.Warning);
         }
     }
-
-    private static bool EnsureTrashTerminator(Span<byte> trash)
-    {
-        if (trash.Length < 2)
-        {
-            return false;
-        }
-
-        if (trash[^1] == 0 && trash[^2] == 0)
-        {
-            return false;
-        }
-
-        trash[^1] = 0;
-        trash[^2] = 0;
-        return true;
-    }
-
-    private static bool ClearTrashAfterTerminator(PKM pk, Span<byte> trash)
-    {
-        var termCharIdx = pk.GetStringTerminatorIndex(trash);
-        if (termCharIdx < 0)
-        {
-            return false;
-        }
-
-        var byteOffset = (termCharIdx + 1) * pk.GetBytesPerChar();
-        if (byteOffset >= trash.Length)
-        {
-            return false;
-        }
-
-        var trashRegion = trash[byteOffset..];
-        if (!trashRegion.ContainsAnyExcept<byte>(0))
-        {
-            return false;
-        }
-
-        trashRegion.Clear();
-        return true;
-    }
-
-    private static bool HasInvalidResult(LegalityAnalysis la, CheckIdentifier identifier, LegalityCheckResultCode code) =>
-        la.Results.Any(r => !r.Valid && r.Identifier == identifier && r.Result == code);
 
     private IReadOnlyList<(MoveResult Result, int SlotNumber)> GetInvalidMoves()
     {
@@ -418,45 +278,6 @@ public partial class LegalityTab : IDisposable
         PKHexSeverity.Valid => Icons.Material.Filled.CheckCircle,
         PKHexSeverity.Fishy => Icons.Material.Filled.Warning,
         _ => Icons.Material.Filled.Cancel
-    };
-
-    private static string GetIdentifierLabel(CheckIdentifier id) => id switch
-    {
-        CheckIdentifier.CurrentMove => "Move",
-        CheckIdentifier.RelearnMove => "Relearn Move",
-        CheckIdentifier.Encounter => "Encounter",
-        CheckIdentifier.Shiny => "Shiny",
-        CheckIdentifier.EC => "Encryption Constant",
-        CheckIdentifier.PID => "PID",
-        CheckIdentifier.Gender => "Gender",
-        CheckIdentifier.EVs => "EVs",
-        CheckIdentifier.Language => "Language",
-        CheckIdentifier.Nickname => "Nickname",
-        CheckIdentifier.Trainer => "Trainer",
-        CheckIdentifier.IVs => "IVs",
-        CheckIdentifier.Level => "Level",
-        CheckIdentifier.Ball => "Ball",
-        CheckIdentifier.Memory => "Memory",
-        CheckIdentifier.Geography => "Geo Locations",
-        CheckIdentifier.Form => "Form",
-        CheckIdentifier.Egg => "Egg",
-        CheckIdentifier.Misc => "Misc",
-        CheckIdentifier.Fateful => "Fateful Encounter",
-        CheckIdentifier.Ribbon => "Ribbon",
-        CheckIdentifier.Training => "Training",
-        CheckIdentifier.Ability => "Ability",
-        CheckIdentifier.Evolution => "Evolution",
-        CheckIdentifier.Nature => "Nature",
-        CheckIdentifier.GameOrigin => "Game Origin",
-        CheckIdentifier.HeldItem => "Held Item",
-        CheckIdentifier.RibbonMark => "Ribbon/Mark",
-        CheckIdentifier.GVs => "GVs",
-        CheckIdentifier.Marking => "Marking",
-        CheckIdentifier.AVs => "AVs",
-        CheckIdentifier.TrashBytes => "Trash Bytes",
-        CheckIdentifier.SlotType => "Slot Type",
-        CheckIdentifier.Handler => "Handler",
-        _ => id.ToString()
     };
 
     private string HumanizeResult(CheckResult result)

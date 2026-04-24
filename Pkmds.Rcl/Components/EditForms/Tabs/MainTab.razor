@@ -28,8 +28,9 @@
                                  @bind-Value:set="@(newPid => SetPokemonPid(newPid))"
                                  For="@(() => Pokemon.PID)"/>
             </MudStack>
-            <LegalityIndicator Severity="@(GetCheckResult(CheckIdentifier.PID)?.Judgement ?? PKHeX.Core.Severity.Valid)"
-                               Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.PID))"/>
+            <LegalityPopover Result="@LegalityHelpers.GetCheckResult(Analysis, CheckIdentifier.PID)"
+                             Analysis="@Analysis"
+                             Title="PID"/>
         </MudStack>
 
         <MudTextField Label="PID (Hex)"
@@ -111,9 +112,9 @@
                           MaxLength="@saveFile.MaxStringLengthNickname"
                           For="@(() => Pokemon.Nickname)"/>
         </MudStack>
-        <LegalityIndicator
-            Severity="@(GetCheckResult(CheckIdentifier.Nickname)?.Judgement ?? PKHeX.Core.Severity.Valid)"
-            Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Nickname))"/>
+        <LegalityPopover Result="@LegalityHelpers.GetCheckResult(Analysis, CheckIdentifier.Nickname)"
+                         Analysis="@Analysis"
+                         Title="Nickname"/>
         @if (Pokemon.NicknameTrash.Length > 0)
         {
             <MudTooltip Text="Edit trash bytes...">
@@ -132,9 +133,9 @@
             <GenderDisplayComponent Gender="@((Gender)Pokemon.Gender)"
                                     OnChange="@OnGenderToggle"
                                     ReadOnly="@(!Pokemon.PersonalInfo.IsDualGender)"/>
-            <LegalityIndicator
-                Severity="@(GetCheckResult(CheckIdentifier.Gender)?.Judgement ?? PKHeX.Core.Severity.Valid)"
-                Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Gender))"/>
+            <LegalityPopover Result="@LegalityHelpers.GetCheckResult(Analysis, CheckIdentifier.Gender)"
+                             Analysis="@Analysis"
+                             Title="Gender"/>
         </MudStack>
     }
 
@@ -190,9 +191,9 @@
                     </ItemTemplate>
                 </AutocompleteSelect>
             </MudStack>
-            <LegalityIndicator
-                Severity="@(GetCheckResult(CheckIdentifier.Nature)?.Judgement ?? PKHeX.Core.Severity.Valid)"
-                Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Nature))"/>
+            <LegalityPopover Result="@LegalityHelpers.GetCheckResult(Analysis, CheckIdentifier.Nature)"
+                             Analysis="@Analysis"
+                             Title="Nature"/>
         </MudStack>
     }
 
@@ -242,9 +243,9 @@
                           ObjectPosition="@ObjectPosition.Center"
                           Width="40"
                           Height="30"/>
-                <LegalityIndicator
-                    Severity="@(GetCheckResult(CheckIdentifier.Form)?.Judgement ?? PKHeX.Core.Severity.Valid)"
-                    Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Form))"/>
+                <LegalityPopover Result="@LegalityHelpers.GetCheckResult(Analysis, CheckIdentifier.Form)"
+                                 Analysis="@Analysis"
+                                 Title="Form"/>
             </MudStack>
 
             @if (Pokemon is IFormArgument && FormArgumentUtil.GetFormArgumentMax(Pokemon.Species, Pokemon.Form, Pokemon.Context) > 0 && FormConverter.GetFormArgumentIsNamedIndex(Pokemon.Species))
@@ -379,9 +380,9 @@
                     }
                 </InfoButton>
             }
-            <LegalityIndicator
-                Severity="@(GetCheckResult(CheckIdentifier.HeldItem)?.Judgement ?? PKHeX.Core.Severity.Valid)"
-                Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.HeldItem))"/>
+            <LegalityPopover Result="@LegalityHelpers.GetCheckResult(Analysis, CheckIdentifier.HeldItem)"
+                             Analysis="@Analysis"
+                             Title="Held Item"/>
         </MudStack>
     }
 
@@ -418,9 +419,9 @@
                                         Items="@GetAbilityNumberItems().Select(s => s.Value)"
                                         ToStringFunc="@(v => GetAbilityNumberItems().FirstOrDefault(s => s.Value == v)?.Text ?? v.ToString())"/>
                 }
-                <LegalityIndicator
-                    Severity="@(GetCheckResult(CheckIdentifier.Ability)?.Judgement ?? PKHeX.Core.Severity.Valid)"
-                    Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Ability))"/>
+                <LegalityPopover Result="@LegalityHelpers.GetCheckResult(Analysis, CheckIdentifier.Ability)"
+                                 Analysis="@Analysis"
+                                 Title="Ability"/>
                 <InfoButton Title="@(abilityInfo?.Name ?? SafeNameLookup.Ability(Pokemon!.Ability))">
                     <MudText Typo="@Typo.body2">@(abilityInfo is { Description: { Length: > 0 } desc }
                             ? desc
@@ -441,9 +442,9 @@
                                         Items="@GetAbilitySlotItems().Select(s => s.Value)"
                                         ToStringFunc="@(v => GetAbilitySlotItems().FirstOrDefault(s => s.Value == v)?.Text ?? v.ToString())"/>
                 </MudStack>
-                <LegalityIndicator
-                    Severity="@(GetCheckResult(CheckIdentifier.Ability)?.Judgement ?? PKHeX.Core.Severity.Valid)"
-                    Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Ability))"/>
+                <LegalityPopover Result="@LegalityHelpers.GetCheckResult(Analysis, CheckIdentifier.Ability)"
+                                 Analysis="@Analysis"
+                                 Title="Ability"/>
                 <InfoButton Title="@(abilityInfo?.Name ?? SafeNameLookup.Ability(Pokemon!.Ability))">
                     <MudText Typo="@Typo.body2">@(abilityInfo is { Description: { Length: > 0 } desc }
                             ? desc
@@ -466,9 +467,9 @@
                                     ToStringFunc="@GetLanguageText"
                                     For="@(() => Pokemon.Language)"/>
             </MudStack>
-            <LegalityIndicator
-                Severity="@(GetCheckResult(CheckIdentifier.Language)?.Judgement ?? PKHeX.Core.Severity.Valid)"
-                Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Language))"/>
+            <LegalityPopover Result="@LegalityHelpers.GetCheckResult(Analysis, CheckIdentifier.Language)"
+                             Analysis="@Analysis"
+                             Title="Language"/>
         </MudStack>
     }
 
@@ -497,9 +498,9 @@
                                 @bind-Value="@Pokemon.IsEgg"
                                 @bind-Value:after="@RefreshService.Refresh"
                                 For="@(() => Pokemon.IsEgg)"/>
-                <LegalityIndicator
-                    Severity="@(GetCheckResult(CheckIdentifier.Egg)?.Judgement ?? PKHeX.Core.Severity.Valid)"
-                    Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Egg))"/>
+                <LegalityPopover Result="@LegalityHelpers.GetCheckResult(Analysis, CheckIdentifier.Egg)"
+                                 Analysis="@Analysis"
+                                 Title="Egg"/>
             </MudStack>
 
             <PokerusComponent Pokemon="Pokemon"/>
@@ -513,9 +514,9 @@
                             @bind-Value:get="@Pokemon.GetIsShinySafe()"
                             @bind-Value:set="@(isShiny => OnShinySet(isShiny))"
                             For="@(() => Pokemon.IsShiny)"/>
-            <LegalityIndicator
-                Severity="@(GetCheckResult(CheckIdentifier.Shiny)?.Judgement ?? PKHeX.Core.Severity.Valid)"
-                Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Shiny))"/>
+            <LegalityPopover Result="@LegalityHelpers.GetCheckResult(Analysis, CheckIdentifier.Shiny)"
+                             Analysis="@Analysis"
+                             Title="Shiny"/>
         </MudStack>
 
     </MudStack>

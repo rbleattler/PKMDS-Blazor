@@ -1,0 +1,59 @@
+@using PKHexSeverity = PKHeX.Core.Severity
+
+@if (IsVisible)
+{
+    @* Transparent full-screen overlay — sits below the popover (z-index 1199) so
+       tapping anywhere outside the popover closes it on both mouse and touch. *@
+    @if (open)
+    {
+        <div @onclick="Close"
+             style="position:fixed;inset:0;z-index:1199;cursor:default;"></div>
+    }
+
+    <span style="position:relative;display:inline-flex;align-items:center;">
+        <MudIconButton Icon="@GetIcon()"
+                       Size="@Size.Small"
+                       Color="@GetColor()"
+                       OnClick="@Toggle"
+                       title="@PopoverTitle"
+                       aria-label="@PopoverTitle"
+                       aria-expanded="@open"/>
+        <MudPopover Open="@open"
+                    Class="info-popover"
+                    AnchorOrigin="Origin.BottomRight"
+                    TransformOrigin="Origin.TopRight"
+                    OverflowBehavior="OverflowBehavior.FlipAlways"
+                    Paper="true">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 4px 0 16px;">
+                <MudText Typo="@Typo.subtitle2"
+                         Style="font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                    @PopoverTitle
+                </MudText>
+                <MudIconButton Icon="@Icons.Material.Filled.Close"
+                               Size="@Size.Small"
+                               Color="@Color.Default"
+                               OnClick="@Close"
+                               title="Close"
+                               aria-label="Close"/>
+            </div>
+            <div class="pa-3"
+                 style="padding-top:0;">
+                <MudStack Spacing="2">
+                    @if (!string.IsNullOrEmpty(Message))
+                    {
+                        <MudText Typo="@Typo.body2">@Message</MudText>
+                    }
+                    @if (OnQuickFix.HasDelegate)
+                    {
+                        <MudButton Variant="@Variant.Filled"
+                                   Color="@Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.AutoFixHigh"
+                                   OnClick="@HandleQuickFix">
+                            @QuickFixLabel
+                        </MudButton>
+                    }
+                </MudStack>
+            </div>
+        </MudPopover>
+    </span>
+}

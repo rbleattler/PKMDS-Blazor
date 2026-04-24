@@ -244,4 +244,33 @@ public partial class MovesTab
         var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Small);
         await DialogService.ShowAsync<MoveShopDialog>("Move Shop Editor", parameters, options);
     }
+
+    private void SuggestMoves()
+    {
+        if (Pokemon is null)
+        {
+            return;
+        }
+
+        ApplyFixOutcome(LegalityFixService.SuggestMoves(Pokemon));
+    }
+
+    private void SuggestRelearnMoves()
+    {
+        if (Pokemon is null || Analysis is not { } la)
+        {
+            return;
+        }
+
+        ApplyFixOutcome(LegalityFixService.SuggestRelearnMoves(Pokemon, la));
+    }
+
+    private void ApplyFixOutcome(FixOutcome outcome)
+    {
+        Snackbar.Add(outcome.Message, outcome.Severity);
+        if (outcome.Changed)
+        {
+            RefreshService.Refresh();
+        }
+    }
 }

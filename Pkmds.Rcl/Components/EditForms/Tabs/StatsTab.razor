@@ -121,9 +121,9 @@
                           AlignItems="@AlignItems.Center"
                           Spacing="1">
                     <MudText>IVs</MudText>
-                    <LegalityIndicator
-                        Severity="@(GetCheckResult(CheckIdentifier.IVs)?.Judgement ?? PKHeX.Core.Severity.Valid)"
-                        Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.IVs))"/>
+                    <LegalityPopover Result="@LegalityHelpers.GetCheckResult(Analysis, CheckIdentifier.IVs)"
+                                     Analysis="@Analysis"
+                                     Title="IVs"/>
                 </MudStack>
 
                 <MudNumericField T="@int"
@@ -253,9 +253,9 @@
                               AlignItems="@AlignItems.Center"
                               Spacing="1">
                         <MudText>AVs</MudText>
-                        <LegalityIndicator
-                            Severity="@(GetCheckResult(CheckIdentifier.AVs)?.Judgement ?? PKHeX.Core.Severity.Valid)"
-                            Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.AVs))"/>
+                        <LegalityPopover Result="@LegalityHelpers.GetCheckResult(Analysis, CheckIdentifier.AVs)"
+                                         Analysis="@Analysis"
+                                         Title="AVs"/>
                     </MudStack>
 
                     <MudNumericField Label="HP"
@@ -341,9 +341,9 @@
                               AlignItems="@AlignItems.Center"
                               Spacing="1">
                         <MudText>GVs</MudText>
-                        <LegalityIndicator
-                            Severity="@(GetCheckResult(CheckIdentifier.GVs)?.Judgement ?? PKHeX.Core.Severity.Valid)"
-                            Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.GVs))"/>
+                        <LegalityPopover Result="@LegalityHelpers.GetCheckResult(Analysis, CheckIdentifier.GVs)"
+                                         Analysis="@Analysis"
+                                         Title="GVs"/>
                     </MudStack>
 
                     <MudNumericField Label="HP"
@@ -422,9 +422,9 @@
                               AlignItems="@AlignItems.Center"
                               Spacing="1">
                         <MudText>EVs</MudText>
-                        <LegalityIndicator
-                            Severity="@(GetCheckResult(CheckIdentifier.EVs)?.Judgement ?? PKHeX.Core.Severity.Valid)"
-                            Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.EVs))"/>
+                        <LegalityPopover Result="@LegalityHelpers.GetCheckResult(Analysis, CheckIdentifier.EVs)"
+                                         Analysis="@Analysis"
+                                         Title="EVs"/>
                     </MudStack>
 
                     <MudNumericField Label="HP"

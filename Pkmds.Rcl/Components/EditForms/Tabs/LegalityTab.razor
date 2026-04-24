@@ -1,5 +1,6 @@
 @inherits BasePkmdsComponent
 @inject ILegalizationService LegalizationService
+@inject ILegalityFixService LegalityFixService
 
 @if (Pokemon is not null &&
      AppState is { SaveFile: { Context: not (EntityContext.None or EntityContext.SplitInvalid or EntityContext.MaxInvalid) }, SelectedSlotsAreValid: true })
@@ -55,7 +56,7 @@
                                          Size="@Size.Small"
                                          Color="@GetSeverityColor(result.Judgement)"
                                          Variant="@Variant.Outlined">
-                                    @GetIdentifierLabel(result.Identifier)
+                                    @LegalityHelpers.GetIdentifierLabel(result.Identifier)
                                 </MudChip>
                                 <MudText Typo="@Typo.body2">@HumanizeResult(result)</MudText>
                             </MudStack>
