@@ -17,11 +17,15 @@
         {
             var title = GetSpeciesTitle(Pokemon.Species);
             var isShiny = Pokemon.GetIsShinySafe();
-            var highResUrl = AppState.SpriteStyle == SpriteStyle.Game
-                ? ImageHelper.GetPokeApiVersionSpriteUrl(Pokemon.Species, Pokemon.Form,
-                    Pokemon.GetFormArgument(0), isShiny, Pokemon.Gender, OwnerVersion)
-                : ImageHelper.GetPokeApiHomeSpriteUrl(Pokemon.Species, Pokemon.Form,
-                    Pokemon.GetFormArgument(0), isShiny, Pokemon.Gender);
+            // In embedded host mode, suppress the high-res PokeAPI overlay so PKMDS
+            // makes no external network requests. See #787.
+            var highResUrl = HostService.IsEmbedded
+                ? null
+                : AppState.SpriteStyle == SpriteStyle.Game
+                    ? ImageHelper.GetPokeApiVersionSpriteUrl(Pokemon.Species, Pokemon.Form,
+                        Pokemon.GetFormArgument(0), isShiny, Pokemon.Gender, OwnerVersion)
+                    : ImageHelper.GetPokeApiHomeSpriteUrl(Pokemon.Species, Pokemon.Form,
+                        Pokemon.GetFormArgument(0), isShiny, Pokemon.Gender);
             <object class="pkm-sprite w-full h-auto object-contain block"
                     style="@(highResLoaded ? "display:none" : string.Empty)"
                     type="image/png"
