@@ -136,6 +136,22 @@ public partial class MainLayout : IDisposable
         RefreshService.Refresh();
 
         StateHasChanged();
+
+        // Signal embedded-host readiness AFTER settings load and theme apply
+        // so the host can call window.PKMDS.host.loadSave() without racing the
+        // Blazor boot sequence. Without this, hosts would have to poll for
+        // window.PKMDS.host existence before calling in. See #787.
+        if (HostService.IsEmbedded)
+        {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("PKMDS.host._sendMessage", "ready", new { });
+            }
+            catch (JSException ex)
+            {
+                Logger.LogWarning(ex, "Failed to fire host ready signal");
+            }
+        }
     }
 
     private async void OnSystemPreferenceChanged(bool newValue)
