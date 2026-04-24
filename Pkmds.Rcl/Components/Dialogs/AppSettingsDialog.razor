@@ -18,70 +18,81 @@
             <MudTabPanel Text="UI">
                 <MudStack Spacing="3"
                           Class="pa-4">
-                    <MudText Typo="@Typo.subtitle1"
-                             Color="@Color.Primary">
-                        Theme
-                    </MudText>
-                    <MudButtonGroup Variant="@Variant.Outlined"
-                                    Size="@Size.Small">
-                        <MudIconButton Icon="@Icons.Material.Filled.LightMode"
-                                       Color="@Color.Inherit"
-                                       Style="@(themeMode == ThemeMode.Light
-                                                  ? "background-color: var(--mud-palette-primary-lighten);"
-                                                  : "opacity: 0.6;")"
-                                       title="Light mode"
-                                       OnClick="@(() => themeMode = ThemeMode.Light)"/>
-                        <MudIconButton Icon="@Icons.Material.Filled.SettingsBrightness"
-                                       Color="@Color.Inherit"
-                                       Style="@(themeMode == ThemeMode.System
-                                                  ? "background-color: var(--mud-palette-primary-lighten);"
-                                                  : "opacity: 0.6;")"
-                                       title="System default"
-                                       OnClick="@(() => themeMode = ThemeMode.System)"/>
-                        <MudIconButton Icon="@Icons.Material.Filled.DarkMode"
-                                       Color="@Color.Inherit"
-                                       Style="@(themeMode == ThemeMode.Dark
-                                                  ? "background-color: var(--mud-palette-primary-lighten);"
-                                                  : "opacity: 0.6;")"
-                                       title="Dark mode"
-                                       OnClick="@(() => themeMode = ThemeMode.Dark)"/>
-                    </MudButtonGroup>
+                    @* Theme picker hidden in embed mode — host owns appearance,
+                       ThemeMode is force-locked to System in SettingsService. *@
+                    @if (!HostService.IsEmbedded)
+                    {
+                        <MudText Typo="@Typo.subtitle1"
+                                 Color="@Color.Primary">
+                            Theme
+                        </MudText>
+                        <MudButtonGroup Variant="@Variant.Outlined"
+                                        Size="@Size.Small">
+                            <MudIconButton Icon="@Icons.Material.Filled.LightMode"
+                                           Color="@Color.Inherit"
+                                           Style="@(themeMode == ThemeMode.Light
+                                                      ? "background-color: var(--mud-palette-primary-lighten);"
+                                                      : "opacity: 0.6;")"
+                                           title="Light mode"
+                                           OnClick="@(() => themeMode = ThemeMode.Light)"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.SettingsBrightness"
+                                           Color="@Color.Inherit"
+                                           Style="@(themeMode == ThemeMode.System
+                                                      ? "background-color: var(--mud-palette-primary-lighten);"
+                                                      : "opacity: 0.6;")"
+                                           title="System default"
+                                           OnClick="@(() => themeMode = ThemeMode.System)"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.DarkMode"
+                                           Color="@Color.Inherit"
+                                           Style="@(themeMode == ThemeMode.Dark
+                                                      ? "background-color: var(--mud-palette-primary-lighten);"
+                                                      : "opacity: 0.6;")"
+                                           title="Dark mode"
+                                           OnClick="@(() => themeMode = ThemeMode.Dark)"/>
+                        </MudButtonGroup>
 
-                    <MudDivider/>
+                        <MudDivider/>
+                    }
 
-                    <MudText Typo="@Typo.subtitle1"
-                             Color="@Color.Primary">
-                        Sprite Style
-                    </MudText>
-                    <MudButtonGroup Variant="@Variant.Filled"
-                                    Size="@Size.Small">
-                        <MudButton StartIcon="@Icons.Material.Filled.Home"
-                                   Color="@(spriteStyle == SpriteStyle.Home
-                                              ? Color.Primary
-                                              : Color.Default)"
-                                   title="Home (high-res 512×512 sprites)"
-                                   OnClick="@(() => spriteStyle = SpriteStyle.Home)">
-                            Home
+                    @* Sprite Style hidden in embed mode — PokeAPI overlay is
+                       suppressed for embedded sessions, so the choice has no
+                       visible effect. *@
+                    @if (!HostService.IsEmbedded)
+                    {
+                        <MudText Typo="@Typo.subtitle1"
+                                 Color="@Color.Primary">
+                            Sprite Style
+                        </MudText>
+                        <MudButtonGroup Variant="@Variant.Filled"
+                                        Size="@Size.Small">
+                            <MudButton StartIcon="@Icons.Material.Filled.Home"
+                                       Color="@(spriteStyle == SpriteStyle.Home
+                                                  ? Color.Primary
+                                                  : Color.Default)"
+                                       title="Home (high-res 512×512 sprites)"
+                                       OnClick="@(() => spriteStyle = SpriteStyle.Home)">
+                                Home
+                            </MudButton>
+                            <MudButton StartIcon="@Icons.Material.Filled.VideogameAsset"
+                                       Color="@(spriteStyle == SpriteStyle.Game
+                                                  ? Color.Primary
+                                                  : Color.Default)"
+                                       title="Game (era-accurate pixel-art sprites matched to save file)"
+                                       OnClick="@(() => spriteStyle = SpriteStyle.Game)">
+                                Game
+                            </MudButton>
+                        </MudButtonGroup>
+                        <MudButton StartIcon="@Icons.Material.Filled.ImageNotSupported"
+                                   Variant="@Variant.Filled"
+                                   Size="@Size.Small"
+                                   Color="@Color.Default"
+                                   title="Forces all high-res sprites to reload from the CDN"
+                                   OnClick="@(() => PokemonSlotComponent.ClearSpriteCache())">
+                            Clear Sprite Cache
                         </MudButton>
-                        <MudButton StartIcon="@Icons.Material.Filled.VideogameAsset"
-                                   Color="@(spriteStyle == SpriteStyle.Game
-                                              ? Color.Primary
-                                              : Color.Default)"
-                                   title="Game (era-accurate pixel-art sprites matched to save file)"
-                                   OnClick="@(() => spriteStyle = SpriteStyle.Game)">
-                            Game
-                        </MudButton>
-                    </MudButtonGroup>
-                    <MudButton StartIcon="@Icons.Material.Filled.ImageNotSupported"
-                               Variant="@Variant.Filled"
-                               Size="@Size.Small"
-                               Color="@Color.Default"
-                               title="Forces all high-res sprites to reload from the CDN"
-                               OnClick="@(() => PokemonSlotComponent.ClearSpriteCache())">
-                        Clear Sprite Cache
-                    </MudButton>
 
-                    <MudDivider/>
+                        <MudDivider/>
+                    }
 
                     <MudText Typo="@Typo.subtitle1"
                              Color="@Color.Primary">
@@ -112,18 +123,24 @@
 
                     <MudDivider/>
 
-                    <MudText Typo="@Typo.subtitle1"
-                             Color="@Color.Primary">
-                        Haptic Feedback
-                    </MudText>
-                    <MudSwitch T="@bool"
-                               Value="@hapticsEnabled"
-                               Color="@Color.Primary"
-                               Label="Enable haptics"
-                               title="Short vibration pulses on drag, drop, save export, and other key actions. No effect on iOS — Safari does not support web haptics."
-                               ValueChanged="@(v => OnToggle(v, x => hapticsEnabled = x))"/>
+                    @* Haptics hidden in embed mode — iOS WebKit doesn't implement
+                       navigator.vibrate, so the toggle has no effect in any
+                       embedded WKWebView host. *@
+                    @if (!HostService.IsEmbedded)
+                    {
+                        <MudText Typo="@Typo.subtitle1"
+                                 Color="@Color.Primary">
+                            Haptic Feedback
+                        </MudText>
+                        <MudSwitch T="@bool"
+                                   Value="@hapticsEnabled"
+                                   Color="@Color.Primary"
+                                   Label="Enable haptics"
+                                   title="Short vibration pulses on drag, drop, save export, and other key actions. No effect on iOS — Safari does not support web haptics."
+                                   ValueChanged="@(v => OnToggle(v, x => hapticsEnabled = x))"/>
 
-                    <MudDivider/>
+                        <MudDivider/>
+                    }
 
                     <MudText Typo="@Typo.subtitle1"
                              Color="@Color.Primary">
@@ -178,49 +195,133 @@
                 </MudStack>
             </MudTabPanel>
 
-            <!-- Tab 3: Advanced -->
-            <MudTabPanel Text="Advanced">
-                <MudStack Spacing="3"
+            @* Advanced tab is entirely standalone-only: Backup uses IndexedDB
+               history that doesn't fit a one-shot edit session, and Clear App
+               Cache would tear down the WKWebView session. *@
+            @if (!HostService.IsEmbedded)
+            {
+                <!-- Tab 3: Advanced -->
+                <MudTabPanel Text="Advanced">
+                    <MudStack Spacing="3"
+                              Class="pa-4">
+                        <MudText Typo="@Typo.subtitle1"
+                                 Color="@Color.Primary">
+                            Backup
+                        </MudText>
+                        <MudSwitch T="@bool"
+                                   Value="@isAutoBackupEnabled"
+                                   Color="@Color.Primary"
+                                   Label="Auto-backup on load"
+                                   title="Automatically create a backup each time a save file is loaded"
+                                   ValueChanged="@(v => OnToggle(v, x => isAutoBackupEnabled = x))"/>
+                        <MudNumericField @bind-Value="@maxBackupCount"
+                                         Label="Max backups to keep"
+                                         Variant="@Variant.Outlined"
+                                         Min="@((int)1)"
+                                         Max="@((int)50)"/>
+                        <MudText Typo="@Typo.caption"
+                                 Color="@Color.Secondary">
+                            Backups are stored in the browser. Oldest backups are automatically
+                            removed when the limit is exceeded.
+                        </MudText>
+
+                        <MudDivider/>
+
+                        <MudText Typo="@Typo.subtitle1"
+                                 Color="@Color.Primary">
+                            App Cache
+                        </MudText>
+                        <MudText Typo="@Typo.caption"
+                                 Color="@Color.Secondary">
+                            Use this if the app appears stuck on an old version after a deploy —
+                            stale descriptions, sprites, or move data. Unregisters the service
+                            worker, deletes all browser caches, and reloads the page. Your save
+                            files and backups are preserved.
+                        </MudText>
+                        <MudButton StartIcon="@Icons.Material.Filled.DeleteSweep"
+                                   Variant="@Variant.Filled"
+                                   Color="@Color.Error"
+                                   OnClick="@OnClearAppCache">
+                            Clear App Cache &amp; Reload
+                        </MudButton>
+                    </MudStack>
+                </MudTabPanel>
+            }
+
+            @* About tab is always visible — provides version info that's
+               otherwise only reachable via the drawer footer (which is
+               invisible on small screens and hidden entirely in embed mode). *@
+            <MudTabPanel Text="About">
+                <MudStack Spacing="2"
                           Class="pa-4">
                     <MudText Typo="@Typo.subtitle1"
                              Color="@Color.Primary">
-                        Backup
+                        @Constants.AppTitle
                     </MudText>
-                    <MudSwitch T="@bool"
-                               Value="@isAutoBackupEnabled"
+                    <MudText Typo="@Typo.body2">
+                        Version
+                        <MudLink Href="@($"https://github.com/codemonkey85/PKMDS-Blazor/releases/tag/{AppState.AppVersion}")"
+                                 Target="_blank">
+                            @AppState.AppVersion
+                        </MudLink>
+                    </MudText>
+                    <MudText Typo="@Typo.body2">
+                        Built: @AppState.AppBuildDate?.ToLocalTime().ToString("MMM dd, yyyy hh:mm:ss tt")
+                    </MudText>
+                    <MudText Typo="@Typo.body2">
+                        Created by
+                        <MudLink Href="https://bondcodes.com/"
+                                 Target="_blank">
+                            codemonkey85
+                        </MudLink>
+                    </MudText>
+
+                    <MudDivider Class="my-2"/>
+
+                    <MudText Typo="@Typo.body2">
+                        Based on
+                        <MudLink Href="https://github.com/kwsch/PKHeX/tree/master/PKHeX.Core"
+                                 Target="_blank">
+                            PKHeX.Core
+                        </MudLink>
+                        by
+                        <MudLink Href="https://github.com/kwsch/"
+                                 Target="_blank">
+                            Kaphotics
+                        </MudLink>
+                        (version
+                        <MudLink Href="@($"https://www.nuget.org/packages/PKHeX.Core/{IAppState.PkhexVersion}")"
+                                 Target="_blank">
+                            @IAppState.PkhexVersion
+                        </MudLink>
+                        )
+                    </MudText>
+                    <MudText Typo="@Typo.body2">
+                        Special thanks to Kaphotics, as well as
+                        <MudLink Href="https://github.com/kwsch/PKHeX/graphs/contributors"
+                                 Target="_blank">
+                            all the contributors to PKHeX and PKHeX.Core
+                        </MudLink>
+                    </MudText>
+
+                    <MudDivider Class="my-2"/>
+
+                    <MudButton Href="https://github.com/codemonkey85/PKMDS-Blazor"
+                               Target="_blank"
+                               Variant="@Variant.Outlined"
+                               Color="@Color.Default"
+                               StartIcon="@Icons.Custom.Brands.GitHub"
+                               FullWidth>
+                        Source on GitHub
+                    </MudButton>
+                    <MudButton Href="https://ko-fi.com/michaelbond"
+                               Target="_blank"
+                               title="Support Me on Ko-fi"
+                               Variant="@Variant.Outlined"
                                Color="@Color.Primary"
-                               Label="Auto-backup on load"
-                               title="Automatically create a backup each time a save file is loaded"
-                               ValueChanged="@(v => OnToggle(v, x => isAutoBackupEnabled = x))"/>
-                    <MudNumericField @bind-Value="@maxBackupCount"
-                                     Label="Max backups to keep"
-                                     Variant="@Variant.Outlined"
-                                     Min="@((int)1)"
-                                     Max="@((int)50)"/>
-                    <MudText Typo="@Typo.caption"
-                             Color="@Color.Secondary">
-                        Backups are stored in the browser. Oldest backups are automatically
-                        removed when the limit is exceeded.
-                    </MudText>
-
-                    <MudDivider/>
-
-                    <MudText Typo="@Typo.subtitle1"
-                             Color="@Color.Primary">
-                        App Cache
-                    </MudText>
-                    <MudText Typo="@Typo.caption"
-                             Color="@Color.Secondary">
-                        Use this if the app appears stuck on an old version after a deploy —
-                        stale descriptions, sprites, or move data. Unregisters the service
-                        worker, deletes all browser caches, and reloads the page. Your save
-                        files and backups are preserved.
-                    </MudText>
-                    <MudButton StartIcon="@Icons.Material.Filled.DeleteSweep"
-                               Variant="@Variant.Filled"
-                               Color="@Color.Error"
-                               OnClick="@OnClearAppCache">
-                        Clear App Cache &amp; Reload
+                               StartIcon="@Icons.Material.Filled.Coffee"
+                               FullWidth>
+                        Support on Ko-fi
                     </MudButton>
                 </MudStack>
             </MudTabPanel>
