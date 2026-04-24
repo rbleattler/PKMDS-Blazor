@@ -4,6 +4,7 @@ namespace Pkmds.Rcl.Services;
 public sealed class SettingsService(
     IJSRuntime jsRuntime,
     IAppState appState,
+    IHostService hostService,
     ILoggingService loggingService) : ISettingsService
 {
     private const string SettingsKey = "pkmds_settings";
@@ -55,12 +56,14 @@ public sealed class SettingsService(
                 return;
             }
 
+            ApplyEmbeddedHostOverrides();
             ApplyToServices();
         }
         catch (JSException)
         {
             // Fallback to in-memory defaults when localStorage is unavailable or blocked.
             Settings = new AppSettings();
+            ApplyEmbeddedHostOverrides();
             ApplyToServices();
         }
     }
@@ -69,6 +72,7 @@ public sealed class SettingsService(
     public async Task SaveAsync(AppSettings settings)
     {
         Settings = settings with { ThemeMode = NormalizeThemeMode(settings.ThemeMode) };
+        ApplyEmbeddedHostOverrides();
         ApplyToServices();
 
         var json = JsonSerializer.Serialize(Settings);
@@ -76,8 +80,12 @@ public sealed class SettingsService(
         {
             await jsRuntime.InvokeVoidAsync("localStorage.setItem", SettingsKey, json);
 
-            // Keep pkmds_theme in sync for the JS early-load script (prevents FOUC on reload)
-            if (Settings.ThemeMode == "system")
+            // Keep pkmds_theme in sync for the JS early-load script (prevents FOUC on reload).
+            // In embedded host mode the host owns appearance, so always remove the legacy key
+            // — that way theme-init.js falls through to prefers-color-scheme on the next load
+            // and we never persist a theme override that would survive into a future standalone
+            // session and confuse the user.
+            if (hostService.IsEmbedded || Settings.ThemeMode == "system")
             {
                 await jsRuntime.InvokeVoidAsync("localStorage.removeItem", LegacyThemeKey);
             }
@@ -99,6 +107,20 @@ public sealed class SettingsService(
         value is "light" or "dark"
             ? value
             : "system";
+
+    /// <summary>
+    /// In embedded host mode, force ThemeMode to "system" so the app follows
+    /// the host's appearance via prefers-color-scheme. The override is applied
+    /// in-memory only — the user's standalone-mode preference (if any) is
+    /// preserved in localStorage and re-takes effect outside embedded mode.
+    /// </summary>
+    private void ApplyEmbeddedHostOverrides()
+    {
+        if (hostService.IsEmbedded && Settings.ThemeMode != "system")
+        {
+            Settings = Settings with { ThemeMode = "system" };
+        }
+    }
 
     private void ApplyToServices()
     {
