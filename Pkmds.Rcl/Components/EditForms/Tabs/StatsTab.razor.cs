@@ -27,35 +27,6 @@ public partial class StatsTab : IDisposable
     public void Dispose() =>
         RefreshService.OnAppStateChanged -= StateHasChanged;
 
-    private CheckResult? GetCheckResult(CheckIdentifier identifier)
-    {
-        if (Analysis is not { } la)
-        {
-            return null;
-        }
-
-        foreach (var r in la.Results)
-        {
-            if (r.Identifier == identifier && !r.Valid)
-            {
-                return r;
-            }
-        }
-
-        return null;
-    }
-
-    private string HumanizeCheckResult(CheckResult? result)
-    {
-        if (result is not { } r || Analysis is not { } la)
-        {
-            return string.Empty;
-        }
-
-        var ctx = LegalityLocalizationContext.Create(la);
-        return ctx.Humanize(in r);
-    }
-
     protected override void OnInitialized() =>
         RefreshService.OnAppStateChanged += StateHasChanged;
 

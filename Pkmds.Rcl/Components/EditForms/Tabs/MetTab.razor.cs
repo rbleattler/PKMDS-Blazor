@@ -135,33 +135,33 @@ public partial class MetTab : IDisposable
         }
     }
 
-    private CheckResult? GetCheckResult(CheckIdentifier identifier)
+    private void SuggestBall()
     {
-        if (Analysis is not { } la)
+        if (Pokemon is null || Analysis is not { } la)
         {
-            return null;
+            return;
         }
 
-        foreach (var r in la.Results)
-        {
-            if (r.Identifier == identifier && !r.Valid)
-            {
-                return r;
-            }
-        }
-
-        return null;
+        ApplyFixOutcome(LegalityFixService.SuggestBall(Pokemon, la));
     }
 
-    private string HumanizeCheckResult(CheckResult? result)
+    private void SuggestMetLocation()
     {
-        if (result is not { } r || Analysis is not { } la)
+        if (Pokemon is null)
         {
-            return string.Empty;
+            return;
         }
 
-        var ctx = LegalityLocalizationContext.Create(la);
-        return ctx.Humanize(in r);
+        ApplyFixOutcome(LegalityFixService.SuggestMetLocation(Pokemon));
+    }
+
+    private void ApplyFixOutcome(FixOutcome outcome)
+    {
+        Snackbar.Add(outcome.Message, outcome.Severity);
+        if (outcome.Changed)
+        {
+            RefreshService.Refresh();
+        }
     }
 
     protected override void OnInitialized() =>

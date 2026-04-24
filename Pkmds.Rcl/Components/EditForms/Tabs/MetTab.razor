@@ -1,4 +1,5 @@
 ﻿@inherits BasePkmdsComponent
+@inject ILegalityFixService LegalityFixService
 
 @if (Pokemon is not null &&
      AppState is
@@ -36,9 +37,9 @@
                       ObjectFit="@ObjectFit.Contain"
                       ObjectPosition="@ObjectPosition.Center"/>
         }
-        <LegalityIndicator
-            Severity="@(GetCheckResult(CheckIdentifier.GameOrigin)?.Judgement ?? PKHeX.Core.Severity.Valid)"
-            Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.GameOrigin))"/>
+        <LegalityPopover Result="@LegalityHelpers.GetCheckResult(Analysis, CheckIdentifier.GameOrigin)"
+                         Analysis="@Analysis"
+                         Title="Game Origin"/>
     </MudStack>
 
     @if (Pokemon is IBattleVersion)
@@ -70,9 +71,11 @@
                              SearchFunc="@SearchMetLocations"
                              ToStringFunc="@(metLocation => metLocation?.Text)"/>
         </MudStack>
-        <LegalityIndicator
-            Severity="@(GetCheckResult(CheckIdentifier.Encounter)?.Judgement ?? PKHeX.Core.Severity.Valid)"
-            Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Encounter))"/>
+        <LegalityPopover Result="@LegalityHelpers.GetCheckResult(Analysis, CheckIdentifier.Encounter)"
+                         Analysis="@Analysis"
+                         Title="Encounter"
+                         QuickFixLabel="Suggest Met Location"
+                         OnQuickFix="@SuggestMetLocation"/>
     </MudStack>
 
     @if (saveGeneration >= 3)
@@ -113,9 +116,11 @@
                           ObjectFit="@ObjectFit.Contain"
                           ObjectPosition="@ObjectPosition.Center"/>
             }
-            <LegalityIndicator
-                Severity="@(GetCheckResult(CheckIdentifier.Ball)?.Judgement ?? PKHeX.Core.Severity.Valid)"
-                Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Ball))"/>
+            <LegalityPopover Result="@LegalityHelpers.GetCheckResult(Analysis, CheckIdentifier.Ball)"
+                             Analysis="@Analysis"
+                             Title="Ball"
+                             QuickFixLabel="Suggest Ball"
+                             OnQuickFix="@SuggestBall"/>
             <InfoButton Title="@(ballInfo?.Name ?? GameInfo.FilteredSources.Balls.FirstOrDefault(b => b.Value == Pokemon?.Ball)?.Text ?? "Ball")">
                 <MudText Typo="@Typo.body2">@(ballInfo is { Description: { Length: > 0 } desc }
                         ? desc
@@ -135,9 +140,11 @@
                                  @bind-Value="@Pokemon.MetLevel"
                                  For="@(() => Pokemon.MetLevel)"/>
             </MudStack>
-            <LegalityIndicator
-                Severity="@(GetCheckResult(CheckIdentifier.Level)?.Judgement ?? PKHeX.Core.Severity.Valid)"
-                Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Level))"/>
+            <LegalityPopover Result="@LegalityHelpers.GetCheckResult(Analysis, CheckIdentifier.Level)"
+                             Analysis="@Analysis"
+                             Title="Met Level"
+                             QuickFixLabel="Suggest Met Location"
+                             OnQuickFix="@SuggestMetLocation"/>
         </MudStack>
     }
 

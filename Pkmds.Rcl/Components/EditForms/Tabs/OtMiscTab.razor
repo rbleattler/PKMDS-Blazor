@@ -80,9 +80,9 @@
                                   MaxLength="@saveFile.MaxStringLengthTrainer"
                                   For="@(() => Pokemon.OriginalTrainerName)"/>
                 </div>
-                <LegalityIndicator
-                    Severity="@(GetCheckResult(CheckIdentifier.Trainer)?.Judgement ?? PKHeX.Core.Severity.Valid)"
-                    Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Trainer))"/>
+                <LegalityPopover Result="@LegalityHelpers.GetCheckResult(Analysis, CheckIdentifier.Trainer)"
+                                 Analysis="@Analysis"
+                                 Title="Trainer"/>
                 @if (Pokemon.OriginalTrainerTrash.Length > 0)
                 {
                     <MudTooltip Text="Edit trash bytes...">
@@ -131,9 +131,9 @@
                                          @bind-Value:set="@(newEc => SetPokemonEc(newEc))"
                                          For="@(() => Pokemon.EncryptionConstant)"/>
                     </div>
-                    <LegalityIndicator
-                        Severity="@(GetCheckResult(CheckIdentifier.EC)?.Judgement ?? PKHeX.Core.Severity.Valid)"
-                        Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.EC))"/>
+                    <LegalityPopover Result="@LegalityHelpers.GetCheckResult(Analysis, CheckIdentifier.EC)"
+                                     Analysis="@Analysis"
+                                     Title="Encryption Constant"/>
                 </div>
             </MudItem>
 
@@ -201,9 +201,9 @@
                                       @bind-Value="@Pokemon.HandlingTrainerName"
                                       MaxLength="@saveFile.MaxStringLengthTrainer"/>
                     </div>
-                    <LegalityIndicator
-                        Severity="@(GetCheckResult(CheckIdentifier.Handler)?.Judgement ?? PKHeX.Core.Severity.Valid)"
-                        Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Handler))"/>
+                    <LegalityPopover Result="@LegalityHelpers.GetCheckResult(Analysis, CheckIdentifier.Handler)"
+                                     Analysis="@Analysis"
+                                     Title="Handler"/>
                     @if (Pokemon.HandlingTrainerTrash.Length > 0)
                     {
                         <MudTooltip Text="Edit trash bytes...">
@@ -375,9 +375,9 @@
                     <MudText Typo="@Typo.subtitle2"
                              Class="mt-1 mb-1">OT Memory
                     </MudText>
-                    <LegalityIndicator
-                        Severity="@(GetCheckResult(CheckIdentifier.Memory)?.Judgement ?? PKHeX.Core.Severity.Valid)"
-                        Message="@HumanizeCheckResult(GetCheckResult(CheckIdentifier.Memory))"/>
+                    <LegalityPopover Result="@LegalityHelpers.GetCheckResult(Analysis, CheckIdentifier.Memory)"
+                                     Analysis="@Analysis"
+                                     Title="OT Memory"/>
                 </MudStack>
             </MudItem>
 

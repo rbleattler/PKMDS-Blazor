@@ -261,7 +261,7 @@ This roadmap outlines the path to achieving 100% feature parity with PKHeX. Task
 - [x] **Batch legalize from the report** — wraps the Auto-Legality engine (see §5.1); cancel button, per-Pokémon timeout, and in-place entry updates; adapts PKM to the save file before analysis so results match what will be written
 - [x] Show legality warnings on Pokémon slot display (valid/warn icon overlay)
 - [x] Add inline per-field legality indicators throughout Pokémon editor tabs (#411)
-  - [x] Reusable `LegalityIndicator` component (MudTooltip + severity icon, renders nothing when valid)
+  - [x] Reusable `LegalityPopover` component (clickable info button → popover with humanized message + optional quick-fix button, renders nothing when valid; #773)
   - [x] `LegalityAnalysis` computed once in `PokemonEditForm` and passed to all tabs
   - [x] Per-move-slot indicators (current moves + relearn moves) in **Moves tab**
   - [x] Group-level indicators for IVs/EVs/AVs/GVs in **Stats tab**
