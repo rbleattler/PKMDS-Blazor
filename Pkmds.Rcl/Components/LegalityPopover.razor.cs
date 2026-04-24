@@ -75,6 +75,16 @@ public partial class LegalityPopover
     // Hide the popover entirely for Valid severity (nothing to show).
     private bool IsVisible => EffectiveSeverity != PKHexSeverity.Valid;
 
+    protected override void OnParametersSet()
+    {
+        // Reset open state when the field becomes Valid, so a later transition
+        // back to Invalid doesn't re-show the popover already-open.
+        if (EffectiveSeverity == PKHexSeverity.Valid)
+        {
+            open = false;
+        }
+    }
+
     private string GetIcon() => EffectiveSeverity switch
     {
         PKHexSeverity.Fishy => Icons.Material.Filled.Warning,

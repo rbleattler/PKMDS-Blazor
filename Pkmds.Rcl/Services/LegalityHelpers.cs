@@ -11,9 +11,11 @@ public static class LegalityHelpers
             return null;
         }
 
+        // Match on Judgement (not !Valid): CheckResult.Valid is true for Fishy,
+        // so filtering by Valid would hide Fishy warnings from per-field popovers.
         foreach (var r in la.Results)
         {
-            if (r.Identifier == identifier && !r.Valid)
+            if (r.Identifier == identifier && r.Judgement != PKHexSeverity.Valid)
             {
                 return r;
             }
