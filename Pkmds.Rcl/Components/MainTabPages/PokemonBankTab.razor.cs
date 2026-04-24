@@ -221,6 +221,96 @@ public partial class PokemonBankTab : RefreshAwareComponent
 
     // ── Export ────────────────────────────────────────────────────────────
 
+    // Single-entry export: write the raw .pk* file directly, no dialog or zip.
+    private async Task ExportSingleAsync(BankEntry entry)
+    {
+        isBusy = true;
+        StateHasChanged();
+
+        try
+        {
+            var pkm = entry.Pokemon;
+            pkm.RefreshChecksum();
+            var bytes = new byte[pkm.SIZE_PARTY];
+            pkm.WriteDecryptedDataParty(bytes);
+            var fileName = AppService.GetCleanFileName(pkm);
+            var ext = $".{pkm.Extension}";
+
+            if (await FileSystemAccessService.IsSupportedAsync())
+            {
+                try
+                {
+                    await JSRuntime.InvokeVoidAsync("showFilePickerAndWrite", fileName, bytes, ext, "Pokémon File");
+                    Snackbar.Add($"{entry.SpeciesName} exported.", Severity.Success);
+                    return;
+                }
+                catch (JSException ex) when (ex.Message.Contains("AbortError", StringComparison.OrdinalIgnoreCase) ||
+                                             ex.Message.Contains("aborted a request", StringComparison.OrdinalIgnoreCase))
+                {
+                    Snackbar.Add("Export cancelled.", Severity.Info);
+                    return;
+                }
+            }
+
+            await JSRuntime.InvokeVoidAsync("downloadBlob", fileName, bytes, "application/x-pokemon-savedata");
+            Snackbar.Add($"{entry.SpeciesName} exported.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Export failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isBusy = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ExportSelectedAsync()
+    {
+        var selected = entries.Where(e => selectedIds.Contains(e.Id)).ToList();
+        if (selected.Count == 0)
+        {
+            return;
+        }
+
+        if (selected.Count == 1)
+        {
+            await ExportSingleAsync(selected[0]);
+            return;
+        }
+
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Small);
+        var parameters = new DialogParameters<BankExportDialog>
+        {
+            { x => x.Entries, selected },
+            { x => x.Scope, BankExportDialog.BankExportScope.Selected }
+        };
+        await DialogService.ShowAsync<BankExportDialog>("Export Selected Pokémon", parameters, options);
+    }
+
+    private async Task ExportAllAsync()
+    {
+        if (entries.Count == 0)
+        {
+            return;
+        }
+
+        if (entries.Count == 1)
+        {
+            await ExportSingleAsync(entries[0]);
+            return;
+        }
+
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Small);
+        var parameters = new DialogParameters<BankExportDialog>
+        {
+            { x => x.Entries, entries },
+            { x => x.Scope, BankExportDialog.BankExportScope.All }
+        };
+        await DialogService.ShowAsync<BankExportDialog>("Export All Pokémon", parameters, options);
+    }
+
     private async Task ExportAsync()
     {
         isBusy = true;
