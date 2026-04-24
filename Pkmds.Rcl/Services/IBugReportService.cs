@@ -6,6 +6,7 @@ public sealed record BugReportRequest(
     string Description,
     string AppVersion,
     string UserAgent,
+    string? PkhexVersion = null,
     byte[]? SaveFileBytes = null,
     string? SaveFileName = null,
     string? SaveGameName = null,

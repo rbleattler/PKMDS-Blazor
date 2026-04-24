@@ -23,6 +23,11 @@ public class BugReportService(IConfiguration configuration, HttpClient httpClien
             content.Add(new StringContent(request.AppVersion), "appVersion");
             content.Add(new StringContent(request.UserAgent), "userAgent");
 
+            if (!string.IsNullOrWhiteSpace(request.PkhexVersion))
+            {
+                content.Add(new StringContent(request.PkhexVersion), "pkhexVersion");
+            }
+
             if (request.SaveGameName is not null)
             {
                 content.Add(new StringContent(request.SaveGameName), "saveGameName");

@@ -98,9 +98,13 @@ public partial class MainLayout : IDisposable
         // The JS call is wrapped defensively because in-app browsers / extensions sometimes
         // inject a non-function global with the same name, which would otherwise crash the
         // entire layout init (see issue #732).
+        // In embedded host mode the warning is irrelevant — a host that has explicitly
+        // embedded PKMDS is a known container, not the hostile in-app webviews this
+        // detector targets.
         try
         {
-            var isInAppBrowser = await JSRuntime.InvokeAsync<bool>("pkmdsIsInAppBrowser");
+            var isInAppBrowser = !HostService.IsEmbedded
+                && await JSRuntime.InvokeAsync<bool>("pkmdsIsInAppBrowser");
             if (isInAppBrowser)
             {
                 Snackbar.Add(

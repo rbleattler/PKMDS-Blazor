@@ -1,5 +1,28 @@
+// Detect embedded host mode from the URL query string. This runs before Blazor
+// boots, so we can't ask IHostService — plain JS only. Mirrors the parsing in
+// Pkmds.Rcl/Services/HostService.cs (case-insensitive key, empty value treated
+// as not embedded). Skipping SW registration in embed contexts avoids caching
+// app shell assets inside a host-bundled WKWebView, which would compete with
+// the host's bundle and make host-bundled updates invisible.
+function pkmdsIsEmbedded() {
+    try {
+        const params = new URLSearchParams(window.location.search);
+        for (const [key, value] of params.entries()) {
+            if (key.toLowerCase() === 'host' && value && value.trim()) {
+                return true;
+            }
+        }
+    } catch (e) {
+        // URLSearchParams unavailable or malformed query — fall back to standalone behaviour.
+    }
+    return false;
+}
+
 // Service worker registration
-if ('serviceWorker' in navigator) {
+if (pkmdsIsEmbedded()) {
+    console.info('Service worker registration skipped: embedded host mode.');
+    window._swRegistrationPromise = Promise.resolve(null);
+} else if ('serviceWorker' in navigator) {
     window._swRegistrationPromise = navigator.serviceWorker.register('service-worker.js', {updateViaCache: 'none'}).then(registration => {
         console.info('Service worker registered, scope:', registration.scope);
         setInterval(() => registration.update().catch(err => {

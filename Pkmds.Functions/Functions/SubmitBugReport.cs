@@ -30,6 +30,7 @@ public class SubmitBugReport(IGitHubService gitHubService, IBlobService blobServ
         var email = form["email"].ToString().Trim();
         var description = form["description"].ToString().Trim();
         var appVersion = form["appVersion"].ToString().Trim();
+        var pkhexVersion = form["pkhexVersion"].ToString().Trim();
         var userAgent = form["userAgent"].ToString().Trim();
         var saveGameName = form["saveGameName"].ToString().Trim();
         var saveRevision = form["saveRevision"].ToString().Trim();
@@ -83,6 +84,9 @@ public class SubmitBugReport(IGitHubService gitHubService, IBlobService blobServ
         var issueBody =
             $"**Reporter:** {name} ({email})\n" +
             $"**App version:** {appVersion}\n" +
+            (string.IsNullOrWhiteSpace(pkhexVersion)
+                ? string.Empty
+                : $"**PKHeX.Core version:** {pkhexVersion}\n") +
             $"**User agent:** {userAgent}" +
             saveFileSection +
             $"\n\n## Description\n\n{description}";

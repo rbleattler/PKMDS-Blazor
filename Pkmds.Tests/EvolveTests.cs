@@ -409,6 +409,7 @@ public class EvolveTests
         public int? SelectedBoxNumberB { get; set; }
         public int? SelectedBoxSlotNumberB { get; set; }
         public int? SelectedPartySlotNumberB { get; set; }
+        public bool HapticsEnabled { get; set; }
     }
 
     private sealed class TestRefreshService : IRefreshService

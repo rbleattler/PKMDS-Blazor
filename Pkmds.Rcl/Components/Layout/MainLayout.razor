@@ -3,32 +3,35 @@
 
 <MudLayout>
     <MudAppBar Dense>
-        <MudBadge Color="@Color.Info"
-                  Dot
-                  Overlap
-                  Visible="@IsUpdateAvailable"
-                  BadgeClass="update-badge">
-            <MudIconButton Icon="@Icons.Material.Filled.Menu"
-                           Color="@Color.Inherit"
-                           Edge="@Edge.Start"
-                           OnClick="@DrawerToggle"/>
-        </MudBadge>
-        <MudText Typo="@Typo.h4"
-                 Class="d-none d-lg-flex">
-            @(AppService.IsDrawerOpen
-                ? Constants.AppShortTitle
-                : Constants.AppTitle)
-        </MudText>
-        <MudText Typo="@Typo.h6"
-                 Class="d-none d-md-flex d-lg-none">
-            @(AppService.IsDrawerOpen
-                ? Constants.AppShortTitle
-                : Constants.AppTitle)
-        </MudText>
-        <MudText Typo="@Typo.inherit"
-                 Class="d-xs-flex d-md-none">
-            @Constants.AppShortTitle
-        </MudText>
+        @if (!HostService.IsEmbedded)
+        {
+            <MudBadge Color="@Color.Info"
+                      Dot
+                      Overlap
+                      Visible="@IsUpdateAvailable"
+                      BadgeClass="update-badge">
+                <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                               Color="@Color.Inherit"
+                               Edge="@Edge.Start"
+                               OnClick="@DrawerToggle"/>
+            </MudBadge>
+            <MudText Typo="@Typo.h4"
+                     Class="d-none d-lg-flex">
+                @(AppService.IsDrawerOpen
+                    ? Constants.AppShortTitle
+                    : Constants.AppTitle)
+            </MudText>
+            <MudText Typo="@Typo.h6"
+                     Class="d-none d-md-flex d-lg-none">
+                @(AppService.IsDrawerOpen
+                    ? Constants.AppShortTitle
+                    : Constants.AppTitle)
+            </MudText>
+            <MudText Typo="@Typo.inherit"
+                     Class="d-xs-flex d-md-none">
+                @Constants.AppShortTitle
+            </MudText>
+        }
         <MudSpacer/>
         @if (AppState.IsHaXEnabled)
         {
@@ -40,50 +43,85 @@
                 PKHaX
             </MudChip>
         }
-        <MudStack Row
-                  AlignItems="@AlignItems.Center">
-            <MudButtonGroup Variant="@Variant.Outlined"
-                            Size="@Size.Small">
-                <MudIconButton Icon="@Icons.Material.Filled.LightMode"
-                               Color="@Color.Inherit"
-                               Style="@(themeMode == ThemeMode.Light
-                                          ? "background-color: rgba(255,255,255,0.2);"
-                                          : "opacity: 0.6;")"
-                               title="Light mode"
-                               OnClick="@(() => OnThemeModeChanged(ThemeMode.Light))"/>
-                <MudIconButton Icon="@Icons.Material.Filled.SettingsBrightness"
-                               Color="@Color.Inherit"
-                               Style="@(themeMode == ThemeMode.System
-                                          ? "background-color: rgba(255,255,255,0.2);"
-                                          : "opacity: 0.6;")"
-                               title="System default"
-                               OnClick="@(() => OnThemeModeChanged(ThemeMode.System))"/>
-                <MudIconButton Icon="@Icons.Material.Filled.DarkMode"
-                               Color="@Color.Inherit"
-                               Style="@(themeMode == ThemeMode.Dark
-                                          ? "background-color: rgba(255,255,255,0.2);"
-                                          : "opacity: 0.6;")"
-                               title="Dark mode"
-                               OnClick="@(() => OnThemeModeChanged(ThemeMode.Dark))"/>
-            </MudButtonGroup>
-            <MudButton Class="d-none d-md-flex"
-                       EndIcon="@Icons.Custom.Brands.GitHub"
-                       Href="@GitHubRepoLink"
-                       Target="_blank"
-                       title="@GitHubTooltip"
-                       Color="@Color.Inherit"
-                       Variant="@Variant.Outlined">
-                Source code on GitHub
-            </MudButton>
-            <MudIconButton Class="d-md-none"
-                           Icon="@Icons.Custom.Brands.GitHub"
+        @if (!HostService.IsEmbedded)
+        {
+            <MudStack Row
+                      AlignItems="@AlignItems.Center">
+                <MudButtonGroup Variant="@Variant.Outlined"
+                                Size="@Size.Small">
+                    <MudIconButton Icon="@Icons.Material.Filled.LightMode"
+                                   Color="@Color.Inherit"
+                                   Style="@(themeMode == ThemeMode.Light
+                                              ? "background-color: rgba(255,255,255,0.2);"
+                                              : "opacity: 0.6;")"
+                                   title="Light mode"
+                                   OnClick="@(() => OnThemeModeChanged(ThemeMode.Light))"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.SettingsBrightness"
+                                   Color="@Color.Inherit"
+                                   Style="@(themeMode == ThemeMode.System
+                                              ? "background-color: rgba(255,255,255,0.2);"
+                                              : "opacity: 0.6;")"
+                                   title="System default"
+                                   OnClick="@(() => OnThemeModeChanged(ThemeMode.System))"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.DarkMode"
+                                   Color="@Color.Inherit"
+                                   Style="@(themeMode == ThemeMode.Dark
+                                              ? "background-color: rgba(255,255,255,0.2);"
+                                              : "opacity: 0.6;")"
+                                   title="Dark mode"
+                                   OnClick="@(() => OnThemeModeChanged(ThemeMode.Dark))"/>
+                </MudButtonGroup>
+                <MudButton Class="d-none d-md-flex"
+                           EndIcon="@Icons.Custom.Brands.GitHub"
                            Href="@GitHubRepoLink"
                            Target="_blank"
                            title="@GitHubTooltip"
                            Color="@Color.Inherit"
-                           Variant="@Variant.Outlined"/>
-        </MudStack>
+                           Variant="@Variant.Outlined">
+                    Source code on GitHub
+                </MudButton>
+                <MudIconButton Class="d-md-none"
+                               Icon="@Icons.Custom.Brands.GitHub"
+                               Href="@GitHubRepoLink"
+                               Target="_blank"
+                               title="@GitHubTooltip"
+                               Color="@Color.Inherit"
+                               Variant="@Variant.Outlined"/>
+            </MudStack>
+        }
+        else
+        {
+            @* Embedded host mode: the host owns Done / Cancel via its own
+               nav bar, so PKMDS only needs an overflow menu for meta-actions
+               that don't terminate the session. *@
+            <MudMenu Icon="@Icons.Material.Filled.MoreVert"
+                     Color="@Color.Inherit"
+                     AnchorOrigin="@Origin.BottomRight"
+                     TransformOrigin="@Origin.TopRight"
+                     title="More actions">
+                <MudMenuItem Icon="@Icons.Material.Filled.Settings"
+                             OnClick="@ShowSettingsDialog">
+                    Settings
+                </MudMenuItem>
+                <MudMenuItem Icon="@Icons.Material.Filled.Info"
+                             OnClick="@ShowSaveFileInfoDialog"
+                             Disabled="@(AppState.SaveFile is null)">
+                    Save Info
+                </MudMenuItem>
+                <MudMenuItem Icon="@Icons.Material.Filled.Build"
+                             OnClick="@ShowSaveFileRepairDialog"
+                             Disabled="@(AppState.SaveFile is null)">
+                    Repair
+                </MudMenuItem>
+                <MudMenuItem Icon="@Icons.Material.Filled.BugReport"
+                             OnClick="@ShowBugReportDialog">
+                    Report a Bug
+                </MudMenuItem>
+            </MudMenu>
+        }
     </MudAppBar>
+    @if (!HostService.IsEmbedded)
+    {
     <MudDrawer @bind-Open="@AppService.IsDrawerOpen">
 
         <!-- File Operations -->
@@ -279,6 +317,7 @@
             </MudButton>
         </MudStack>
     </MudDrawer>
+    }
     <MudMainContent>
         <MudContainer MaxWidth="@MaxWidth.False">
             @Body
