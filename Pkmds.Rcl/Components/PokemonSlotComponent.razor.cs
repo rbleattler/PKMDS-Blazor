@@ -282,6 +282,7 @@ public partial class PokemonSlotComponent : IDisposable
 
         DragDropService.StartDrag(Pokemon, BoxNumber, SlotNumber, IsPartySlot);
         e.DataTransfer.EffectAllowed = "copyMove";
+        Haptics.Tap();
 
         // Set drag-out data so the PKM file can be dragged to the OS desktop (Chrome/Edge only).
         // Uses IJSInProcessRuntime for a synchronous call — required because dataTransfer can only
@@ -413,6 +414,7 @@ public partial class PokemonSlotComponent : IDisposable
         AppService.ClearSelection();
 
         DragDropService.ClearDrag();
+        Haptics.Confirm();
         StateHasChanged();
     }
 
@@ -528,6 +530,7 @@ public partial class PokemonSlotComponent : IDisposable
             Snackbar.Add(
                 $"Successfully imported {AppService.GetPokemonSpeciesName(pokemon.Species) ?? "Pokémon"} from {fileName}",
                 Severity.Success);
+            Haptics.Success();
         }
         catch (Exception ex)
         {
@@ -571,12 +574,7 @@ public partial class PokemonSlotComponent : IDisposable
                 // Box slot drop → fill boxes first; party slot drop → fill party first.
                 { x => x.FillBoxesFirst, !IsPartySlot }
             };
-            var options = new DialogOptions
-            {
-                CloseOnEscapeKey = true,
-                MaxWidth = MaxWidth.Small,
-                FullWidth = true
-            };
+            var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Small);
 
             var dialog = await DialogService.ShowAsync<BulkImportDialog>(
                 "Bulk Import .pk* Files", parameters, options);

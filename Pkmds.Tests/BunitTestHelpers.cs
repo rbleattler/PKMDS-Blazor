@@ -50,6 +50,9 @@ internal static class BunitTestHelpers
         ctx.Services.AddSingleton<IFileSystemAccessService>(new NullFileSystemAccessService());
         ctx.Services.AddSingleton<ILoggingService>(new NullLoggingService());
         ctx.Services.AddSingleton<IDescriptionService>(new NullDescriptionService());
+        // DialogOptionsHelper is @inject'd in Pkmds.Rcl/_Imports.razor so every
+        // component under test resolves it at render time.
+        ctx.Services.AddSingleton<IDialogOptionsHelper, DialogOptionsHelper>();
         return ctx;
     }
 }

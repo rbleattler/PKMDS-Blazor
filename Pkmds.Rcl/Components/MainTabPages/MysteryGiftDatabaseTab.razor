@@ -27,10 +27,11 @@
                       @bind-Value:after="@OnSortOrFilterChanged"
                       Clearable/>
 
-        <MudSwitch @bind-Value="@ShinyOnly"
+        <MudSwitch T="@bool"
+                   Value="@ShinyOnly"
                    Color="@Color.Primary"
                    Label="Shiny only"
-                   @bind-Value:after="@OnSortOrFilterChanged"/>
+                   ValueChanged="@(v => { Haptics.Tap(); ShinyOnly = v; OnSortOrFilterChanged(); })"/>
 
     </MudStack>
 

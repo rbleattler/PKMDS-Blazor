@@ -197,6 +197,7 @@ public partial class RibbonsTab : IDisposable
             return;
         }
 
+        Haptics.Confirm();
         foreach (var ribbon in GetAllRibbonInfo())
         {
             var value = ribbon.Type is RibbonValueType.Boolean
@@ -215,6 +216,7 @@ public partial class RibbonsTab : IDisposable
             return;
         }
 
+        Haptics.Confirm();
         foreach (var ribbon in GetAllRibbonInfo())
         {
             var value = ribbon.Type is RibbonValueType.Boolean

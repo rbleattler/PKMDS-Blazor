@@ -144,4 +144,7 @@ public record AppState : IAppState
 
     /// <inheritdoc />
     public bool ShowIllegalIndicator { get; set; } = true;
+
+    /// <inheritdoc />
+    public bool HapticsEnabled { get; set; } = true;
 }

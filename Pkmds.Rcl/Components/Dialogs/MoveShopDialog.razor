@@ -51,18 +51,19 @@
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="@GiveAll"
-                   Variant="@Variant.Outlined"
+                   Variant="@Variant.Filled"
                    Color="@Color.Primary">
             Give All
         </MudButton>
         <MudButton OnClick="@RemoveAll"
-                   Variant="@Variant.Outlined"
-                   Color="@Color.Secondary">
+                   Variant="@Variant.Filled"
+                   Color="@Color.Error">
             Remove All
         </MudButton>
         <MudSpacer/>
         <MudButton OnClick="@Cancel"
-                   Variant="@Variant.Outlined">
+                   Variant="@Variant.Filled"
+                   Color="@Color.Default">
             Cancel
         </MudButton>
         <MudButton OnClick="@Save"

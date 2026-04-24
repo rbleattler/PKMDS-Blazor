@@ -27,6 +27,7 @@ public partial class AppSettingsDialog
     private bool showFishyIndicator = true;
     private bool showIllegalIndicator = true;
     private bool showLegalIndicator = true;
+    private bool hapticsEnabled = true;
     private SpriteStyle spriteStyle;
 
     // Working copy — only committed on Save
@@ -58,10 +59,20 @@ public partial class AppSettingsDialog
         showLegalIndicator = InitialSettings.ShowLegalIndicator;
         showFishyIndicator = InitialSettings.ShowFishyIndicator;
         showIllegalIndicator = InitialSettings.ShowIllegalIndicator;
+        hapticsEnabled = InitialSettings.HapticsEnabled;
+    }
+
+    // Pulse a Tap before applying the new value so the toggle feels responsive when the
+    // user is turning haptics off (otherwise the disabled-then-set order eats the final tap).
+    private void OnToggle(bool value, Action<bool> setter)
+    {
+        Haptics.Tap();
+        setter(value);
     }
 
     private async Task OnHaXEnabledChanged(bool newValue)
     {
+        Haptics.Tap();
         if (newValue && !InitialSettings.IsHaXEnabled)
         {
             var ack = await JSRuntime.InvokeAsync<string?>("localStorage.getItem", "pkmds_hax_warning_ack");
@@ -107,6 +118,8 @@ public partial class AppSettingsDialog
         showLegalIndicator = defaults.ShowLegalIndicator;
         showFishyIndicator = defaults.ShowFishyIndicator;
         showIllegalIndicator = defaults.ShowIllegalIndicator;
+        hapticsEnabled = defaults.HapticsEnabled;
+        Haptics.Confirm();
         StateHasChanged();
     }
 
@@ -124,6 +137,7 @@ public partial class AppSettingsDialog
             return;
         }
 
+        Haptics.Confirm();
         await JSRuntime.InvokeVoidAsync("clearAppCacheAndReload");
     }
 
@@ -152,7 +166,8 @@ public partial class AppSettingsDialog
             MaxBackupCount = maxBackupCount,
             ShowLegalIndicator = showLegalIndicator,
             ShowFishyIndicator = showFishyIndicator,
-            ShowIllegalIndicator = showIllegalIndicator
+            ShowIllegalIndicator = showIllegalIndicator,
+            HapticsEnabled = hapticsEnabled
         };
 
         MudDialog.Close(DialogResult.Ok(updated));

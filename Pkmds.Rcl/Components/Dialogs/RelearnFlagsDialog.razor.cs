@@ -94,6 +94,7 @@ public partial class RelearnFlagsDialog
         }
 
         RefreshService.Refresh();
+        Haptics.Confirm();
         MudDialog?.Close(DialogResult.Ok(true));
     }
 

@@ -90,6 +90,7 @@ public partial class PlusFlagsDialog
         }
 
         RefreshService.Refresh();
+        Haptics.Confirm();
         MudDialog?.Close(DialogResult.Ok(true));
     }
 

@@ -53,29 +53,27 @@
                              Color="@Color.Primary">
                         Sprite Style
                     </MudText>
-                    <MudButtonGroup Variant="@Variant.Outlined"
+                    <MudButtonGroup Variant="@Variant.Filled"
                                     Size="@Size.Small">
                         <MudButton StartIcon="@Icons.Material.Filled.Home"
-                                   Color="@Color.Inherit"
-                                   Style="@(spriteStyle == SpriteStyle.Home
-                                              ? "background-color: var(--mud-palette-primary-lighten);"
-                                              : "opacity: 0.6;")"
+                                   Color="@(spriteStyle == SpriteStyle.Home
+                                              ? Color.Primary
+                                              : Color.Default)"
                                    title="Home (high-res 512×512 sprites)"
                                    OnClick="@(() => spriteStyle = SpriteStyle.Home)">
                             Home
                         </MudButton>
                         <MudButton StartIcon="@Icons.Material.Filled.VideogameAsset"
-                                   Color="@Color.Inherit"
-                                   Style="@(spriteStyle == SpriteStyle.Game
-                                              ? "background-color: var(--mud-palette-primary-lighten);"
-                                              : "opacity: 0.6;")"
+                                   Color="@(spriteStyle == SpriteStyle.Game
+                                              ? Color.Primary
+                                              : Color.Default)"
                                    title="Game (era-accurate pixel-art sprites matched to save file)"
                                    OnClick="@(() => spriteStyle = SpriteStyle.Game)">
                             Game
                         </MudButton>
                     </MudButtonGroup>
                     <MudButton StartIcon="@Icons.Material.Filled.ImageNotSupported"
-                               Variant="@Variant.Text"
+                               Variant="@Variant.Filled"
                                Size="@Size.Small"
                                Color="@Color.Default"
                                title="Forces all high-res sprites to reload from the CDN"
@@ -93,18 +91,37 @@
                              Color="@Color.Secondary">
                         Choose which overlay icons appear on box and party slots.
                     </MudText>
-                    <MudSwitch @bind-Value="@showLegalIndicator"
+                    <MudSwitch T="@bool"
+                               Value="@showLegalIndicator"
                                Color="@Color.Success"
                                Label="Show Legal (green)"
-                               title="Show a green check on slots whose Pokémon are fully legal"/>
-                    <MudSwitch @bind-Value="@showFishyIndicator"
+                               title="Show a green check on slots whose Pokémon are fully legal"
+                               ValueChanged="@(v => OnToggle(v, x => showLegalIndicator = x))"/>
+                    <MudSwitch T="@bool"
+                               Value="@showFishyIndicator"
                                Color="@Color.Warning"
                                Label="Show Fishy (yellow)"
-                               title="Show a yellow warning on slots whose Pokémon pass legality but have suspicious checks"/>
-                    <MudSwitch @bind-Value="@showIllegalIndicator"
+                               title="Show a yellow warning on slots whose Pokémon pass legality but have suspicious checks"
+                               ValueChanged="@(v => OnToggle(v, x => showFishyIndicator = x))"/>
+                    <MudSwitch T="@bool"
+                               Value="@showIllegalIndicator"
                                Color="@Color.Error"
                                Label="Show Illegal (red)"
-                               title="Show a red indicator on slots whose Pokémon fail legality"/>
+                               title="Show a red indicator on slots whose Pokémon fail legality"
+                               ValueChanged="@(v => OnToggle(v, x => showIllegalIndicator = x))"/>
+
+                    <MudDivider/>
+
+                    <MudText Typo="@Typo.subtitle1"
+                             Color="@Color.Primary">
+                        Haptic Feedback
+                    </MudText>
+                    <MudSwitch T="@bool"
+                               Value="@hapticsEnabled"
+                               Color="@Color.Primary"
+                               Label="Enable haptics"
+                               title="Short vibration pulses on drag, drop, save export, and other key actions. No effect on iOS — Safari does not support web haptics."
+                               ValueChanged="@(v => OnToggle(v, x => hapticsEnabled = x))"/>
 
                     <MudDivider/>
 
@@ -118,10 +135,12 @@
                                Label="PKHaX Mode"
                                title="Enables unrestricted editing. May create illegal/untradable Pokémon. Use at your own risk."
                                ValueChanged="@(value => OnHaXEnabledChanged(value))"/>
-                    <MudSwitch @bind-Value="@isVerboseLogging"
+                    <MudSwitch T="@bool"
+                               Value="@isVerboseLogging"
                                Color="@Color.Primary"
                                Label="Verbose Logging"
-                               title="Enable verbose logging to browser console"/>
+                               title="Enable verbose logging to browser console"
+                               ValueChanged="@(v => OnToggle(v, x => isVerboseLogging = x))"/>
                 </MudStack>
             </MudTabPanel>
 
@@ -167,10 +186,12 @@
                              Color="@Color.Primary">
                         Backup
                     </MudText>
-                    <MudSwitch @bind-Value="@isAutoBackupEnabled"
+                    <MudSwitch T="@bool"
+                               Value="@isAutoBackupEnabled"
                                Color="@Color.Primary"
                                Label="Auto-backup on load"
-                               title="Automatically create a backup each time a save file is loaded"/>
+                               title="Automatically create a backup each time a save file is loaded"
+                               ValueChanged="@(v => OnToggle(v, x => isAutoBackupEnabled = x))"/>
                     <MudNumericField @bind-Value="@maxBackupCount"
                                      Label="Max backups to keep"
                                      Variant="@Variant.Outlined"
@@ -196,8 +217,8 @@
                         files and backups are preserved.
                     </MudText>
                     <MudButton StartIcon="@Icons.Material.Filled.DeleteSweep"
-                               Variant="@Variant.Outlined"
-                               Color="@Color.Warning"
+                               Variant="@Variant.Filled"
+                               Color="@Color.Error"
                                OnClick="@OnClearAppCache">
                         Clear App Cache &amp; Reload
                     </MudButton>
@@ -208,19 +229,20 @@
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="@OnResetAll"
+                   Variant="@Variant.Filled"
                    Color="@Color.Error"
-                   StartIcon="@Icons.Material.Filled.RestartAlt"
-                   Variant="@Variant.Text">
+                   StartIcon="@Icons.Material.Filled.RestartAlt">
             Reset All
         </MudButton>
         <MudSpacer/>
         <MudButton OnClick="@Cancel"
-                   Variant="@Variant.Text">
+                   Variant="@Variant.Filled"
+                   Color="@Color.Default">
             Cancel
         </MudButton>
         <MudButton OnClick="@Save"
-                   Color="@Color.Primary"
-                   Variant="@Variant.Filled">
+                   Variant="@Variant.Filled"
+                   Color="@Color.Primary">
             Save
         </MudButton>
     </DialogActions>

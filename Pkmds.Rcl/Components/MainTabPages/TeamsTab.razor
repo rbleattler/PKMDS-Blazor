@@ -34,7 +34,7 @@
                     <CardHeaderActions>
                         <MudSwitch T="bool"
                                    Value="@bbLocked"
-                                   ValueChanged="@(v => AppService.SetBattleBoxLocked(v))"
+                                   ValueChanged="@(v => { Haptics.Tap(); AppService.SetBattleBoxLocked(v); })"
                                    Color="@Color.Warning"
                                    Label="Locked"
                                    title="Toggle Battle Box lock"/>
@@ -105,14 +105,14 @@
                 <MudButton Variant="@Variant.Text"
                            Color="@Color.Primary"
                            StartIcon="@Icons.Material.Filled.LockOpen"
-                           OnClick="@(() => AppService.UnlockAllBattleTeams())"
+                           OnClick="@(() => { Haptics.Confirm(); AppService.UnlockAllBattleTeams(); })"
                            Size="@Size.Small">
                     Unlock All
                 </MudButton>
                 <MudButton Variant="@Variant.Text"
                            Color="@Color.Error"
                            StartIcon="@Icons.Material.Filled.DeleteSweep"
-                           OnClick="@(() => AppService.ClearAllBattleTeams())"
+                           OnClick="@(() => { Haptics.Confirm(); AppService.ClearAllBattleTeams(); })"
                            Size="@Size.Small">
                     Clear All
                 </MudButton>
@@ -144,7 +144,7 @@
                         <CardHeaderActions>
                             <MudSwitch T="bool"
                                        Value="@isLocked"
-                                       ValueChanged="@(v => AppService.SetBattleTeamLocked(teamIndex, v))"
+                                       ValueChanged="@(v => { Haptics.Tap(); AppService.SetBattleTeamLocked(teamIndex, v); })"
                                        Color="@Color.Warning"
                                        Label="Locked"
                                        title="Toggle team lock"/>

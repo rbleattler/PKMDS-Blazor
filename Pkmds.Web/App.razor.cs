@@ -13,6 +13,9 @@ public partial class App : IDisposable
     [Inject]
     private IRefreshService RefreshService { get; set; } = null!;
 
+    [Inject]
+    private IDialogOptionsHelper DialogOptionsHelper { get; set; } = null!;
+
     public void Dispose() => RefreshService.OnThemeChanged -= HandleThemeChanged;
 
     protected override void OnInitialized() =>
@@ -55,13 +58,10 @@ public partial class App : IDisposable
             { nameof(BugReportDialog.AppVersion), AppState.AppVersion ?? string.Empty },
             { nameof(BugReportDialog.CapturedException), exception },
         };
-        var options = new DialogOptions
-        {
-            MaxWidth = MaxWidth.Small,
-            FullWidth = true,
-            CloseOnEscapeKey = false,
-            BackdropClick = false,
-        };
+        var options = await DialogOptionsHelper.BuildAsync(
+            MaxWidth.Small,
+            closeOnEscapeKey: false,
+            backdropClick: false);
         var dialog = await DialogService.ShowAsync<BugReportDialog>("Report this crash", parameters, options);
         await dialog.Result;
     }

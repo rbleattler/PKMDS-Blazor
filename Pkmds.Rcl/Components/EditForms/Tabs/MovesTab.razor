@@ -69,14 +69,13 @@
                             </div>
                             @if (moveId != 0)
                             {
-                                <InfoButton>
+                                <InfoButton Title="@(moveInfos[i]?.Name ?? SafeNameLookup.Move(moveId))">
                                     <MudStack Spacing="2">
                                         @MoveTypeAndCategorySummary(
                                             MoveInfo.GetType(moveId, saveFileEntityContext),
                                             GetMoveCategory(moveId, saveFileEntityContext))
                                         @if (moveInfos[i] is { } moveInfo)
                                         {
-                                            <MudText Typo="@Typo.subtitle2">@moveInfo.Name</MudText>
                                             <MudStack Row
                                                       Spacing="3">
                                                 <MudText Typo="@Typo.caption">Power:
@@ -222,22 +221,24 @@
                             {
                                 var localMoveId = Pokemon.GetMove(i);
                                 var plusFlagIndex = PersonalInfo9ZA.PlusMoves.IndexOf(localMoveId);
-                                <MudCheckBox Label="+"
-                                             Dense
-                                             title="Plus Move"
-                                             @bind-Value:get="@GetPokemonMoveIsPlus(plusFlagIndex)"
-                                             @bind-Value:set="@(newValue => SetPokemonMoveIsPlus(plusFlagIndex, newValue))"/>
+                                <HapticCheckBox T="@bool"
+                                                Label="+"
+                                                Dense
+                                                title="Plus Move"
+                                                @bind-Value:get="@GetPokemonMoveIsPlus(plusFlagIndex)"
+                                                @bind-Value:set="@(newValue => SetPokemonMoveIsPlus(plusFlagIndex, newValue))"/>
                             }
                             @if (showMasteredMove && Pokemon is IMoveShop8Mastery)
                             {
                                 var localMoveId = Pokemon.GetMove(i);
                                 var masteredFlagIndex = GetMasteredRecordIndex(localMoveId);
-                                <MudCheckBox Label="+"
-                                             Dense
-                                             title="Mastered Move"
-                                             Disabled="@(masteredFlagIndex < 0)"
-                                             @bind-Value:get="@GetPokemonMoveIsMastered(masteredFlagIndex)"
-                                             @bind-Value:set="@(newValue => SetPokemonMoveIsMastered(masteredFlagIndex, newValue))"/>
+                                <HapticCheckBox T="@bool"
+                                                Label="+"
+                                                Dense
+                                                title="Mastered Move"
+                                                Disabled="@(masteredFlagIndex < 0)"
+                                                @bind-Value:get="@GetPokemonMoveIsMastered(masteredFlagIndex)"
+                                                @bind-Value:set="@(newValue => SetPokemonMoveIsMastered(masteredFlagIndex, newValue))"/>
                             }
                         </MudStack>
                     </MudItem>
@@ -315,13 +316,10 @@
                         <MudText Typo="@Typo.body2">
                             <b>@SafeNameLookup.Ability(Pokemon.Ability)</b>
                         </MudText>
-                        <InfoButton>
-                            <MudStack Spacing="2">
-                                <MudText Typo="@Typo.subtitle2">@(abilityInfo?.Name ?? SafeNameLookup.Ability(Pokemon.Ability))</MudText>
-                                <MudText Typo="@Typo.body2">@(abilityInfo is { Description: { Length: > 0 } desc }
-                                        ? desc
-                                        : "No description available.")</MudText>
-                            </MudStack>
+                        <InfoButton Title="@(abilityInfo?.Name ?? SafeNameLookup.Ability(Pokemon.Ability))">
+                            <MudText Typo="@Typo.body2">@(abilityInfo is { Description: { Length: > 0 } desc }
+                                    ? desc
+                                    : "No description available.")</MudText>
                         </InfoButton>
                     </MudStack>
                 }
@@ -436,14 +434,13 @@
                                 </div>
                                 @if (relearnMoveId != 0)
                                 {
-                                    <InfoButton>
+                                    <InfoButton Title="@(relearnMoveInfos[i]?.Name ?? SafeNameLookup.Move(relearnMoveId))">
                                         <MudStack Spacing="2">
                                             @MoveTypeAndCategorySummary(
                                                 MoveInfo.GetType(relearnMoveId, saveFileEntityContext),
                                                 GetMoveCategory(relearnMoveId, saveFileEntityContext))
                                             @if (relearnMoveInfos[i] is { } relearnInfo)
                                             {
-                                                <MudText Typo="@Typo.subtitle2">@relearnInfo.Name</MudText>
                                                 <MudStack Row
                                                           Spacing="3">
                                                     <MudText Typo="@Typo.caption">Power:
@@ -542,14 +539,13 @@
                                 </MudStack>
                                 @if (alphaMoveId != 0)
                                 {
-                                    <InfoButton>
+                                    <InfoButton Title="@(alphaMoveInfo?.Name ?? SafeNameLookup.Move(alphaMoveId))">
                                         <MudStack Spacing="2">
                                             @MoveTypeAndCategorySummary(
                                                 MoveInfo.GetType(alphaMoveId, saveFileEntityContext),
                                                 GetMoveCategory(alphaMoveId, saveFileEntityContext))
                                             @if (alphaMoveInfo is { } alphaInfo)
                                             {
-                                                <MudText Typo="@Typo.subtitle2">@alphaInfo.Name</MudText>
                                                 <MudStack Row
                                                           Spacing="3">
                                                     <MudText Typo="@Typo.caption">Power:

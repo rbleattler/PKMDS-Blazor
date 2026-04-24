@@ -27,13 +27,16 @@ public partial class ConfirmActionDialog
     public string CancelIcon { get; set; } = Icons.Material.Filled.Clear;
 
     [Parameter]
-    public Color CancelColor { get; set; } = Color.Secondary;
+    public Color CancelColor { get; set; } = Color.Default;
 
     [Parameter]
     public EventCallback<bool> OnConfirm { get; set; }
 
     private void Confirm()
     {
+        // One pulse covers every destructive/primary callsite that funnels through this
+        // generic dialog (Delete Pokémon, Reset to Defaults, etc.) — no per-call wiring.
+        Haptics.Confirm();
         OnConfirm.InvokeAsync(true);
         MudDialog?.Close();
     }

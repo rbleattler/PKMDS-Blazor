@@ -38,6 +38,7 @@ public partial class MiniorColorDialog
         }
 
         Pokemon.Form = selectedForm;
+        Haptics.Confirm();
         MudDialog?.Close(DialogResult.Ok(true));
     }
 

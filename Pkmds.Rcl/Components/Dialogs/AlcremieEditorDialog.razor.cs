@@ -66,6 +66,7 @@ public partial class AlcremieEditorDialog
             fa.FormArgument = selectedDeco;
         }
 
+        Haptics.Confirm();
         MudDialog?.Close(DialogResult.Ok(true));
     }
 

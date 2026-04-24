@@ -305,10 +305,11 @@ public partial class PokedexSpeciesGrid
 
     private async Task OpenDetails(PokedexGridRow row)
     {
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Medium);
         var result = await DialogService.ShowAsync<PokedexSpeciesDialog>(
             string.Empty,
             new DialogParameters<PokedexSpeciesDialog> { { x => x.SpeciesId, row.SpeciesId } },
-            new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true });
+            options);
 
         await result.Result;
 

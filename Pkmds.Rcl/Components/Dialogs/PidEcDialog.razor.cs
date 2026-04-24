@@ -117,6 +117,7 @@ public partial class PidEcDialog
         }
 
         AppService.LoadPokemonStats(Pokemon);
+        Haptics.Confirm();
         RefreshService.Refresh();
     }
 
@@ -128,6 +129,7 @@ public partial class PidEcDialog
         }
 
         Pokemon.SetIsShiny(true);
+        Haptics.Confirm();
         RefreshService.Refresh();
     }
 
@@ -206,6 +208,7 @@ public partial class PidEcDialog
 
         Pokemon.SetIVs(ivs);
         AppService.LoadPokemonStats(Pokemon);
+        Haptics.Confirm();
         RefreshService.Refresh();
     }
 
@@ -221,6 +224,7 @@ public partial class PidEcDialog
         // EC satisfies newEc % 6 == oldEc % 6 before calling SetRandomEC.
         Pokemon.SetRandomEC();
         AppService.LoadPokemonStats(Pokemon);
+        Haptics.Confirm();
         RefreshService.Refresh();
     }
 
@@ -232,6 +236,7 @@ public partial class PidEcDialog
         }
 
         Pokemon.SetShiny(SelectedShinyType);
+        Haptics.Confirm();
         RefreshService.Refresh();
     }
 

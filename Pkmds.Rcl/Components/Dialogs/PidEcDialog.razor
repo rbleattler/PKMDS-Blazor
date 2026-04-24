@@ -20,22 +20,26 @@
                           Class="mb-2">
                     @if (IsGen345)
                     {
-                        <MudCheckBox @bind-Value="@KeepNature"
-                                     Label="Keep nature"
-                                     Color="@Color.Primary"/>
+                        <HapticCheckBox T="@bool"
+                                        @bind-Value="@KeepNature"
+                                        Label="Keep nature"
+                                        Color="@Color.Primary"/>
                         @if (Pokemon.PersonalInfo.IsDualGender)
                         {
-                            <MudCheckBox @bind-Value="@KeepGender"
-                                         Label="Keep gender"
-                                         Color="@Color.Primary"/>
+                            <HapticCheckBox T="@bool"
+                                            @bind-Value="@KeepGender"
+                                            Label="Keep gender"
+                                            Color="@Color.Primary"/>
                         }
                     }
-                    <MudCheckBox @bind-Value="@AvoidShiny"
-                                 Label="Avoid shiny"
-                                 Color="@Color.Primary"/>
-                    <MudCheckBox @bind-Value="@ForceShiny"
-                                 Label="Force shiny"
-                                 Color="@Color.Primary"/>
+                    <HapticCheckBox T="@bool"
+                                    @bind-Value="@AvoidShiny"
+                                    Label="Avoid shiny"
+                                    Color="@Color.Primary"/>
+                    <HapticCheckBox T="@bool"
+                                    @bind-Value="@ForceShiny"
+                                    Label="Force shiny"
+                                    Color="@Color.Primary"/>
                 </MudStack>
 
                 <MudStack Row
@@ -43,14 +47,16 @@
                           Spacing="1"
                           Class="mb-2">
 
-                    <MudButton Variant="@Variant.Outlined"
+                    <MudButton Variant="@Variant.Filled"
+                               Color="@Color.Primary"
                                OnClick="@GeneratePid"
                                Disabled="@IsGenerating"
                                StartIcon="@Icons.Material.Filled.Refresh">
                         Generate PID
                     </MudButton>
 
-                    <MudButton Variant="@Variant.Outlined"
+                    <MudButton Variant="@Variant.Filled"
+                               Color="@Color.Primary"
                                OnClick="@MakeShinyPid"
                                Disabled="@IsGenerating"
                                StartIcon="@Icons.Material.Filled.Star">
@@ -106,7 +112,8 @@
                           Spacing="1"
                           Class="mb-2">
 
-                    <MudButton Variant="@Variant.Outlined"
+                    <MudButton Variant="@Variant.Filled"
+                               Color="@Color.Primary"
                                OnClick="@RandomizeEc"
                                StartIcon="@Icons.Material.Filled.Shuffle">
                         Randomize EC
@@ -148,7 +155,8 @@
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="@Close"
-                   Variant="@Variant.Outlined">
+                   Variant="@Variant.Filled"
+                   Color="@Color.Default">
             Close
         </MudButton>
     </DialogActions>

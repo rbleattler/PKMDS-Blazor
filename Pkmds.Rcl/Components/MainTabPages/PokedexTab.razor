@@ -72,67 +72,70 @@
                 case SAV3 sav3:
                     <MudStack Row
                               AlignItems="AlignItems.Center">
-                        <MudCheckBox Label="National Mode Unlocked"
-                                     T="@bool"
-                                     Value="@sav3.NationalDex"
-                                     ValueChanged="@(v => sav3.NationalDex = v)"/>
+                        <HapticCheckBox Label="National Mode Unlocked"
+                                        T="@bool"
+                                        Value="@sav3.NationalDex"
+                                        ValueChanged="@(v => sav3.NationalDex = v)"/>
                     </MudStack>
                     break;
                 case SAV5 sav5:
                     <MudStack Row
+                              Wrap="@Wrap.Wrap"
                               AlignItems="AlignItems.Center">
-                        <MudCheckBox Label="National Mode Unlocked"
-                                     T="@bool"
-                                     Value="@sav5.Zukan.IsNationalDexUnlocked"
-                                     ValueChanged="@(v => sav5.Zukan.IsNationalDexUnlocked = v)"/>
-                        <MudCheckBox Label="National Mode Active"
-                                     T="@bool"
-                                     Value="@sav5.Zukan.IsNationalDexMode"
-                                     ValueChanged="@(v => sav5.Zukan.IsNationalDexMode = v)"/>
+                        <HapticCheckBox Label="National Mode Unlocked"
+                                        T="@bool"
+                                        Value="@sav5.Zukan.IsNationalDexUnlocked"
+                                        ValueChanged="@(v => sav5.Zukan.IsNationalDexUnlocked = v)"/>
+                        <HapticCheckBox Label="National Mode Active"
+                                        T="@bool"
+                                        Value="@sav5.Zukan.IsNationalDexMode"
+                                        ValueChanged="@(v => sav5.Zukan.IsNationalDexMode = v)"/>
                     </MudStack>
                     break;
                 case SAV6XY sav6Xy:
                     <MudStack Row
+                              Wrap="@Wrap.Wrap"
                               AlignItems="AlignItems.Center">
-                        <MudCheckBox Label="National Mode Unlocked"
-                                     T="@bool"
-                                     Value="@sav6Xy.Zukan.IsNationalDexUnlocked"
-                                     ValueChanged="@(v => sav6Xy.Zukan.IsNationalDexUnlocked = v)"/>
-                        <MudCheckBox Label="National Mode Active"
-                                     T="@bool"
-                                     Value="@sav6Xy.Zukan.IsNationalDexMode"
-                                     ValueChanged="@(v => sav6Xy.Zukan.IsNationalDexMode = v)"/>
+                        <HapticCheckBox Label="National Mode Unlocked"
+                                        T="@bool"
+                                        Value="@sav6Xy.Zukan.IsNationalDexUnlocked"
+                                        ValueChanged="@(v => sav6Xy.Zukan.IsNationalDexUnlocked = v)"/>
+                        <HapticCheckBox Label="National Mode Active"
+                                        T="@bool"
+                                        Value="@sav6Xy.Zukan.IsNationalDexMode"
+                                        ValueChanged="@(v => sav6Xy.Zukan.IsNationalDexMode = v)"/>
                     </MudStack>
                     break;
                 case SAV6AO sav6Ao:
                     <MudStack Row
+                              Wrap="@Wrap.Wrap"
                               AlignItems="AlignItems.Center">
-                        <MudCheckBox Label="National Mode Unlocked"
-                                     T="@bool"
-                                     Value="@sav6Ao.Zukan.IsNationalDexUnlocked"
-                                     ValueChanged="@(v => sav6Ao.Zukan.IsNationalDexUnlocked = v)"/>
-                        <MudCheckBox Label="National Mode Active"
-                                     T="@bool"
-                                     Value="@sav6Ao.Zukan.IsNationalDexMode"
-                                     ValueChanged="@(v => sav6Ao.Zukan.IsNationalDexMode = v)"/>
+                        <HapticCheckBox Label="National Mode Unlocked"
+                                        T="@bool"
+                                        Value="@sav6Ao.Zukan.IsNationalDexUnlocked"
+                                        ValueChanged="@(v => sav6Ao.Zukan.IsNationalDexUnlocked = v)"/>
+                        <HapticCheckBox Label="National Mode Active"
+                                        T="@bool"
+                                        Value="@sav6Ao.Zukan.IsNationalDexMode"
+                                        ValueChanged="@(v => sav6Ao.Zukan.IsNationalDexMode = v)"/>
                     </MudStack>
                     break;
                 case SAV7 sav7:
                     <MudStack Row
                               AlignItems="AlignItems.Center">
-                        <MudCheckBox Label="National Mode Unlocked"
-                                     T="@bool"
-                                     Value="@sav7.Zukan.NationalDex"
-                                     ValueChanged="@(v => sav7.Zukan.NationalDex = v)"/>
+                        <HapticCheckBox Label="National Mode Unlocked"
+                                        T="@bool"
+                                        Value="@sav7.Zukan.NationalDex"
+                                        ValueChanged="@(v => sav7.Zukan.NationalDex = v)"/>
                     </MudStack>
                     break;
                 case SAV8BS sav8Bs:
                     <MudStack Row
                               AlignItems="AlignItems.Center">
-                        <MudCheckBox Label="National Mode Unlocked"
-                                     T="@bool"
-                                     Value="@sav8Bs.Zukan.HasNationalDex"
-                                     ValueChanged="@(v => sav8Bs.Zukan.HasNationalDex = v)"/>
+                        <HapticCheckBox Label="National Mode Unlocked"
+                                        T="@bool"
+                                        Value="@sav8Bs.Zukan.HasNationalDex"
+                                        ValueChanged="@(v => sav8Bs.Zukan.HasNationalDex = v)"/>
                     </MudStack>
                     break;
                 case SAV9SV sav9Sv:
