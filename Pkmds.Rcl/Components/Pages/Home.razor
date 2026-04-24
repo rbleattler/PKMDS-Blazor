@@ -11,11 +11,41 @@
         @* No drawer / file picker in embed mode — the host hands the save in
            via window.PKMDS.host.loadSave(), so prompt the user to wait rather
            than asking them to take an action they can't take. *@
-        <MudText Typo="@Typo.h5"
-                 Align="@Align.Center"
-                 Class="pa-8">
-            Waiting for save file…
-        </MudText>
+        <MudStack AlignItems="@AlignItems.Center"
+                  Class="pa-8"
+                  Spacing="3">
+            <MudText Typo="@Typo.h5">
+                Waiting for save file…
+            </MudText>
+            @if (HostService.HostName == "test")
+            {
+                @* Dev-only affordance for browser smoke testing — only shown
+                   when ?host=test specifically, never for real WKWebView hosts. *@
+                <MudText Typo="@Typo.caption"
+                         Color="@Color.Secondary">
+                    Test host detected — pick a save file to load via the JS bridge.
+                </MudText>
+                <MudFileUpload T="@IBrowserFile"
+                               Accept="*/*"
+                               OnFilesChanged="@OnTestFilePicked">
+                    <CustomContent>
+                        <MudButton Variant="@Variant.Filled"
+                                   Color="@Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.UploadFile"
+                                   OnClick="@context.OpenFilePickerAsync">
+                            Pick a save file
+                        </MudButton>
+                    </CustomContent>
+                </MudFileUpload>
+                @if (testPickerStatus is not null)
+                {
+                    <MudText Typo="@Typo.caption"
+                             Color="@(testPickerError ? Color.Error : Color.Success)">
+                        @testPickerStatus
+                    </MudText>
+                }
+            }
+        </MudStack>
     }
     else
     {
