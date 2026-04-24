@@ -18,9 +18,11 @@
 
         <MudItem xs="12">
             <MudStack>
-                <MudSwitch @bind-Value="@ShowStatsChart"
+                <MudSwitch T="@bool"
+                           Value="@ShowStatsChart"
                            Color="@Color.Primary"
-                           Label="Show Stats Chart"/>
+                           Label="Show Stats Chart"
+                           ValueChanged="@(v => { Haptics.Tap(); ShowStatsChart = v; })"/>
                 @if (ShowStatsChart)
                 {
                     <MudPaper Class="pa-1">

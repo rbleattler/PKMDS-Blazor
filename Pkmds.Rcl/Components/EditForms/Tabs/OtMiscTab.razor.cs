@@ -295,6 +295,7 @@ public partial class OtMiscTab : IDisposable
             return;
         }
 
+        Haptics.Confirm();
         Pokemon.OriginalTrainerName = saveFile.OT;
         Pokemon.OriginalTrainerGender = saveFile.Gender;
 

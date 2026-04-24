@@ -130,6 +130,8 @@ public partial class BadgesComponent : IDisposable
             return;
         }
 
+        Haptics.Tap();
+
         switch (saveFile.Context)
         {
             case EntityContext.Gen1 when saveFile is SAV1 sav1:

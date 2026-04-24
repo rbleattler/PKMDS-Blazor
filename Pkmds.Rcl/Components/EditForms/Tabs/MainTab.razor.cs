@@ -339,6 +339,7 @@ public partial class MainTab : IDisposable
             return;
         }
 
+        Haptics.Confirm();
         Pokemon.IsNicknamed = false;
         Pokemon.ClearNickname();
     }
