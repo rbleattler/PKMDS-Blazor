@@ -42,10 +42,23 @@ jobs:
       - uses: anthropics/claude-code-action@v1.0.104
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          settings: |
+            {
+              "permissions": {
+                "allow": ["Bash"],
+                "deny": []
+              }
+            }
           prompt: |
             You are a triage assistant for PKMDS, a Pokémon save file editor built with Blazor WebAssembly using PKHeX.Core (https://github.com/codemonkey85/PKMDS-Blazor).
 
-            A new issue has been opened. Review its title and body, then take one of the following actions by posting a comment:
+            Issue number: ${{ github.event.issue.number }}
+            Issue title: ${{ github.event.issue.title }}
+
+            Fetch the full issue body with:
+              gh issue view ${{ github.event.issue.number }} --json title,body,author,labels
+
+            Review the title and body, then take one of the following actions. Post comments with `gh issue comment ${{ github.event.issue.number }} --body "..."` and apply labels with `gh issue edit ${{ github.event.issue.number }} --add-label "<label>"`.
 
             ## Immediate close candidates — respond and apply the "invalid" or "wontfix" label if applicable:
 
