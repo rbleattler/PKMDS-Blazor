@@ -252,7 +252,7 @@ public partial class PokemonBankTab : RefreshAwareComponent
                 }
             }
 
-            await JSRuntime.InvokeVoidAsync("downloadBlob", fileName, bytes, "application/octet-stream");
+            await JSRuntime.InvokeVoidAsync("downloadBlob", fileName, bytes, "application/x-pokemon-savedata");
             Snackbar.Add($"{entry.SpeciesName} exported.", Severity.Success);
         }
         catch (Exception ex)
