@@ -120,8 +120,10 @@ public partial class BugReportDialog
 
             var userAgent = await JSRuntime.InvokeAsync<string>("eval", "navigator.userAgent");
             var request = new BugReportRequest(name, email, description, AppVersion, userAgent,
-                saveBytes, saveFileName, saveGameName, saveRevision,
-                saveFileSource, saveFileType, CapturedException);
+                PkhexVersion: IAppState.PkhexVersion,
+                SaveFileBytes: saveBytes, SaveFileName: saveFileName, SaveGameName: saveGameName,
+                SaveRevision: saveRevision, SaveFileSource: saveFileSource,
+                SaveFileType: saveFileType, CapturedException: CapturedException);
             var result = await BugReportService.SubmitBugReportAsync(request);
 
             if (result.Success)
