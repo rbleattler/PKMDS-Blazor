@@ -33,5 +33,14 @@ public partial class MarkingComponent
             _ => string.Empty
         }}";
 
-    private void Toggle() => Pokemon?.ToggleMarking((int)Shape);
+    private void Toggle()
+    {
+        if (Pokemon is null)
+        {
+            return;
+        }
+
+        Haptics.Tap();
+        Pokemon.ToggleMarking((int)Shape);
+    }
 }

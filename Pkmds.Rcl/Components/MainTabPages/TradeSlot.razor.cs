@@ -191,6 +191,7 @@ public partial class TradeSlot : RefreshAwareComponent
 
         DragDropService.StartDrag(Pokemon, OwnerSaveFile, BoxNumber, SlotNumber, IsPartySlot);
         e.DataTransfer.EffectAllowed = "move";
+        Haptics.Tap();
 
         // iOS Safari cancels a drag whose dragstart ends with an empty DataTransfer,
         // which is why long-press lifts the slot then the drag aborts. PokemonSlotComponent

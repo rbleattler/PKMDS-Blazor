@@ -72,4 +72,11 @@ public record AppSettings
     /// Whether to show the red "illegal" indicator on box/party slots.
     /// </summary>
     public bool ShowIllegalIndicator { get; init; } = true;
+
+    /// <summary>
+    /// Whether to fire short haptic pulses (via the Vibration API) on key interactions —
+    /// drag lift / drop, save export, batch-legalize completion, and settings toggles.
+    /// Silently no-ops on devices without <c>navigator.vibrate</c> (notably iOS Safari).
+    /// </summary>
+    public bool HapticsEnabled { get; init; } = true;
 }

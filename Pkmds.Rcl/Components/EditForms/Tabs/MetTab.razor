@@ -184,11 +184,11 @@
 
     @if (saveGeneration >= 4)
     {
-        <MudCheckBox Label="This Pokémon was met as an Egg"
-                     T="@bool"
-                     Value="@PokemonMetAsEgg"
-                     ValueChanged="@MetAsEggChanged"
-                     For="@(() => Pokemon.FatefulEncounter)"/>
+        <HapticCheckBox Label="This Pokémon was met as an Egg"
+                        T="@bool"
+                        Value="@PokemonMetAsEgg"
+                        ValueChanged="@MetAsEggChanged"
+                        For="@(() => Pokemon.FatefulEncounter)"/>
     }
 
     @if (saveGeneration >= 4 && PokemonMetAsEgg)
@@ -211,15 +211,17 @@
                    @bind-Value="@Pokemon.EggMetDate"/>
     }
 
-    <MudCheckBox Label="Is Egg"
-                 @bind-Value="@Pokemon.IsEgg"
-                 @bind-Value:after="@RefreshService.Refresh"
-                 For="@(() => Pokemon.IsEgg)"/>
+    <HapticCheckBox T="@bool"
+                    Label="Is Egg"
+                    @bind-Value="@Pokemon.IsEgg"
+                    @bind-Value:after="@RefreshService.Refresh"
+                    For="@(() => Pokemon.IsEgg)"/>
 
     @if (saveGeneration >= 3)
     {
-        <MudCheckBox Label="Fateful Encounter"
-                     @bind-Value="@Pokemon.FatefulEncounter"
-                     For="@(() => Pokemon.FatefulEncounter)"/>
+        <HapticCheckBox T="@bool"
+                        Label="Fateful Encounter"
+                        @bind-Value="@Pokemon.FatefulEncounter"
+                        For="@(() => Pokemon.FatefulEncounter)"/>
     }
 }

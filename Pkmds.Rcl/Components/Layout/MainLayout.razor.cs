@@ -493,6 +493,7 @@ public partial class MainLayout : IDisposable
 
         AppState.ShowProgressIndicator = false;
         RefreshService.RefreshBoxAndPartyState();
+        Haptics.Success();
     }
 
     private void FinishLoadingSaveFile(SaveFile saveFile, string? fileName = null)
@@ -588,6 +589,7 @@ public partial class MainLayout : IDisposable
             }
 
             Logger.LogInformation("Save file exported successfully");
+            Haptics.Success();
         }
         catch (Exception ex)
         {

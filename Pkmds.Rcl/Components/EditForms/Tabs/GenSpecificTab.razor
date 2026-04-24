@@ -92,17 +92,17 @@
                 @for (var i = 0; i < 5; i++)
                 {
                     var bit = i;
-                    <MudCheckBox T="@bool"
-                                 Label="@($"Leaf {bit + 1}")"
-                                 Value="@GetShinyLeafBit(g4.ShinyLeaf, bit)"
-                                 ValueChanged="@(v => g4.ShinyLeaf = SetShinyLeafBit(g4.ShinyLeaf, bit, v))"
-                                 title="@($"Shiny Leaf {bit + 1}")"/>
+                    <HapticCheckBox T="@bool"
+                                    Label="@($"Leaf {bit + 1}")"
+                                    Value="@GetShinyLeafBit(g4.ShinyLeaf, bit)"
+                                    ValueChanged="@(v => g4.ShinyLeaf = SetShinyLeafBit(g4.ShinyLeaf, bit, v))"
+                                    title="@($"Shiny Leaf {bit + 1}")"/>
                 }
-                <MudCheckBox T="@bool"
-                             Label="Crown"
-                             Value="@GetShinyLeafBit(g4.ShinyLeaf, 5)"
-                             ValueChanged="@(v => g4.ShinyLeaf = SetShinyLeafBit(g4.ShinyLeaf, 5, v))"
-                             title="Shiny Leaf Crown (requires all 5 leaves)"/>
+                <HapticCheckBox T="@bool"
+                                Label="Crown"
+                                Value="@GetShinyLeafBit(g4.ShinyLeaf, 5)"
+                                ValueChanged="@(v => g4.ShinyLeaf = SetShinyLeafBit(g4.ShinyLeaf, 5, v))"
+                                title="Shiny Leaf Crown (requires all 5 leaves)"/>
             </MudStack>
 
             <MudNumericField T="@sbyte"
@@ -121,10 +121,11 @@
             <MudDivider/>
             <MudText Typo="@Typo.subtitle2">Gen 5</MudText>
 
-            <MudCheckBox Label="N's Sparkle"
-                         @bind-Value="@pk5.NSparkle"
-                         @bind-Value:after="@RefreshService.Refresh"
-                         For="@(() => pk5.NSparkle)"/>
+            <HapticCheckBox T="@bool"
+                            Label="N's Sparkle"
+                            @bind-Value="@pk5.NSparkle"
+                            @bind-Value:after="@RefreshService.Refresh"
+                            For="@(() => pk5.NSparkle)"/>
 
             <MudNumericField T="@byte"
                              Label="PokéStar Fame (B2/W2 only)"
@@ -210,9 +211,10 @@
                                  Style="max-width: 160px;"/>
                 @if (Pokemon is IGigantamax gigantamax)
                 {
-                    <MudCheckBox Label="Gigantamax"
-                                 @bind-Value="@gigantamax.CanGigantamax"
-                                 For="@(() => gigantamax.CanGigantamax)"/>
+                    <HapticCheckBox T="@bool"
+                                    Label="Gigantamax"
+                                    @bind-Value="@gigantamax.CanGigantamax"
+                                    For="@(() => gigantamax.CanGigantamax)"/>
                 }
             </MudStack>
         }
@@ -227,16 +229,18 @@
                       Wrap="@Wrap.Wrap">
                 @if (Pokemon is INoble noble)
                 {
-                    <MudCheckBox Label="Noble"
-                                 @bind-Value="@noble.IsNoble"
-                                 For="@(() => noble.IsNoble)"/>
+                    <HapticCheckBox T="@bool"
+                                    Label="Noble"
+                                    @bind-Value="@noble.IsNoble"
+                                    For="@(() => noble.IsNoble)"/>
                 }
                 @switch (Pokemon)
                 {
                     case IAlpha alpha:
-                        <MudCheckBox Label="Alpha"
-                                     @bind-Value="@alpha.IsAlpha"
-                                     For="@(() => alpha.IsAlpha)"/>
+                        <HapticCheckBox T="@bool"
+                                        Label="Alpha"
+                                        @bind-Value="@alpha.IsAlpha"
+                                        For="@(() => alpha.IsAlpha)"/>
                         break;
                     case IAlphaReadOnly alphaReadOnly:
                         <MudCheckBox Label="Alpha"

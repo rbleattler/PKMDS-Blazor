@@ -539,6 +539,7 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
 
     private void ToggleMarking(int index)
     {
+        Haptics.Tap();
         if (!selectedMarkings.Add(index))
         {
             selectedMarkings.Remove(index);

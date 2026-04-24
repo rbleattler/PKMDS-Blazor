@@ -1,0 +1,40 @@
+@typeparam T
+
+@*
+    Thin wrapper around <MudCheckBox<T>> that fires Haptics.Tap() before propagating
+    the value change. Drop-in for editor controls where toggling represents a real
+    state change worth signalling. Skip for bulk-fill grids (Pokédex, Bag) where a
+    haptic per click would become noise. ReadOnly checkboxes naturally don't pulse
+    because MudCheckBox doesn't fire ValueChanged for them.
+*@
+<MudCheckBox T="@T"
+             Value="@Value"
+             ValueChanged="@HandleValueChanged"
+             For="@For"
+             @attributes="@AdditionalAttributes">
+    @ChildContent
+</MudCheckBox>
+
+@code {
+
+    [Parameter] public T? Value { get; set; }
+
+    [Parameter] public EventCallback<T?> ValueChanged { get; set; }
+
+    [Parameter] public System.Linq.Expressions.Expression<System.Func<T>>? For { get; set; }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private async Task HandleValueChanged(T? newValue)
+    {
+        Haptics.Tap();
+        if (ValueChanged.HasDelegate)
+        {
+            await ValueChanged.InvokeAsync(newValue);
+        }
+    }
+
+}

@@ -107,6 +107,7 @@ public sealed class SettingsService(
         appState.ShowLegalIndicator = Settings.ShowLegalIndicator;
         appState.ShowFishyIndicator = Settings.ShowFishyIndicator;
         appState.ShowIllegalIndicator = Settings.ShowIllegalIndicator;
+        appState.HapticsEnabled = Settings.HapticsEnabled;
         loggingService.IsVerboseLoggingEnabled = Settings.IsVerboseLoggingEnabled;
     }
 }

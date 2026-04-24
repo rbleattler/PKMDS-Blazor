@@ -40,6 +40,7 @@ services
     .AddSingleton<IDragDropService, DragDropService>()
     .AddSingleton<ILoggingService, LoggingService>()
     .AddSingleton<ISettingsService, SettingsService>()
+    .AddSingleton<IHapticService, HapticService>()
     .AddSingleton(levelSwitch)
     .AddSingleton<JsService>()
     .AddSingleton<BlazorAesProvider>()

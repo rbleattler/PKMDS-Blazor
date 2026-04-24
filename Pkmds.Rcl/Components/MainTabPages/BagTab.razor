@@ -51,9 +51,11 @@
                                        StartIcon="@Icons.Material.Filled.Sort">
                                 Sort By Index
                             </MudButton>
-                            <MudSwitch @bind-Value="@ShowEmptySlots"
+                            <MudSwitch T="@bool"
+                                       Value="@ShowEmptySlots"
                                        Color="@Color.Primary"
-                                       Label="Show Empty Slots"/>
+                                       Label="Show Empty Slots"
+                                       ValueChanged="@(v => { Haptics.Tap(); ShowEmptySlots = v; })"/>
                         </MudStack>
                         <MudDataGrid T="@InventoryItem"
                                      Items="@(ShowEmptySlots

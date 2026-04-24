@@ -109,10 +109,11 @@
                           Clearable
                           Style="min-width: 220px;"/>
 
-            <MudSwitch @bind-Value="shinyOnly"
-                       @bind-Value:after="ApplyFilter"
+            <MudSwitch T="@bool"
+                       Value="@shinyOnly"
                        Color="@Color.Primary"
-                       Label="Shiny only"/>
+                       Label="Shiny only"
+                       ValueChanged="@(v => { Haptics.Tap(); shinyOnly = v; ApplyFilter(); })"/>
 
             @if (filteredEntries.Count != entries.Count)
             {

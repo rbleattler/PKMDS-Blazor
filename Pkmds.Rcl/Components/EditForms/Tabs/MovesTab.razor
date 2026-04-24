@@ -221,22 +221,24 @@
                             {
                                 var localMoveId = Pokemon.GetMove(i);
                                 var plusFlagIndex = PersonalInfo9ZA.PlusMoves.IndexOf(localMoveId);
-                                <MudCheckBox Label="+"
-                                             Dense
-                                             title="Plus Move"
-                                             @bind-Value:get="@GetPokemonMoveIsPlus(plusFlagIndex)"
-                                             @bind-Value:set="@(newValue => SetPokemonMoveIsPlus(plusFlagIndex, newValue))"/>
+                                <HapticCheckBox T="@bool"
+                                                Label="+"
+                                                Dense
+                                                title="Plus Move"
+                                                @bind-Value:get="@GetPokemonMoveIsPlus(plusFlagIndex)"
+                                                @bind-Value:set="@(newValue => SetPokemonMoveIsPlus(plusFlagIndex, newValue))"/>
                             }
                             @if (showMasteredMove && Pokemon is IMoveShop8Mastery)
                             {
                                 var localMoveId = Pokemon.GetMove(i);
                                 var masteredFlagIndex = GetMasteredRecordIndex(localMoveId);
-                                <MudCheckBox Label="+"
-                                             Dense
-                                             title="Mastered Move"
-                                             Disabled="@(masteredFlagIndex < 0)"
-                                             @bind-Value:get="@GetPokemonMoveIsMastered(masteredFlagIndex)"
-                                             @bind-Value:set="@(newValue => SetPokemonMoveIsMastered(masteredFlagIndex, newValue))"/>
+                                <HapticCheckBox T="@bool"
+                                                Label="+"
+                                                Dense
+                                                title="Mastered Move"
+                                                Disabled="@(masteredFlagIndex < 0)"
+                                                @bind-Value:get="@GetPokemonMoveIsMastered(masteredFlagIndex)"
+                                                @bind-Value:set="@(newValue => SetPokemonMoveIsMastered(masteredFlagIndex, newValue))"/>
                             }
                         </MudStack>
                     </MudItem>

@@ -212,6 +212,7 @@ public partial class EvolvePickerDialog
             return;
         }
 
+        Haptics.Confirm();
         MudDialog?.Close(DialogResult.Ok(selected));
     }
 

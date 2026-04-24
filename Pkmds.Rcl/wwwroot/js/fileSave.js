@@ -69,6 +69,19 @@ window.setDragDownloadData = function (filename, base64data) {
     }
 };
 
+// Haptic feedback via the Vibration API. Android Chrome / Samsung / Firefox honour this;
+// iOS Safari doesn't implement navigator.vibrate at all, so this is a silent no-op there
+// (iOS still gets the system "lift" haptic from native HTML5 drag for free — see #770).
+// Caller passes either a duration in ms or an array pattern (e.g. [10, 30, 10]).
+window.pkmdsHaptic = function (pattern) {
+    if (!navigator || typeof navigator.vibrate !== 'function') return false;
+    try {
+        return navigator.vibrate(pattern);
+    } catch (e) {
+        return false;
+    }
+};
+
 // iOS Safari cancels a drag whose dragstart completes with an empty DataTransfer.
 // Set a minimal text/plain payload so the drag survives through to dragover/drop
 // on touch devices. Desktop browsers are unaffected — they ignore unused payloads.
