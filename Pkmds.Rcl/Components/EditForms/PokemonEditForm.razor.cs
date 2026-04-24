@@ -6,6 +6,9 @@ public partial class PokemonEditForm : IDisposable
     [EditorRequired]
     public PKM? Pokemon { get; set; }
 
+    [Inject]
+    private IBankService BankService { get; set; } = null!;
+
     private LegalityAnalysis? Analysis { get; set; }
 
     public void Dispose() =>
@@ -64,6 +67,87 @@ public partial class PokemonEditForm : IDisposable
             "Import from Showdown / PokePaste",
             new DialogParameters<ShowdownImportDialog>(),
             options);
+    }
+
+    private async Task AddToBankAsync()
+    {
+        if (Pokemon is null || Pokemon.Species.IsInvalidSpecies() || AppState.SaveFile is not { } saveFile)
+        {
+            return;
+        }
+
+        if (HasUnsavedChanges(saveFile))
+        {
+            var save = await DialogService.ShowMessageBoxAsync(
+                "Unsaved Changes",
+                "This Pokémon has unsaved changes. Save before adding to the Bank?",
+                yesText: "Save & Bank",
+                cancelText: "Cancel");
+
+            if (save is not true)
+            {
+                return;
+            }
+
+            AppService.SavePokemon(Pokemon);
+        }
+
+        var isDuplicate = await BankService.IsDuplicateAsync(Pokemon);
+        if (isDuplicate)
+        {
+            var addAnyway = await DialogService.ShowMessageBoxAsync(
+                "Already in Bank",
+                "This Pokémon is already in the Bank. Add it again?",
+                yesText: "Add Again",
+                cancelText: "Cancel");
+
+            if (addAnyway is not true)
+            {
+                return;
+            }
+        }
+
+        var tid = saveFile.DisplayTID.ToString(AppService.GetIdFormatString());
+        var gameName = SaveFileNameDisplay.FriendlyGameName(saveFile.Version);
+        var sourceSave = $"{saveFile.OT} ({tid}, {gameName})";
+
+        await BankService.AddAsync(Pokemon, sourceSave: sourceSave);
+
+        var speciesName = AppService.GetPokemonSpeciesName(Pokemon.Species)
+                          ?? Pokemon.Species.ToString(CultureInfo.InvariantCulture);
+        Snackbar.Add($"{speciesName} added to Bank.", Severity.Success);
+    }
+
+    private bool HasUnsavedChanges(SaveFile saveFile)
+    {
+        if (Pokemon is null)
+        {
+            return false;
+        }
+
+        var selectedPokemonType = AppService.GetSelectedPokemonSlot(out var partySlot, out var boxNumber, out var boxSlot);
+
+        PKM? slotPokemon = selectedPokemonType switch
+        {
+            SelectedPokemonType.Party => saveFile.GetPartySlotAtIndex(partySlot),
+            SelectedPokemonType.Box => saveFile.GetBoxSlotAtIndex(boxNumber, boxSlot),
+            SelectedPokemonType.None when saveFile is SAV7b && AppState.SelectedBoxSlotNumber is { } lgSlot =>
+                saveFile.GetBoxSlotAtIndex(lgSlot / saveFile.BoxSlotCount, lgSlot % saveFile.BoxSlotCount),
+            _ => null
+        };
+
+        if (slotPokemon is null || Pokemon.SIZE_STORED != slotPokemon.SIZE_STORED)
+        {
+            return false;
+        }
+
+        var editedBytes = new byte[Pokemon.SIZE_STORED];
+        Pokemon.WriteDecryptedDataStored(editedBytes);
+
+        var slotBytes = new byte[slotPokemon.SIZE_STORED];
+        slotPokemon.WriteDecryptedDataStored(slotBytes);
+
+        return !editedBytes.AsSpan().SequenceEqual(slotBytes);
     }
 
     private void SaveAndClose()

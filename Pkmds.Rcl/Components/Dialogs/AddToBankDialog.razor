@@ -1,0 +1,137 @@
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="@Typo.h6">Add to Bank</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="3">
+
+            @if (!isLetsGo)
+            {
+                <MudRadioGroup T="AddToBankDialog.AddToBankScope"
+                               @bind-Value="scope"
+                               @bind-Value:after="LoadCandidatesAsync"
+                               Disabled="@(isAdding || isLoading)">
+                    <MudRadio T="AddToBankDialog.AddToBankScope"
+                              Value="@AddToBankDialog.AddToBankScope.Party"
+                              Color="@Color.Primary">
+                        Party
+                    </MudRadio>
+                    <MudRadio T="AddToBankDialog.AddToBankScope"
+                              Value="@AddToBankDialog.AddToBankScope.CurrentBox"
+                              Color="@Color.Primary">
+                        Current Box
+                    </MudRadio>
+                    <MudRadio T="AddToBankDialog.AddToBankScope"
+                              Value="@AddToBankDialog.AddToBankScope.AllBoxes"
+                              Color="@Color.Primary">
+                        All Boxes
+                    </MudRadio>
+                </MudRadioGroup>
+            }
+
+            @if (isLoading)
+            {
+                <MudProgressCircular Indeterminate
+                                     Color="@Color.Primary"
+                                     Size="@Size.Small"/>
+            }
+            else if (candidates.Count == 0)
+            {
+                <MudText Typo="@Typo.body2"
+                         Color="@Color.Secondary">
+                    No Pokémon in this scope.
+                </MudText>
+            }
+            else
+            {
+                <MudStack Row
+                          AlignItems="@AlignItems.Center"
+                          Spacing="1">
+                    <MudButton Size="@Size.Small"
+                               OnClick="@(() => ToggleSelectAll(true))"
+                               Variant="@Variant.Text"
+                               Disabled="@isAdding">
+                        Select All
+                    </MudButton>
+                    <MudButton Size="@Size.Small"
+                               OnClick="@(() => ToggleSelectAll(false))"
+                               Variant="@Variant.Text"
+                               Disabled="@isAdding">
+                        Select None
+                    </MudButton>
+                    <MudSpacer/>
+                    <MudText Typo="@Typo.body2">@AddCount selected</MudText>
+                </MudStack>
+
+                <div style="max-height: 320px; overflow-y: auto;">
+                    @foreach (var c in candidates)
+                    {
+                        <MudStack Row
+                                  AlignItems="@AlignItems.Center"
+                                  Spacing="1"
+                                  Class="py-0">
+                            <MudCheckBox T="bool"
+                                         @bind-Value="c.IsSelected"
+                                         Disabled="@(isAdding || (skipDuplicates && c.IsDuplicate))"/>
+                            @if (c.Pokemon.IsShiny)
+                            {
+                                <MudText Typo="@Typo.body2">✨</MudText>
+                            }
+                            <MudText Typo="@Typo.body2">@c.SpeciesName</MudText>
+                            @if (c.IsParty)
+                            {
+                                <MudChip T="string"
+                                         Size="@Size.Small"
+                                         Color="@Color.Info"
+                                         Class="ml-1">
+                                    Party
+                                </MudChip>
+                            }
+                            @if (c.IsDuplicate)
+                            {
+                                <MudTooltip Text="Already in Bank">
+                                    <MudIcon Icon="@Icons.Material.Filled.Warning"
+                                             Color="@Color.Warning"
+                                             Size="@Size.Small"/>
+                                </MudTooltip>
+                            }
+                        </MudStack>
+                    }
+                </div>
+
+                <MudRadioGroup T="bool"
+                               @bind-Value="skipDuplicates"
+                               @bind-Value:after="OnSkipDuplicatesChanged"
+                               Disabled="@isAdding">
+                    <MudRadio T="bool"
+                              Value="true"
+                              Color="@Color.Primary">
+                        Skip duplicates
+                    </MudRadio>
+                    <MudRadio T="bool"
+                              Value="false"
+                              Color="@Color.Primary">
+                        Add duplicates anyway
+                    </MudRadio>
+                </MudRadioGroup>
+            }
+
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@Cancel"
+                   StartIcon="@Icons.Material.Filled.Clear"
+                   Variant="@Variant.Filled"
+                   Color="@Color.Default"
+                   Disabled="@isAdding">
+            Cancel
+        </MudButton>
+        <MudButton OnClick="@AddToBankAsync"
+                   StartIcon="@Icons.Material.Filled.AccountBalanceWallet"
+                   Variant="@Variant.Filled"
+                   Color="@Color.Primary"
+                   Disabled="@(isAdding || isLoading || AddCount == 0)">
+            Add @AddCount to Bank
+        </MudButton>
+    </DialogActions>
+</MudDialog>
