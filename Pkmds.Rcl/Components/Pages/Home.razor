@@ -6,13 +6,27 @@
 
 @if (AppState.SaveFile is null)
 {
-    <MudButton Variant="@Variant.Text"
-               ButtonType="@ButtonType.Button"
-               OnClick="@(_ => AppService.IsDrawerOpen = true)">
-        <MudText Typo="@Typo.h5">
-            Please load a save file.
+    @if (HostService.IsEmbedded)
+    {
+        @* No drawer / file picker in embed mode — the host hands the save in
+           via window.PKMDS.host.loadSave(), so prompt the user to wait rather
+           than asking them to take an action they can't take. *@
+        <MudText Typo="@Typo.h5"
+                 Align="@Align.Center"
+                 Class="pa-8">
+            Waiting for save file…
         </MudText>
-    </MudButton>
+    }
+    else
+    {
+        <MudButton Variant="@Variant.Text"
+                   ButtonType="@ButtonType.Button"
+                   OnClick="@(_ => AppService.IsDrawerOpen = true)">
+            <MudText Typo="@Typo.h5">
+                Please load a save file.
+            </MudText>
+        </MudButton>
+    }
 }
 
 <SaveFileComponent/>

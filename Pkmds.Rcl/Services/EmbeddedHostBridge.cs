@@ -62,7 +62,12 @@ public sealed class EmbeddedHostBridge
         }
         catch (FormatException ex)
         {
-            _logger.LogWarning(ex, "Host sent malformed base64 save data ({FileName})", fileName);
+            _logger.LogWarning(
+                ex,
+                "Host sent malformed base64 save data ({FileName}). " +
+                "loadSave() expects base64-encoded raw save bytes — not a file path or filename. " +
+                "Use loadSaveFromUrl(url, fileName) for browser testing if you need to load from a URL.",
+                fileName);
             return false;
         }
 

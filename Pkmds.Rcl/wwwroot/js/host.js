@@ -35,11 +35,39 @@
         // Inbound: load a save into PKMDS. The host calls this once embedded
         // mode is initialized (after the 'ready' message has been observed).
         // bytesBase64 — base64-encoded raw save file bytes (or Manic EMU ZIP).
+        //   IMPORTANT: this is base64-encoded BYTES, not a file path or
+        //   filename. Use loadSaveFromUrl below if you want to load from a URL
+        //   in browser-based testing.
         // fileName — display filename; used for Manic EMU detection, error
         //   messages, and the eventual export filename. Pass null if unknown.
         loadSave: async function (bytesBase64, fileName) {
             return await DotNet.invokeMethodAsync(
                 'Pkmds.Rcl', 'LoadSaveFromHost', bytesBase64, fileName || null);
+        },
+
+        // Convenience helper for browser-based testing: fetch a URL, base64-
+        // encode the bytes, and forward to loadSave(). Useful for smoke-testing
+        // the bridge from DevTools without manually base64-encoding a file.
+        // Real WKWebView hosts call loadSave() directly with bytes they already
+        // have in Swift Data form.
+        loadSaveFromUrl: async function (url, fileName) {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error('[PKMDS.host] Fetch failed for ' + url + ': ' + response.status);
+            }
+            const buffer = await response.arrayBuffer();
+            const bytes = new Uint8Array(buffer);
+            // Chunked encoding to avoid call-stack overflow on large saves
+            // (Gen 9 saves can exceed 4 MB; String.fromCharCode.apply has a
+            // ~64K argument limit on most engines).
+            let binary = '';
+            const chunkSize = 0x8000;
+            for (let i = 0; i < bytes.length; i += chunkSize) {
+                binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+            }
+            const base64 = btoa(binary);
+            const inferredName = fileName || url.split('/').pop() || 'save.sav';
+            return await window.PKMDS.host.loadSave(base64, inferredName);
         },
 
         // Inbound: request the current save bytes. PKMDS responds asynchronously
