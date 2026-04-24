@@ -27,10 +27,14 @@ jobs:
       id-token: write
     steps:
       # uses GitHub's checkout action to checkout code from the release branch
+      # RELEASE_PAT is a PAT with `workflow` scope; required so the tag push is
+      # accepted when main contains commits that modify `.github/workflows/*`
+      # (the default GITHUB_TOKEN cannot be granted the `workflows` scope).
       - name: Checkout code
         uses: actions/checkout@v6.0.2
         with:
           persist-credentials: true
+          token: ${{ secrets.RELEASE_PAT }}
 
       # sets up .NET SDK
       - name: Setup .NET

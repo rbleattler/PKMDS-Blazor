@@ -44,7 +44,7 @@
             }
 
             <MudFileUpload T="IBrowserFile"
-                           Accept=".json"
+                           Accept="@ImportAcceptList"
                            @bind-Files="importFile"
                            @bind-Files:after="OnImportFileChangedAsync">
                 <CustomContent>

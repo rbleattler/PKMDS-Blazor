@@ -1,8 +1,12 @@
+using System.IO.Compression;
+
 namespace Pkmds.Rcl.Components.MainTabPages;
 
 public partial class PokemonBankTab : RefreshAwareComponent
 {
     private const string BackupReminderDismissedKey = "pkmds.bank.backup-reminder-dismissed";
+
+    private static readonly string ImportAcceptList = BuildImportAcceptList();
 
     private static readonly int[] PageSizes = [20, 50, 100];
     private readonly HashSet<long> selectedIds = [];
@@ -198,15 +202,32 @@ public partial class PokemonBankTab : RefreshAwareComponent
 
         try
         {
-            using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            await using var stream = file.OpenReadStream(Constants.MaxFileSize);
             using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
             var data = ms.ToArray();
 
-            await BankService.ImportAsync(data);
-            await ReloadAsync();
+            var ext = Path.GetExtension(file.Name);
 
-            Snackbar.Add("Bank imported successfully.", Severity.Success);
+            if (ext.Equals(".json", StringComparison.OrdinalIgnoreCase))
+            {
+                await BankService.ImportAsync(data);
+                await ReloadAsync();
+                Snackbar.Add("Bank imported successfully.", Severity.Success);
+                return;
+            }
+
+            var pokemon = ext.Equals(".zip", StringComparison.OrdinalIgnoreCase)
+                ? ReadPokemonFromZip(data)
+                : ReadSinglePokemon(data, ext);
+
+            if (pokemon.Count == 0)
+            {
+                Snackbar.Add("No Pokémon found in file.", Severity.Warning);
+                return;
+            }
+
+            await ImportPokemonAsync(pokemon, sourceSave: $"Import: {file.Name}");
         }
         catch (Exception ex)
         {
@@ -217,6 +238,97 @@ public partial class PokemonBankTab : RefreshAwareComponent
             isBusy = false;
             StateHasChanged();
         }
+    }
+
+    private async Task ImportPokemonAsync(List<PKM> pokemon, string sourceSave)
+    {
+        var (unique, duplicates) = await BankService.PartitionDuplicatesAsync(pokemon);
+        var toAdd = unique.ToList();
+
+        if (duplicates.Count > 0)
+        {
+            var skipDuplicates = await DialogService.ShowMessageBoxAsync(
+                "Duplicates Detected",
+                $"{duplicates.Count} duplicate(s) found. Skip them and add only the {unique.Count} unique Pokémon?",
+                yesText: "Skip Duplicates",
+                noText: "Add All",
+                cancelText: "Cancel");
+
+            switch (skipDuplicates)
+            {
+                case null:
+                    return;
+                case false:
+                    toAdd = pokemon;
+                    break;
+            }
+        }
+
+        await BankService.AddRangeAsync(toAdd, sourceSave: sourceSave);
+        await ReloadAsync();
+
+        var skipped = pokemon.Count - toAdd.Count;
+        Snackbar.Add(skipped > 0
+                ? $"{toAdd.Count} Pokémon imported ({skipped} duplicates skipped)."
+                : $"{toAdd.Count} Pokémon imported.",
+            Severity.Success);
+    }
+
+    private static List<PKM> ReadSinglePokemon(byte[] data, string ext) =>
+        FileUtil.TryGetPKM(data, out var pkm, ext) && pkm.Species != 0
+            ? [pkm]
+            : [];
+
+    private static List<PKM> ReadPokemonFromZip(byte[] data)
+    {
+        var result = new List<PKM>();
+        using var ms = new MemoryStream(data);
+        using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+        foreach (var entry in zip.Entries)
+        {
+            var entryExt = Path.GetExtension(entry.Name);
+            if (!IsPokemonExtension(entryExt))
+            {
+                continue;
+            }
+
+            using var es = entry.Open();
+            using var ems = new MemoryStream();
+            es.CopyTo(ems);
+            var bytes = ems.ToArray();
+
+            if (FileUtil.TryGetPKM(bytes, out var pkm, entryExt) && pkm.Species != 0)
+            {
+                result.Add(pkm);
+            }
+        }
+
+        return result;
+    }
+
+    private static bool IsPokemonExtension(string ext)
+    {
+        if (string.IsNullOrEmpty(ext))
+        {
+            return false;
+        }
+
+        var stripped = ext.StartsWith('.') ? ext[1..] : ext;
+        foreach (var valid in EntityFileExtension.GetExtensionsAll())
+        {
+            if (stripped.Equals(valid, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static string BuildImportAcceptList()
+    {
+        var pkmExtensions = EntityFileExtension.GetExtensionsAll().Select(e => "." + e);
+        return string.Join(",", pkmExtensions.Concat([".zip", ".json"]));
     }
 
     // ── Export ────────────────────────────────────────────────────────────
