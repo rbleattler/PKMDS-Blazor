@@ -47,6 +47,47 @@ public static unsafe class Exports
         }
     }
 
+    [UnmanagedCallersOnly(EntryPoint = "pkmds_render_pkm_html")]
+    public static int RenderPkmHtml(byte* data, int length, byte* outHtml, int outCap)
+    {
+        try
+        {
+            if (data is null || outHtml is null || length <= 0 || outCap <= 0)
+                return -1;
+
+            var bytes = CopyIn(data, length);
+            var pkm = EntityFormat.GetFromBytes(bytes);
+            if (pkm is null)
+                return -2;
+
+            return WriteJson(HtmlRenderer.RenderPkm(pkm), outHtml, outCap);
+        }
+        catch
+        {
+            return -99;
+        }
+    }
+
+    [UnmanagedCallersOnly(EntryPoint = "pkmds_render_save_html")]
+    public static int RenderSaveHtml(byte* data, int length, byte* outHtml, int outCap)
+    {
+        try
+        {
+            if (data is null || outHtml is null || length <= 0 || outCap <= 0)
+                return -1;
+
+            var bytes = CopyIn(data, length);
+            if (!SaveUtil.TryGetSaveFile(bytes, out var sav))
+                return -2;
+
+            return WriteJson(HtmlRenderer.RenderSave(sav), outHtml, outCap);
+        }
+        catch
+        {
+            return -99;
+        }
+    }
+
     private static byte[] CopyIn(byte* data, int length)
     {
         var bytes = new byte[length];

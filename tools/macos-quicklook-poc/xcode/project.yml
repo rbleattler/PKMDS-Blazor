@@ -1,0 +1,115 @@
+name: PkmdsQuickLook
+options:
+  bundleIdPrefix: com.bondcodes.pkmds
+  deploymentTarget:
+    macOS: "13.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "-"
+    DEVELOPMENT_TEAM: ""
+    ENABLE_HARDENED_RUNTIME: NO
+    OTHER_CODE_SIGN_FLAGS: "--timestamp=none"
+
+targets:
+  PkmdsHost:
+    type: application
+    platform: macOS
+    sources:
+      - path: PkmdsHost
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.bondcodes.pkmds.host
+        INFOPLIST_KEY_NSHumanReadableCopyright: ""
+        INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.utilities"
+        INFOPLIST_KEY_NSPrincipalClass: NSApplication
+        ENABLE_USER_SCRIPT_SANDBOXING: YES
+        MARKETING_VERSION: "0.0.1"
+        CURRENT_PROJECT_VERSION: "1"
+    info:
+      path: PkmdsHost/Info.plist
+      properties:
+        CFBundleDisplayName: PKMDS Quick Look (POC)
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        LSApplicationCategoryType: public.app-category.utilities
+        UTExportedTypeDeclarations:
+          - UTTypeIdentifier: com.bondcodes.pkmds.pkm-file
+            UTTypeDescription: Pokémon Entity File
+            UTTypeConformsTo:
+              - public.data
+            UTTypeTagSpecification:
+              public.filename-extension:
+                - pk1
+                - pk2
+                - pk3
+                - pk4
+                - pk5
+                - pk6
+                - pk7
+                - pk8
+                - pk9
+                - pa8
+                - pb7
+                - pb8
+          - UTTypeIdentifier: com.bondcodes.pkmds.save-file
+            UTTypeDescription: Pokémon Save File
+            UTTypeConformsTo:
+              - public.data
+            UTTypeTagSpecification:
+              public.filename-extension:
+                - sav
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: Pokémon Entity File
+            CFBundleTypeRole: Viewer
+            LSItemContentTypes:
+              - com.bondcodes.pkmds.pkm-file
+            LSHandlerRank: Alternate
+          - CFBundleTypeName: Pokémon Save File
+            CFBundleTypeRole: Viewer
+            LSItemContentTypes:
+              - com.bondcodes.pkmds.save-file
+            LSHandlerRank: Alternate
+    dependencies:
+      - target: PkmdsQuickLook
+        embed: true
+        codeSign: true
+
+  PkmdsQuickLook:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: PkmdsQuickLook
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.bondcodes.pkmds.host.quicklook
+        LD_RUNPATH_SEARCH_PATHS: "@executable_path/../Frameworks"
+        SKIP_INSTALL: YES
+        MARKETING_VERSION: "0.0.1"
+        CURRENT_PROJECT_VERSION: "1"
+        ENABLE_HARDENED_RUNTIME: YES
+        CODE_SIGN_ENTITLEMENTS: PkmdsQuickLook/PkmdsQuickLook.entitlements
+    info:
+      path: PkmdsQuickLook/Info.plist
+      properties:
+        CFBundleDisplayName: PKMDS Quick Look
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.quicklook.preview
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).PreviewViewController
+          NSExtensionAttributes:
+            QLSupportedContentTypes:
+              - com.bondcodes.pkmds.pkm-file
+              - com.bondcodes.pkmds.save-file
+            QLSupportsSearchableItems: false
+    dependencies:
+      - framework: ../build-resources/PkmdsNative.dylib
+        embed: true
+        codeSign: true
+      - sdk: QuickLookUI.framework
+      - sdk: WebKit.framework

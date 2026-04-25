@@ -33,11 +33,15 @@ SWIFT_BIN="$SCRIPT_DIR/swift-cli/pkmds-poc"
 swiftc -O -o "$SWIFT_BIN" "$SCRIPT_DIR/swift-cli/main.swift"
 
 if [[ -n "$PKM_FIXTURE" && -f "$PKM_FIXTURE" ]]; then
-    echo "==> pkm: $PKM_FIXTURE"
+    echo "==> pkm json: $PKM_FIXTURE"
     "$SWIFT_BIN" "$DYLIB" pkm "$PKM_FIXTURE"
+    echo "==> pkm html: $PKM_FIXTURE -> /tmp/pkmds-poc-pkm.html"
+    "$SWIFT_BIN" "$DYLIB" pkm-html "$PKM_FIXTURE" > /tmp/pkmds-poc-pkm.html
 fi
 
 if [[ -n "$SAV_FIXTURE" && -f "$SAV_FIXTURE" ]]; then
-    echo "==> save: $SAV_FIXTURE"
+    echo "==> save json: $SAV_FIXTURE"
     "$SWIFT_BIN" "$DYLIB" save "$SAV_FIXTURE"
+    echo "==> save html: $SAV_FIXTURE -> /tmp/pkmds-poc-save.html"
+    "$SWIFT_BIN" "$DYLIB" save-html "$SAV_FIXTURE" > /tmp/pkmds-poc-save.html
 fi

@@ -1,7 +1,7 @@
 import Foundation
 
 func usage(_ name: String) -> Never {
-    FileHandle.standardError.write(Data("usage: \(name) <libPkmdsNative.dylib> <pkm|save> <file>\n".utf8))
+    FileHandle.standardError.write(Data("usage: \(name) <libPkmdsNative.dylib> <pkm|save|pkm-html|save-html> <file>\n".utf8))
     exit(64)
 }
 
@@ -14,10 +14,13 @@ let kind = argv[2]
 let inputPath = argv[3]
 
 let symbolName: String
+let outCap: Int
 switch kind {
-case "pkm":  symbolName = "pkmds_describe_pkm"
-case "save": symbolName = "pkmds_describe_save"
-default:     usage(progName)
+case "pkm":       symbolName = "pkmds_describe_pkm";    outCap = 64 * 1024
+case "save":      symbolName = "pkmds_describe_save";   outCap = 64 * 1024
+case "pkm-html":  symbolName = "pkmds_render_pkm_html"; outCap = 256 * 1024
+case "save-html": symbolName = "pkmds_render_save_html"; outCap = 256 * 1024
+default:          usage(progName)
 }
 
 guard let handle = dlopen(dylibPath, RTLD_NOW) else {
@@ -45,7 +48,6 @@ do {
     exit(1)
 }
 
-let outCap = 64 * 1024
 var outBuf = [UInt8](repeating: 0, count: outCap)
 
 let written = data.withUnsafeBytes { (raw: UnsafeRawBufferPointer) -> Int32 in
