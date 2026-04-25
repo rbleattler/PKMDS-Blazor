@@ -1245,15 +1245,17 @@ The Bag tab is slow to load on large saves (SV, SwSh) because all pouches render
 - [ ] Implement reduced motion mode
 
 ### 7.4 Error Handling & Validation
+**Status:** ⚠️ Partial — dialogs, GitHub-issue bug reports, browser-side logging, legality popovers, and backup-based recovery are shipped; comprehensive input validation, proactive save-checksum scanning, and opt-in telemetry remain. Tracks #360.
+
 **Tasks:**
-- [ ] Improve error messages
-- [ ] Add validation error tooltips
-- [ ] Implement comprehensive input validation
-- [ ] Add save file corruption detection
-- [ ] Create error recovery mechanisms
-- [ ] Implement error logging/telemetry (opt-in)
-- [ ] Add user-friendly error dialogs
-- [ ] Create error report export
+- [ ] Improve error messages _(ongoing — many incremental fixes; #485, #528, #600, #634, #679, #719, #751)_
+- [x] Add validation error tooltips _(per-field legality indicators #412; `LegalityPopover` info-button popovers #785/#773; Showdown-import legality #735; moves/items/abilities popovers #579)_
+- [ ] Implement comprehensive input validation _(legality covers Pokémon-side; free-text fields like trainer name/IDs not yet systematically validated)_
+- [ ] Add save file corruption detection _(load-time and export-time guards exist via #679; no proactive block-checksum scanner with user-facing report)_
+- [x] Create error recovery mechanisms _(`BackupService` + auto-backup #655; `BackupManagerDialog` for restore)_
+- [ ] Implement error logging/telemetry (opt-in) _(Serilog → browser console with runtime verbosity toggle #228 done; Sentry was added #514/#521 then removed when trial ended #615/#616 — opt-in telemetry replacement still TBD)_
+- [x] Add user-friendly error dialogs _(`ErrorBoundary` in `App.razor` → `BugReportDialog` with captured exception)_
+- [x] Create error report export _(`BugReportService` posts to Azure Function that opens GitHub issues #514/#577/#619; attaches save bytes #521)_
 
 ### 7.5 Internationalization (i18n)
 **Tasks:**
