@@ -30,6 +30,7 @@ jobs:
       - uses: anthropics/claude-code-action@v1.0.105
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_args: "--model claude-opus-4-7"
 
   triage:
     if: github.event_name == 'issues' && github.event.action == 'opened'
