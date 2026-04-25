@@ -138,6 +138,12 @@ The same code path works in any browser. Run `./watch.ps1` and visit `http://loc
 
 Build your Swift bridge against this observable shim before you have a working `WKURLSchemeHandler` — the contract is identical.
 
+### Browser-based mock host page (PoC)
+
+For a more complete end-to-end demonstration — including mock Done/Cancel chrome, a file picker outside PKMDS, and a live message log — see [`tools/embedded-host-poc/`](tools/embedded-host-poc/README.md).
+
+The mock host page embeds PKMDS in an `<iframe src="/?host=poc">` and drives it entirely through `window.postMessage`, simulating exactly what a native host app must do. It runs without Xcode, a device, or a real `WKWebView`. Open `tools/embedded-host-poc/index.html` directly in a browser while the dev server is running (`./watch.ps1`).
+
 ## 7. Getting a publishable bundle
 
 ```bash

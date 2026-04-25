@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>PKMDS — Embedded Host PoC</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a1a;
+      color: #f5f5f5;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Mock native navigation bar ── */
+    .nav-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      background: #2c2c2e;
+      border-bottom: 1px solid #3a3a3c;
+      flex-shrink: 0;
+    }
+    .nav-title {
+      font-size: 17px;
+      font-weight: 600;
+      color: #f5f5f5;
+    }
+    .nav-subtitle {
+      font-size: 11px;
+      color: #8e8e93;
+      text-align: center;
+      margin-top: 1px;
+    }
+    .btn {
+      padding: 7px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn-done   { background: #0a84ff; color: #fff; }
+    .btn-cancel { background: transparent; color: #ff453a; border: 1px solid #ff453a; }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 16px;
+      background: #2c2c2e;
+      border-bottom: 1px solid #3a3a3c;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+    .toolbar-label { font-size: 13px; color: #aeaeb2; white-space: nowrap; }
+    .file-btn {
+      padding: 5px 12px;
+      font-size: 13px;
+      background: #3a3a3c;
+      color: #f5f5f5;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .file-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .file-input { display: none; }
+    .status {
+      font-size: 12px;
+      color: #aeaeb2;
+      font-style: italic;
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ── Main area ── */
+    .main {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* ── PKMDS iframe ── */
+    #pkmds-frame {
+      flex: 1;
+      border: none;
+      background: #fff;
+      min-width: 0;
+    }
+
+    /* ── Message log panel ── */
+    .log-panel {
+      width: 300px;
+      display: flex;
+      flex-direction: column;
+      background: #1c1c1e;
+      border-left: 1px solid #3a3a3c;
+      flex-shrink: 0;
+    }
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: #2c2c2e;
+      border-bottom: 1px solid #3a3a3c;
+      font-size: 11px;
+      font-weight: 600;
+      color: #8e8e93;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      flex-shrink: 0;
+    }
+    .log-clear {
+      font-size: 11px;
+      font-weight: 400;
+      text-transform: none;
+      letter-spacing: 0;
+      color: #0a84ff;
+      cursor: pointer;
+    }
+    .log-entries {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .log-empty {
+      color: #3a3a3c;
+      font-size: 12px;
+      text-align: center;
+      padding-top: 20px;
+    }
+    .log-entry {
+      padding: 7px 9px;
+      border-radius: 6px;
+      background: #2c2c2e;
+      font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+      font-size: 11px;
+      line-height: 1.5;
+      border-left: 3px solid transparent;
+    }
+    .log-entry.kind-ready   { border-left-color: #30d158; }
+    .log-entry.kind-export  { border-left-color: #0a84ff; }
+    .log-entry.kind-call    { border-left-color: #ffd60a; }
+    .log-entry.kind-error   { border-left-color: #ff453a; }
+    .log-time   { color: #636366; font-size: 10px; }
+    .log-kind   { font-weight: 700; color: #f5f5f5; }
+    .log-detail { color: #aeaeb2; word-break: break-all; white-space: pre-wrap; margin-top: 2px; }
+
+    @media (max-width: 700px) {
+      .log-panel { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Mock native navigation bar (Done / Cancel chrome) -->
+  <div class="nav-bar">
+    <button class="btn btn-cancel" id="btn-cancel" disabled>Cancel</button>
+    <div>
+      <div class="nav-title">PKMDS</div>
+      <div class="nav-subtitle">Mock Host PoC</div>
+    </div>
+    <button class="btn btn-done" id="btn-done" disabled>Done</button>
+  </div>
+
+  <!-- File picker toolbar -->
+  <div class="toolbar">
+    <span class="toolbar-label">Load save:</span>
+    <button class="file-btn" id="file-btn" disabled>Choose .sav…</button>
+    <input type="file" class="file-input" id="file-input" accept="*/*"/>
+    <span class="status" id="status">Waiting for PKMDS to boot…</span>
+  </div>
+
+  <div class="main">
+    <!-- PKMDS embedded in an iframe with ?host=poc -->
+    <iframe id="pkmds-frame" title="PKMDS save editor"></iframe>
+
+    <!-- Bridge message log panel -->
+    <div class="log-panel">
+      <div class="log-header">
+        Bridge messages
+        <span class="log-clear" id="log-clear">Clear</span>
+      </div>
+      <div class="log-entries" id="log-entries">
+        <div class="log-empty">No messages yet</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="mock-host.js"></script>
+</body>
+</html>
