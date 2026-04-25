@@ -50,6 +50,50 @@ if (pkmdsIsEmbedded()) {
     window._swRegistrationPromise = Promise.resolve(null);
 }
 
+// Embedded PoC polyfill — active only when ?host=poc.
+//
+// Routes PKMDS outbound messages (ready, saveExport) to the parent page via
+// window.parent.postMessage, and handles inbound method calls (loadSave,
+// requestExport) arriving as postMessages from the parent.
+//
+// This makes the standalone tools/embedded-host-poc/index.html page work
+// cross-origin without requiring same-origin iframe access or Xcode.
+// All other host values and standalone mode are completely unaffected.
+(function () {
+    var params;
+    try { params = new URLSearchParams(window.location.search); } catch (e) { return; }
+    if (params.get('host') !== 'poc') return;
+
+    // Polyfill window.webkit.messageHandlers.pkmds to route outbound messages
+    // to the parent page. host.js reads window.webkit at call time (not at
+    // definition time), so this is safe to set even after host.js has loaded.
+    window.webkit = window.webkit || {};
+    window.webkit.messageHandlers = window.webkit.messageHandlers || {};
+    window.webkit.messageHandlers.pkmds = {
+        postMessage: function (msg) {
+            window.parent.postMessage(msg, '*');
+        }
+    };
+
+    // Handle inbound method calls from the parent page.
+    // Protocol: parent sends { type: 'pkmds-host-call', method, args, id }
+    //           iframe responds { type: 'pkmds-host-result', id, result }
+    // The parent should only call loadSave / requestExport after receiving the
+    // 'ready' outbound message, at which point window.PKMDS.host is available.
+    window.addEventListener('message', function (event) {
+        var data = event.data;
+        if (!data || data.type !== 'pkmds-host-call') return;
+        var method = data.method;
+        var args = data.args || [];
+        var id = data.id;
+        var src = event.source || window.parent;
+        Promise.resolve()
+            .then(function () { return window.PKMDS.host[method].apply(window.PKMDS.host, args); })
+            .then(function (result) { src.postMessage({ type: 'pkmds-host-result', id: id, result: result }, '*'); })
+            .catch(function (err) { src.postMessage({ type: 'pkmds-host-result', id: id, result: false, error: String(err) }, '*'); });
+    });
+})();
+
 // Listen for update events and forward to Blazor
 window.addUpdateListener = () => {
     window.addEventListener('updateAvailable', () => {
