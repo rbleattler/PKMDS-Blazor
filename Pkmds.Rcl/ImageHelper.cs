@@ -278,7 +278,7 @@ public static partial class ImageHelper
         // ── Gen 6 alternate forms ─────────────────────────────────────────────
         { (658, 1), 10116 },
         { (658, 2), 10117 }, // Greninja-Battle-Bond / -Ash
-        { (670, 5), 10061 }, // Floette-Eternal — sprite not yet on PokeAPI CDN; pre-mapped to resolve automatically when added
+        { (670, 5), 10061 }, // Floette-Eternal
         { (681, 1), 10026 }, // Aegislash-Blade      (PKHeX: 0=Shield, 1=Blade)
         { (710, 1), 10027 },
         { (710, 2), 10028 },
@@ -432,7 +432,80 @@ public static partial class ImageHelper
         { (1017, 2), 10274 }, // Ogerpon-Hearthflame-Mask
         { (1017, 3), 10275 }, // Ogerpon-Cornerstone-Mask
         { (1024, 1), 10276 }, // Terapagos-Terastal
-        { (1024, 2), 10277 } // Terapagos-Stellar
+        { (1024, 2), 10277 }, // Terapagos-Stellar
+
+        // ── Rockruff-Own-Tempo ────────────────────────────────────────────────
+        // PKHeX form 1 of Rockruff is the Own-Tempo variant that evolves into Dusk Lycanroc.
+        { (744, 1), 10151 }, // Rockruff-Own-Tempo
+
+        // ── Z-A / Mega Dimension megas (Gen 9) ────────────────────────────────
+        // Pre-existing megas with a new Mega-Z form added in Gen 9 mega context.
+        { (359, 2), 10307 }, // Absol-Mega-Z
+        { (445, 2), 10309 }, // Garchomp-Mega-Z
+        { (448, 2), 10310 }, // Lucario-Mega-Z
+
+        // Pre-existing multi-form species with a new Mega form added in Gen 9 mega context.
+        // Form orderings derived from PKHeX FormConverter (GetFormsAlolan / GetFormsGreninja /
+        // GetFormsFloette / GetFormsZygarde / Meowstic / Magearna / Tatsugiri branches).
+
+        // Raichu (26) Gen 9 mega context: 0=Normal, 1=Alolan, 2=Mega-X, 3=Mega-Y
+        { (26, 2), 10304 }, // Raichu-Mega-X
+        { (26, 3), 10305 }, // Raichu-Mega-Y
+        // Greninja (658) Gen 9 mega context: 0=Normal, 1=Battle-Bond, 2=Ash, 3=Mega
+        { (658, 3), 10294 }, // Greninja-Mega
+        // Floette (670) Gen 9 mega context: 0-4=colors, 5=Eternal, 6=Mega
+        { (670, 6), 10296 }, // Floette-Mega
+        // Meowstic (678) Gen 9 mega context: 0=Male, 1=Female, 2=Mega-Male, 3=Mega-Female.
+        // Both Mega genders share 10314 — no separate female/ sprite exists.
+        { (678, 2), 10314 }, // Meowstic-Mega (Male)
+        { (678, 3), 10314 }, // Meowstic-Mega (Female)
+        // Zygarde (718) Gen 9 mega context: 0-4=existing, 5=Mega
+        { (718, 5), 10301 }, // Zygarde-Mega
+        // Magearna (801) Gen 9 mega context: 0=Default, 1=Original, 2=Mega, 3=Mega-Original
+        { (801, 2), 10317 }, // Magearna-Mega
+        { (801, 3), 10318 }, // Magearna-Original-Mega
+        // Tatsugiri (978) Gen 9 mega context: 0=Curly, 1=Droopy, 2=Stretchy, 3-5=their megas
+        { (978, 3), 10322 }, // Tatsugiri-Curly-Mega
+        { (978, 4), 10323 }, // Tatsugiri-Droopy-Mega
+        { (978, 5), 10324 }, // Tatsugiri-Stretchy-Mega
+
+        // New single-mega species (form 1 = Mega). Z-A roster.
+        { (36, 1), 10278 }, // Clefable-Mega
+        { (71, 1), 10279 }, // Victreebel-Mega
+        { (121, 1), 10280 }, // Starmie-Mega
+        { (149, 1), 10281 }, // Dragonite-Mega
+        { (154, 1), 10282 }, // Meganium-Mega
+        { (160, 1), 10283 }, // Feraligatr-Mega
+        { (227, 1), 10284 }, // Skarmory-Mega
+        { (478, 1), 10285 }, // Froslass-Mega
+        { (500, 1), 10286 }, // Emboar-Mega
+        { (530, 1), 10287 }, // Excadrill-Mega
+        { (545, 1), 10288 }, // Scolipede-Mega
+        { (560, 1), 10289 }, // Scrafty-Mega
+        { (604, 1), 10290 }, // Eelektross-Mega
+        { (609, 1), 10291 }, // Chandelure-Mega
+        { (652, 1), 10292 }, // Chesnaught-Mega
+        { (655, 1), 10293 }, // Delphox-Mega
+        { (668, 1), 10295 }, // Pyroar-Mega
+        { (687, 1), 10297 }, // Malamar-Mega
+        { (689, 1), 10298 }, // Barbaracle-Mega
+        { (691, 1), 10299 }, // Dragalge-Mega
+        { (701, 1), 10300 }, // Hawlucha-Mega
+        { (780, 1), 10302 }, // Drampa-Mega
+        { (870, 1), 10303 }, // Falinks-Mega
+
+        // New single-mega species (form 1 = Mega). "Mega Dimension" roster.
+        { (358, 1), 10306 }, // Chimecho-Mega
+        { (398, 1), 10308 }, // Staraptor-Mega
+        { (485, 1), 10311 }, // Heatran-Mega
+        { (491, 1), 10312 }, // Darkrai-Mega
+        { (623, 1), 10313 }, // Golurk-Mega
+        { (740, 1), 10315 }, // Crabominable-Mega
+        { (768, 1), 10316 }, // Golisopod-Mega
+        { (807, 1), 10319 }, // Zeraora-Mega
+        { (952, 1), 10320 }, // Scovillain-Mega
+        { (970, 1), 10321 }, // Glimmora-Mega
+        { (998, 1), 10325 } // Baxcalibur-Mega
     };
 
     // Species where ALL forms share a single home sprite (the base {species}.png).
