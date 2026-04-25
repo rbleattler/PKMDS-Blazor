@@ -249,10 +249,10 @@ public partial class PokedexTab
         }
     }
 
-    // NuGet 26.1.31: Zukan4.CompleteDex requires explicit shinyToo argument.
     private static void FillGen4Pokedex(SAV4 s4) => s4.Dex.CompleteDex();
 
-    // NuGet 26.1.31: Zukan5 has no CompleteDex(); iterate via GiveAll per species.
+    // Zukan5 is a standalone class (not derived from ZukanBase) and exposes no
+    // CompleteDex(); iterate via GiveAll per species instead.
     private static void FillGen5Pokedex(SAV5 s5)
     {
         for (ushort i = 1; i < s5.MaxSpeciesID + 1; i++)
@@ -261,7 +261,8 @@ public partial class PokedexTab
         }
     }
 
-    // NuGet 26.1.31: Zukan6XY has no CompleteDex(); iterate via GiveAll per species.
+    // Zukan6XY is a standalone class (not derived from ZukanBase) and exposes no
+    // CompleteDex(); iterate via GiveAll per species instead.
     private static void FillGen6XyPokedex(SAV6XY xy)
     {
         for (ushort i = 1; i < xy.MaxSpeciesID + 1; i++)
@@ -270,7 +271,8 @@ public partial class PokedexTab
         }
     }
 
-    // NuGet 26.1.31: Zukan6AO has no CompleteDex(); iterate via GiveAll per species.
+    // Zukan6AO is a standalone class (not derived from ZukanBase) and exposes no
+    // CompleteDex(); iterate via GiveAll per species instead.
     private static void FillGen6AoPokedex(SAV6AO ao)
     {
         for (ushort i = 1; i < ao.MaxSpeciesID + 1; i++)
@@ -279,10 +281,8 @@ public partial class PokedexTab
         }
     }
 
-    // NuGet 26.1.31: Zukan7.CompleteDex requires explicit shinyToo argument.
     private static void FillGen7Pokedex(SAV7 s7) => s7.Zukan.CompleteDex();
 
-    // NuGet 26.1.31: Zukan7b.CompleteDex requires explicit shinyToo argument.
     // ReSharper disable once InconsistentNaming
     private static void FillGen7bPokedex(SAV7b b7) => b7.Zukan.CompleteDex();
 
@@ -405,10 +405,10 @@ public partial class PokedexTab
                 }
 
                 break;
-            // NuGet 26.1.31: Zukan4/5/6* SeenAll requires an explicit shinyToo argument.
-            // Zukan5 and Zukan6* are standalone classes (not subclasses of Zukan<T>),
-            // so their SeenAll(shinyToo) implementations are correct and NOT affected
-            // by the Zukan<T>.SeenAll forwarding bug described below for Gen 7/7b.
+            // Zukan5 and Zukan6* are standalone classes (not subclasses of Zukan<T>), so
+            // their SeenAll(bool shinyToo) signature has no default and requires an explicit
+            // argument. They are not affected by the Zukan<T>.SeenAll forwarding bug
+            // described below for Gen 7/7b.
             case SAV4 s4:
                 s4.Dex.SeenAll();
                 break;
