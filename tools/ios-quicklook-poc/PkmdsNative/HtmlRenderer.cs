@@ -1,0 +1,271 @@
+using System.Globalization;
+using System.Text;
+using PKHeX.Core;
+using Pkmds.Core.Extensions;
+
+namespace Pkmds.Native;
+
+internal static class HtmlRenderer
+{
+    private const string PokeApiHomeBaseUrl =
+        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/";
+
+    public static string RenderPkm(PKM pkm)
+    {
+        var s = GameInfo.Strings;
+        var sb = new StringBuilder(4096);
+        AppendDocStart(sb, $"{Lookup(s.specieslist, pkm.Species)} (Lv. {pkm.CurrentLevel})");
+        sb.Append("<div class=\"pkm\">");
+
+        AppendSprite(sb, pkm.Species, pkm.IsShiny);
+
+        sb.Append("<div class=\"info\">");
+        var nickname = pkm.Nickname ?? string.Empty;
+        var speciesName = Lookup(s.specieslist, pkm.Species);
+        var displayName = nickname.Length > 0 && nickname != speciesName
+            ? $"{Escape(nickname)} <span class=\"muted\">({Escape(speciesName)})</span>"
+            : Escape(speciesName);
+
+        sb.Append("<h1>").Append(displayName);
+        if (pkm.IsShiny)
+        {
+            sb.Append(" <span class=\"shiny\" title=\"Shiny\">★</span>");
+        }
+        sb.Append("</h1>");
+
+        sb.Append("<div class=\"meta\">")
+            .Append("Lv. ").Append(pkm.CurrentLevel)
+            .Append(" &middot; ").Append(Escape(Lookup(s.natures, (int)pkm.Nature))).Append(" nature");
+        if (pkm.Form > 0)
+        {
+            sb.Append(" &middot; Form ").Append(pkm.Form);
+        }
+        sb.Append("</div>");
+
+        sb.Append("<dl class=\"details\">");
+        AppendDt(sb, "OT", $"{Escape(pkm.OriginalTrainerName ?? string.Empty)} <span class=\"muted\">({pkm.TID16}/{pkm.SID16})</span>");
+        AppendDt(sb, "Ability", Escape(Lookup(s.abilitylist, pkm.Ability)));
+        if (pkm.HeldItem > 0)
+        {
+            AppendDt(sb, "Item", Escape(Lookup(s.itemlist, pkm.HeldItem)));
+        }
+        AppendDt(sb, "Format", $"PK{pkm.Format} (Gen {pkm.Generation})");
+        sb.Append("</dl>");
+
+        AppendStatsTable(sb, pkm);
+        AppendMovesTable(sb, pkm, s);
+
+        sb.Append("</div>"); // .info
+        sb.Append("</div>"); // .pkm
+        AppendDocEnd(sb);
+        return sb.ToString();
+    }
+
+    public static string RenderSave(SaveFile sav)
+    {
+        var s = GameInfo.Strings;
+        var sb = new StringBuilder(4096);
+        var ot = sav.OT ?? string.Empty;
+        AppendDocStart(sb, $"{ot} – {sav.Version}");
+
+        sb.Append("<div class=\"sav\">");
+        sb.Append("<h1>").Append(Escape(ot.Length > 0 ? ot : "Trainer")).Append("</h1>");
+        sb.Append("<div class=\"meta\">")
+            .Append(Escape(sav.Version.ToString()))
+            .Append(" &middot; Gen ").Append(sav.Generation)
+            .Append(" &middot; ID ").Append(sav.TID16).Append('/').Append(sav.SID16)
+            .Append("</div>");
+
+        sb.Append("<dl class=\"details\">");
+        AppendDt(sb, "Save type", Escape(sav.GetType().Name));
+        AppendDt(sb, "Language", LanguageName(sav.Language));
+        AppendDt(sb, "Boxes", $"{sav.BoxCount} × {sav.BoxSlotCount}");
+        AppendDt(sb, "Party", (sav.HasParty ? sav.PartyCount : 0).ToString(CultureInfo.InvariantCulture));
+        sb.Append("</dl>");
+
+        if (sav.HasParty && sav.PartyCount > 0)
+        {
+            sb.Append("<h2>Party</h2><div class=\"party\">");
+            var count = Math.Min(sav.PartyCount, 6);
+            for (var i = 0; i < count; i++)
+            {
+                var pkm = sav.GetPartySlotAtIndex(i);
+                sb.Append("<div class=\"party-slot\">");
+                AppendSpriteSmall(sb, pkm.Species, pkm.IsShiny);
+                sb.Append("<div class=\"party-info\">");
+                sb.Append("<div class=\"party-name\">")
+                    .Append(Escape(Lookup(s.specieslist, pkm.Species)));
+                if (pkm.IsShiny)
+                {
+                    sb.Append(" <span class=\"shiny\" title=\"Shiny\">★</span>");
+                }
+                sb.Append("</div>");
+                sb.Append("<div class=\"muted\">Lv. ").Append(pkm.CurrentLevel);
+                var nick = pkm.Nickname ?? string.Empty;
+                if (nick.Length > 0 && nick != Lookup(s.specieslist, pkm.Species))
+                {
+                    sb.Append(" &middot; ").Append(Escape(nick));
+                }
+                sb.Append("</div>");
+                sb.Append("</div>");
+                sb.Append("</div>");
+            }
+            sb.Append("</div>");
+        }
+
+        sb.Append("</div>"); // .sav
+        AppendDocEnd(sb);
+        return sb.ToString();
+    }
+
+    private static void AppendSprite(StringBuilder sb, ushort species, bool isShiny)
+    {
+        sb.Append("<div class=\"sprite\"><img alt=\"\" src=\"")
+            .Append(BuildHomeSpriteUrl(species, isShiny))
+            .Append("\"></div>");
+    }
+
+    private static void AppendSpriteSmall(StringBuilder sb, ushort species, bool isShiny)
+    {
+        sb.Append("<img class=\"sprite-sm\" alt=\"\" src=\"")
+            .Append(BuildHomeSpriteUrl(species, isShiny))
+            .Append("\">");
+    }
+
+    // Minimal sprite URL: PokeAPI home sprite by species ID. Form/regional/Mega variants
+    // fall back to the base species sprite — promoted to ImageHelper-quality lookup if
+    // this POC graduates to a real extension.
+    private static string BuildHomeSpriteUrl(ushort species, bool isShiny) =>
+        species.IsValidSpecies()
+            ? $"{PokeApiHomeBaseUrl}{(isShiny ? "shiny/" : string.Empty)}{species}.png"
+            : $"{PokeApiHomeBaseUrl}0.png";
+
+    private static void AppendStatsTable(StringBuilder sb, PKM pkm)
+    {
+        sb.Append("<table class=\"stats\"><thead><tr>")
+            .Append("<th></th><th>HP</th><th>Atk</th><th>Def</th><th>SpA</th><th>SpD</th><th>Spe</th>")
+            .Append("</tr></thead><tbody>");
+        AppendStatRow(sb, "IVs", pkm.IV_HP, pkm.IV_ATK, pkm.IV_DEF, pkm.IV_SPA, pkm.IV_SPD, pkm.IV_SPE);
+        AppendStatRow(sb, "EVs", pkm.EV_HP, pkm.EV_ATK, pkm.EV_DEF, pkm.EV_SPA, pkm.EV_SPD, pkm.EV_SPE);
+        sb.Append("</tbody></table>");
+    }
+
+    private static void AppendStatRow(StringBuilder sb, string label, int hp, int atk, int def, int spa, int spd, int spe)
+    {
+        sb.Append("<tr><th>").Append(label).Append("</th>")
+            .Append("<td>").Append(hp).Append("</td>")
+            .Append("<td>").Append(atk).Append("</td>")
+            .Append("<td>").Append(def).Append("</td>")
+            .Append("<td>").Append(spa).Append("</td>")
+            .Append("<td>").Append(spd).Append("</td>")
+            .Append("<td>").Append(spe).Append("</td>")
+            .Append("</tr>");
+    }
+
+    private static void AppendMovesTable(StringBuilder sb, PKM pkm, GameStrings s)
+    {
+        sb.Append("<table class=\"moves\"><thead><tr><th>Move</th><th>PP</th></tr></thead><tbody>");
+        var pp = pkm.GetPP();
+        ReadOnlySpan<ushort> moves = [pkm.Move1, pkm.Move2, pkm.Move3, pkm.Move4];
+        for (var i = 0; i < moves.Length; i++)
+        {
+            var moveId = moves[i];
+            if (moveId == 0)
+            {
+                continue;
+            }
+            sb.Append("<tr><td>").Append(Escape(Lookup(s.movelist, moveId))).Append("</td>")
+                .Append("<td>").Append(pp[i]).Append('/').Append(pkm.GetMaxPP(i)).Append("</td></tr>");
+        }
+        sb.Append("</tbody></table>");
+    }
+
+    private static void AppendDt(StringBuilder sb, string key, string valueHtml)
+    {
+        sb.Append("<dt>").Append(key).Append("</dt><dd>").Append(valueHtml).Append("</dd>");
+    }
+
+    private static string Lookup(IReadOnlyList<string> list, int index) =>
+        (uint)index < (uint)list.Count ? list[index] : string.Empty;
+
+    private static string LanguageName(int language) => language switch
+    {
+        1 => "Japanese",
+        2 => "English",
+        3 => "French",
+        4 => "Italian",
+        5 => "German",
+        7 => "Spanish",
+        8 => "Korean",
+        9 => "Chinese (Simplified)",
+        10 => "Chinese (Traditional)",
+        _ => language.ToString(CultureInfo.InvariantCulture)
+    };
+
+    private static void AppendDocStart(StringBuilder sb, string title)
+    {
+        sb.Append("<!doctype html><html><head><meta charset=\"utf-8\"><title>")
+            .Append(Escape(title))
+            .Append("</title><style>")
+            .Append(Css)
+            .Append("</style></head><body>");
+    }
+
+    private static void AppendDocEnd(StringBuilder sb)
+    {
+        sb.Append("</body></html>");
+    }
+
+    private static string Escape(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return string.Empty;
+        }
+
+        var sb = new StringBuilder(value.Length);
+        foreach (var c in value)
+        {
+            switch (c)
+            {
+                case '&': sb.Append("&amp;"); break;
+                case '<': sb.Append("&lt;"); break;
+                case '>': sb.Append("&gt;"); break;
+                case '"': sb.Append("&quot;"); break;
+                case '\'': sb.Append("&#39;"); break;
+                default: sb.Append(c); break;
+            }
+        }
+        return sb.ToString();
+    }
+
+    private const string Css = """
+        :root { color-scheme: light dark; }
+        body {
+            font: 13px -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+            margin: 0; padding: 16px;
+            background: Canvas; color: CanvasText;
+        }
+        h1 { font-size: 18px; margin: 0 0 4px; font-weight: 600; }
+        h2 { font-size: 14px; margin: 16px 0 8px; font-weight: 600; opacity: 0.75; text-transform: uppercase; letter-spacing: 0.04em; }
+        .pkm { display: grid; grid-template-columns: 128px 1fr; gap: 16px; align-items: start; }
+        .sprite img { width: 128px; height: 128px; object-fit: contain; image-rendering: -webkit-optimize-contrast; }
+        .sprite-sm { width: 48px; height: 48px; object-fit: contain; flex-shrink: 0; }
+        .meta { opacity: 0.7; margin-bottom: 12px; }
+        .muted { opacity: 0.6; font-weight: normal; }
+        .shiny { color: #d4a017; }
+        dl.details { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 0 0 12px; }
+        dl.details dt { font-weight: 600; opacity: 0.7; }
+        dl.details dd { margin: 0; }
+        table { border-collapse: collapse; margin: 8px 0; }
+        table.stats th, table.stats td { padding: 4px 8px; text-align: center; font-variant-numeric: tabular-nums; }
+        table.stats thead th { font-weight: 600; opacity: 0.6; font-size: 11px; }
+        table.moves { width: 100%; max-width: 320px; }
+        table.moves th, table.moves td { padding: 4px 8px; text-align: left; }
+        table.moves thead th { font-weight: 600; opacity: 0.6; font-size: 11px; border-bottom: 1px solid color-mix(in srgb, CanvasText 15%, transparent); }
+        table.moves td:last-child { text-align: right; font-variant-numeric: tabular-nums; opacity: 0.7; }
+        .party { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        .party-slot { display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid color-mix(in srgb, CanvasText 12%, transparent); border-radius: 6px; }
+        .party-name { font-weight: 600; }
+        """;
+}

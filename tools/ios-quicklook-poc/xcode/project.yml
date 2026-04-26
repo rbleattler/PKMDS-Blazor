@@ -1,0 +1,123 @@
+name: PkmdsQuickLook
+options:
+  bundleIdPrefix: com.bondcodes.pkmds
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGNING_ALLOWED: NO
+    DEVELOPMENT_TEAM: ""
+    TARGETED_DEVICE_FAMILY: "1,2"
+
+targets:
+  PkmdsHost:
+    type: application
+    platform: iOS
+    sources:
+      - path: PkmdsHost
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.bondcodes.pkmds.host.ios
+        MARKETING_VERSION: "0.0.1"
+        CURRENT_PROJECT_VERSION: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: ""
+        ENABLE_USER_SCRIPT_SANDBOXING: YES
+    info:
+      path: PkmdsHost/Info.plist
+      properties:
+        CFBundleDisplayName: PKMDS Quick Look (POC)
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        LSApplicationCategoryType: public.app-category.utilities
+        UILaunchScreen:
+          UIColorName: ""
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UTExportedTypeDeclarations:
+          - UTTypeIdentifier: com.bondcodes.pkmds.pkm-file
+            UTTypeDescription: Pokémon Entity File
+            UTTypeConformsTo:
+              - public.data
+            UTTypeTagSpecification:
+              public.filename-extension:
+                - pk1
+                - pk2
+                - pk3
+                - pk4
+                - pk5
+                - pk6
+                - pk7
+                - pk8
+                - pk9
+                - pa8
+                - pb7
+                - pb8
+          - UTTypeIdentifier: com.bondcodes.pkmds.save-file
+            UTTypeDescription: Pokémon Save File
+            UTTypeConformsTo:
+              - public.data
+            UTTypeTagSpecification:
+              public.filename-extension:
+                - sav
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: Pokémon Entity File
+            CFBundleTypeRole: Viewer
+            LSItemContentTypes:
+              - com.bondcodes.pkmds.pkm-file
+            LSHandlerRank: Alternate
+          - CFBundleTypeName: Pokémon Save File
+            CFBundleTypeRole: Viewer
+            LSItemContentTypes:
+              - com.bondcodes.pkmds.save-file
+            LSHandlerRank: Alternate
+    dependencies:
+      - target: PkmdsQuickLook
+        embed: true
+        codeSign: true
+
+  PkmdsQuickLook:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: PkmdsQuickLook
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.bondcodes.pkmds.host.ios.quicklook
+        LD_RUNPATH_SEARCH_PATHS: "@executable_path/Frameworks @executable_path/../../Frameworks"
+        SKIP_INSTALL: YES
+        MARKETING_VERSION: "0.0.1"
+        CURRENT_PROJECT_VERSION: "1"
+        CODE_SIGN_ENTITLEMENTS: PkmdsQuickLook/PkmdsQuickLook.entitlements
+    info:
+      path: PkmdsQuickLook/Info.plist
+      properties:
+        CFBundleDisplayName: PKMDS Quick Look
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.quicklook.preview
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).PreviewViewController
+          NSExtensionAttributes:
+            QLSupportedContentTypes:
+              - com.bondcodes.pkmds.pkm-file
+              - com.bondcodes.pkmds.save-file
+            QLSupportsSearchableItems: false
+    dependencies:
+      - framework: ../build-resources/PkmdsNative.dylib
+        embed: true
+        codeSign: true
+      - sdk: QuickLook.framework
+      - sdk: WebKit.framework
+      - sdk: UIKit.framework
