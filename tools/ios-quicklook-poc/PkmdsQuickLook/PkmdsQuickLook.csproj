@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <!--
+            iOS Quick Look extensions built with NativeAOT must be a full iOS
+            app-extension project: Microsoft.iOS.Sdk + IsAppExtension=true.
+            Microsoft.iOS.Sdk treats OutputType=Library alone as an "iOS class
+            library" and skips AOT compilation entirely. Microsoft.NET.Sdk
+            rejects iOS RIDs for AOT outright (NETSDK1203). So the macOS POC's
+            "Swift wrapper + standalone .dylib" pattern has no direct analog on
+            iOS — the extension is written end-to-end in C#.
+        -->
+        <OutputType>Library</OutputType>
+        <IsAppExtension>true</IsAppExtension>
+        <TargetFramework>net10.0-ios</TargetFramework>
+        <SupportedOSPlatformVersion>16.0</SupportedOSPlatformVersion>
+        <RootNamespace>Pkmds.QuickLook</RootNamespace>
+        <AssemblyName>PkmdsQuickLook</AssemblyName>
+        <ApplicationId>com.bondcodes.pkmds.host.ios.quicklook</ApplicationId>
+        <ApplicationTitle>PKMDS Quick Look</ApplicationTitle>
+        <ApplicationDisplayVersion>0.0.1</ApplicationDisplayVersion>
+        <ApplicationVersion>1</ApplicationVersion>
+        <PublishAot>true</PublishAot>
+        <InvariantGlobalization>true</InvariantGlobalization>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+        <IsPackable>false</IsPackable>
+        <!--
+            Microsoft.iOS.Sdk pins to a specific Xcode major.minor and raises
+            E0191 if the local Xcode is newer. Disable the check so this POC
+            doesn't drift out of buildability every time Xcode updates; real
+            distribution builds should track the recommended Xcode.
+        -->
+        <ValidateXcodeVersion>false</ValidateXcodeVersion>
+        <EnableCodeSigning>false</EnableCodeSigning>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="PKHeX.Core"/>
+        <ProjectReference Include="..\..\..\Pkmds.Core\Pkmds.Core.csproj"/>
+    </ItemGroup>
+
+</Project>
