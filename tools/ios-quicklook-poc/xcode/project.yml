@@ -38,6 +38,7 @@ targets:
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         LSApplicationCategoryType: public.app-category.utilities
+        LSSupportsOpeningDocumentsInPlace: true
         UILaunchScreen:
           UIColorName: ""
         UISupportedInterfaceOrientations:
@@ -52,8 +53,12 @@ targets:
         UTExportedTypeDeclarations:
           - UTTypeIdentifier: com.bondcodes.pkmds.pkm-file
             UTTypeDescription: Pokémon Entity File
+            # public.composite-content lands the type in Files.app's
+            # contentTypesToPreviewTypes whitelist; without it Files skips
+            # QL extension dispatch and shows the generic file-icon preview.
             UTTypeConformsTo:
               - public.data
+              - public.composite-content
             UTTypeTagSpecification:
               public.filename-extension:
                 - pk1
@@ -72,6 +77,7 @@ targets:
             UTTypeDescription: Pokémon Save File
             UTTypeConformsTo:
               - public.data
+              - public.composite-content
             UTTypeTagSpecification:
               public.filename-extension:
                 - sav

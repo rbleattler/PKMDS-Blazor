@@ -76,12 +76,18 @@ These were established with `dotnet workload version 26.2.10233` + Xcode 26.4.1 
 - ✅ `Microsoft.iOS` bindings cover everything the extension needs: `IQLPreviewingController` (in `QuickLook` namespace, not `QuickLookUI`), `UIViewController`, `WKWebView`, `NSData`, `NSError`.
 - ✅ Trim warnings carry over from macOS POC: `IL2104` on `PKHeX.Core`, three "always throw" notes on `SaveBlock3*.PrintMembers`. The decode path we exercise isn't affected.
 - ✅ `Info.plist`'s `NSExtension` keys round-trip cleanly through Microsoft.iOS.Sdk's plist merge — the SDK auto-fills `CFBundleIdentifier`, `MinimumOSVersion`, `CFBundleSupportedPlatforms` from MSBuild properties without overwriting the hand-authored extension keys.
+- ✅ End-to-end on the iOS Simulator: tap a `.pk*`/`.sav` in Files.app and the extension renders the styled HTML preview — confirmed against full-Box B/W save fixtures and a `.pk5` entity.
 - ⚠️ Simulator builds use Mono (no NativeAOT) — `.appex` is ~77 MB with managed assemblies + AOT data files, vs 24 MB for the AOT'd device build.
+
+### The two non-obvious gotchas that broke us during simulator iteration
+
+1. **`SIGKILL (Code Signature Invalid)` on extension launch.** iOS extensions are amfid-validated even on the simulator — the host app gets a pass without a signature, but a plain `cp` of the `.appex` from `dotnet build` into `PkmdsHost.app/PlugIns/` produces a binary that crashes during dyld's `__LINKEDIT` mapping. `build-extension.sh` ad-hoc signs the `.appex` (and every embedded `.dylib`) after embedding.
+2. **Files.app's `contentTypesToPreviewTypes` whitelist.** Even with the extension correctly registered for our custom UTI (`pluginkit -m` confirms it), Files refused to dispatch to it and logged `Could not determine preview item: ... not part of contentTypesToPreviewTypes`. Files routes preview based on the UTI's *abstract conformance* — adding `public.composite-content` to `UTTypeConformsTo` (alongside `public.data`) lands the type in the whitelist and Files dispatches correctly.
 
 ## Open work past this POC
 
 - **Real device verification.** The build script produces an unsigned host app for `ios-arm64`. Deploying requires opening the project in Xcode and setting a signing Team. The 120 MB extension memory ceiling can only be verified on hardware (the simulator doesn't enforce it).
-- **Signing the embedded `.appex`.** `Microsoft.iOS.Sdk` defaults to `EnableCodeSigning=false` here. Real distribution will need to either sign at the dotnet step (set `CodesignKey` / `CodesignProvision` in the csproj) or re-sign post-embed in the build script. App Store submission requires the extension and host signed with the same Team ID (no `cs.disable-library-validation` escape hatch).
+- **Signing the embedded `.appex`.** `Microsoft.iOS.Sdk` defaults to `EnableCodeSigning=false` here; the build script ad-hoc signs the `.appex` post-embed for simulator runs. Real distribution will need a real Developer ID — set `CodesignKey` / `CodesignProvision` in the csproj or replace the post-embed `codesign --sign -` step. App Store submission requires the extension and host signed with the same Team ID (no `cs.disable-library-validation` escape hatch).
 - **Xcode version pin.** `<ValidateXcodeVersion>false</ValidateXcodeVersion>` is a soft bypass for E0191. The right fix is to track the Microsoft.iOS.Sdk version that recommends the locally-installed Xcode.
 - **Promote `ImageHelper` from `Pkmds.Rcl` into `Pkmds.Core`** (carried over from the macOS POC's macros) so both platforms share the sprite-URL helper and `BuildHomeSpriteUrl` doesn't need a fallback path.
 - **Resolve the orientations warning** in the simulator path (`warning : Supported iPhone orientations have not been set`). Cosmetic; comes from Microsoft.iOS.Sdk wanting `UISupportedInterfaceOrientations` in the *extension's* Info.plist, not the host's.
@@ -96,6 +102,18 @@ These were established with `dotnet workload version 26.2.10233` + Xcode 26.4.1 
 | `xcrun simctl spawn booted log stream --level debug --predicate 'process == "PkmdsQuickLook"'` | Stream extension logs from the simulator |
 | `xcrun simctl uninstall booted com.bondcodes.pkmds.host.ios` | Force a clean re-install |
 | Web Inspector (Safari → Develop → Simulator → "PkmdsQuickLook") | DOM / console / network for the `WKWebView` (only visible while a preview is active) |
+| `xcrun simctl spawn booted pluginkit -mAvvv -p com.apple.quicklook.preview` | Confirm the extension is registered with PluginKit |
+| `codesign -dv <appex>` | Verify the embedded `.appex` has the expected ad-hoc signature |
+| `ls -t ~/Library/Logs/DiagnosticReports/PkmdsQuickLook*.ips` | Extension crash reports (`SIGKILL (Code Signature Invalid)` etc.) |
+
+To copy a test fixture into Files.app's "On My iPhone":
+
+```sh
+cp /path/to/fixture.pk5 \
+   ~/Library/Developer/CoreSimulator/Devices/<SIM-UUID>/data/Containers/Shared/AppGroup/*/File\ Provider\ Storage/
+```
+
+Drag-drop into the simulator window targets whichever app claims the file's UTI, so a `.pk*` drop opens PkmdsHost (since it's the only registered handler) instead of landing in Files. The `cp` route avoids that.
 
 ## Out of scope
 

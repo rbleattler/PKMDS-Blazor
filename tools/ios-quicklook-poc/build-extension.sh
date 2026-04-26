@@ -10,6 +10,17 @@ set -euo pipefail
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+# Ad-hoc signs every Mach-O inside an .appex (main binary + every embedded
+# .dylib), then signs the bundle itself. iOS extensions on the simulator
+# are amfid-validated at load time and SIGKILL on any unsigned page.
+sign_appex() {
+    local appex="$1"
+    while IFS= read -r dylib; do
+        codesign --force --sign - --timestamp=none "$dylib" >/dev/null 2>&1
+    done < <(find "$appex" -type f -name '*.dylib')
+    codesign --force --sign - --timestamp=none "$appex" >/dev/null 2>&1
+}
+
 TARGET_DEVICE=0
 if [[ "${1:-}" == "--device" ]]; then
     TARGET_DEVICE=1
@@ -77,6 +88,14 @@ if [[ "$TARGET_DEVICE" -eq 1 ]]; then
     rm -rf "$APP_PATH/PlugIns/PkmdsQuickLook.appex"
     cp -R "$APPEX_SRC" "$APP_PATH/PlugIns/"
 
+    # Even on the simulator, iOS extensions must carry a valid code signature —
+    # the host app gets a pass without one, but amfid SIGKILLs unsigned .appex
+    # bundles on launch ("Code Signature Invalid" / dyld __LINKEDIT page fault).
+    # Ad-hoc signing covers the simulator path; real-device deployment needs a
+    # full Developer ID via Xcode.
+    echo "==> ad-hoc sign embedded .appex"
+    sign_appex "$APP_PATH/PlugIns/PkmdsQuickLook.appex"
+
     echo
     echo "Built unsigned host app with embedded extension: $APP_PATH"
     echo "Deploy to a real device by opening the project in Xcode, setting your"
@@ -125,6 +144,9 @@ echo "==> embed .appex into host app"
 mkdir -p "$APP_PATH/PlugIns"
 rm -rf "$APP_PATH/PlugIns/PkmdsQuickLook.appex"
 cp -R "$APPEX_SRC" "$APP_PATH/PlugIns/"
+
+echo "==> ad-hoc sign embedded .appex"
+sign_appex "$APP_PATH/PlugIns/PkmdsQuickLook.appex"
 
 echo "==> install + launch"
 xcrun simctl uninstall "$SIM_UUID" com.bondcodes.pkmds.host.ios 2>/dev/null || true
