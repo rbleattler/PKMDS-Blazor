@@ -797,3 +797,58 @@ body, html {
         max-height: none;
     }
 }
+
+/* ── Issue #774 — accidental zoom mitigations ──
+   Three independent fixes; none of them disable user-scalable so pinch-zoom
+   for accessibility still works.
+
+   1. Batch Editor script textarea: monospace 0.85rem (~13.6px) is below the
+      16px threshold Android Chrome uses to suppress focus auto-zoom. Bump to
+      16px on touch-only devices; keep the tighter 0.85rem on hover-capable
+      desktops where it doesn't trigger zoom. */
+.batch-script-editor textarea.mud-input-slot,
+.batch-script-editor .mud-input-slot.mud-input-root {
+    font-family: monospace;
+    font-size: 0.85rem;
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .batch-script-editor textarea.mud-input-slot,
+    .batch-script-editor .mud-input-slot.mud-input-root {
+        font-size: 16px;
+    }
+}
+
+/* 2. Hisuian Pokédex research-task table: MudSimpleTable doesn't wrap itself
+      in a .mud-table-container, so its ~620px of min-width columns blew out
+      the parent panel and got clipped by .mud-tab-panel { overflow-x: hidden }.
+      Give it its own scroll container so the user can pan the table without
+      having to zoom the whole page. */
+.la-research-task-table-wrapper {
+    overflow-x: auto;
+}
+
+/* 3. Tab scroll-arrows + pagination buttons + box navigation: rapid-tap to
+      advance reads as a double-tap to Chrome's gesture detector and triggers
+      zoom. touch-action: manipulation disables double-tap-zoom on the targeted
+      element while leaving pinch-zoom intact.
+
+      touch-action is NOT an inherited property, so the rule has to land on the
+      actual <button> element receiving the tap — not just an ancestor. MudTabs
+      renders scroll arrows as <div class="mud-tabs-scroll-button"><button
+      class="mud-icon-button">…</button></div>, and MudPagination renders each
+      page control as <li><button class="mud-icon-button|mud-button">…</button></li>.
+      Without explicit selectors on those inner buttons, taps that land on the
+      button itself (most of them — the icon fills the button) zoom; only taps
+      that hit the wrapper's padding advance cleanly. That's the source of the
+      "only sometimes" zoom on the main tab strip's scroll arrows. */
+.mud-tabs .mud-tabs-toolbar,
+.mud-tabs .mud-tab,
+.mud-tabs .mud-tabs-scroll-button,
+.mud-tabs .mud-tabs-scroll-button .mud-icon-button,
+.mud-pagination,
+.mud-pagination .mud-icon-button,
+.mud-pagination .mud-button,
+.box-navigation .mud-icon-button {
+    touch-action: manipulation;
+}
