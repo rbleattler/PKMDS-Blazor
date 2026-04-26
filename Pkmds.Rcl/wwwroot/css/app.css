@@ -833,14 +833,22 @@ body, html {
       zoom. touch-action: manipulation disables double-tap-zoom on the targeted
       element while leaving pinch-zoom intact.
 
-      The toolbar selector alone wasn't enough — Chrome's gesture detector keys
-      off the actual tap target, and inheritance from an ancestor's
-      touch-action isn't reliable across all Android Chrome builds. Target the
-      individual tab buttons (.mud-tab) and the box navigation icon buttons
-      directly so the property lands on the element that receives the tap. */
+      touch-action is NOT an inherited property, so the rule has to land on the
+      actual <button> element receiving the tap — not just an ancestor. MudTabs
+      renders scroll arrows as <div class="mud-tabs-scroll-button"><button
+      class="mud-icon-button">…</button></div>, and MudPagination renders each
+      page control as <li><button class="mud-icon-button|mud-button">…</button></li>.
+      Without explicit selectors on those inner buttons, taps that land on the
+      button itself (most of them — the icon fills the button) zoom; only taps
+      that hit the wrapper's padding advance cleanly. That's the source of the
+      "only sometimes" zoom on the main tab strip's scroll arrows. */
 .mud-tabs .mud-tabs-toolbar,
 .mud-tabs .mud-tab,
+.mud-tabs .mud-tabs-scroll-button,
+.mud-tabs .mud-tabs-scroll-button .mud-icon-button,
 .mud-pagination,
+.mud-pagination .mud-icon-button,
+.mud-pagination .mud-button,
 .box-navigation .mud-icon-button {
     touch-action: manipulation;
 }
