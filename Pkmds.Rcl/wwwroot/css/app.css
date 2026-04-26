@@ -418,6 +418,11 @@ body, html {
 
     .mud-main-content {
         height: 100dvh;
+        /* iOS WKWebView with viewport-fit=cover counts the home-indicator zone in
+           100dvh, so the inner tab panel's overflow:auto can't scroll to reveal
+           content covered by the indicator. Reserve safe-area space at the bottom;
+           env(...) is 0 on browsers without a safe area. */
+        padding-bottom: env(safe-area-inset-bottom, 0px);
         box-sizing: border-box;
         display: flex;
         flex-direction: column;

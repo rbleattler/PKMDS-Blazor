@@ -1,0 +1,4 @@
+xcode/build/
+xcode/PkmdsHost.xcodeproj/
+xcode/PkmdsHost/Resources/PKMDS/
+xcode/PkmdsHost/Info.plist

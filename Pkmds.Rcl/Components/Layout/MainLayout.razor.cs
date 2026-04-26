@@ -298,6 +298,30 @@ public partial class MainLayout : IDisposable
         await DialogService.ShowAsync<SaveFileRepairDialog>("Repair Save File", parameters, options);
     }
 
+    private async Task ExportPartyAsShowdown()
+    {
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Small);
+        await DialogService.ShowAsync<ShowdownExportDialog>("Showdown Export", options);
+    }
+
+    private async Task ExportToPokePaste()
+    {
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Medium);
+        await DialogService.ShowAsync<PokePasteExportDialog>(
+            "Export to PokePaste",
+            new DialogParameters<PokePasteExportDialog>(),
+            options);
+    }
+
+    private async Task ImportFromShowdown()
+    {
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Medium);
+        await DialogService.ShowAsync<ShowdownImportDialog>(
+            "Import from Showdown / PokePaste",
+            new DialogParameters<ShowdownImportDialog>(),
+            options);
+    }
+
     private async Task ShowBackupManagerDialog()
     {
         var parameters = new DialogParameters { { nameof(BackupManagerDialog.SaveFile), AppState.SaveFile }, { nameof(BackupManagerDialog.FileName), AppState.SaveFileName }, { nameof(BackupManagerDialog.IsManicEmu), AppState.ManicEmuSaveContext is not null }, { nameof(BackupManagerDialog.ManicEmuContext), AppState.ManicEmuSaveContext } };
