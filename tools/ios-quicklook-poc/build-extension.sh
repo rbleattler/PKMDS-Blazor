@@ -1,84 +1,90 @@
 #!/usr/bin/env bash
-# Builds the iOS NativeAOT dylib + Xcode host app + Quick Look extension for the
-# iOS Simulator, installs to a booted simulator, and launches the host app.
+# Builds the C# Quick Look extension (.appex) and the SwiftUI host app, then
+# embeds the .appex into the host app's PlugIns/. Defaults to the iOS Simulator
+# (no signing required); use --device for an AOT'd ios-arm64 build.
 #
-#   ./build-extension.sh                                # default simulator
+#   ./build-extension.sh                          # iOS Simulator (Mono, no AOT)
+#   ./build-extension.sh --device                 # ios-arm64 (NativeAOT) — host app produced unsigned, deploy via Xcode
 #   SIM_NAME="iPhone 15 Pro" ./build-extension.sh
-#   ./build-extension.sh --device                       # build for ios-arm64 (real device, requires signing)
 set -euo pipefail
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-REPO_ROOT="$( cd "$SCRIPT_DIR/../.." && pwd )"
 
-# --device flips the AOT publish target + Xcode destination to a real iOS device.
-# Real-device runs require manual signing (Developer ID + provisioning profile)
-# that this script does not configure.
 TARGET_DEVICE=0
 if [[ "${1:-}" == "--device" ]]; then
     TARGET_DEVICE=1
 fi
 
+# Both paths build a .appex with Microsoft.iOS.Sdk + IsAppExtension=true. They
+# diverge on RID + AOT: simulator uses iossimulator-arm64 + Mono via `dotnet
+# build` (Microsoft.iOS.Sdk's Publish target rejects simulator RIDs); device
+# uses ios-arm64 + NativeAOT via `dotnet publish`.
+CSPROJ="$SCRIPT_DIR/PkmdsQuickLook/PkmdsQuickLook.csproj"
 if [[ "$TARGET_DEVICE" -eq 1 ]]; then
-    RID="ios-arm64"
-    DEST="generic/platform=iOS"
-    PRODUCTS_DIR="Release-iphoneos"
+    DOTNET_CMD=(publish -c Release -r ios-arm64)
+    DOTNET_OUT_DIR="$SCRIPT_DIR/PkmdsQuickLook/bin/Release/net10.0-ios/ios-arm64"
+    XCODE_DEST="generic/platform=iOS"
+    XCODE_PRODUCTS_DIR="Release-iphoneos"
+    XCODE_CONFIG="Release"
 else
-    RID="iossimulator-arm64"
-    DEST=""
-    PRODUCTS_DIR="Release-iphonesimulator"
+    DOTNET_CMD=(build -c Debug -r iossimulator-arm64)
+    DOTNET_OUT_DIR="$SCRIPT_DIR/PkmdsQuickLook/bin/Debug/net10.0-ios/iossimulator-arm64"
+    XCODE_PRODUCTS_DIR="Debug-iphonesimulator"
+    XCODE_CONFIG="Debug"
 fi
 
-CSPROJ="$SCRIPT_DIR/PkmdsNative/PkmdsNative.csproj"
-PUBLISH_DIR="$SCRIPT_DIR/PkmdsNative/bin/Release/net10.0/$RID/publish"
-DYLIB_SRC="$PUBLISH_DIR/PkmdsNative.dylib"
-DYLIB_DEST="$SCRIPT_DIR/build-resources/PkmdsNative.dylib"
+APPEX_SRC="$DOTNET_OUT_DIR/PkmdsQuickLook.appex"
 
 XCODE_DIR="$SCRIPT_DIR/xcode"
-PROJECT="$XCODE_DIR/PkmdsQuickLook.xcodeproj"
+PROJECT="$XCODE_DIR/PkmdsHost.xcodeproj"
 DERIVED="$XCODE_DIR/build"
-APP_PATH="$DERIVED/Build/Products/$PRODUCTS_DIR/PkmdsHost.app"
+APP_PATH="$DERIVED/Build/Products/$XCODE_PRODUCTS_DIR/PkmdsHost.app"
 
-# Verify the ios workload is installed; the publish below depends on it.
+# Verify the ios .NET workload (Microsoft.iOS.Sdk) is installed.
 if ! dotnet workload list 2>/dev/null | grep -qE '^ios\b'; then
     cat <<'EOF' >&2
 ==> error: the 'ios' .NET workload is not installed.
     Install it with:
         sudo dotnet workload install ios
-    (Requires a paid Apple Developer account only for real-device runs;
-    simulator builds work without one.)
 EOF
     exit 1
 fi
 
-echo "==> dotnet publish ($RID, AOT)"
-dotnet publish "$CSPROJ" -c Release -r "$RID" --nologo
+echo "==> dotnet ${DOTNET_CMD[*]}"
+dotnet "${DOTNET_CMD[@]}" "$CSPROJ" --nologo
 
-[[ -f "$DYLIB_SRC" ]] || { echo "missing $DYLIB_SRC" >&2; exit 1; }
-
-echo "==> stage dylib at $DYLIB_DEST"
-mkdir -p "$(dirname "$DYLIB_DEST")"
-cp "$DYLIB_SRC" "$DYLIB_DEST"
+[[ -d "$APPEX_SRC" ]] || { echo "missing .appex at $APPEX_SRC" >&2; exit 1; }
 
 echo "==> xcodegen generate"
 ( cd "$XCODE_DIR" && xcodegen generate --quiet )
 
 if [[ "$TARGET_DEVICE" -eq 1 ]]; then
-    echo "==> xcodebuild PkmdsHost (Release, iOS device — signing left to user)"
+    echo "==> xcodebuild PkmdsHost (Release, iOS device, unsigned)"
     xcodebuild \
         -project "$PROJECT" \
         -scheme PkmdsHost \
-        -configuration Release \
-        -destination "$DEST" \
+        -configuration "$XCODE_CONFIG" \
+        -destination "$XCODE_DEST" \
         -derivedDataPath "$DERIVED" \
+        CODE_SIGNING_ALLOWED=NO \
         -quiet \
         build
+
+    [[ -d "$APP_PATH" ]] || { echo "missing host app at $APP_PATH" >&2; exit 1; }
+
+    echo "==> embed .appex into host app"
+    mkdir -p "$APP_PATH/PlugIns"
+    rm -rf "$APP_PATH/PlugIns/PkmdsQuickLook.appex"
+    cp -R "$APPEX_SRC" "$APP_PATH/PlugIns/"
+
     echo
-    echo "Built: $APP_PATH"
-    echo "Sign with your Developer ID + provisioning profile, then deploy via Xcode or 'ios-deploy'."
+    echo "Built unsigned host app with embedded extension: $APP_PATH"
+    echo "Deploy to a real device by opening the project in Xcode, setting your"
+    echo "Team / signing identity, and running on a connected device."
     exit 0
 fi
 
-# Pick a simulator (override with SIM_NAME=...)
+# Simulator path — pick a simulator (override with SIM_NAME=...)
 SIM_NAME="${SIM_NAME:-}"
 if [[ -n "$SIM_NAME" ]]; then
     SIM_LINE=$(xcrun simctl list devices available 2>/dev/null \
@@ -102,18 +108,23 @@ echo "==> using simulator $SIM_NAME ($SIM_UUID)"
 xcrun simctl boot "$SIM_UUID" 2>/dev/null || true
 open -a Simulator
 
-echo "==> xcodebuild PkmdsHost (Release, iOS Simulator, unsigned)"
+echo "==> xcodebuild PkmdsHost (Debug, iOS Simulator, unsigned)"
 xcodebuild \
     -project "$PROJECT" \
     -scheme PkmdsHost \
-    -configuration Release \
+    -configuration "$XCODE_CONFIG" \
     -destination "id=$SIM_UUID" \
     -derivedDataPath "$DERIVED" \
     CODE_SIGNING_ALLOWED=NO \
     -quiet \
     build
 
-[[ -d "$APP_PATH" ]] || { echo "missing built app at $APP_PATH" >&2; exit 1; }
+[[ -d "$APP_PATH" ]] || { echo "missing host app at $APP_PATH" >&2; exit 1; }
+
+echo "==> embed .appex into host app"
+mkdir -p "$APP_PATH/PlugIns"
+rm -rf "$APP_PATH/PlugIns/PkmdsQuickLook.appex"
+cp -R "$APPEX_SRC" "$APP_PATH/PlugIns/"
 
 echo "==> install + launch"
 xcrun simctl uninstall "$SIM_UUID" com.bondcodes.pkmds.host.ios 2>/dev/null || true

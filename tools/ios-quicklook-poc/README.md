@@ -1,175 +1,105 @@
 # iOS / iPadOS Quick Look POC
 
-Proof-of-concept for issue [#796](https://github.com/codemonkey85/PKMDS-Blazor/issues/796): a native iOS / iPadOS Quick Look extension that previews PKHeX-compatible files (`.pk1`–`.pk9`, `.pa8`, `.pb7`, `.pb8`, `.sav`) by calling PKHeX.Core through a NativeAOT-compiled dylib.
+Proof-of-concept for issue [#796](https://github.com/codemonkey85/PKMDS-Blazor/issues/796): a native iOS / iPadOS Quick Look extension that previews PKHeX-compatible files (`.pk1`–`.pk9`, `.pa8`, `.pb7`, `.pb8`, `.sav`) by embedding PKHeX.Core compiled with NativeAOT.
 
-This is the iOS companion to [`tools/macos-quicklook-poc/`](../macos-quicklook-poc/) (issue [#549](https://github.com/codemonkey85/PKMDS-Blazor/issues/549) / PR [#795](https://github.com/codemonkey85/PKMDS-Blazor/pull/795)). The C# layer (`PkmdsNative/Exports.cs`, `PkmdsNative/HtmlRenderer.cs`) and the rendered HTML are reused **verbatim** from the macOS POC — only the platform shell changes.
+This is the iOS companion to [`tools/macos-quicklook-poc/`](../macos-quicklook-poc/) (issue [#549](https://github.com/codemonkey85/PKMDS-Blazor/issues/549) / PR [#795](https://github.com/codemonkey85/PKMDS-Blazor/pull/795)). The two POCs share `HtmlRenderer.cs` and the rendered HTML; the platform shell — and the build pipeline — diverges.
 
 ## What's in here
 
 ```
 tools/ios-quicklook-poc/
-├── PkmdsNative/                 # C# NativeAOT library — verbatim from macos-quicklook-poc
-│   ├── Exports.cs               # C-exported pkmds_* entry points (unchanged)
-│   ├── HtmlRenderer.cs          # Self-contained HTML preview (unchanged)
-│   └── PkmdsNative.csproj       # RIDs: iossimulator-arm64;ios-arm64
+├── PkmdsQuickLook/                           # C# iOS app extension (Microsoft.iOS.Sdk)
+│   ├── PreviewViewController.cs              # UIViewController + IQLPreviewingController + WKWebView
+│   ├── HtmlRenderer.cs                       # Verbatim from macos-quicklook-poc
+│   ├── Info.plist                            # NSExtension dict + QL principal class
+│   └── PkmdsQuickLook.csproj                 # net10.0-ios + IsAppExtension=true + PublishAot=true
 ├── xcode/
-│   ├── project.yml              # xcodegen spec — iOS host app + .appex extension
-│   ├── PkmdsHost/
-│   │   └── PkmdsHostApp.swift   # Minimal SwiftUI placeholder
-│   └── PkmdsQuickLook/
-│       ├── PreviewViewController.swift   # QLPreviewingController + WKWebView (UIKit)
-│       └── PkmdsQuickLook.entitlements   # Network client (no sandbox keys — extension is sandboxed by default on iOS)
-├── build-extension.sh           # dotnet publish → xcodegen → xcodebuild → install on simulator
+│   ├── project.yml                           # xcodegen — host SwiftUI app only
+│   └── PkmdsHost/PkmdsHostApp.swift          # Minimal placeholder
+├── build-extension.sh                        # dotnet → xcodegen → xcodebuild → embed .appex into PlugIns/
 └── README.md
 ```
 
 ## Prerequisites
 
-- **Xcode** (full install, not just Command Line Tools) with the **iOS Simulator runtime** installed.
+- **Xcode** (full install, not just Command Line Tools) with the iOS Simulator runtime.
 - **.NET SDK** matching `global.json` (net10.0).
 - **`ios` .NET workload** — `sudo dotnet workload install ios` (one-time).
 - **xcodegen** — `brew install xcodegen`.
-- **(Real device only)** Apple Developer account + provisioning profile — see "Signing on iOS" below.
 
 ## Build & run
 
-### iOS Simulator (no signing required)
+### iOS Simulator (default)
 
 ```sh
 ./build-extension.sh
-# Optional: pick a specific simulator
 SIM_NAME="iPhone 15 Pro" ./build-extension.sh
 ```
 
-The script publishes the AOT dylib for `iossimulator-arm64`, regenerates the Xcode project, builds for the simulator, installs the host app, and launches it. Drag a `.pk*` or `.sav` from Finder onto the Simulator window — it lands in **Files → On My iPhone**, where Quick Look should show the styled HTML preview.
+`dotnet build -r iossimulator-arm64` produces a Mono-runtime `.appex` (no AOT — Microsoft.iOS.Sdk's Publish target rejects simulator RIDs). xcodebuild builds the SwiftUI host for the simulator. The script copies the `.appex` into `PkmdsHost.app/PlugIns/`, installs, launches.
 
-### Real device (`ios-arm64`)
+Drag a `.pk*`/`.sav` from Finder onto the Simulator window — it lands in **Files → On My iPhone**. Long-press the file to trigger Quick Look.
+
+### iOS device (NativeAOT)
 
 ```sh
 ./build-extension.sh --device
 ```
 
-Builds the dylib for `ios-arm64` and the host app for a generic iOS device — but **does not sign or deploy**. You'll need to open the Xcode project (`xcode/PkmdsQuickLook.xcodeproj`), set your Team / signing identity, and run from Xcode against a connected device. See "Signing on iOS" below for why this isn't automated.
+`dotnet publish -r ios-arm64` produces an AOT-compiled `arm64` `.appex` (~24 MB). xcodebuild builds the host app for `generic/platform=iOS`. The host app is left **unsigned** — open the project in Xcode, set your Team / signing identity, and run on a connected device.
 
-## What's the same as the macOS POC
+## Why the architecture diverges from the macOS POC
 
-Verbatim, no changes:
-- `PkmdsNative/Exports.cs` — same C-exported `pkmds_*` entry points
-- `PkmdsNative/HtmlRenderer.cs` — same HTML output (`color-scheme: light dark`, `-apple-system` font stack, etc.)
-- `xcode/PkmdsQuickLook/PreviewViewController.swift` — same `WKWebView` rendering path; only the AppKit/UIKit shell differs (see below)
+The macOS POC uses Swift `PreviewViewController` calling into a standalone NativeAOT C# `.dylib` via `dlopen`/`dlsym`. The first attempt at this iOS POC tried to mirror that. **It can't be done in .NET 10.** The five things that forced the pivot:
 
-## What's different from the macOS POC
+1. **`Microsoft.NET.Sdk` rejects iOS RIDs for AOT.** `<RuntimeIdentifier>iossimulator-arm64</RuntimeIdentifier>` + `<PublishAot>true</PublishAot>` errors with `NETSDK1203: Ahead-of-time compilation is not supported for the target runtime identifier 'iossimulator-arm64'`. Same for `ios-arm64`. iOS / Android RIDs aren't on the supported AOT list — only `osx-*`, `linux-*`, `win-*`, `browser-wasm`.
+2. **`Microsoft.iOS.Sdk` + `OutputType=Library` skips AOT silently.** Setting `<TargetFramework>net10.0-ios</TargetFramework>` and publishing with `<NativeLib>Shared</NativeLib>` produces only managed `.dll`s — no native compilation. The iOS SDK classifies an `OutputType=Library` project as "iOS class library" and runs the AOT compiler only when the project is `OutputType=Exe` or `IsAppExtension=true`. (See `Xamarin.Shared.Sdk.targets:42-44` in the iOS workload pack.)
+3. **`Microsoft.iOS.Sdk`'s Publish target rejects simulator RIDs.** `Xamarin.Shared.Sdk.Publish.targets:14` errors with "A runtime identifier for a device architecture must be specified" for any `iossimulator-*` RID. Simulator validation has to use `dotnet build` (not publish) — which doesn't run NativeAOT but does produce a runnable `.appex` via Mono.
+4. **Apple's Xcode-version pin is strict.** The 26.0 SDK pack requires Xcode 26.0; the 26.2 pack requires Xcode 26.3. With Xcode 26.4.1 installed, both fail with `error E0191: This version of .NET for iOS requires Xcode <X>` until `<ValidateXcodeVersion>false</ValidateXcodeVersion>` is set.
+5. **Bundle metadata is mandatory.** `ApplicationId` (→ `CFBundleIdentifier`) is required; missing it errors with "A bundle identifier is required."
 
-These are the iOS-specific deltas that the next reader of this code is most likely to trip on.
+### What the pivot looks like
 
-### 1. UIKit shell instead of AppKit
+Instead of two languages and an FFI:
+- The extension is a single `Microsoft.iOS.Sdk` project with `IsAppExtension=true` and `PublishAot=true`.
+- `PreviewViewController` is C# — `UIViewController` + `IQLPreviewingController` + `WKWebView` from the `Microsoft.iOS` bindings.
+- `HtmlRenderer.cs` is reused **verbatim** from the macOS POC — pure C#, no platform dependencies.
+- The Xcode project is host-only (SwiftUI). `build-extension.sh` runs `dotnet publish`, then `xcodebuild`, then copies the `.appex` into `PkmdsHost.app/PlugIns/`.
 
-```swift
-// macOS                                        // iOS
-import Cocoa                                    import UIKit
-import Quartz                                   import QuickLook
-final class PreviewViewController:              final class PreviewViewController:
-    NSViewController, QLPreviewingController        UIViewController, QLPreviewingController
-```
+It's actually a *cleaner* iOS architecture (one toolchain, no FFI ABI to maintain) — but the deviation from the macOS POC was driven by .NET 10's iOS SDK behaviour, not preference.
 
-`QLPreviewingController` is the same protocol — it just lives in different parent frameworks. iOS uses `QuickLook.framework`; macOS uses `QuickLookUI.framework` from `Quartz`.
+## Verified findings
 
-### 2. Transparent WebView background
+These were established with `dotnet workload version 26.2.10233` + Xcode 26.4.1 on macOS 26.4.
 
-`NSWindow`-hosted `WKWebView` exposes a private `drawsBackground` flag we toggle via KVC on macOS. UIKit doesn't have that — we set `webView.isOpaque = false`, `webView.backgroundColor = .clear`, and clear the inner scroll view explicitly so the system's preview chrome shows through.
+- ✅ `dotnet publish -c Release -r ios-arm64` produces a 24 MB `arm64` Mach-O `.appex` with PKHeX.Core + Pkmds.Core under NativeAOT.
+- ✅ `Microsoft.iOS` bindings cover everything the extension needs: `IQLPreviewingController` (in `QuickLook` namespace, not `QuickLookUI`), `UIViewController`, `WKWebView`, `NSData`, `NSError`.
+- ✅ Trim warnings carry over from macOS POC: `IL2104` on `PKHeX.Core`, three "always throw" notes on `SaveBlock3*.PrintMembers`. The decode path we exercise isn't affected.
+- ✅ `Info.plist`'s `NSExtension` keys round-trip cleanly through Microsoft.iOS.Sdk's plist merge — the SDK auto-fills `CFBundleIdentifier`, `MinimumOSVersion`, `CFBundleSupportedPlatforms` from MSBuild properties without overwriting the hand-authored extension keys.
+- ⚠️ Simulator builds use Mono (no NativeAOT) — `.appex` is ~77 MB with managed assemblies + AOT data files, vs 24 MB for the AOT'd device build.
 
-### 3. Deployment target: iOS 16.0
+## Open work past this POC
 
-`QLPreviewingController` exists since iOS 11, but iOS 16 is the floor for `WKWebView` color-scheme behaviour we rely on (`UIScreen.traitCollection.userInterfaceStyle` propagation through `WKWebView`). Modern enough that it covers the realistic install base; bump down if a specific requirement surfaces.
+- **Real device verification.** The build script produces an unsigned host app for `ios-arm64`. Deploying requires opening the project in Xcode and setting a signing Team. The 120 MB extension memory ceiling can only be verified on hardware (the simulator doesn't enforce it).
+- **Signing the embedded `.appex`.** `Microsoft.iOS.Sdk` defaults to `EnableCodeSigning=false` here. Real distribution will need to either sign at the dotnet step (set `CodesignKey` / `CodesignProvision` in the csproj) or re-sign post-embed in the build script. App Store submission requires the extension and host signed with the same Team ID (no `cs.disable-library-validation` escape hatch).
+- **Xcode version pin.** `<ValidateXcodeVersion>false</ValidateXcodeVersion>` is a soft bypass for E0191. The right fix is to track the Microsoft.iOS.Sdk version that recommends the locally-installed Xcode.
+- **Promote `ImageHelper` from `Pkmds.Rcl` into `Pkmds.Core`** (carried over from the macOS POC's macros) so both platforms share the sprite-URL helper and `BuildHomeSpriteUrl` doesn't need a fallback path.
+- **Resolve the orientations warning** in the simulator path (`warning : Supported iPhone orientations have not been set`). Cosmetic; comes from Microsoft.iOS.Sdk wanting `UISupportedInterfaceOrientations` in the *extension's* Info.plist, not the host's.
 
-### 4. Entitlements differ
+## Diagnostic toolbox
 
-iOS extensions are **sandboxed by default** — there's no per-extension `app-sandbox` toggle, and the `com.apple.security.cs.disable-library-validation` macOS escape hatch **does not exist on iOS**. This is the single biggest practical difference between the two POCs.
+| Command | What it tells you |
+|---|---|
+| `dotnet publish -r ios-arm64 -v normal \| grep IL` | Trim/AOT warnings from PKHeX.Core |
+| `file <appex>/PkmdsQuickLook` | Confirm Mach-O arch — `arm64` for both device (AOT) and simulator (Mono) on Apple Silicon |
+| `/usr/libexec/PlistBuddy -c "Print" <appex>/Info.plist` | Verify NSExtension keys made it through |
+| `xcrun simctl spawn booted log stream --level debug --predicate 'process == "PkmdsQuickLook"'` | Stream extension logs from the simulator |
+| `xcrun simctl uninstall booted com.bondcodes.pkmds.host.ios` | Force a clean re-install |
+| Web Inspector (Safari → Develop → Simulator → "PkmdsQuickLook") | DOM / console / network for the `WKWebView` (only visible while a preview is active) |
 
-The iOS entitlements file declares only `com.apple.security.network.client` (so the WebView can fetch HOME sprites from PokeAPI). File access goes through the extension's read-only handoff from the host process — no `files.user-selected.read-only` key needed.
+## Out of scope
 
-### 5. UTI declarations live in the host app
-
-Same custom UTIs (`com.bondcodes.pkmds.pkm-file`, `com.bondcodes.pkmds.save-file`), same conformance to `public.data`, same filename-extension list. The iOS-specific bits in `project.yml` are `UILaunchScreen`, `UISupportedInterfaceOrientations`, and `TARGETED_DEVICE_FAMILY: "1,2"` (iPhone + iPad).
-
-### 6. Different dylib install path
-
-macOS embeds the dylib at `Contents/Frameworks/PkmdsNative.dylib` and the extension at `Contents/PlugIns/PkmdsQuickLook.appex/Contents/Frameworks/...`. iOS extensions are at `<App>.app/PlugIns/PkmdsQuickLook.appex/Frameworks/...` (no nested `Contents/`), so the rpath is different:
-
-```
-LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks @executable_path/../../Frameworks"
-```
-
-The first entry resolves the dylib when embedded directly in the extension; the second walks up to the host app's `Frameworks/` directory in case it ends up shared there.
-
-### 7. No `qlmanage` equivalent
-
-macOS has `qlmanage -p <file>` to drive a Quick Look preview from the CLI. iOS has nothing equivalent — verification is "drag a file into the simulator and long-press it." The Web Inspector (Safari → Develop → Simulator → \<extension\>) is your friend for inspecting the rendered HTML inside the extension's `WKWebView`.
-
-## Signing on iOS
-
-The macOS POC's "ad-hoc sign + `disable-library-validation`" trick **does not work on iOS**. App Store extensions require:
-
-- The host app and the extension signed with the same Team ID.
-- Any embedded dynamic library (the AOT dylib here) signed with the same Team ID.
-- A real provisioning profile (free Apple ID profiles work for personal-device install but not extensions in some cases — verify with your Apple ID).
-
-This means real-device verification of this POC requires an Apple Developer account from the start. Simulator-only validation is enough to confirm the extension loads, the dylib resolves, and the HTML renders — but does not exercise the signing path.
-
-## The known unknowns
-
-These are documented risks from issue [#796](https://github.com/codemonkey85/PKMDS-Blazor/issues/796) that this POC is positioned to verify but cannot finish verifying without the full signing pipeline.
-
-### 1. Extension memory cap (~120 MB)
-
-iOS preview/share extensions are killed when they exceed roughly 120 MB resident. The macOS dylib is 17 MB; runtime PKHeX parsing adds 30-40 MB peak. Should fit comfortably, but **needs verification with the largest realistic fixtures** — full Box dumps, Gen 8/9 saves with thousands of stored Pokémon. The simulator does not enforce the same cap as the device, so verification has to happen on hardware (Xcode's Memory Report gauge during a `qlmanage`-equivalent preview).
-
-### 2. NativeAOT for `ios-arm64` in .NET 10
-
-Officially supported but newer than the macOS path. Expect the same trim warnings as macOS (`IL2070` on `EntityBlank.GetBlank` and `ReflectUtil.GetAllProperties`, plus three "always throw" notes on `SaveBlock3*.PrintMembers`). Track with:
-
-```sh
-dotnet publish PkmdsNative/PkmdsNative.csproj -c Release -r ios-arm64 -v normal 2>&1 \
-    | grep -E 'warning IL|warning AOT'
-```
-
-### 3. dylib install validation
-
-Same class of failure as macOS gotcha #5 (library validation rejects mismatched signatures), but on iOS there's no escape hatch entitlement. The dylib **must** be signed with the same Team ID as the extension, full stop. Verify after a signed build with:
-
-```sh
-codesign -dv <App>.app/PlugIns/PkmdsQuickLook.appex/Frameworks/PkmdsNative.dylib
-```
-
-The "Authority=" line should match the host app and extension.
-
-### 4. Quick Look extension activation
-
-iOS won't activate an extension until the host app has been launched at least once after install. The build script launches the host app automatically; if the extension isn't picked up, kill and relaunch the host app, then reboot the simulator (`xcrun simctl shutdown booted; xcrun simctl boot <UUID>`) and try again.
-
-### 5. Web Inspector access
-
-For the simulator: Safari → Develop → Simulator → "PkmdsQuickLook" appears once an actual preview is in flight. If it's missing, the extension isn't running — check the simulator's diagnostic logs:
-
-```sh
-xcrun simctl spawn booted log stream --level debug \
-    --predicate 'process == "QuickLookUIService" OR process == "PkmdsQuickLook"'
-```
-
-## Out of scope for this POC
-
-- App Store / TestFlight distribution — covered by "Macros" below.
-- iCloud / sync — Quick Look is read-only by definition.
-- Bundling sample fixtures — keeps the POC honest about the security-scoped URL handoff.
-- Wiring up the iOS Files-app share extension (separate `NSExtensionPointIdentifier`) — out of scope; this is preview only.
-
-## Macros for next session
-
-If this POC graduates to a real `tools/ios-quicklook/` (no `-poc` suffix):
-
-1. Set up Apple Developer ID + provisioning profile + automatic signing.
-2. Verify the 120 MB memory ceiling against full Box-dump fixtures on a real device.
-3. Set up TestFlight distribution.
-4. Mirror the macOS "promote `ImageHelper` from `Pkmds.Rcl` into `Pkmds.Core`" cleanup so both platforms share the sprite-URL helper.
-5. Decide whether the iOS host app should also expose a usable UI (vs. the current placeholder); the macOS host has the same question open.
-6. Investigate string-table trimming on the AOT dylib if size matters more on iOS than it did on macOS.
+- App Store / TestFlight distribution.
+- iCloud / sync (Quick Look is read-only).
+- Bundling sample fixtures.
+- Wiring up to a real iOS host app for actual end-user use — that's downstream work after the POC validates the architecture.

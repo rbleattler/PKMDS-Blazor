@@ -3,7 +3,7 @@ using System.Text;
 using PKHeX.Core;
 using Pkmds.Core.Extensions;
 
-namespace Pkmds.Native;
+namespace Pkmds.QuickLook;
 
 internal static class HtmlRenderer
 {

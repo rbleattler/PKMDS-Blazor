@@ -1,4 +1,4 @@
-name: PkmdsQuickLook
+name: PkmdsHost
 options:
   bundleIdPrefix: com.bondcodes.pkmds
   deploymentTarget:
@@ -14,6 +14,10 @@ settings:
     DEVELOPMENT_TEAM: ""
     TARGETED_DEVICE_FAMILY: "1,2"
 
+# The Quick Look extension itself is built by `dotnet publish` (Microsoft.iOS.Sdk
+# + IsAppExtension=true + PublishAot=true) — see ../PkmdsQuickLook/. This Xcode
+# project only owns the SwiftUI host app and the UTI declarations. The build
+# script copies the prebuilt .appex into PkmdsHost.app/PlugIns/ after xcodebuild.
 targets:
   PkmdsHost:
     type: application
@@ -82,42 +86,3 @@ targets:
             LSItemContentTypes:
               - com.bondcodes.pkmds.save-file
             LSHandlerRank: Alternate
-    dependencies:
-      - target: PkmdsQuickLook
-        embed: true
-        codeSign: true
-
-  PkmdsQuickLook:
-    type: app-extension
-    platform: iOS
-    sources:
-      - path: PkmdsQuickLook
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.bondcodes.pkmds.host.ios.quicklook
-        LD_RUNPATH_SEARCH_PATHS: "@executable_path/Frameworks @executable_path/../../Frameworks"
-        SKIP_INSTALL: YES
-        MARKETING_VERSION: "0.0.1"
-        CURRENT_PROJECT_VERSION: "1"
-        CODE_SIGN_ENTITLEMENTS: PkmdsQuickLook/PkmdsQuickLook.entitlements
-    info:
-      path: PkmdsQuickLook/Info.plist
-      properties:
-        CFBundleDisplayName: PKMDS Quick Look
-        CFBundleShortVersionString: "$(MARKETING_VERSION)"
-        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
-        NSExtension:
-          NSExtensionPointIdentifier: com.apple.quicklook.preview
-          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).PreviewViewController
-          NSExtensionAttributes:
-            QLSupportedContentTypes:
-              - com.bondcodes.pkmds.pkm-file
-              - com.bondcodes.pkmds.save-file
-            QLSupportsSearchableItems: false
-    dependencies:
-      - framework: ../build-resources/PkmdsNative.dylib
-        embed: true
-        codeSign: true
-      - sdk: QuickLook.framework
-      - sdk: WebKit.framework
-      - sdk: UIKit.framework
