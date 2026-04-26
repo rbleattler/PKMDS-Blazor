@@ -32,7 +32,7 @@ The published site uses `<base href="/" />`, so it must be served from the root 
   - `.json`, `.js`, `.css`, `.html`, `.png`, `.svg`, `.woff2` → standard
 - Reference: .NET MAUI's `BlazorWebView` iOS implementation (`SchemeHandler.cs` in the maui repo) is the canonical example of this pattern.
 
-Then `webView.load(URLRequest(url: URL(string: "app://pkmds/index.html?host=delta")!))`.
+Then `webView.load(URLRequest(url: URL(string: "app://pkmds/?host=delta")!))`. Load the **root path**, not `/index.html` — Blazor's router only registers `@page "/"`, so `/index.html` falls through to PKMDS's `NotFound` component. Map empty paths in your scheme handler to `index.html` server-side; let the URL Blazor sees stay at `/`.
 
 ### b) `WKScriptMessageHandler` for outbound messages
 
@@ -143,6 +143,10 @@ Build your Swift bridge against this observable shim before you have a working `
 For a more complete end-to-end demonstration — including mock Done/Cancel chrome, a file picker outside PKMDS, and a live message log — see [`tools/embedded-host-poc/`](tools/embedded-host-poc/README.md).
 
 The mock host page embeds PKMDS in an `<iframe src="/?host=poc">` and drives it entirely through `window.postMessage`, simulating exactly what a native host app must do. It runs without Xcode, a device, or a real `WKWebView`. Open `tools/embedded-host-poc/index.html` directly in a browser while the dev server is running (`./watch.ps1`).
+
+### iOS / iPadOS PoC (real `WKWebView` + `WKURLSchemeHandler`)
+
+For the native-app version of the same round-trip — a minimal SwiftUI app that hosts PKMDS via `WKWebView`, bundles `wwwroot/` under a custom URL scheme, and exercises the bridge end-to-end on the iOS Simulator — see [`tools/embedded-host-ios-poc/`](tools/embedded-host-ios-poc/README.md). That PoC is where to look for working Swift implementations of `WKURLSchemeHandler` (Brotli + WASM MIME handling) and `WKScriptMessageHandler` for `ready` / `saveExport`.
 
 ## 7. Getting a publishable bundle
 

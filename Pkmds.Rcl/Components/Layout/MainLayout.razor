@@ -113,6 +113,23 @@
                              Disabled="@(AppState.SaveFile is null)">
                     Repair
                 </MudMenuItem>
+                <MudDivider/>
+                <MudMenuItem Icon="@Icons.Material.Filled.Share"
+                             OnClick="@ExportPartyAsShowdown"
+                             Disabled="@(AppState.SaveFile is null)">
+                    Export Party As Showdown
+                </MudMenuItem>
+                <MudMenuItem Icon="@Icons.Material.Filled.CloudUpload"
+                             OnClick="@ExportToPokePaste"
+                             Disabled="@(AppState.SaveFile is null)">
+                    Export to PokePaste
+                </MudMenuItem>
+                <MudMenuItem Icon="@Icons.Material.Filled.FileUpload"
+                             OnClick="@ImportFromShowdown"
+                             Disabled="@(AppState.SaveFile is null)">
+                    Import from Showdown
+                </MudMenuItem>
+                <MudDivider/>
                 <MudMenuItem Icon="@Icons.Material.Filled.BugReport"
                              OnClick="@ShowBugReportDialog">
                     Report a Bug
