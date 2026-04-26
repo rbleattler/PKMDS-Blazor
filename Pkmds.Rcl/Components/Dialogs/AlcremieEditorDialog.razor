@@ -35,7 +35,7 @@
                                   @onclick="@(() => SelectCream(creamIdx))">
                             <img src="@(HostService.IsEmbedded || failedCreamSprites.Contains(creamIdx)
                                           ? ImageHelper.GetPokemonSpriteFilenameForForm((ushort)Species.Alcremie, Pokemon.Context, creamIdx, selectedDeco)
-                                          : ImageHelper.GetPokeApiHomeSpriteUrl((ushort)Species.Alcremie, creamIdx, selectedDeco, isPreviewShiny)
+                                          : PokeApiSpriteUrls.GetPokeApiHomeSpriteUrl((ushort)Species.Alcremie, creamIdx, selectedDeco, isPreviewShiny)
                                             ?? ImageHelper.GetPokemonSpriteFilenameForForm((ushort)Species.Alcremie, Pokemon.Context, creamIdx, selectedDeco))"
                                  alt="@CreamNames[creamIdx]"
                                  style="width:56px; height:56px; object-fit:contain; display:block;"
@@ -68,7 +68,7 @@
                                   @onclick="@(() => SelectDeco(decoIdx))">
                             <img src="@(HostService.IsEmbedded || failedDecoSprites.Contains((int)decoIdx)
                                           ? ImageHelper.GetPokemonSpriteFilenameForForm((ushort)Species.Alcremie, Pokemon.Context, selectedCream, decoIdx)
-                                          : ImageHelper.GetPokeApiHomeSpriteUrl((ushort)Species.Alcremie, selectedCream, decoIdx, isPreviewShiny)
+                                          : PokeApiSpriteUrls.GetPokeApiHomeSpriteUrl((ushort)Species.Alcremie, selectedCream, decoIdx, isPreviewShiny)
                                             ?? ImageHelper.GetPokemonSpriteFilenameForForm((ushort)Species.Alcremie, Pokemon.Context, selectedCream, decoIdx))"
                                  alt="@DecorationNames[decoIdx]"
                                  style="width:56px; height:56px; object-fit:contain; display:block;"
@@ -82,7 +82,7 @@
                 <MudText Typo="@Typo.caption">Preview</MudText>
                 <img src="@(HostService.IsEmbedded || previewFailed
                               ? ImageHelper.GetPokemonSpriteFilenameForForm((ushort)Species.Alcremie, Pokemon.Context, selectedCream, selectedDeco)
-                              : ImageHelper.GetPokeApiHomeSpriteUrl((ushort)Species.Alcremie, selectedCream, selectedDeco, isPreviewShiny)
+                              : PokeApiSpriteUrls.GetPokeApiHomeSpriteUrl((ushort)Species.Alcremie, selectedCream, selectedDeco, isPreviewShiny)
                                 ?? ImageHelper.GetPokemonSpriteFilenameForForm((ushort)Species.Alcremie, Pokemon.Context, selectedCream, selectedDeco))"
                      alt="Alcremie preview"
                      style="width:96px; height:96px; object-fit:contain; display:block;"

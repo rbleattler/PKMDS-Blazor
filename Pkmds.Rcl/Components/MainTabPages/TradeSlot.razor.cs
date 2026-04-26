@@ -122,7 +122,7 @@ public partial class TradeSlot : RefreshAwareComponent
         var currentIsShiny = Pokemon?.GetIsShinySafe() ?? false;
         var currentForm = Pokemon?.Form ?? 0;
         var currentFormArg = Pokemon?.GetFormArgument(0) ?? 0;
-        var currentIsFemale = Pokemon is not null && ImageHelper.HasFemaleHomeSprite(Pokemon.Species, Pokemon.Gender);
+        var currentIsFemale = Pokemon is not null && PokeApiSpriteUrls.HasFemaleHomeSprite(Pokemon.Species, Pokemon.Gender);
         var currentSpriteStyle = AppState.SpriteStyle;
         if (Pokemon?.Species == lastLoadedSpecies
             && currentForm == lastLoadedForm

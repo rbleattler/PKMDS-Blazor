@@ -72,7 +72,7 @@ The existing `Pkmds.Rcl` components require the Blazor runtime, MudBlazor's JS/C
 
 ### Why `Pkmds.Core` and not `Pkmds.Rcl`
 
-`Pkmds.Core` only references `PKHeX.Core` and is AOT-clean. `Pkmds.Rcl` is a Razor Class Library that drags in MudBlazor, Tailwind, and the Blazor stack — none of which AOT-compiles cleanly. Long-term, the sprite URL helpers in `Pkmds.Rcl/ImageHelper.cs` should move into `Pkmds.Core` so both the web app and the QL extension share them.
+`Pkmds.Core` only references `PKHeX.Core` and is AOT-clean. `Pkmds.Rcl` is a Razor Class Library that drags in MudBlazor, Tailwind, and the Blazor stack — none of which AOT-compiles cleanly. The PokeAPI sprite URL helpers (with full Mega/regional/gender/Alcremie/Vivillon coverage) live in `Pkmds.Core/Utilities/PokeApiSpriteUrls.cs` so both the web app and the QL extension share them.
 
 ## The five non-obvious things that broke us (and how to spot them)
 
@@ -155,7 +155,6 @@ Note: `/usr/bin/log` rather than bare `log` — zsh has a builtin that intercept
 
 ## Known POC limitations
 
-- **Sprite URL fallback** — `HtmlRenderer.BuildHomeSpriteUrl` only handles base species, not Mega/regional/gender variants. The full mapping lives in `Pkmds.Rcl/ImageHelper.cs`. When promoting this POC to a real extension, move that helper (and its `PokeApiFormSuffixes` / `PokeApiFormIds` dictionaries) into `Pkmds.Core` so both consumers share it.
 - **Ad-hoc signing only** — works for local install. Distribution (Mac App Store or Developer ID + notarization) requires a real signing identity and Team ID; once that's in place, drop `cs.disable-library-validation`.
 - **Trim warnings from PKHeX.Core** — IL2070 on `EntityBlank.GetBlank` and `ReflectUtil.GetAllProperties`, plus three "always throw" notes on `SaveBlock3*.PrintMembers`. Carried over from the original AOT POC findings; none affect the read-only decode path we exercise.
 - **POC outputs only the host display name** — `PkmdsHost` (literally), not branded. Cosmetic; address before any user-facing release.
@@ -165,9 +164,7 @@ Note: `/usr/bin/log` rather than bare `log` — zsh has a builtin that intercept
 
 If this POC graduates to a real `tools/macos-quicklook/` (no `-poc` suffix):
 
-1. Promote `ImageHelper` and its form-mapping dictionaries from `Pkmds.Rcl` into `Pkmds.Core` so both Web and QL extension share them.
-2. Replace the inline `BuildHomeSpriteUrl` in `HtmlRenderer.cs` with `ImageHelper.GetPokeApiHomeSpriteUrl`.
-3. Set up Developer ID signing (drop `disable-library-validation`).
-4. Set up notarization in CI.
-5. Decide distribution channel (DMG / Homebrew cask / Mac App Store).
-6. Consider an iOS share extension using the same dylib and `HtmlRenderer`.
+1. Set up Developer ID signing (drop `disable-library-validation`).
+2. Set up notarization in CI.
+3. Decide distribution channel (DMG / Homebrew cask / Mac App Store).
+4. Consider an iOS share extension using the same dylib and `HtmlRenderer`.
