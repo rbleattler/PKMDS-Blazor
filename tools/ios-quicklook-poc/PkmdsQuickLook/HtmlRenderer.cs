@@ -2,13 +2,15 @@ using System.Globalization;
 using System.Text;
 using PKHeX.Core;
 using Pkmds.Core.Extensions;
+using Pkmds.Core.Utilities;
 
 namespace Pkmds.QuickLook;
 
 internal static class HtmlRenderer
 {
-    private const string PokeApiHomeBaseUrl =
-        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/";
+    // Final fallback when even the base-species URL can't be built (invalid species).
+    private const string PlaceholderSpriteUrl =
+        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/0.png";
 
     public static string RenderPkm(PKM pkm)
     {
@@ -17,7 +19,7 @@ internal static class HtmlRenderer
         AppendDocStart(sb, $"{Lookup(s.specieslist, pkm.Species)} (Lv. {pkm.CurrentLevel})");
         sb.Append("<div class=\"pkm\">");
 
-        AppendSprite(sb, pkm.Species, pkm.IsShiny);
+        AppendSprite(sb, pkm);
 
         sb.Append("<div class=\"info\">");
         var nickname = pkm.Nickname ?? string.Empty;
@@ -91,7 +93,7 @@ internal static class HtmlRenderer
             {
                 var pkm = sav.GetPartySlotAtIndex(i);
                 sb.Append("<div class=\"party-slot\">");
-                AppendSpriteSmall(sb, pkm.Species, pkm.IsShiny);
+                AppendSpriteSmall(sb, pkm);
                 sb.Append("<div class=\"party-info\">");
                 sb.Append("<div class=\"party-name\">")
                     .Append(Escape(Lookup(s.specieslist, pkm.Species)));
@@ -118,27 +120,42 @@ internal static class HtmlRenderer
         return sb.ToString();
     }
 
-    private static void AppendSprite(StringBuilder sb, ushort species, bool isShiny)
+    private static void AppendSprite(StringBuilder sb, PKM pkm)
     {
         sb.Append("<div class=\"sprite\"><img alt=\"\" src=\"")
-            .Append(BuildHomeSpriteUrl(species, isShiny))
+            .Append(BuildHomeSpriteUrl(pkm))
             .Append("\"></div>");
     }
 
-    private static void AppendSpriteSmall(StringBuilder sb, ushort species, bool isShiny)
+    private static void AppendSpriteSmall(StringBuilder sb, PKM pkm)
     {
         sb.Append("<img class=\"sprite-sm\" alt=\"\" src=\"")
-            .Append(BuildHomeSpriteUrl(species, isShiny))
+            .Append(BuildHomeSpriteUrl(pkm))
             .Append("\">");
     }
 
-    // Minimal sprite URL: PokeAPI home sprite by species ID. Form/regional/Mega variants
-    // fall back to the base species sprite — promoted to ImageHelper-quality lookup if
-    // this POC graduates to a real extension.
-    private static string BuildHomeSpriteUrl(ushort species, bool isShiny) =>
-        species.IsValidSpecies()
-            ? $"{PokeApiHomeBaseUrl}{(isShiny ? "shiny/" : string.Empty)}{species}.png"
-            : $"{PokeApiHomeBaseUrl}0.png";
+    // Full PokeAPI home-sprite lookup — handles Mega/regional/gender/Alcremie/Vivillon/etc.
+    // For rare forms with no PokeAPI home sprite (Sinistea-Antique, Rockruff-Own-Tempo, GMax, …)
+    // the helper returns null; we retry with form 0 so the user still sees the base species
+    // instead of a broken image.
+    private static string BuildHomeSpriteUrl(PKM pkm)
+    {
+        var url = PokeApiSpriteUrls.GetPokeApiHomeSpriteUrl(
+            pkm.Species, pkm.Form, pkm.GetFormArgument(0), pkm.IsShiny, pkm.Gender);
+        if (url is not null)
+        {
+            return url;
+        }
+
+        if (pkm.Species.IsValidSpecies())
+        {
+            return PokeApiSpriteUrls.GetPokeApiHomeSpriteUrl(
+                pkm.Species, form: 0, isShiny: pkm.IsShiny, gender: pkm.Gender)
+                ?? PlaceholderSpriteUrl;
+        }
+
+        return PlaceholderSpriteUrl;
+    }
 
     private static void AppendStatsTable(StringBuilder sb, PKM pkm)
     {

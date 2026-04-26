@@ -26,6 +26,13 @@ reusable functionality for working with PKHeX.Core.
 - **GameInfoUtilities**: Utility methods for game metadata:
     - Move category name lookup
 
+- **PokeApiSpriteUrls**: PokeAPI CDN URL builders for Pokémon sprites, AOT-clean and shared across the
+  Blazor web app and the macOS / iOS Quick Look extensions:
+    - `GetPokeApiHomeSpriteUrl` — high-res HOME artwork URLs
+    - `GetPokeApiVersionSpriteUrl` — game-version-specific pixel-art URLs
+    - Full coverage of Mega/Primal, regional variants, gender differences,
+      Alcremie cream/sweet permutations, Vivillon patterns, and Totem-form mapping
+
 ## Usage
 
 Add a reference to Pkmds.Core in your project:

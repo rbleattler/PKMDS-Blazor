@@ -89,7 +89,6 @@ These were established with `dotnet workload version 26.2.10233` + Xcode 26.4.1 
 - **Real device verification.** The build script produces an unsigned host app for `ios-arm64`. Deploying requires opening the project in Xcode and setting a signing Team. The 120 MB extension memory ceiling can only be verified on hardware (the simulator doesn't enforce it).
 - **Signing the embedded `.appex`.** `Microsoft.iOS.Sdk` defaults to `EnableCodeSigning=false` here; the build script ad-hoc signs the `.appex` post-embed for simulator runs. Real distribution will need a real Developer ID — set `CodesignKey` / `CodesignProvision` in the csproj or replace the post-embed `codesign --sign -` step. App Store submission requires the extension and host signed with the same Team ID (no `cs.disable-library-validation` escape hatch).
 - **Xcode version pin.** `<ValidateXcodeVersion>false</ValidateXcodeVersion>` is a soft bypass for E0191. The right fix is to track the Microsoft.iOS.Sdk version that recommends the locally-installed Xcode.
-- **Promote `ImageHelper` from `Pkmds.Rcl` into `Pkmds.Core`** (carried over from the macOS POC's macros) so both platforms share the sprite-URL helper and `BuildHomeSpriteUrl` doesn't need a fallback path.
 - **Resolve the orientations warning** in the simulator path (`warning : Supported iPhone orientations have not been set`). Cosmetic; comes from Microsoft.iOS.Sdk wanting `UISupportedInterfaceOrientations` in the *extension's* Info.plist, not the host's.
 
 ## Diagnostic toolbox

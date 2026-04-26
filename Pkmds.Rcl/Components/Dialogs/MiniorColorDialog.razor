@@ -40,7 +40,7 @@
                                   @onclick="@(() => selectedForm = formIdx)">
                             <img src="@(HostService.IsEmbedded || failedFormSprites.Contains(formIdx)
                                           ? ImageHelper.GetPokemonSpriteFilenameForForm(Pokemon.Species, Pokemon.Context, formIdx)
-                                          : ImageHelper.GetPokeApiHomeSpriteUrl(Pokemon.Species, formIdx, null, isPreviewShiny, Pokemon.Gender)
+                                          : PokeApiSpriteUrls.GetPokeApiHomeSpriteUrl(Pokemon.Species, formIdx, null, isPreviewShiny, Pokemon.Gender)
                                             ?? ImageHelper.GetPokemonSpriteFilenameForForm(Pokemon.Species, Pokemon.Context, formIdx))"
                                  alt="@label"
                                  style="width:56px; height:56px; object-fit:contain; display:block;"
@@ -79,7 +79,7 @@
                                   @onclick="@(() => selectedForm = formIdx)">
                             <img src="@(HostService.IsEmbedded || failedFormSprites.Contains(formIdx)
                                           ? ImageHelper.GetPokemonSpriteFilenameForForm(Pokemon.Species, Pokemon.Context, formIdx)
-                                          : ImageHelper.GetPokeApiHomeSpriteUrl(Pokemon.Species, formIdx, null, isPreviewShiny, Pokemon.Gender)
+                                          : PokeApiSpriteUrls.GetPokeApiHomeSpriteUrl(Pokemon.Species, formIdx, null, isPreviewShiny, Pokemon.Gender)
                                             ?? ImageHelper.GetPokemonSpriteFilenameForForm(Pokemon.Species, Pokemon.Context, formIdx))"
                                  alt="@label"
                                  style="width:56px; height:56px; object-fit:contain; display:block;"
