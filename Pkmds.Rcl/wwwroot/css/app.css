@@ -797,3 +797,45 @@ body, html {
         max-height: none;
     }
 }
+
+/* ── Issue #774 — accidental zoom mitigations ──
+   Three independent fixes; none of them disable user-scalable so pinch-zoom
+   for accessibility still works.
+
+   1. Batch Editor script textarea: monospace 0.85rem (~13.6px) is below the
+      16px threshold Android Chrome uses to suppress focus auto-zoom. Bump to
+      16px on touch-only devices; keep the tighter 0.85rem on hover-capable
+      desktops where it doesn't trigger zoom. */
+.batch-script-editor textarea.mud-input-slot,
+.batch-script-editor .mud-input-slot.mud-input-root {
+    font-family: monospace;
+    font-size: 0.85rem;
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .batch-script-editor textarea.mud-input-slot,
+    .batch-script-editor .mud-input-slot.mud-input-root {
+        font-size: 16px;
+    }
+}
+
+/* 2. Hisuian Pokédex research-task table: MudSimpleTable doesn't wrap itself
+      in a .mud-table-container, so its ~620px of min-width columns blew out
+      the parent panel and got clipped by .mud-tab-panel { overflow-x: hidden }.
+      Give it its own scroll container so the user can pan the table without
+      having to zoom the whole page. */
+.la-research-task-table-wrapper {
+    overflow-x: auto;
+}
+
+/* 3. Tab scroll-arrows + pagination buttons: rapid-tap to advance reads as a
+      double-tap to Chrome's gesture detector and triggers zoom. touch-action:
+      manipulation disables double-tap-zoom on the targeted element while
+      leaving pinch-zoom intact. Apply to anything users tap repeatedly.
+      Targeting the toolbar (rather than just the scroll-button class) covers
+      both the scroll arrows and the tab strip itself, which is the other
+      surface users rapid-tap. */
+.mud-tabs .mud-tabs-toolbar,
+.mud-pagination {
+    touch-action: manipulation;
+}

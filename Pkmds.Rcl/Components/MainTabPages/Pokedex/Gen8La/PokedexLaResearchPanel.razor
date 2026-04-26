@@ -130,10 +130,12 @@
                                                })"/>
                 </MudStack>
 
-                @* Research task table *@
+                @* Research task table — wrapped so the ~620px min-width content
+                   gets a horizontal scrollbar instead of being clipped by the
+                   parent .mud-tab-panel { overflow-x: hidden } on phones. *@
+                <div class="la-research-task-table-wrapper mb-2">
                 <MudSimpleTable Dense
-                                Bordered
-                                Class="mb-2">
+                                Bordered>
                     <thead>
                     <tr>
                         <th style="min-width:220px;">Task</th>
@@ -214,6 +216,7 @@
                     }
                     </tbody>
                 </MudSimpleTable>
+                </div>
 
                 <MudStack Row
                           Justify="Justify.FlexEnd">
