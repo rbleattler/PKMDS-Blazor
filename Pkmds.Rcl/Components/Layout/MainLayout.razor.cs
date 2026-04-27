@@ -804,8 +804,29 @@ public partial class MainLayout : IDisposable
             var data = memoryStream.ToArray();
             Logger.LogDebug("Read {ByteCount} bytes from Mystery Gift file", data.Length);
 
-            if (!FileUtil.TryGetMysteryGift(data, out var mysteryGift,
-                    Path.GetExtension(browserLoadMysteryGiftFile.Name)))
+            var fileExtension = Path.GetExtension(browserLoadMysteryGiftFile.Name);
+
+            // .wc3 files are not DataMysteryGift-compatible — WonderCard3 lives directly in the
+            // save's wonder card slot, so route them to the dedicated WC3 import path before
+            // reaching FileUtil.TryGetMysteryGift (which would reject them).
+            if (string.Equals(fileExtension, ".wc3", StringComparison.OrdinalIgnoreCase))
+            {
+                await AppService.ImportWonderCard3(data, out var wc3ImportSuccessful, out var wc3ImportMessage);
+                if (wc3ImportSuccessful)
+                {
+                    Logger.LogInformation("WC3 Wonder Card imported successfully: {Message}", wc3ImportMessage);
+                    Snackbar.Add(wc3ImportMessage, Severity.Success);
+                }
+                else
+                {
+                    Logger.LogWarning("WC3 Wonder Card import failed: {Message}", wc3ImportMessage);
+                    Snackbar.Add(wc3ImportMessage, Severity.Error);
+                }
+
+                return;
+            }
+
+            if (!FileUtil.TryGetMysteryGift(data, out var mysteryGift, fileExtension))
             {
                 Logger.LogError("Failed to load Mystery Gift file: {FileName} - Not a supported format",
                     browserLoadMysteryGiftFile.Name);
@@ -814,7 +835,7 @@ public partial class MainLayout : IDisposable
             }
 
             // Import the gift card to the mystery gift album when the save supports it.
-            await AppService.ImportMysteryGift(data, Path.GetExtension(browserLoadMysteryGiftFile.Name),
+            await AppService.ImportMysteryGift(data, fileExtension,
                 out var albumImportSuccessful, out var albumImportMessage);
 
             if (albumImportSuccessful)
