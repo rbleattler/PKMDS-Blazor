@@ -755,6 +755,84 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
         return Task.CompletedTask;
     }
 
+    public Task ImportWonderCard3(byte[] data, out bool isSuccessful, out string resultsMessage)
+    {
+        // WC3 files are not handled by FileUtil.TryGetMysteryGift / MysteryGift.GetMysteryGift —
+        // WonderCard3 is stored verbatim in the save's wonder card slot rather than as a generic
+        // DataMysteryGift. Emulate the WC3Plugin import sequence: write the card, optionally the
+        // link-stats extra block, and the accompanying MysteryEvent3 script.
+        if (AppState.SaveFile is not SAV3 sav)
+        {
+            isSuccessful = false;
+            resultsMessage =
+                "The loaded save file does not support WC3 Wonder Cards. Only Generation 3 saves accept WC3 files.";
+            return Task.CompletedTask;
+        }
+
+        if (sav.LargeBlock is not ISaveBlock3LargeExpansion expansion)
+        {
+            isSuccessful = false;
+            resultsMessage =
+                "The loaded save file does not support WC3 Wonder Cards. Only Emerald and FireRed/LeafGreen saves accept WC3 files.";
+            return Task.CompletedTask;
+        }
+
+        var cardSize = sav.Japanese ? WonderCard3.SIZE_JAP : WonderCard3.SIZE;
+        var scriptOffset = cardSize + (WonderCard3Extra.SIZE * 2);
+        var expectedSize = scriptOffset + MysteryEvent3.SIZE;
+
+        if (data.Length != expectedSize)
+        {
+            // The other locale's expected size, used to detect a locale mismatch (e.g. a JPN
+            // .wc3 loaded into an International save) and surface a clearer error than a raw
+            // byte-count mismatch.
+            var otherCardSize = sav.Japanese ? WonderCard3.SIZE : WonderCard3.SIZE_JAP;
+            var otherExpectedSize = otherCardSize + (WonderCard3Extra.SIZE * 2) + MysteryEvent3.SIZE;
+
+            isSuccessful = false;
+            resultsMessage = data.Length == otherExpectedSize
+                ? $"This is a {(sav.Japanese ? "International" : "Japanese")} Wonder Card ({data.Length} bytes), " +
+                  $"but the loaded save is {(sav.Japanese ? "Japanese" : "International")}. " +
+                  $"Use a {(sav.Japanese ? "Japanese" : "International")} ({expectedSize}-byte) WC3 file."
+                : $"Invalid WC3 file size ({data.Length} bytes; expected {expectedSize} bytes for this save).";
+            return Task.CompletedTask;
+        }
+
+        try
+        {
+            Memory<byte> memory = data;
+
+            var card = new WonderCard3(memory[..cardSize]);
+            card.FixChecksum();
+            expansion.SetWonderCard(sav.Japanese, card.Data);
+
+            // Type 2 = link-stats card; the first WonderCard3Extra block records wins/losses/trades.
+            const byte CardTypeLinkStats = 2;
+            if (card.Type == CardTypeLinkStats)
+            {
+                var extra = new WonderCard3Extra(memory.Slice(cardSize, WonderCard3Extra.SIZE));
+                expansion.SetWonderCardExtra(sav.Japanese, extra.Data);
+            }
+
+            var script = new MysteryEvent3(memory[scriptOffset..]);
+            script.FixChecksum();
+            expansion.MysteryData = script;
+
+            var title = card.Title.Trim();
+            isSuccessful = true;
+            resultsMessage = string.IsNullOrEmpty(title)
+                ? "Wonder Card imported successfully."
+                : $"Wonder Card \"{title}\" imported successfully.";
+            return Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            isSuccessful = false;
+            resultsMessage = ex.Message;
+            return Task.CompletedTask;
+        }
+    }
+
     public void MovePokemon(int? sourceBoxNumber, int sourceSlotNumber, bool isSourceParty,
         int? destBoxNumber, int destSlotNumber, bool isDestParty)
     {

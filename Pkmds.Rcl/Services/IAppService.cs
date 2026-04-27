@@ -282,6 +282,20 @@ public interface IAppService
     Task ImportMysteryGift(byte[] data, string fileExtension, out bool isSuccessful, out string resultsMessage);
 
     /// <summary>
+    /// Imports a Generation 3 Wonder Card (<c>.wc3</c>) file into the loaded save file.
+    /// WC3 files are not <see cref="DataMysteryGift" />-compatible because <see cref="WonderCard3" />
+    /// is stored as a raw save-slot struct rather than a generic mystery gift; this method writes
+    /// the card, the optional <see cref="WonderCard3Extra" /> link-stats block, and the accompanying
+    /// <see cref="MysteryEvent3" /> script directly into the save's wonder card slots.
+    /// Only Emerald and FireRed/LeafGreen saves are supported (Ruby/Sapphire have no wonder card slot).
+    /// </summary>
+    /// <param name="data">The raw <c>.wc3</c> file bytes.</param>
+    /// <param name="isSuccessful">Output parameter indicating whether the import was successful.</param>
+    /// <param name="resultsMessage">Output parameter containing a message describing the result.</param>
+    /// <returns>A completed task.</returns>
+    Task ImportWonderCard3(byte[] data, out bool isSuccessful, out string resultsMessage);
+
+    /// <summary>
     /// Moves or swaps a Pokémon between slots (box-to-box, party-to-box, box-to-party, or party-to-party).
     /// Handles special cases like Gen 1/2 box compacting and party compacting.
     /// </summary>
