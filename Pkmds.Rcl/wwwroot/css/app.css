@@ -286,6 +286,14 @@ body, html {
         overflow-y: auto;
     }
 
+    /* Feebas tab content: the route map can be taller than the tab panel
+       (Route 119 native height is 1553px), so let the tab content scroll
+       internally rather than getting clipped by the panel's overflow:hidden. */
+    .feebas-tab-content {
+        height: 100%;
+        overflow-y: auto;
+    }
+
     /* Bank tab: the tab panel becomes a flex column so the card grid can
        fill remaining vertical space without a fragile calc() offset. */
     .save-file-outer-tabs > .mud-tabs-panels > .mud-tab-panel:has(.bank-tab-content) {
