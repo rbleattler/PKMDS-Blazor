@@ -25,8 +25,11 @@ public partial class FeebasLocatorTab
     private int mapHeight;
     private List<TileMarker> markers = [];
     private bool fitToView = true;
+    private bool showNumbers;
 
     private void ToggleFitToView() => fitToView = !fitToView;
+
+    private void ToggleShowNumbers() => showNumbers = !showNumbers;
 
     private bool TryParseEditedSeed(out uint value) =>
         uint.TryParse(editedSeedHex, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out value);

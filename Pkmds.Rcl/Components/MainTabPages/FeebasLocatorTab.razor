@@ -70,12 +70,19 @@ else
 
         <MudStack Row
                   AlignItems="@AlignItems.Center"
-                  Spacing="2">
+                  Spacing="2"
+                  Wrap="@Wrap.Wrap">
             <MudButton OnClick="@ToggleFitToView"
                        Variant="@Variant.Outlined"
                        Color="@Color.Primary"
                        StartIcon="@(fitToView ? Icons.Material.Filled.ZoomIn : Icons.Material.Filled.ZoomOutMap)">
                 @(fitToView ? "Show full size" : "Fit to view")
+            </MudButton>
+            <MudButton OnClick="@ToggleShowNumbers"
+                       Variant="@Variant.Outlined"
+                       Color="@Color.Primary"
+                       StartIcon="@(showNumbers ? Icons.Material.Filled.CheckBoxOutlineBlank : Icons.Material.Filled.LooksOne)">
+                @(showNumbers ? "Show squares" : "Show numbers")
             </MudButton>
             <MudText Typo="@Typo.caption"
                      Color="@Color.Default">
@@ -90,10 +97,13 @@ else
                      style="@ImageStyle"/>
                 @foreach (var marker in markers)
                 {
-                    <div style="@MarkerStyle(marker)"></div>
-                    @if (marker.ShowLabel)
+                    @if (showNumbers && marker.ShowLabel)
                     {
                         <div style="@MarkerLabelStyle(marker)">@(marker.Index + 1)</div>
+                    }
+                    else
+                    {
+                        <div style="@MarkerStyle(marker)"></div>
                     }
                 }
             </div>
