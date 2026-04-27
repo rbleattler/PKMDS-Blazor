@@ -17,6 +17,8 @@ public partial class FeebasLocatorTab
     private uint seed;
     private string seedHex = string.Empty;
     private string seedFormat = "X4";
+    private string editedSeedHex = string.Empty;
+    private int seedMaxLength = 4;
     private string locationLabel = string.Empty;
     private string mapUrl = string.Empty;
     private int mapWidth;
@@ -25,6 +27,69 @@ public partial class FeebasLocatorTab
     private bool fitToView = true;
 
     private void ToggleFitToView() => fitToView = !fitToView;
+
+    private bool TryParseEditedSeed(out uint value) =>
+        uint.TryParse(editedSeedHex, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out value);
+
+    private bool IsSeedDifferentFromSaved =>
+        TryParseEditedSeed(out var parsed) && parsed != seed;
+
+    private bool CanApplySeed =>
+        TryParseEditedSeed(out _) && IsSeedDifferentFromSaved;
+
+    private void OnSeedInputChanged()
+    {
+        if (saveFile is null || !TryParseEditedSeed(out var parsed))
+        {
+            return;
+        }
+
+        var newTiles = saveFile.Generation == 3
+            ? Feebas3.GetTiles(parsed)
+            : Feebas4.GetTiles(parsed);
+        tiles = newTiles;
+        markers = BuildMarkers(saveFile, newTiles);
+    }
+
+    private void RandomizeSeed()
+    {
+        if (saveFile is null)
+        {
+            return;
+        }
+
+        var newSeed = saveFile.Generation == 3
+            ? (uint)Util.Rand.Next(0x10000)
+            : Util.Rand.Rand32();
+        editedSeedHex = newSeed.ToString(seedFormat, CultureInfo.InvariantCulture);
+        OnSeedInputChanged();
+    }
+
+    private void ApplySeed()
+    {
+        if (saveFile is null || !TryParseEditedSeed(out var parsed))
+        {
+            return;
+        }
+
+        if (!FeebasSeedAccessor.TryWriteSeed(saveFile, parsed))
+        {
+            Snackbar.Add("Could not write Feebas seed: unsupported save type.", MudBlazor.Severity.Error);
+            return;
+        }
+
+        seed = parsed;
+        seedHex = seed.ToString(seedFormat, CultureInfo.InvariantCulture);
+        editedSeedHex = seedHex;
+        Snackbar.Add($"Feebas seed updated to 0x{seedHex}.", MudBlazor.Severity.Success);
+        RefreshService.Refresh();
+    }
+
+    private void ResetSeed()
+    {
+        editedSeedHex = seedHex;
+        OnSeedInputChanged();
+    }
 
     private const string ContainerStyle =
         "border: 1px solid var(--mud-palette-lines-default); " +
@@ -113,6 +178,7 @@ public partial class FeebasLocatorTab
         if (saveFile.Generation == 3)
         {
             seedFormat = "X4";
+            seedMaxLength = 4;
             locationLabel = "Route 119 — Hoenn";
             mapUrl = Route119Url;
             mapWidth = Route119Width;
@@ -121,13 +187,15 @@ public partial class FeebasLocatorTab
         else
         {
             seedFormat = "X8";
+            seedMaxLength = 8;
             locationLabel = "Mt. Coronet B1F";
             mapUrl = MtCoronetUrl;
             mapWidth = MtCoronetWidth;
             mapHeight = MtCoronetHeight;
         }
 
-        seedHex = seed.ToString(seedFormat);
+        seedHex = seed.ToString(seedFormat, CultureInfo.InvariantCulture);
+        editedSeedHex = seedHex;
         markers = BuildMarkers(saveFile, tiles);
     }
 

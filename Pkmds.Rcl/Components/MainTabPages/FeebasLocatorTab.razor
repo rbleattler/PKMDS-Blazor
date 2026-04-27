@@ -14,9 +14,45 @@ else
             @locationLabel
         </MudText>
 
-        <MudText Typo="@Typo.body2">
-            <strong>Seed:</strong> @($"0x{seedHex}")
-        </MudText>
+        <MudAlert Severity="@Severity.Warning"
+                  Variant="@Variant.Outlined"
+                  Icon="@Icons.Material.Filled.Warning">
+            Editing the seed changes which tiles yield Feebas in-game. Save a backup from the <strong>Backups</strong> menu before applying changes.
+        </MudAlert>
+
+        <MudStack Row
+                  AlignItems="@AlignItems.Center"
+                  Spacing="2"
+                  Wrap="@Wrap.Wrap">
+            <MudTextField T="@string"
+                          @bind-Value="@editedSeedHex"
+                          @bind-Value:after="@OnSeedInputChanged"
+                          Label="Seed"
+                          Adornment="@Adornment.Start"
+                          AdornmentText="0x"
+                          MaxLength="@seedMaxLength"
+                          Variant="@Variant.Outlined"
+                          Margin="@Margin.Dense"
+                          Style="max-width: 200px;"/>
+            <MudButton OnClick="@RandomizeSeed"
+                       Variant="@Variant.Outlined"
+                       StartIcon="@Icons.Material.Filled.Casino">
+                Randomize
+            </MudButton>
+            <MudButton OnClick="@ApplySeed"
+                       Variant="@Variant.Filled"
+                       Color="@Color.Primary"
+                       Disabled="@(!CanApplySeed)"
+                       StartIcon="@Icons.Material.Filled.Save">
+                Apply
+            </MudButton>
+            <MudButton OnClick="@ResetSeed"
+                       Variant="@Variant.Outlined"
+                       Disabled="@(!IsSeedDifferentFromSaved)"
+                       StartIcon="@Icons.Material.Filled.Refresh">
+                Reset
+            </MudButton>
+        </MudStack>
 
         <MudText Typo="@Typo.body2">
             <strong>Today's Feebas tiles:</strong>
