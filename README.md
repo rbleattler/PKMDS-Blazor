@@ -42,6 +42,10 @@ Project Pokémon forums thread: https://projectpokemon.org/home/forums/topic/633
 
 PKMDS is working toward 100% feature parity with PKHeX. See the [PKHeX Parity Roadmap](PKHEX_PARITY_ROADMAP.md) for a comprehensive breakdown of planned features and implementation status.
 
+## License
+
+PKMDS-Blazor is licensed under the **GNU General Public License v3.0** — see [LICENSE.md](LICENSE.md) for the full text. This matches the licence of [PKHeX / PKHeX.Core](https://github.com/kwsch/PKHeX), which PKMDS depends on directly.
+
 <details>
   <summary>FAQ</summary>
 
