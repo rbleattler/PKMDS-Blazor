@@ -43,28 +43,15 @@ else
         </MudStack>
 
         <div style="@ContainerStyle">
-            <svg style="@SvgStyle"
-                 width="@mapWidth"
-                 height="@mapHeight"
-                 viewBox="0 0 @mapWidth @mapHeight"
-                 preserveAspectRatio="xMidYMid meet"
-                 xmlns="http://www.w3.org/2000/svg">
-                <image href="@mapUrl"
-                       x="0"
-                       y="0"
-                       width="@mapWidth"
-                       height="@mapHeight"/>
+            <div style="@WrapperStyle">
+                <img src="@mapUrl"
+                     alt="@locationLabel"
+                     style="@ImageStyle"/>
                 @foreach (var marker in markers)
                 {
-                    <rect x="@marker.X"
-                          y="@marker.Y"
-                          width="@marker.Width"
-                          height="@marker.Height"
-                          fill="rgba(244, 67, 54, 0.7)"
-                          stroke="rgba(244, 67, 54, 1)"
-                          stroke-width="1"/>
+                    <div style="@MarkerStyle(marker)"></div>
                 }
-            </svg>
+            </div>
         </div>
     </MudStack>
 }

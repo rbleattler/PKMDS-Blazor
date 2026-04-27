@@ -26,13 +26,34 @@ public partial class FeebasLocatorTab
 
     private void ToggleFitToView() => fitToView = !fitToView;
 
-    private string ContainerStyle => fitToView
-        ? "border: 1px solid var(--mud-palette-lines-default); border-radius: 4px; background: var(--mud-palette-background-grey); padding: 4px;"
-        : "border: 1px solid var(--mud-palette-lines-default); border-radius: 4px; background: var(--mud-palette-background-grey); padding: 4px; height: 80vh; overflow: auto;";
+    private const string ContainerCommon =
+        "border: 1px solid var(--mud-palette-lines-default); " +
+        "border-radius: 4px; " +
+        "background: var(--mud-palette-background-grey); " +
+        "padding: 4px; " +
+        "text-align: center;";
 
-    private string SvgStyle => fitToView
-        ? "display: block; width: auto; height: auto; max-width: 100%; max-height: calc(80vh - 16px); margin: 0 auto; image-rendering: pixelated;"
-        : "display: block; margin: 0 auto; image-rendering: pixelated;";
+    private string ContainerStyle => fitToView
+        ? ContainerCommon
+        : ContainerCommon + " height: 80vh; overflow: auto;";
+
+    private string WrapperStyle => fitToView
+        ? "position: relative; display: inline-block; max-width: 100%;"
+        : $"position: relative; display: inline-block; width: {mapWidth}px; height: {mapHeight}px;";
+
+    private string ImageStyle => fitToView
+        ? "display: block; max-width: 100%; max-height: calc(80vh - 16px); width: auto; height: auto; image-rendering: pixelated;"
+        : "display: block; width: 100%; height: 100%; image-rendering: pixelated;";
+
+    private string MarkerStyle(TileMarker marker)
+    {
+        var leftPct = (double)marker.X / mapWidth * 100;
+        var topPct = (double)marker.Y / mapHeight * 100;
+        var widthPct = (double)marker.Width / mapWidth * 100;
+        var heightPct = (double)marker.Height / mapHeight * 100;
+        return string.Create(CultureInfo.InvariantCulture,
+            $"position: absolute; left: {leftPct:F4}%; top: {topPct:F4}%; width: {widthPct:F4}%; height: {heightPct:F4}%; background: rgba(244, 67, 54, 0.7); border: 1px solid rgba(244, 67, 54, 1); pointer-events: none; box-sizing: border-box;");
+    }
 
     protected override void OnInitialized()
     {
