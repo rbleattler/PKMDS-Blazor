@@ -42,8 +42,8 @@ else
             </MudText>
         </MudStack>
 
-        <div class="feebas-map-container">
-            <svg class="feebas-map @(fitToView ? "fit" : "full")"
+        <div style="@ContainerStyle">
+            <svg style="@SvgStyle"
                  width="@mapWidth"
                  height="@mapHeight"
                  viewBox="0 0 @mapWidth @mapHeight"
@@ -68,26 +68,3 @@ else
         </div>
     </MudStack>
 }
-
-<style>
-    .feebas-map-container {
-        max-height: 80vh;
-        overflow: auto;
-        border: 1px solid var(--mud-palette-lines-default);
-        border-radius: 4px;
-        background: var(--mud-palette-background-grey);
-    }
-
-    .feebas-map {
-        display: block;
-        margin: 0 auto;
-        image-rendering: pixelated;
-    }
-
-    .feebas-map.fit {
-        width: auto !important;
-        height: auto !important;
-        max-width: 100%;
-        max-height: 70vh;
-    }
-</style>

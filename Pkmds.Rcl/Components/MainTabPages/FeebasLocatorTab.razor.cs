@@ -26,6 +26,14 @@ public partial class FeebasLocatorTab
 
     private void ToggleFitToView() => fitToView = !fitToView;
 
+    private string ContainerStyle => fitToView
+        ? "border: 1px solid var(--mud-palette-lines-default); border-radius: 4px; background: var(--mud-palette-background-grey); padding: 4px;"
+        : "border: 1px solid var(--mud-palette-lines-default); border-radius: 4px; background: var(--mud-palette-background-grey); padding: 4px; height: 80vh; overflow: auto;";
+
+    private string SvgStyle => fitToView
+        ? "display: block; width: auto; height: auto; max-width: 100%; max-height: calc(80vh - 16px); margin: 0 auto; image-rendering: pixelated;"
+        : "display: block; margin: 0 auto; image-rendering: pixelated;";
+
     protected override void OnInitialized()
     {
         base.OnInitialized();
