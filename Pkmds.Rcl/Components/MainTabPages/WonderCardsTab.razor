@@ -1,0 +1,85 @@
+@inherits RefreshAwareComponent
+
+<MudStack Class="pa-2"
+          Spacing="3">
+
+    @if (AppState.SaveFile is null)
+    {
+        <MudAlert Severity="@Severity.Info">No save file is loaded.</MudAlert>
+    }
+    else if (!AppService.HasWonderCardSlots())
+    {
+        <MudAlert Severity="@Severity.Info">
+            The loaded save file does not expose Wonder Card / Mystery Gift slots that can be
+            displayed. (Supported: Generation 3 Emerald / FRLG and all Generation 4–7 saves
+            including Let's Go.)
+        </MudAlert>
+    }
+    else
+    {
+        var slots = Slots;
+        var occupiedCount = slots.Count(s => !s.IsEmpty);
+
+        <MudText Typo="@Typo.body2" Color="@Color.Default">
+            Showing @occupiedCount of @slots.Count slot(s) occupied.
+        </MudText>
+
+        <MudTable T="@WonderCardSlotInfo"
+                  Items="@slots"
+                  Dense
+                  Hover
+                  Striped
+                  Bordered
+                  FixedHeader
+                  Height="calc(100dvh - 260px)"
+                  Class="wonder-cards-table">
+            <HeaderContent>
+                <MudTh>#</MudTh>
+                <MudTh>Title</MudTh>
+                <MudTh>Type</MudTh>
+                <MudTh>Card ID</MudTh>
+                <MudTh>Species</MudTh>
+                <MudTh>Received</MudTh>
+                <MudTh>Notes</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="#">@(context.Index + 1)</MudTd>
+                <MudTd DataLabel="Title">
+                    @if (context.IsEmpty)
+                    {
+                        <MudText Typo="@Typo.body2" Color="@Color.Default">@context.Title</MudText>
+                    }
+                    else
+                    {
+                        @context.Title
+                    }
+                </MudTd>
+                <MudTd DataLabel="Type">@context.CardType</MudTd>
+                <MudTd DataLabel="Card ID">
+                    @(context.CardId is { } id ? id.ToString("0000", CultureInfo.InvariantCulture) : "—")
+                </MudTd>
+                <MudTd DataLabel="Species">@SpeciesLabel(context)</MudTd>
+                <MudTd DataLabel="Received">
+                    @switch (context.Received)
+                    {
+                        case true:
+                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle"
+                                     Color="@Color.Success"
+                                     Size="@Size.Small"/>
+                            break;
+                        case false:
+                            <MudIcon Icon="@Icons.Material.Outlined.RadioButtonUnchecked"
+                                     Color="@Color.Default"
+                                     Size="@Size.Small"/>
+                            break;
+                        default:
+                            <span>—</span>
+                            break;
+                    }
+                </MudTd>
+                <MudTd DataLabel="Notes">@(context.ExtraInfo ?? string.Empty)</MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+
+</MudStack>

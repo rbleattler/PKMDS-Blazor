@@ -372,6 +372,97 @@ public class AppServiceTests
         appState.SelectedBoxNumber.Should().BeNull();
     }
 
+    [Fact]
+    public void HasWonderCardSlots_NoSaveLoaded_ReturnsFalse()
+    {
+        var appState = new TestAppState { SaveFile = null };
+        var appService = new AppService(appState, new TestRefreshService(), new LegalizationService());
+
+        appService.HasWonderCardSlots().Should().BeFalse();
+        appService.GetWonderCardSlots().Should().BeEmpty();
+    }
+
+    [Fact]
+    public void HasWonderCardSlots_RubySave_ReturnsFalseBecauseRSLacksWonderCardStorage()
+    {
+        // SAV3RS uses SaveBlock3LargeRS which does NOT implement ISaveBlock3LargeExpansion —
+        // RS has no wonder card slot, so the viewer should hide the tab on Ruby/Sapphire saves.
+        var data = File.ReadAllBytes(Path.Combine(TestFilesPath, "POKEMON RUBY_AXVE-0.sav"));
+        SaveUtil.TryGetSaveFile(data, out var saveFile, "POKEMON RUBY_AXVE-0.sav").Should().BeTrue();
+
+        var appState = new TestAppState { SaveFile = saveFile };
+        var appService = new AppService(appState, new TestRefreshService(), new LegalizationService());
+
+        appService.HasWonderCardSlots().Should().BeFalse();
+        appService.GetWonderCardSlots().Should().BeEmpty();
+    }
+
+    [Fact]
+    public void GetWonderCardSlots_EmeraldWithImportedWC3_ReturnsSinglePopulatedSlot()
+    {
+        // The bundled JPN Emerald save has the Old Sea Map WC3 imported (see PR #810 / issue #423).
+        var data = File.ReadAllBytes(Path.Combine(TestFilesPath, "Pocket Monsters - Emerald (Japan).sav"));
+        SaveUtil.TryGetSaveFile(data, out var saveFile, "Pocket Monsters - Emerald (Japan).sav").Should().BeTrue();
+        saveFile.Should().BeOfType<SAV3E>();
+
+        var appState = new TestAppState { SaveFile = saveFile };
+        var appService = new AppService(appState, new TestRefreshService(), new LegalizationService());
+
+        appService.HasWonderCardSlots().Should().BeTrue();
+
+        var slots = appService.GetWonderCardSlots();
+        slots.Should().HaveCount(1);
+        var slot = slots[0];
+        slot.Index.Should().Be(0);
+        slot.CardType.Should().Be(nameof(WonderCard3));
+        slot.IsEmpty.Should().BeFalse();
+        slot.Title.Should().NotBe("(empty)");
+        slot.Title.Should().NotBeNullOrWhiteSpace();
+        slot.CardId.Should().NotBeNull();
+        // Gen 3 has no IMysteryGiftFlags-style bitmap, so Received is always null here.
+        slot.Received.Should().BeNull();
+    }
+
+    [Fact]
+    public void GetWonderCardSlots_BlackSave_ReturnsTwelveSlotsAllEmpty()
+    {
+        // Black/White's MysteryBlock5 exposes 12 PGF slots via IMysteryGiftStorageProvider.
+        var data = File.ReadAllBytes(Path.Combine(TestFilesPath, "Black - Full Completion.sav"));
+        SaveUtil.TryGetSaveFile(data, out var saveFile, "Black - Full Completion.sav").Should().BeTrue();
+
+        var appState = new TestAppState { SaveFile = saveFile };
+        var appService = new AppService(appState, new TestRefreshService(), new LegalizationService());
+
+        appService.HasWonderCardSlots().Should().BeTrue();
+
+        var slots = appService.GetWonderCardSlots();
+        slots.Should().HaveCount(12);
+        slots.Select(s => s.Index).Should().Equal(Enumerable.Range(0, 12));
+        slots.Should().OnlyContain(s => s.CardType == nameof(PGF));
+        // The bundled save has no imported gifts; every slot should report empty + no Received flag.
+        slots.Should().OnlyContain(s => s.IsEmpty);
+        slots.Should().OnlyContain(s => s.Received == null || s.Received == false);
+    }
+
+    [Fact]
+    public void GetWonderCardSlots_LetsGoSave_ReturnsTenWR7Slots()
+    {
+        // SAV7b stores 10 WR7 records via WB7Records (the storage block is named after WB7 but
+        // actually casts to WR7 — see WB7Records.cs:50).
+        var data = File.ReadAllBytes(Path.Combine(TestFilesPath, "Lets-Go-Pikachu-All-Pokemon.bin"));
+        SaveUtil.TryGetSaveFile(data, out var saveFile, "Lets-Go-Pikachu-All-Pokemon.bin").Should().BeTrue();
+        saveFile.Should().BeOfType<SAV7b>();
+
+        var appState = new TestAppState { SaveFile = saveFile };
+        var appService = new AppService(appState, new TestRefreshService(), new LegalizationService());
+
+        appService.HasWonderCardSlots().Should().BeTrue();
+
+        var slots = appService.GetWonderCardSlots();
+        slots.Should().HaveCount(10);
+        slots.Should().OnlyContain(s => s.CardType == nameof(WR7));
+    }
+
     private class TestAppState : IAppState
     {
         public string CurrentLanguage { get; set; } = "en";

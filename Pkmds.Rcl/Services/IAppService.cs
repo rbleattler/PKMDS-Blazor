@@ -282,6 +282,22 @@ public interface IAppService
     Task ImportMysteryGift(byte[] data, string fileExtension, out bool isSuccessful, out string resultsMessage);
 
     /// <summary>
+    /// Returns <see langword="true" /> if the loaded save file exposes any wonder card /
+    /// mystery gift slots that the in-app viewer can display. Mirrors the support matrix in
+    /// PKHeX WinForms' <c>SAV_Wondercard</c>: Generation 3 Emerald / FRLG, plus all Gen 4–7
+    /// saves that implement <see cref="IMysteryGiftStorageProvider" /> (DP/Pt/HGSS, BW/B2W2,
+    /// XY/ORAS, SM/USUM, LGPE).
+    /// </summary>
+    bool HasWonderCardSlots();
+
+    /// <summary>
+    /// Returns a generation-agnostic snapshot of every wonder card / mystery gift slot in
+    /// the loaded save file (including empty slots, so the viewer can show full storage
+    /// capacity). The list is empty when the save has no wonder card storage.
+    /// </summary>
+    IReadOnlyList<WonderCardSlotInfo> GetWonderCardSlots();
+
+    /// <summary>
     /// Imports a Generation 3 Wonder Card (<c>.wc3</c>) file into the loaded save file.
     /// WC3 files are not <see cref="DataMysteryGift" />-compatible because <see cref="WonderCard3" />
     /// is stored as a raw save-slot struct rather than a generic mystery gift; this method writes
