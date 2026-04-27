@@ -51,6 +51,32 @@ public partial class FeebasLocatorTab
             $"position: absolute; left: {leftPct:F4}%; top: {topPct:F4}%; width: {widthPct:F4}%; height: {heightPct:F4}%; background: rgba(244, 67, 54, 0.7); border: 1px solid rgba(244, 67, 54, 1); pointer-events: none; box-sizing: border-box;");
     }
 
+    private const string BadgeBaseStyle =
+        "display: inline-flex; " +
+        "align-items: center; " +
+        "justify-content: center; " +
+        "width: 22px; " +
+        "height: 22px; " +
+        "border-radius: 50%; " +
+        "background: #ffffff; " +
+        "border: 2px solid #d32f2f; " +
+        "color: #d32f2f; " +
+        "font-size: 12px; " +
+        "font-weight: bold; " +
+        "box-sizing: border-box; " +
+        "line-height: 1; " +
+        "flex-shrink: 0;";
+
+    private const string BadgeListStyle = BadgeBaseStyle + " margin: 0 4px 0 8px; vertical-align: middle;";
+
+    private string MarkerLabelStyle(TileMarker marker)
+    {
+        var centerX = (marker.X + (marker.Width / 2.0)) / mapWidth * 100;
+        var centerY = (marker.Y + (marker.Height / 2.0)) / mapHeight * 100;
+        return string.Create(CultureInfo.InvariantCulture,
+            $"{BadgeBaseStyle} position: absolute; left: {centerX:F4}%; top: {centerY:F4}%; transform: translate(-50%, -50%); pointer-events: none; z-index: 2;");
+    }
+
     protected override void OnInitialized()
     {
         base.OnInitialized();
@@ -115,8 +141,9 @@ public partial class FeebasLocatorTab
 
         if (sav.Generation == 3)
         {
-            foreach (var tile in tiles)
+            for (var idx = 0; idx < tiles.Length; idx++)
             {
+                var tile = tiles[idx];
                 if (Feebas3.IsUnderBridge(tile))
                 {
                     var underBridgeRows = FeebasTileCoordinates.Route119TilesUnderBridge.GetLength(0);
@@ -126,7 +153,9 @@ public partial class FeebasLocatorTab
                             FeebasTileCoordinates.Route119TilesUnderBridge[i, 0],
                             FeebasTileCoordinates.Route119TilesUnderBridge[i, 1],
                             FeebasTileCoordinates.Gen3MarkerSize,
-                            FeebasTileCoordinates.Gen3MarkerSize));
+                            FeebasTileCoordinates.Gen3MarkerSize,
+                            idx,
+                            i == 0));
                     }
                     continue;
                 }
@@ -137,14 +166,17 @@ public partial class FeebasLocatorTab
                         FeebasTileCoordinates.Route119Tiles[tile - 4, 0],
                         FeebasTileCoordinates.Route119Tiles[tile - 4, 1],
                         FeebasTileCoordinates.Gen3MarkerSize,
-                        FeebasTileCoordinates.Gen3MarkerSize));
+                        FeebasTileCoordinates.Gen3MarkerSize,
+                        idx,
+                        true));
                 }
             }
         }
         else
         {
-            foreach (var tile in tiles)
+            for (var idx = 0; idx < tiles.Length; idx++)
             {
+                var tile = tiles[idx];
                 if (tile >= FeebasTileCoordinates.MtCoronetTiles.GetLength(0))
                 {
                     continue;
@@ -154,12 +186,14 @@ public partial class FeebasLocatorTab
                     FeebasTileCoordinates.MtCoronetTiles[tile, 0],
                     FeebasTileCoordinates.MtCoronetTiles[tile, 1],
                     FeebasTileCoordinates.Gen4MarkerWidth,
-                    FeebasTileCoordinates.Gen4MarkerHeight));
+                    FeebasTileCoordinates.Gen4MarkerHeight,
+                    idx,
+                    true));
             }
         }
 
         return result;
     }
 
-    private readonly record struct TileMarker(int X, int Y, int Width, int Height);
+    private readonly record struct TileMarker(int X, int Y, int Width, int Height, int Index, bool ShowLabel);
 }

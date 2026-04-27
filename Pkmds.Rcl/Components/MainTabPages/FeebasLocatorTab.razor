@@ -19,7 +19,12 @@ else
         </MudText>
 
         <MudText Typo="@Typo.body2">
-            <strong>Today's Feebas tiles:</strong> @string.Join(", ", tiles)
+            <strong>Today's Feebas tiles:</strong>
+            @for (var i = 0; i < tiles.Length; i++)
+            {
+                <span style="@BadgeListStyle">@(i + 1)</span>
+                <span>@tiles[i]</span>
+            }
         </MudText>
 
         <MudAlert Severity="@Severity.Info"
@@ -50,6 +55,10 @@ else
                 @foreach (var marker in markers)
                 {
                     <div style="@MarkerStyle(marker)"></div>
+                    @if (marker.ShowLabel)
+                    {
+                        <div style="@MarkerLabelStyle(marker)">@(marker.Index + 1)</div>
+                    }
                 }
             </div>
         </div>
