@@ -836,6 +836,11 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
     public bool HasWonderCardSlots() => AppState.SaveFile switch
     {
         SAV3 sav => sav.LargeBlock is ISaveBlock3LargeExpansion,
+        // Intentionally probes the interface rather than hardcoding SAV4..SAV7b: in PKHeX 26.4.11
+        // only those generations implement IMysteryGiftStorageProvider (SAV8 / SAV9 deliberately
+        // do not — BDSP's MysteryBlock8b is a separate received-gift history block, tracked in
+        // #813). If upstream ever extends the interface to a future generation, this picks it up
+        // automatically rather than silently ignoring the new save format.
         IMysteryGiftStorageProvider => true,
         _ => false,
     };
@@ -890,7 +895,13 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
                     Species = null,
                     IsEmpty = isEmpty,
                     Received = null,
-                    ExtraInfo = isEmpty ? null : extra,
+                    // Surface the script-present note even for empty card slots: a Mystery Event
+                    // script can legitimately exist on its own (e.g. the user cleared the card
+                    // but the script remains from a prior import). Suppress only the link-card
+                    // sub-text when the card itself is empty, since "Type" comes from the card.
+                    ExtraInfo = isEmpty
+                        ? scriptPresent ? "Mystery Event script present" : null
+                        : extra,
                 },
             ];
         }
