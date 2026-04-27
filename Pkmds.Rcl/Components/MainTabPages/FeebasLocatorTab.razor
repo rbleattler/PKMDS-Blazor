@@ -15,35 +15,33 @@ else
         </MudText>
 
         <MudText Typo="@Typo.body2">
-            <strong>Seed:</strong> 0x@seedHex
+            <strong>Seed:</strong> @($"0x{seedHex}")
         </MudText>
 
         <MudText Typo="@Typo.body2">
             <strong>Today's Feebas tiles:</strong> @string.Join(", ", tiles)
         </MudText>
 
-        <div class="feebas-map-scroll">
-            <svg class="feebas-map"
-                 viewBox="0 0 @mapWidth @mapHeight"
-                 preserveAspectRatio="xMidYMid meet"
-                 xmlns="http://www.w3.org/2000/svg">
-                <image href="@mapUrl"
-                       x="0"
-                       y="0"
-                       width="@mapWidth"
-                       height="@mapHeight"/>
-                @foreach (var marker in markers)
-                {
-                    <rect x="@marker.X"
-                          y="@marker.Y"
-                          width="@marker.Width"
-                          height="@marker.Height"
-                          fill="rgba(244, 67, 54, 0.7)"
-                          stroke="rgba(244, 67, 54, 1)"
-                          stroke-width="1"/>
-                }
-            </svg>
-        </div>
+        <svg class="feebas-map"
+             viewBox="0 0 @mapWidth @mapHeight"
+             preserveAspectRatio="xMidYMid meet"
+             xmlns="http://www.w3.org/2000/svg">
+            <image href="@mapUrl"
+                   x="0"
+                   y="0"
+                   width="@mapWidth"
+                   height="@mapHeight"/>
+            @foreach (var marker in markers)
+            {
+                <rect x="@marker.X"
+                      y="@marker.Y"
+                      width="@marker.Width"
+                      height="@marker.Height"
+                      fill="rgba(244, 67, 54, 0.7)"
+                      stroke="rgba(244, 67, 54, 1)"
+                      stroke-width="1"/>
+            }
+        </svg>
 
         <MudAlert Severity="@Severity.Info"
                   Variant="@Variant.Outlined">
@@ -53,18 +51,16 @@ else
 }
 
 <style>
-    .feebas-map-scroll {
+    .feebas-map {
+        display: block;
+        width: auto;
+        height: auto;
+        max-width: 100%;
         max-height: 70vh;
-        overflow: auto;
+        margin: 0 auto;
         border: 1px solid var(--mud-palette-lines-default);
         border-radius: 4px;
         background: var(--mud-palette-background-grey);
-    }
-
-    .feebas-map {
-        display: block;
-        max-width: 100%;
-        height: auto;
         image-rendering: pixelated;
     }
 </style>
