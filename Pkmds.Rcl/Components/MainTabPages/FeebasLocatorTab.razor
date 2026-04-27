@@ -22,45 +22,72 @@ else
             <strong>Today's Feebas tiles:</strong> @string.Join(", ", tiles)
         </MudText>
 
-        <svg class="feebas-map"
-             viewBox="0 0 @mapWidth @mapHeight"
-             preserveAspectRatio="xMidYMid meet"
-             xmlns="http://www.w3.org/2000/svg">
-            <image href="@mapUrl"
-                   x="0"
-                   y="0"
-                   width="@mapWidth"
-                   height="@mapHeight"/>
-            @foreach (var marker in markers)
-            {
-                <rect x="@marker.X"
-                      y="@marker.Y"
-                      width="@marker.Width"
-                      height="@marker.Height"
-                      fill="rgba(244, 67, 54, 0.7)"
-                      stroke="rgba(244, 67, 54, 1)"
-                      stroke-width="1"/>
-            }
-        </svg>
-
         <MudAlert Severity="@Severity.Info"
                   Variant="@Variant.Outlined">
             The seed rotates daily in-game. The highlighted cells are the river/lake tiles that yield Feebas while the current seed is active.
         </MudAlert>
+
+        <MudStack Row
+                  AlignItems="@AlignItems.Center"
+                  Spacing="2">
+            <MudButton OnClick="@ToggleFitToView"
+                       Variant="@Variant.Outlined"
+                       Color="@Color.Primary"
+                       StartIcon="@(fitToView ? Icons.Material.Filled.ZoomIn : Icons.Material.Filled.ZoomOutMap)">
+                @(fitToView ? "Show full size" : "Fit to view")
+            </MudButton>
+            <MudText Typo="@Typo.caption"
+                     Color="@Color.Default">
+                @(fitToView ? $"Scaled to fit ({mapWidth} × {mapHeight} native)" : $"Native size: {mapWidth} × {mapHeight}")
+            </MudText>
+        </MudStack>
+
+        <div class="feebas-map-container">
+            <svg class="feebas-map @(fitToView ? "fit" : "full")"
+                 width="@mapWidth"
+                 height="@mapHeight"
+                 viewBox="0 0 @mapWidth @mapHeight"
+                 preserveAspectRatio="xMidYMid meet"
+                 xmlns="http://www.w3.org/2000/svg">
+                <image href="@mapUrl"
+                       x="0"
+                       y="0"
+                       width="@mapWidth"
+                       height="@mapHeight"/>
+                @foreach (var marker in markers)
+                {
+                    <rect x="@marker.X"
+                          y="@marker.Y"
+                          width="@marker.Width"
+                          height="@marker.Height"
+                          fill="rgba(244, 67, 54, 0.7)"
+                          stroke="rgba(244, 67, 54, 1)"
+                          stroke-width="1"/>
+                }
+            </svg>
+        </div>
     </MudStack>
 }
 
 <style>
-    .feebas-map {
-        display: block;
-        width: auto;
-        height: auto;
-        max-width: 100%;
-        max-height: 70vh;
-        margin: 0 auto;
+    .feebas-map-container {
+        max-height: 80vh;
+        overflow: auto;
         border: 1px solid var(--mud-palette-lines-default);
         border-radius: 4px;
         background: var(--mud-palette-background-grey);
+    }
+
+    .feebas-map {
+        display: block;
+        margin: 0 auto;
         image-rendering: pixelated;
+    }
+
+    .feebas-map.fit {
+        width: auto !important;
+        height: auto !important;
+        max-width: 100%;
+        max-height: 70vh;
     }
 </style>

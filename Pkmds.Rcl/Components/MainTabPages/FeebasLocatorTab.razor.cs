@@ -22,6 +22,9 @@ public partial class FeebasLocatorTab
     private int mapWidth;
     private int mapHeight;
     private List<TileMarker> markers = [];
+    private bool fitToView = true;
+
+    private void ToggleFitToView() => fitToView = !fitToView;
 
     protected override void OnInitialized()
     {
