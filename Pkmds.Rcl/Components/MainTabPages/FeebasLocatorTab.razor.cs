@@ -26,23 +26,19 @@ public partial class FeebasLocatorTab
 
     private void ToggleFitToView() => fitToView = !fitToView;
 
-    private const string ContainerCommon =
+    private const string ContainerStyle =
         "border: 1px solid var(--mud-palette-lines-default); " +
         "border-radius: 4px; " +
         "background: var(--mud-palette-background-grey); " +
         "padding: 4px; " +
         "text-align: center;";
 
-    private string ContainerStyle => fitToView
-        ? ContainerCommon
-        : ContainerCommon + " height: 80vh; overflow: auto;";
-
     private string WrapperStyle => fitToView
-        ? "position: relative; display: inline-block; max-width: 100%;"
+        ? "position: relative; display: inline-block;"
         : $"position: relative; display: inline-block; width: {mapWidth}px; height: {mapHeight}px;";
 
     private string ImageStyle => fitToView
-        ? "display: block; max-width: 100%; max-height: calc(80vh - 16px); width: auto; height: auto; image-rendering: pixelated;"
+        ? "display: block; max-width: 100%; max-height: 50vh; width: auto; height: auto; image-rendering: pixelated;"
         : "display: block; width: 100%; height: 100%; image-rendering: pixelated;";
 
     private string MarkerStyle(TileMarker marker)
