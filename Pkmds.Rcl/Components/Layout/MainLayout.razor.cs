@@ -816,6 +816,10 @@ public partial class MainLayout : IDisposable
                 {
                     Logger.LogInformation("WC3 Wonder Card imported successfully: {Message}", wc3ImportMessage);
                     Snackbar.Add(wc3ImportMessage, Severity.Success);
+                    // Notify subscribers (e.g. the Wonder Cards tab) that save state changed —
+                    // otherwise the viewer keeps rendering the pre-import slot until the user
+                    // navigates away and back.
+                    RefreshService.Refresh();
                 }
                 else
                 {
@@ -842,6 +846,8 @@ public partial class MainLayout : IDisposable
             {
                 Logger.LogInformation("Mystery Gift card imported to album successfully");
                 Snackbar.Add("Mystery Gift card added to Wonder Cards album.", Severity.Success);
+                // Notify subscribers (e.g. the Wonder Cards tab) that save state changed.
+                RefreshService.Refresh();
             }
             else
             {

@@ -833,6 +833,127 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
         }
     }
 
+    public bool HasWonderCardSlots() => AppState.SaveFile switch
+    {
+        SAV3 sav => sav.LargeBlock is ISaveBlock3LargeExpansion,
+        // Intentionally probes the interface rather than hardcoding SAV4..SAV7b: in PKHeX 26.4.11
+        // only those generations implement IMysteryGiftStorageProvider (SAV8 / SAV9 deliberately
+        // do not — BDSP's MysteryBlock8b is a separate received-gift history block, tracked in
+        // #813). If upstream ever extends the interface to a future generation, this picks it up
+        // automatically rather than silently ignoring the new save format.
+        IMysteryGiftStorageProvider => true,
+        _ => false,
+    };
+
+    public IReadOnlyList<WonderCardSlotInfo> GetWonderCardSlots()
+    {
+        if (AppState.SaveFile is not { } saveFile)
+        {
+            return [];
+        }
+
+        if (saveFile is SAV3 sav3 && sav3.LargeBlock is ISaveBlock3LargeExpansion expansion)
+        {
+            return BuildGen3Slots(sav3, expansion);
+        }
+
+        if (saveFile is IMysteryGiftStorageProvider provider)
+        {
+            return BuildModernSlots(saveFile, provider);
+        }
+
+        return [];
+
+        static IReadOnlyList<WonderCardSlotInfo> BuildGen3Slots(SAV3 sav, ISaveBlock3LargeExpansion expansion)
+        {
+            var card = expansion.GetWonderCard(sav.Japanese);
+            // The wonder card slot is initialised to 0xFF / 0x00 padding on a fresh save.
+            // Treat any slot whose card body has no real bytes set as empty (mirrors WC3Plugin's
+            // HasWC3 check). CardID == 0 alone is not enough — some valid cards have ID 0.
+            var isEmpty = !card.Data.ContainsAnyExcept<byte>(0, 0xFF);
+            var title = card.Title.Replace('　', ' ').Trim();
+
+            // The Mystery Event script lives in a separate slot; surface its presence as an
+            // info note so users can confirm the script was written alongside the card.
+            var scriptPresent = expansion.MysteryData.Data.ContainsAnyExcept<byte>(0, 0xFF);
+            string? extra = (card.Type, scriptPresent) switch
+            {
+                (2, true) => "Link card; Mystery Event script present",
+                (2, false) => "Link card",
+                (_, true) => "Mystery Event script present",
+                _ => null,
+            };
+
+            return
+            [
+                new WonderCardSlotInfo
+                {
+                    Index = 0,
+                    Title = isEmpty ? "(empty)" : (string.IsNullOrEmpty(title) ? "(no title)" : title),
+                    CardType = nameof(WonderCard3),
+                    CardId = isEmpty ? null : card.CardID,
+                    Species = null,
+                    IsEmpty = isEmpty,
+                    Received = null,
+                    // Surface the script-present note even for empty card slots: a Mystery Event
+                    // script can legitimately exist on its own (e.g. the user cleared the card
+                    // but the script remains from a prior import). Suppress only the link-card
+                    // sub-text when the card itself is empty, since "Type" comes from the card.
+                    ExtraInfo = isEmpty
+                        ? scriptPresent ? "Mystery Event script present" : null
+                        : extra,
+                },
+            ];
+        }
+
+        static IReadOnlyList<WonderCardSlotInfo> BuildModernSlots(SaveFile saveFile, IMysteryGiftStorageProvider provider)
+        {
+            var storage = provider.MysteryGiftStorage;
+            var flags = storage as IMysteryGiftFlags;
+            var count = storage.GiftCountMax;
+            var includeLockCapsule = saveFile is SAV4HGSS;
+            var slots = new List<WonderCardSlotInfo>(count + (includeLockCapsule ? 1 : 0));
+
+            for (var i = 0; i < count; i++)
+            {
+                slots.Add(BuildModernSlot(storage.GetMysteryGift(i), i, flags, extra: null));
+            }
+
+            if (includeLockCapsule && saveFile is SAV4HGSS hgss)
+            {
+                slots.Add(BuildModernSlot(hgss.LockCapsuleSlot, count, flags, extra: "Lock Capsule"));
+            }
+
+            return slots;
+        }
+
+        static WonderCardSlotInfo BuildModernSlot(DataMysteryGift gift, int index, IMysteryGiftFlags? flags, string? extra)
+        {
+            var isEmpty = gift.IsEmpty;
+            var title = isEmpty ? "(empty)" : gift.CardTitle.Replace('　', ' ').Trim();
+            ushort? species = isEmpty || !gift.IsEntity ? null : gift.Species;
+            var cardId = isEmpty ? (int?)null : gift.CardID;
+
+            bool? received = null;
+            if (!isEmpty && flags is not null && cardId is { } id && (uint)id < flags.MysteryGiftReceivedFlagMax)
+            {
+                received = flags.GetMysteryGiftReceivedFlag(id);
+            }
+
+            return new WonderCardSlotInfo
+            {
+                Index = index,
+                Title = string.IsNullOrEmpty(title) ? (isEmpty ? "(empty)" : "(no title)") : title,
+                CardType = gift.GetType().Name,
+                CardId = cardId,
+                Species = species,
+                IsEmpty = isEmpty,
+                Received = received,
+                ExtraInfo = extra,
+            };
+        }
+    }
+
     public void MovePokemon(int? sourceBoxNumber, int sourceSlotNumber, bool isSourceParty,
         int? destBoxNumber, int destSlotNumber, bool isDestParty)
     {
