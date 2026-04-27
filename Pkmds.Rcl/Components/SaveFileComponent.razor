@@ -76,6 +76,15 @@ else
             </MudTabPanel>
         }
 
+        @if (saveFile is SAV3RS or SAV3E or SAV4Sinnoh or SAV8BS)
+        {
+            <MudTabPanel Text="Feebas">
+                <div class="mt-3">
+                    <FeebasLocatorTab/>
+                </div>
+            </MudTabPanel>
+        }
+
         @if (saveFile.HasPokeDex)
         {
             <MudTabPanel Text="Pokédex">

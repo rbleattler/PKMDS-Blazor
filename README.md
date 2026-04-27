@@ -46,6 +46,10 @@ PKMDS is working toward 100% feature parity with PKHeX. See the [PKHeX Parity Ro
 
 PKMDS-Blazor is licensed under the **GNU General Public License v3.0** — see [LICENSE.md](LICENSE.md) for the full text. This matches the licence of [PKHeX / PKHeX.Core](https://github.com/kwsch/PKHeX), which PKMDS depends on directly.
 
+## Credits & third-party attributions
+
+PKMDS-Blazor builds on work from PKHeX, the PKHeX plugin community, PokeAPI, Pokémon Showdown, Bulbapedia, pokemondb.net, and others. See [NOTICE.md](NOTICE.md) for the full list of third-party code, assets, and data sources we depend on or have adapted, along with their licenses.
+
 <details>
   <summary>FAQ</summary>
 

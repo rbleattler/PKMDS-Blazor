@@ -1,0 +1,70 @@
+@inherits RefreshAwareComponent
+
+@if (saveFile is null || tiles is null)
+{
+    <MudAlert Severity="@Severity.Info"
+              Variant="@Variant.Outlined">
+        Feebas locator is only available for Ruby/Sapphire, Emerald, Diamond/Pearl/Platinum, and Brilliant Diamond / Shining Pearl.
+    </MudAlert>
+}
+else
+{
+    <MudStack Spacing="3">
+        <MudText Typo="@Typo.h5">
+            @locationLabel
+        </MudText>
+
+        <MudText Typo="@Typo.body2">
+            <strong>Seed:</strong> 0x@seedHex
+        </MudText>
+
+        <MudText Typo="@Typo.body2">
+            <strong>Today's Feebas tiles:</strong> @string.Join(", ", tiles)
+        </MudText>
+
+        <div class="feebas-map-scroll">
+            <svg class="feebas-map"
+                 viewBox="0 0 @mapWidth @mapHeight"
+                 preserveAspectRatio="xMidYMid meet"
+                 xmlns="http://www.w3.org/2000/svg">
+                <image href="@mapUrl"
+                       x="0"
+                       y="0"
+                       width="@mapWidth"
+                       height="@mapHeight"/>
+                @foreach (var marker in markers)
+                {
+                    <rect x="@marker.X"
+                          y="@marker.Y"
+                          width="@marker.Width"
+                          height="@marker.Height"
+                          fill="rgba(244, 67, 54, 0.7)"
+                          stroke="rgba(244, 67, 54, 1)"
+                          stroke-width="1"/>
+                }
+            </svg>
+        </div>
+
+        <MudAlert Severity="@Severity.Info"
+                  Variant="@Variant.Outlined">
+            The seed rotates daily in-game. The highlighted cells are the river/lake tiles that yield Feebas while the current seed is active.
+        </MudAlert>
+    </MudStack>
+}
+
+<style>
+    .feebas-map-scroll {
+        max-height: 70vh;
+        overflow: auto;
+        border: 1px solid var(--mud-palette-lines-default);
+        border-radius: 4px;
+        background: var(--mud-palette-background-grey);
+    }
+
+    .feebas-map {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        image-rendering: pixelated;
+    }
+</style>
