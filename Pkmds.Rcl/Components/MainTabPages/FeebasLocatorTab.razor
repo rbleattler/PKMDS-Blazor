@@ -1,0 +1,112 @@
+@inherits RefreshAwareComponent
+
+@if (saveFile is null || tiles is null)
+{
+    <MudAlert Severity="@Severity.Info"
+              Variant="@Variant.Outlined">
+        Feebas locator is only available for Ruby/Sapphire, Emerald, Diamond/Pearl/Platinum, and Brilliant Diamond / Shining Pearl.
+    </MudAlert>
+}
+else
+{
+    <MudStack Spacing="3">
+        <MudText Typo="@Typo.h5">
+            @locationLabel
+        </MudText>
+
+        <MudAlert Severity="@Severity.Warning"
+                  Variant="@Variant.Outlined"
+                  Icon="@Icons.Material.Filled.Warning">
+            Editing the seed changes which tiles yield Feebas in-game. Save a backup from the <strong>Backups</strong> menu before applying changes.
+        </MudAlert>
+
+        <MudStack Row
+                  AlignItems="@AlignItems.Center"
+                  Spacing="2"
+                  Wrap="@Wrap.Wrap">
+            <MudTextField T="@string"
+                          @bind-Value="@editedSeedHex"
+                          @bind-Value:after="@OnSeedInputChanged"
+                          Label="Seed"
+                          Adornment="@Adornment.Start"
+                          AdornmentText="0x"
+                          MaxLength="@seedMaxLength"
+                          Variant="@Variant.Outlined"
+                          Margin="@Margin.Dense"
+                          Style="max-width: 200px;"/>
+            <MudButton OnClick="@RandomizeSeed"
+                       Variant="@Variant.Outlined"
+                       StartIcon="@Icons.Material.Filled.Casino">
+                Randomize
+            </MudButton>
+            <MudButton OnClick="@ApplySeed"
+                       Variant="@Variant.Filled"
+                       Color="@Color.Primary"
+                       Disabled="@(!CanApplySeed)"
+                       StartIcon="@Icons.Material.Filled.Save">
+                Apply
+            </MudButton>
+            <MudButton OnClick="@ResetSeed"
+                       Variant="@Variant.Outlined"
+                       Disabled="@(!IsSeedDifferentFromSaved)"
+                       StartIcon="@Icons.Material.Filled.Refresh">
+                Reset
+            </MudButton>
+        </MudStack>
+
+        <MudText Typo="@Typo.body2">
+            <strong>Today's Feebas tiles:</strong>
+            @for (var i = 0; i < tiles.Length; i++)
+            {
+                <span style="@BadgeListStyle">@(i + 1)</span>
+                <span>@tiles[i]</span>
+            }
+        </MudText>
+
+        <MudAlert Severity="@Severity.Info"
+                  Variant="@Variant.Outlined">
+            The seed rotates daily in-game. The highlighted cells are the river/lake tiles that yield Feebas while the current seed is active.
+        </MudAlert>
+
+        <MudStack Row
+                  AlignItems="@AlignItems.Center"
+                  Spacing="2"
+                  Wrap="@Wrap.Wrap">
+            <MudButton OnClick="@ToggleFitToView"
+                       Variant="@Variant.Outlined"
+                       Color="@Color.Primary"
+                       StartIcon="@(fitToView ? Icons.Material.Filled.ZoomIn : Icons.Material.Filled.ZoomOutMap)">
+                @(fitToView ? "Show full size" : "Fit to view")
+            </MudButton>
+            <MudButton OnClick="@ToggleShowNumbers"
+                       Variant="@Variant.Outlined"
+                       Color="@Color.Primary"
+                       StartIcon="@(showNumbers ? Icons.Material.Filled.CheckBoxOutlineBlank : Icons.Material.Filled.LooksOne)">
+                @(showNumbers ? "Show squares" : "Show numbers")
+            </MudButton>
+            <MudText Typo="@Typo.caption"
+                     Color="@Color.Default">
+                @(fitToView ? $"Scaled to fit ({mapWidth} × {mapHeight} native)" : $"Native size: {mapWidth} × {mapHeight}")
+            </MudText>
+        </MudStack>
+
+        <div style="@ContainerStyle">
+            <div style="@WrapperStyle">
+                <img src="@mapUrl"
+                     alt="@locationLabel"
+                     style="@ImageStyle"/>
+                @foreach (var marker in markers)
+                {
+                    @if (showNumbers && marker.ShowLabel)
+                    {
+                        <div style="@MarkerLabelStyle(marker)">@(marker.Index + 1)</div>
+                    }
+                    else
+                    {
+                        <div style="@MarkerStyle(marker)"></div>
+                    }
+                }
+            </div>
+        </div>
+    </MudStack>
+}
