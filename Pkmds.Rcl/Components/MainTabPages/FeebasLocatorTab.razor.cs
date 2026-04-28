@@ -94,12 +94,15 @@ public partial class FeebasLocatorTab
         OnSeedInputChanged();
     }
 
-    private const string ContainerStyle =
+    private const string BaseContainerStyle =
         "border: 1px solid var(--mud-palette-lines-default); " +
         "border-radius: 4px; " +
         "background: var(--mud-palette-background-grey); " +
-        "padding: 4px; " +
-        "text-align: center;";
+        "padding: 4px;";
+
+    private string ContainerStyle => fitToView
+        ? $"{BaseContainerStyle} text-align: center;"
+        : $"{BaseContainerStyle} overflow-x: auto; max-width: 100%;";
 
     private string WrapperStyle => fitToView
         ? "position: relative; display: inline-block;"
