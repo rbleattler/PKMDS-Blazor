@@ -18,7 +18,7 @@ public record AppState : IAppState
         {
             field = value;
             // Re-initialize localized strings when language changes
-            LocalizeUtil.InitializeStrings(CurrentLanguage, SaveFile);
+            LocalizeUtil.InitializeStrings(CurrentLanguage, SaveFile, IsHaXEnabled);
         }
     } = GameLanguage.DefaultLanguage;
 
@@ -30,7 +30,7 @@ public record AppState : IAppState
         {
             field = value;
             // Re-initialize localized strings when save file changes
-            LocalizeUtil.InitializeStrings(CurrentLanguage, SaveFile);
+            LocalizeUtil.InitializeStrings(CurrentLanguage, SaveFile, IsHaXEnabled);
 
             // Create BoxEdit helper for the new save file
             BoxEdit = SaveFile is not null
@@ -128,7 +128,25 @@ public record AppState : IAppState
     public DateTime? AppBuildDate => Assembly.GetAssembly(typeof(Program))?.GetName().Version?.ToDateTime();
 
     /// <inheritdoc />
-    public bool IsHaXEnabled { get; set; }
+    public bool IsHaXEnabled
+    {
+        get;
+        set
+        {
+            if (field == value)
+            {
+                return;
+            }
+
+            field = value;
+            // FilteredSources.{Moves,Relearn,Species,Items} switch between
+            // legal-filtered and HaX-permissive variants based on this flag;
+            // rebuild so dropdowns reflect the new mode without a reload.
+            // Safe when SaveFile is null — InitializeStrings skips the
+            // FilteredSources rebuild in that case.
+            LocalizeUtil.InitializeStrings(CurrentLanguage, SaveFile, IsHaXEnabled);
+        }
+    }
 
     /// <inheritdoc />
     public SpriteStyle SpriteStyle { get; set; }
