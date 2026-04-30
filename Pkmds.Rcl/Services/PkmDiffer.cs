@@ -355,17 +355,59 @@ public static class PkmDiffer
                 a.OriginalTrainerFriendship.ToString(CultureInfo.InvariantCulture)));
         }
 
-        var beforeMarkings = GetPackedMarkings(b);
-        var afterMarkings = GetPackedMarkings(a);
-        if (beforeMarkings != afterMarkings)
-        {
-            changes.Add(new LegalizationChange(
-                LegalizationChangeCategory.Cosmetic, "Markings",
-                beforeMarkings.ToString("X", CultureInfo.InvariantCulture),
-                afterMarkings.ToString("X", CultureInfo.InvariantCulture)));
-        }
-
+        AddMarkingDiff(b, a, changes);
         AddRibbonDelta(b, a, changes);
+    }
+
+    /// <summary>
+    /// Names for marking slots 0–5 (Circle, Triangle, Square, Heart, Star, Diamond).
+    /// Slot order is the same in every generation that uses <see cref="IAppliedMarkings3" />,
+    /// <see cref="IAppliedMarkings4" />, or <see cref="IAppliedMarkings7" />.
+    /// </summary>
+    private static readonly string[] MarkingSlotNames =
+        ["Circle", "Triangle", "Square", "Heart", "Star", "Diamond"];
+
+    private static void AddMarkingDiff(PKM b, PKM a, List<LegalizationChange> changes)
+    {
+        // Two flavours: Gen 7+ uses MarkingColor (None/Blue/Pink) per slot via
+        // IAppliedMarkings<MarkingColor>; Gen 3-6 uses bool per slot via
+        // IAppliedMarkings<bool>. Diff each slot individually so the dialog reads
+        // "Marking (Triangle): None → Blue" instead of opaque packed-byte hex.
+        if (b is IAppliedMarkings<MarkingColor> bColors && a is IAppliedMarkings<MarkingColor> aColors)
+        {
+            DiffMarkingSlots(bColors, aColors, changes,
+                v => v == MarkingColor.None ? "None" : v.ToString());
+        }
+        else if (b is IAppliedMarkings<bool> bBools && a is IAppliedMarkings<bool> aBools)
+        {
+            DiffMarkingSlots(bBools, aBools, changes,
+                v => v ? "Set" : "Unset");
+        }
+    }
+
+    private static void DiffMarkingSlots<T>(
+        IAppliedMarkings<T> before,
+        IAppliedMarkings<T> after,
+        List<LegalizationChange> changes,
+        Func<T, string> format)
+        where T : unmanaged
+    {
+        var slots = Math.Min(before.MarkingCount, MarkingSlotNames.Length);
+        for (var i = 0; i < slots; i++)
+        {
+            var bv = before.GetMarking(i);
+            var av = after.GetMarking(i);
+            if (EqualityComparer<T>.Default.Equals(bv, av))
+            {
+                continue;
+            }
+
+            changes.Add(new LegalizationChange(
+                LegalizationChangeCategory.Cosmetic,
+                $"Marking ({MarkingSlotNames[i]})",
+                format(bv),
+                format(av)));
+        }
     }
 
     private static void AddRibbonDelta(PKM b, PKM a, List<LegalizationChange> changes)
@@ -526,12 +568,5 @@ public static class PkmDiffer
         2 => "2 (secondary)",
         4 => "Hidden",
         _ => abilityNumber.ToString(CultureInfo.InvariantCulture)
-    };
-
-    private static int GetPackedMarkings(PKM pk) => pk switch
-    {
-        IAppliedMarkings7 m7 => m7.MarkingValue,
-        IAppliedMarkings3 m3 => m3.MarkingValue,
-        _ => 0
     };
 }

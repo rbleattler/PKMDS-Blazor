@@ -114,6 +114,40 @@ public class PkmDifferTests
     }
 
     [Fact]
+    public void Diff_Markings_DecodedPerSlot_ForGen7Plus()
+    {
+        // Gen 7+ stores 2-bit MarkingColor per slot. The diff should report each slot
+        // by name (Circle, Triangle, …) with human-readable colour, not packed hex.
+        var before = new PK9 { MarkingTriangle = MarkingColor.Blue };
+        var after = before.Clone();
+        after.MarkingCircle = MarkingColor.Pink;
+        after.MarkingDiamond = MarkingColor.Blue;
+
+        var result = PkmDiffer.Diff(before, after);
+
+        var markingChanges = result.Changes
+            .Where(c => c.FieldLabel.StartsWith("Marking ", StringComparison.Ordinal))
+            .ToList();
+        markingChanges.Should().HaveCount(2);
+        markingChanges.Should().Contain(c => c.FieldLabel == "Marking (Circle)" && c.OldValue == "None" && c.NewValue == "Pink");
+        markingChanges.Should().Contain(c => c.FieldLabel == "Marking (Diamond)" && c.OldValue == "None" && c.NewValue == "Blue");
+    }
+
+    [Fact]
+    public void Diff_Markings_DecodedPerSlot_ForGen3Through6()
+    {
+        // Gen 3-6 stores a bool per slot. Format should be Set/Unset, not raw bools.
+        var before = new PK4();
+        var after = before.Clone();
+        after.MarkingHeart = true;
+
+        var result = PkmDiffer.Diff(before, after);
+
+        result.Changes.Should().ContainSingle(c => c.FieldLabel == "Marking (Heart)")
+            .Which.Should().Match<LegalizationChange>(c => c.OldValue == "Unset" && c.NewValue == "Set");
+    }
+
+    [Fact]
     public void Diff_PidAndEncryptionConstant_ReportedAsInternal()
     {
         var before = new PK9 { PID = 0x11111111, EncryptionConstant = 0x22222222 };
