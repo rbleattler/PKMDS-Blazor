@@ -11,6 +11,12 @@ public partial class LegalityReportTab : RefreshAwareComponent
     private CancellationTokenSource? legalizeCts;
     private LegalityStatus? statusFilter;
 
+    // Field-level diffs collected during the most recent batch legalize, keyed by
+    // (Box, Slot) for box entries and (-1, partySlot) for party entries. Only the
+    // rows that flipped to Legal get an entry — everything else stays absent so
+    // the row's "View changes" affordance can hide cleanly.
+    private readonly Dictionary<(int Box, int Slot), LegalizationChanges> changesByLocation = [];
+
     /// <summary>
     /// Callback invoked after a row is clicked to jump to the Party / Box tab.
     /// </summary>
@@ -48,6 +54,9 @@ public partial class LegalityReportTab : RefreshAwareComponent
         legalizeCts?.Dispose();
         legalizeCts = new CancellationTokenSource();
         var ct = legalizeCts.Token;
+
+        // Drop any diffs from a prior run — they don't apply once we re-legalize.
+        changesByLocation.Clear();
 
         isLegalizing = true;
         legalizationPercent = 0;
@@ -161,6 +170,24 @@ public partial class LegalityReportTab : RefreshAwareComponent
             {
                 case LegalityStatus.Legal:
                     successCount++;
+                    // Recompute the diff against the bytes actually stored in the save
+                    // rather than reusing result.Changes (which was diffed against the
+                    // in-memory result.Pokemon before SetBoxSlot/SetPartySlot ran). The
+                    // EntityImportSettings.None write path can still serialize/deserialize
+                    // and trim trailing fields, so the row's "View changes" must reflect
+                    // what the user will see if they re-scan.
+                    var storedChanges = PkmDiffer.Diff(entry.Pokemon, storedPk);
+                    if (!storedChanges.IsEmpty)
+                    {
+                        // Index by the row's location, not the entry instance, because the
+                        // entry was replaced above with a new record and any future re-scan
+                        // will rebuild new instances entirely.
+                        var key = entry.IsParty
+                            ? (-1, entry.SlotNumber)
+                            : (entry.BoxNumber, entry.SlotNumber);
+                        changesByLocation[key] = storedChanges;
+                    }
+
                     break;
                 case LegalityStatus.Fishy:
                     // Valid PKHeX-wise but still flagged Fishy — count separately so the
@@ -270,6 +297,9 @@ public partial class LegalityReportTab : RefreshAwareComponent
         isScanning = true;
         hasRun = false;
         legalityReportEntries = [];
+        // A re-scan invalidates whatever the old diffs claimed; the entries they keyed
+        // were re-fetched from the save and may not match anymore.
+        changesByLocation.Clear();
         statusFilter = null;
         StateHasChanged();
 
@@ -367,4 +397,29 @@ public partial class LegalityReportTab : RefreshAwareComponent
 
     private bool TableFilterFunction(LegalityReportEntry legalityReportEntry) =>
         statusFilter is null || legalityReportEntry.Status == statusFilter;
+
+    private bool HasChangesFor(LegalityReportEntry entry) =>
+        changesByLocation.ContainsKey(GetLocationKey(entry));
+
+    private async Task ShowChangesDialogAsync(LegalityReportEntry entry)
+    {
+        if (!changesByLocation.TryGetValue(GetLocationKey(entry), out var changes) || changes.IsEmpty)
+        {
+            return;
+        }
+
+        var label = $"{entry.SpeciesName} ({entry.Location})";
+        var parameters = new DialogParameters<LegalizationChangesDialog>
+        {
+            { x => x.Changes, changes },
+            { x => x.PokemonLabel, label }
+        };
+
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Medium);
+        await DialogService.ShowAsync<LegalizationChangesDialog>(
+            "Legalization Changes", parameters, options);
+    }
+
+    private static (int Box, int Slot) GetLocationKey(LegalityReportEntry entry) =>
+        entry.IsParty ? (-1, entry.SlotNumber) : (entry.BoxNumber, entry.SlotNumber);
 }

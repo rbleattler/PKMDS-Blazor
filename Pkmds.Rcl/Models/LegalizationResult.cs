@@ -27,4 +27,14 @@ public enum LegalizationStatus
 public record LegalizationOutcome(
     PKM Pokemon,
     LegalizationStatus Status,
-    string? FailureReason = null);
+    string? FailureReason = null)
+{
+    /// <summary>
+    /// Field-level differences between the input PKM and <see cref="Pokemon" />. Populated
+    /// only when <see cref="Status" /> is <see cref="LegalizationStatus.Success" /> and the
+    /// caller supplied a starting PKM (i.e. legalize-existing, not generate-from-set).
+    /// Defaults to <see cref="LegalizationChanges.Empty" /> so non-diffing call sites
+    /// stay source-compatible.
+    /// </summary>
+    public LegalizationChanges Changes { get; init; } = LegalizationChanges.Empty;
+}

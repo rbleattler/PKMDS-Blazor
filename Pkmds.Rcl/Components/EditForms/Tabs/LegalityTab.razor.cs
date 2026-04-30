@@ -82,6 +82,38 @@ public partial class LegalityTab : IDisposable
     public void Dispose() =>
         RefreshService.OnAppStateChanged -= StateHasChanged;
 
+    private void ShowSuccessSnackbar(PKM legalizedPokemon, LegalizationChanges changes)
+    {
+        if (changes.IsEmpty)
+        {
+            Snackbar.Add("Legalized successfully. Click Save to apply changes.", Severity.Success);
+            return;
+        }
+
+        var plural = changes.Count == 1 ? string.Empty : "s";
+        var message = $"Legalized successfully — {changes.Count} change{plural}. Click Save to apply.";
+        Snackbar.Add(message, Severity.Success, config =>
+        {
+            config.Action = "View changes";
+            config.ActionColor = Color.Inherit;
+            config.OnClick = _ => ShowChangesDialog(legalizedPokemon, changes);
+        });
+    }
+
+    private async Task ShowChangesDialog(PKM pokemon, LegalizationChanges changes)
+    {
+        var label = AppService.GetPokemonSpeciesName(pokemon.Species) ?? string.Empty;
+        var parameters = new DialogParameters<LegalizationChangesDialog>
+        {
+            { x => x.Changes, changes },
+            { x => x.PokemonLabel, label }
+        };
+
+        var options = await DialogOptionsHelper.BuildAsync(MaxWidth.Medium);
+        await DialogService.ShowAsync<LegalizationChangesDialog>(
+            "Legalization Changes", parameters, options);
+    }
+
     private async Task LegalizeAsync()
     {
         if (Pokemon is null || AppState.SaveFile is not { } sav)
@@ -107,7 +139,7 @@ public partial class LegalityTab : IDisposable
             {
                 case LegalizationStatus.Success:
                     await OnPokemonLegalized.InvokeAsync(result.Pokemon);
-                    Snackbar.Add("Legalized successfully. Click Save to apply changes.", Severity.Success);
+                    ShowSuccessSnackbar(result.Pokemon, result.Changes);
                     break;
 
                 case LegalizationStatus.Timeout:
