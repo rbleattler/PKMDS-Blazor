@@ -305,7 +305,11 @@ public partial class PokedexTab
 
             foreach (var task in PokedexConstants8a.ResearchTasks[dexIndex - 1])
             {
-                if (task.TaskThresholds.Length == 0)
+                // ObtainForms / PartOfArceus / SpeciesQuest tasks have no settable
+                // counter — calling SetResearchTaskProgressByForce on them throws
+                // ArgumentOutOfRangeException from PokedexSaveResearchEntry.SetCurrentResearchLevel.
+                // PKHeX WinForms (SAV_PokedexLA.cs) gates each call on this check.
+                if (!task.Task.CanSetCurrentValue() || task.TaskThresholds.Length == 0)
                 {
                     continue;
                 }
@@ -335,7 +339,7 @@ public partial class PokedexTab
 
             foreach (var task in PokedexConstants8a.ResearchTasks[dexIndex - 1])
             {
-                if (task.TaskThresholds.Length == 0)
+                if (!task.Task.CanSetCurrentValue() || task.TaskThresholds.Length == 0)
                 {
                     continue;
                 }
