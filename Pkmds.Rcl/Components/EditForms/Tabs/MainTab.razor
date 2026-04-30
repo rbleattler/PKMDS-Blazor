@@ -233,7 +233,7 @@
                                         @bind-Value="@Pokemon.Form"
                                         @bind-Value:after="@AfterFormChanged"
                                         Items="@Enumerable.Range(0, forms.Length).Select(i => (byte)i)"
-                                        ToStringFunc="@(i => forms[i])"
+                                        ToStringFunc="@(i => i < forms.Length ? forms[i] : string.Empty)"
                                         For="@(() => Pokemon.Form)"/>
                 </MudStack>
                 <MudImage Src="@GetFormPreviewSprite()"
@@ -261,7 +261,7 @@
                                                 RefreshService.Refresh();
                                             })"
                                     Items="@Enumerable.Range(0, formArgs.Length).Select(i => (uint?)i)"
-                                    ToStringFunc="@(i => i.HasValue ? formArgs[i.Value] : string.Empty)"/>
+                                    ToStringFunc="@(i => i is { } v && v < formArgs.Length ? formArgs[v] : string.Empty)"/>
             }
 
             @if (IsAlcremie)

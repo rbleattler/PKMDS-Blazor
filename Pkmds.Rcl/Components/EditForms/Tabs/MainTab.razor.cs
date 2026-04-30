@@ -702,6 +702,15 @@ public partial class MainTab : IDisposable
 
         Pokemon.Species = species;
 
+        // Reset Form when it is no longer valid for the new species' form list.
+        // Without this, switching from a many-form species (e.g. Vivillon Form 19)
+        // to one with fewer forms leaves Form pointing past the new form list,
+        // producing a blank Form picker and an invalid PKM state.
+        if (Pokemon.Form >= Pokemon.PersonalInfo.FormCount)
+        {
+            Pokemon.Form = 0;
+        }
+
         // AbilityNumber 0 is invalid for every encounter. SetAbilityIndex sets
         // both the Ability ID and AbilityNumber together, which is required —
         // setting AbilityNumber alone leaves Ability at 0 (AbilityUnexpected).
