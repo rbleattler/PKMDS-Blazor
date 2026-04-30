@@ -167,9 +167,12 @@ public partial class ShowdownImportDialog
 
         parts.Add($"Lv.{set.Level}");
 
-        if (set.HeldItem > 0 && set.HeldItem < strings.Item.Count)
+        // ShowdownSet.HeldItem is in the set's Context-specific item ID space, which differs
+        // from the modern (Gen 4+) `strings.Item` table for Gen 1/2/3/4/8b/9/9a sets.
+        var setItems = strings.GetItemStrings(set.Context);
+        if (set.HeldItem > 0 && set.HeldItem < setItems.Length)
         {
-            parts.Add($"@ {strings.Item[set.HeldItem]}");
+            parts.Add($"@ {setItems[set.HeldItem]}");
         }
 
         return string.Join(" ", parts);

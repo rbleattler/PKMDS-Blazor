@@ -578,8 +578,9 @@
                                         </MudStack>
                                         @if (heldItemId is > 0 && AppState.SaveFile is { } heldItemSf)
                                         {
-                                            var heldItemName = heldItemId.Value < GameInfo.Strings.itemlist.Length
-                                                ? GameInfo.Strings.itemlist[heldItemId.Value]
+                                            var heldItemNames = GameInfo.Strings.GetItemStrings(heldItemSf.Context, heldItemSf.Version);
+                                            var heldItemName = heldItemId.Value < heldItemNames.Length
+                                                ? heldItemNames[heldItemId.Value]
                                                 : string.Empty;
                                             <object class="item-sprite"
                                                     type="image/png"
@@ -916,11 +917,16 @@
                             </MudTd>
 
                             <MudTd DataLabel="Held Item">
+                                @{
+                                    var rowItemNames = AppState.SaveFile is { } rowSf
+                                        ? GameInfo.Strings.GetItemStrings(context.Pokemon.Context, rowSf.Version)
+                                        : System.Array.Empty<string>();
+                                }
                                 @if (context.Pokemon.HeldItem > 0
                                      && AppState.SaveFile is { } sf
-                                     && context.Pokemon.HeldItem < GameInfo.Strings.itemlist.Length)
+                                     && context.Pokemon.HeldItem < rowItemNames.Length)
                                 {
-                                    var heldItemName = GameInfo.Strings.itemlist[context.Pokemon.HeldItem];
+                                    var heldItemName = rowItemNames[context.Pokemon.HeldItem];
                                     <span @onclick:stopPropagation="true"
                                           style="display:inline-flex;align-items:center;gap:4px;">
                                             <object class="item-sprite"
