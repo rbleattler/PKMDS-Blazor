@@ -148,13 +148,17 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
         loadedHeldItems.Clear();
         loadedBalls.Clear();
 
-        var itemlist = GameInfo.Strings.itemlist;
         var version = saveFile.Version;
 
         var distinctAbilityIds = results.Select(r => r.Pokemon.Ability).Distinct().ToList();
-        var distinctHeldItemIds = results.Select(r => r.Pokemon.HeldItem)
-            .Where(id => id > 0 && id < itemlist.Length)
-            .Distinct()
+        // Item IDs are context-specific (Gen 1/2/3/4/8b/9/9a all differ from the modern table).
+        // Resolve the name with the source Pokémon's own context, then dedupe by ID — the
+        // cache is keyed by ID and any duplicates within a single save will share a context.
+        var distinctHeldItemEntries = results
+            .Where(r => r.Pokemon.HeldItem > 0)
+            .Select(r => (Id: r.Pokemon.HeldItem, Context: r.Pokemon.Context))
+            .GroupBy(t => t.Id)
+            .Select(g => g.First())
             .ToList();
         var distinctBallIds = results.Select(r => r.Pokemon.Ball)
             .Where(id => id > 0)
@@ -164,7 +168,11 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
         var abilityResults = await Task.WhenAll(
             distinctAbilityIds.Select(async id => (id, info: await DescriptionService.GetAbilityInfoAsync(id, version))));
         var heldItemResults = await Task.WhenAll(
-            distinctHeldItemIds.Select(async id => (id, info: await DescriptionService.GetItemInfoAsync(SafeNameLookup.Item(itemlist, id), version))));
+            distinctHeldItemEntries.Select(async entry =>
+            {
+                var items = GameInfo.Strings.GetItemStrings(entry.Context, version);
+                return (id: entry.Id, info: await DescriptionService.GetItemInfoAsync(SafeNameLookup.Item(items, entry.Id), version));
+            }));
         var ballResults = await Task.WhenAll(
             distinctBallIds.Select(async id =>
             {
@@ -553,9 +561,11 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
             : null;
         if (heldItemId.HasValue && AppState.SaveFile is { } sf)
         {
-            var itemlist = GameInfo.Strings.itemlist;
-            var name = heldItemId.Value < itemlist.Length
-                ? itemlist[heldItemId.Value]
+            // The filter dropdown sources from FilteredSources.Items, whose Value is in the
+            // save's context-specific item ID space — look the name up in the same space.
+            var items = GameInfo.Strings.GetItemStrings(sf.Context, sf.Version);
+            var name = heldItemId.Value < items.Length
+                ? items[heldItemId.Value]
                 : null;
             filterHeldItemInfo = name is not null
                 ? await DescriptionService.GetItemInfoAsync(name, sf.Version)

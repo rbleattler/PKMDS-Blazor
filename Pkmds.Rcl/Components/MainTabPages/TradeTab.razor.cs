@@ -783,8 +783,11 @@ public partial class TradeTab : RefreshAwareComponent
         var speciesName = pkm.Species < strings.specieslist.Length
             ? strings.specieslist[pkm.Species]
             : $"Species #{pkm.Species}";
-        var itemName = itemId < strings.Item.Count
-            ? strings.Item[itemId]
+        // Held-item IDs are context-specific (e.g. Gen 3 ID 199 = Metal Coat,
+        // but modern ID 199 = Babiri Berry). Look up using the Pokémon's own context.
+        var items = strings.GetItemStrings(pkm.Context, save.Version);
+        var itemName = itemId < items.Length
+            ? items[itemId]
             : $"Item #{itemId}";
         var bagLabel = ReferenceEquals(save, AppState.SaveFile) ? "Slot A" : "Slot B";
         return $"{speciesName}’s {itemName} (from {bagLabel}’s bag)";

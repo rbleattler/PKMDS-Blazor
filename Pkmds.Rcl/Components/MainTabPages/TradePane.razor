@@ -108,8 +108,9 @@
                     var abilityName = selected.Ability >= 0 && selected.Ability < strings.Ability.Count
                         ? strings.Ability[selected.Ability]
                         : null;
-                    var heldItemName = selected.HeldItem > 0 && selected.HeldItem < strings.Item.Count
-                        ? strings.Item[selected.HeldItem]
+                    var selectedItemNames = strings.GetItemStrings(selected.Context, saveFile.Version);
+                    var heldItemName = selected.HeldItem > 0 && selected.HeldItem < selectedItemNames.Length
+                        ? selectedItemNames[selected.HeldItem]
                         : null;
                     var hasNature = natureName is not null;
                     var hasAbility = abilityName is not null;
