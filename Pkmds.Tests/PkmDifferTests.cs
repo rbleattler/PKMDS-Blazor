@@ -2,6 +2,15 @@ namespace Pkmds.Tests;
 
 public class PkmDifferTests
 {
+    static PkmDifferTests()
+    {
+        // PkmDiffer pulls move / ball / species / nature names from GameInfo.Strings.
+        // Although these tests don't assert on language-dependent text, run the full
+        // localization init once so the suite is deterministic regardless of which
+        // other test class runs first under parallel xUnit execution.
+        LocalizeUtil.InitializeStrings(GameLanguage.DefaultLanguage);
+    }
+
     [Fact]
     public void Diff_IdenticalPkms_ReturnsEmpty()
     {

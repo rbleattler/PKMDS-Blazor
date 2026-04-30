@@ -170,7 +170,14 @@ public partial class LegalityReportTab : RefreshAwareComponent
             {
                 case LegalityStatus.Legal:
                     successCount++;
-                    if (!result.Changes.IsEmpty)
+                    // Recompute the diff against the bytes actually stored in the save
+                    // rather than reusing result.Changes (which was diffed against the
+                    // in-memory result.Pokemon before SetBoxSlot/SetPartySlot ran). The
+                    // EntityImportSettings.None write path can still serialize/deserialize
+                    // and trim trailing fields, so the row's "View changes" must reflect
+                    // what the user will see if they re-scan.
+                    var storedChanges = PkmDiffer.Diff(entry.Pokemon, storedPk);
+                    if (!storedChanges.IsEmpty)
                     {
                         // Index by the row's location, not the entry instance, because the
                         // entry was replaced above with a new record and any future re-scan
@@ -178,7 +185,7 @@ public partial class LegalityReportTab : RefreshAwareComponent
                         var key = entry.IsParty
                             ? (-1, entry.SlotNumber)
                             : (entry.BoxNumber, entry.SlotNumber);
-                        changesByLocation[key] = result.Changes;
+                        changesByLocation[key] = storedChanges;
                     }
 
                     break;
