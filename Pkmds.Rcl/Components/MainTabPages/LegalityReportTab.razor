@@ -163,6 +163,8 @@
 
                     <MudTh>First Issue</MudTh>
 
+                    <MudTh Style="width: 1%;">Changes</MudTh>
+
                 </HeaderContent>
 
                 <RowTemplate>
@@ -182,6 +184,19 @@
                     </MudTd>
 
                     <MudTd DataLabel="First Issue">@context.FirstIssue</MudTd>
+
+                    <MudTd DataLabel="Changes">
+                        @if (HasChangesFor(context))
+                        {
+                            <MudTooltip Text="View what was changed during legalization">
+                                <MudIconButton Icon="@Icons.Material.Filled.ListAlt"
+                                               Size="@Size.Small"
+                                               Color="@Color.Primary"
+                                               OnClick="@(() => ShowChangesDialogAsync(context))"
+                                               aria-label="View legalization changes"/>
+                            </MudTooltip>
+                        }
+                    </MudTd>
 
                 </RowTemplate>
 

@@ -19,6 +19,12 @@ public sealed class LegalizationService : ILegalizationService
         CancellationToken ct = default,
         int? timeoutSeconds = null)
     {
+        // Snapshot the original now so the success diff sees pre-mutation state.
+        // Both passes mutate clones of pk internally, but pinning a clone here keeps
+        // the differ insulated from any future caller that hands us a pk reference
+        // they continue to mutate.
+        var original = pk.Clone();
+
         // Build a ShowdownSet from the existing PKM so the core loop can treat both
         // "legalize existing" and "generate from set" uniformly.
         var set = new ShowdownSet(ShowdownParsing.GetShowdownText(pk));
@@ -33,7 +39,7 @@ public sealed class LegalizationService : ILegalizationService
 
         if (preserveOutcome.Status == LegalizationStatus.Success)
         {
-            return preserveOutcome;
+            return preserveOutcome with { Changes = PkmDiffer.Diff(original, preserveOutcome.Pokemon) };
         }
 
         if (ct.IsCancellationRequested)
@@ -44,8 +50,12 @@ public sealed class LegalizationService : ILegalizationService
         // Fallback: rebuild via enc.ConvertToPKM + ApplySetDetails. Lossy, but gets
         // the user a legal result when preserve-mode cannot.
         var rebuildBudget = Math.Max(1, budget - preserveBudget);
-        return await CoreLegalizeAsync(
+        var rebuildOutcome = await CoreLegalizeAsync(
             set, pk, sav, progress, ct, rebuildBudget, preserveDetails: false);
+
+        return rebuildOutcome.Status == LegalizationStatus.Success
+            ? rebuildOutcome with { Changes = PkmDiffer.Diff(original, rebuildOutcome.Pokemon) }
+            : rebuildOutcome;
     }
 
     public async Task<LegalizationOutcome> GenerateFromSetAsync(

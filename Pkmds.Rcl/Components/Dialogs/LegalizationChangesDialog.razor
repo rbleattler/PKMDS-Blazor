@@ -1,0 +1,72 @@
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="@Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.AutoFixHigh"
+                     Class="mr-2"
+                     Style="vertical-align: middle;"/>
+            Legalization Changes
+        </MudText>
+        @if (!string.IsNullOrEmpty(PokemonLabel))
+        {
+            <MudText Typo="@Typo.caption"
+                     Color="@Color.Secondary">
+                @PokemonLabel
+            </MudText>
+        }
+    </TitleContent>
+    <DialogContent>
+        @if (Changes.IsEmpty)
+        {
+            <MudText Color="@Color.Secondary">
+                No changes were made — the Pokémon was already legal in every checked field.
+            </MudText>
+        }
+        else
+        {
+            <MudStack Spacing="2"
+                      Style="min-width: 480px;">
+                <MudText Typo="@Typo.body2"
+                         Color="@Color.Secondary">
+                    @Changes.Count change@(Changes.Count == 1 ? string.Empty : "s") across @CategoryCount categor@(CategoryCount == 1 ? "y" : "ies").
+                </MudText>
+
+                <MudExpansionPanels MultiExpansion>
+                    @foreach (var group in Changes.ByCategory())
+                    {
+                        <MudExpansionPanel Text="@($"{GetCategoryLabel(group.Key)} ({group.Count()})")">
+                            <MudSimpleTable Dense
+                                            Hover
+                                            Striped
+                                            Bordered>
+                                <thead>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Before</th>
+                                    <th>After</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                @foreach (var change in group)
+                                {
+                                    <tr>
+                                        <td>@change.FieldLabel</td>
+                                        <td>@(change.OldValue ?? "—")</td>
+                                        <td>@(change.NewValue ?? "—")</td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </MudSimpleTable>
+                        </MudExpansionPanel>
+                    }
+                </MudExpansionPanels>
+            </MudStack>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@Close"
+                   Variant="@Variant.Filled"
+                   Color="@Color.Default">
+            Close
+        </MudButton>
+    </DialogActions>
+</MudDialog>
