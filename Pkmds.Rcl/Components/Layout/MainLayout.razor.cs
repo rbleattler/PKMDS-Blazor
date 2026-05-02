@@ -586,6 +586,18 @@ public partial class MainLayout : IDisposable
             return;
         }
 
+        // Warn if the user has edits in the Pokémon editor that haven't been written
+        // back to a slot — exporting now would produce a save file without those edits.
+        if (!await UnsavedChangesGuard.ConfirmAsync(
+                AppService,
+                DialogService,
+                "You have unsaved changes to a Pokémon. Save them to the slot before exporting, or export without those changes?",
+                saveText: "Save & Export",
+                discardText: "Export Anyway"))
+        {
+            return;
+        }
+
         Logger.LogInformation("Exporting save file");
         AppState.ShowProgressIndicator = true;
 

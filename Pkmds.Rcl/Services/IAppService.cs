@@ -150,6 +150,13 @@ public interface IAppService
     void SavePokemon(PKM? selectedPokemon);
 
     /// <summary>
+    /// Returns true if <see cref="EditFormPokemon"/> differs byte-for-byte from the
+    /// data currently stored in its source slot — i.e. the user has edits that have
+    /// not been committed via <see cref="SavePokemon"/>.
+    /// </summary>
+    bool EditFormHasUnsavedChanges();
+
+    /// <summary>
     /// Generates a clean, standardized filename for exporting a Pokémon.
     /// Format varies by generation: Gen 1/2 use DV values, Gen 3+ use PID.
     /// </summary>
