@@ -4,8 +4,19 @@ public partial class PartyGrid : RefreshAwareComponent
 {
     protected override RefreshEvents SubscribeTo => RefreshEvents.AppState | RefreshEvents.PartyState;
 
-    private void SetSelectedPokemon(PKM? pokemon, int slotNumber) =>
+    private async Task SetSelectedPokemon(PKM? pokemon, int slotNumber)
+    {
+        if (!await UnsavedChangesGuard.ConfirmAsync(
+                AppService,
+                DialogService,
+                "This Pokémon has unsaved changes. Save them to the slot before switching to another?",
+                snackbar: Snackbar))
+        {
+            return;
+        }
+
         AppService.SetSelectedPartyPokemon(pokemon, slotNumber);
+    }
 
     private string GetClass(int slotNumber) => AppState.SelectedPartySlotNumber == slotNumber
         ? Constants.SelectedSlotClass

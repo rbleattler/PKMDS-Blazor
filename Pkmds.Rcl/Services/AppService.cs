@@ -287,6 +287,38 @@ public class AppService(IAppState appState, IRefreshService refreshService, ILeg
         }
     }
 
+    public bool EditFormHasUnsavedChanges()
+    {
+        if (AppState.SaveFile is not { } saveFile || EditFormPokemon is not { } pokemon)
+        {
+            return false;
+        }
+
+        var selectedPokemonType = GetSelectedPokemonSlot(out var partySlot, out var boxNumber, out var boxSlot);
+
+        PKM? slotPokemon = selectedPokemonType switch
+        {
+            SelectedPokemonType.Party => saveFile.GetPartySlotAtIndex(partySlot),
+            SelectedPokemonType.Box => saveFile.GetBoxSlotAtIndex(boxNumber, boxSlot),
+            SelectedPokemonType.None when saveFile is SAV7b && AppState.SelectedBoxSlotNumber is { } lgSlot =>
+                saveFile.GetBoxSlotAtIndex(lgSlot / saveFile.BoxSlotCount, lgSlot % saveFile.BoxSlotCount),
+            _ => null
+        };
+
+        if (slotPokemon is null || pokemon.SIZE_STORED != slotPokemon.SIZE_STORED)
+        {
+            return false;
+        }
+
+        var editedBytes = new byte[pokemon.SIZE_STORED];
+        pokemon.WriteDecryptedDataStored(editedBytes);
+
+        var slotBytes = new byte[slotPokemon.SIZE_STORED];
+        slotPokemon.WriteDecryptedDataStored(slotBytes);
+
+        return !editedBytes.AsSpan().SequenceEqual(slotBytes);
+    }
+
     public string GetCleanFileName(PKM pkm) => pkm.Context switch
     {
         EntityContext.SplitInvalid or EntityContext.MaxInvalid => DefaultPkmFileName,

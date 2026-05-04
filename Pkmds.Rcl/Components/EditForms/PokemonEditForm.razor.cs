@@ -76,7 +76,7 @@ public partial class PokemonEditForm : IDisposable
             return;
         }
 
-        if (HasUnsavedChanges(saveFile))
+        if (AppService.EditFormHasUnsavedChanges())
         {
             var save = await DialogService.ShowMessageBoxAsync(
                 "Unsaved Changes",
@@ -116,38 +116,6 @@ public partial class PokemonEditForm : IDisposable
         var speciesName = AppService.GetPokemonSpeciesName(Pokemon.Species)
                           ?? Pokemon.Species.ToString(CultureInfo.InvariantCulture);
         Snackbar.Add($"{speciesName} added to Bank.", Severity.Success);
-    }
-
-    private bool HasUnsavedChanges(SaveFile saveFile)
-    {
-        if (Pokemon is null)
-        {
-            return false;
-        }
-
-        var selectedPokemonType = AppService.GetSelectedPokemonSlot(out var partySlot, out var boxNumber, out var boxSlot);
-
-        PKM? slotPokemon = selectedPokemonType switch
-        {
-            SelectedPokemonType.Party => saveFile.GetPartySlotAtIndex(partySlot),
-            SelectedPokemonType.Box => saveFile.GetBoxSlotAtIndex(boxNumber, boxSlot),
-            SelectedPokemonType.None when saveFile is SAV7b && AppState.SelectedBoxSlotNumber is { } lgSlot =>
-                saveFile.GetBoxSlotAtIndex(lgSlot / saveFile.BoxSlotCount, lgSlot % saveFile.BoxSlotCount),
-            _ => null
-        };
-
-        if (slotPokemon is null || Pokemon.SIZE_STORED != slotPokemon.SIZE_STORED)
-        {
-            return false;
-        }
-
-        var editedBytes = new byte[Pokemon.SIZE_STORED];
-        Pokemon.WriteDecryptedDataStored(editedBytes);
-
-        var slotBytes = new byte[slotPokemon.SIZE_STORED];
-        slotPokemon.WriteDecryptedDataStored(slotBytes);
-
-        return !editedBytes.AsSpan().SequenceEqual(slotBytes);
     }
 
     private void SaveAndClose()
@@ -258,7 +226,35 @@ public partial class PokemonEditForm : IDisposable
 
         void PastePokemon()
         {
-            Pokemon = AppState.CopiedPokemon.Clone();
+            if (AppState.SaveFile is not { } saveFile || AppState.CopiedPokemon is null)
+            {
+                return;
+            }
+
+            var pasted = AppState.CopiedPokemon.Clone();
+
+            // The copied Pokémon may originate from a different save loaded earlier in the
+            // session (e.g. copy from a Gen 6 save, then load a Gen 5 Black 2 save). PKHeX's
+            // SetPartySlot/SetBoxSlot throw ArgumentException when the runtime PKM type
+            // doesn't match the save's PKMType, so convert first and surface a friendly error
+            // when conversion isn't possible instead of crashing.
+            if (pasted.GetType() != saveFile.PKMType)
+            {
+                var converted = EntityConverter.ConvertToType(pasted, saveFile.PKMType, out var c);
+                if (!c.IsSuccess || converted is null)
+                {
+                    Snackbar.Add(
+                        $"Could not paste Pokémon: {c.GetDisplayString(pasted, saveFile.PKMType)}",
+                        Severity.Error);
+                    return;
+                }
+
+                pasted = converted;
+            }
+
+            saveFile.AdaptToSaveFile(pasted);
+
+            Pokemon = pasted;
             AppService.SavePokemon(Pokemon);
 
             var selectedPokemonType =

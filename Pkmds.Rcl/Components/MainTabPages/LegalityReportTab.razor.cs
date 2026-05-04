@@ -376,6 +376,15 @@ public partial class LegalityReportTab : RefreshAwareComponent
             return;
         }
 
+        if (!await UnsavedChangesGuard.ConfirmAsync(
+                AppService,
+                DialogService,
+                "This Pokémon has unsaved changes. Save them to the slot before jumping to the report entry?",
+                snackbar: Snackbar))
+        {
+            return;
+        }
+
         if (entry.IsParty)
         {
             AppService.SetSelectedPartyPokemon(entry.Pokemon, entry.SlotNumber);

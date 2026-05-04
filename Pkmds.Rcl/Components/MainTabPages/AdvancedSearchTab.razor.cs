@@ -318,6 +318,15 @@ public partial class AdvancedSearchTab : RefreshAwareComponent
 
     private async Task JumpToResultAsync(AdvancedSearchResult row)
     {
+        if (!await UnsavedChangesGuard.ConfirmAsync(
+                AppService,
+                DialogService,
+                "This Pokémon has unsaved changes. Save them to the slot before jumping to the search result?",
+                snackbar: Snackbar))
+        {
+            return;
+        }
+
         if (row.IsParty)
         {
             AppService.SetSelectedPartyPokemon(row.Pokemon, row.SlotNumber);
